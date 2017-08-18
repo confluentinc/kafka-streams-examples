@@ -1,0 +1,77 @@
+Licensed under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at:
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on
+an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+
+This project includes:
+  Apache Avro under The Apache Software License, Version 2.0
+  Apache Avro Compiler under The Apache Software License, Version 2.0
+  Apache Avro Maven Plugin under The Apache Software License, Version 2.0
+  Apache Log4j under The Apache Software License, Version 2.0
+  Apache Velocity under The Apache Software License, Version 2.0
+  AssertJ fluent assertions under Apache License, Version 2.0
+  classworlds under Apache License, Version 2.0
+  Commons Collections under The Apache Software License, Version 2.0
+  Commons Compress under The Apache Software License, Version 2.0
+  Commons Lang under The Apache Software License, Version 2.0
+  Commons Math under The Apache Software License, Version 2.0
+  config under Apache License 2.0
+  connect-api under Apache License, Version 2.0
+  connect-json under Apache License, Version 2.0
+  Curator Testing under The Apache Software License, Version 2.0
+  Data Mapper for Jackson under The Apache Software License, Version 2.0
+  Default Plexus Container under Apache License, Version 2.0
+  Guava: Google Core Libraries for Java under The Apache Software License, Version 2.0
+  Hamcrest Core under New BSD License
+  Jackson under The Apache Software License, Version 2.0
+  Jackson-annotations under The Apache Software License, Version 2.0
+  Jackson-core under The Apache Software License, Version 2.0
+  jackson-databind under The Apache Software License, Version 2.0
+  Javassist under MPL 1.1 or LGPL 2.1 or Apache License 2.0
+  JLine under BSD
+  JOpt Simple under The MIT License
+  JUnit under Eclipse Public License 1.0
+  kafka-avro-serializer under Apache License 2.0
+  kafka-clients under Apache License, Version 2.0
+  kafka-schema-registry-client under Apache License 2.0
+  kafka-streams under Apache License, Version 2.0
+  kafka_2.11 under Apache License, Version 2.0
+  LZ4 and xxHash under The Apache Software License, Version 2.0
+  Maven Artifact under The Apache Software License, Version 2.0
+  Maven Artifact Manager under The Apache Software License, Version 2.0
+  Maven File Management API under The Apache Software License, Version 2.0
+  Maven Local Settings Model under The Apache Software License, Version 2.0
+  Maven Model under The Apache Software License, Version 2.0
+  Maven Plugin API under The Apache Software License, Version 2.0
+  Maven Plugin Registry Model under The Apache Software License, Version 2.0
+  Maven Profile Model under The Apache Software License, Version 2.0
+  Maven Project Builder under The Apache Software License, Version 2.0
+  Maven Repository Metadata Model under The Apache Software License, Version 2.0
+  Maven Shared I/O API under The Apache Software License, Version 2.0
+  Maven Wagon API under The Apache Software License, Version 2.0
+  Metrics Core Library under Apache License 2.0
+  ParaNamer Core under BSD
+  Plexus Common Utilities under The Apache Software License, Version 2.0
+  Plexus Interpolation API under The Apache Software License, Version 2.0
+  RocksDB JNI under Apache License 2.0
+  Scala Library under BSD 3-Clause
+  scala-parser-combinators under BSD 3-clause
+  scala-xml under BSD 3-clause
+  SLF4J API Module under MIT License
+  SLF4J LOG4J-12 Binding under MIT License
+  snappy-java under The Apache Software License, Version 2.0
+  streams-examples under Apache License 2.0
+  The Netty Project under Apache License, Version 2.0
+  utils under Apache License 2.0
+  XZ for Java under Public Domain
+  ZkClient under The Apache Software License, Version 2.0
+  zookeeper under Apache License, Version 2.0
+
