@@ -1,4 +1,4 @@
-# Kafka Streams Examples [![Build Status](https://travis-ci.org/confluentinc/kafka-streams-examples.svg?branch=3.3.0-post)](https://travis-ci.org/confluentinc/kafka-streams-examples)
+# Kafka Streams Examples
 
 This project contains code examples that demonstrate how to implement real-time applications and event-driven
 microservices using the Streams API of [Apache Kafka](http://kafka.apache.org/) aka Kafka Streams.
