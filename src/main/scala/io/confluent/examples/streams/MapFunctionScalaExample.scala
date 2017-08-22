@@ -51,7 +51,7 @@ import org.apache.kafka.streams.kstream.{KStream, KStreamBuilder}
   * 3) Start this example application either in your IDE or on the command line.
   *
   * If via the command line please refer to
-  * <a href='https://github.com/confluentinc/examples/tree/master/kafka-streams#packaging-and-running'>Packaging</a>.
+  * <a href='https://github.com/confluentinc/kafka-streams-examples#packaging-and-running'>Packaging</a>.
   * Once packaged you can then run:
   *
   * {{{
