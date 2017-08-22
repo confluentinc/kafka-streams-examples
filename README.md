@@ -1,6 +1,6 @@
 # Kafka Streams examples [![Build Status](https://travis-ci.org/confluentinc/examples.svg?branch=3.2.x)](https://travis-ci.org/confluentinc/examples)
 
-This sub-folder contains code examples that demonstrate how to implement real-time applications and event-driven
+This project contains code examples that demonstrate how to implement real-time applications and event-driven
 microservices using the Streams API of [Apache Kafka](http://kafka.apache.org/) aka Kafka Streams.
 
 For more information take a look at the
@@ -370,7 +370,7 @@ $ mvn test    # Runs unit and integration tests
 
 | Branch (this repo)                                                             | Apache Kafka      | Confluent Platform | Notes                                                                                 |
 | -------------------------------------------------------------------------------|-------------------|--------------------|---------------------------------------------------------------------------------------|
-| [master](../../../tree/master/kafka-streams)                                   | 0.11.1.0-SNAPSHOT | 3.5.0-SNAPSHOT     | You must manually build the `trunk` version of Apache Kafka and the `master` version of Confluent Platform.  See instructions above. |
+| [master](../../../tree/master/kafka-streams)                                   | 1.0.0-SNAPSHOT | 4.0.0-SNAPSHOT     | You must manually build the `trunk` version of Apache Kafka and the `master` version of Confluent Platform.  See instructions above. |
 | [3.3.x](../../../tree/3.3.x/kafka-streams)                                     | 0.11.0.0(-cp1)    | 3.3.0              | Works out of the box                                                                  |
 | [3.2.x](../../../tree/3.2.x/kafka-streams)                                     | 0.10.2.1(-cp1)    | 3.2.1              | Works out of the box                                                                  |
 | [3.1.x](../../../tree/3.1.x/kafka-streams)                                     | 0.10.1.1 [preferred], 0.10.1.0(-cp2)    | 3.1.1              | Works out of the box                                                                  |
