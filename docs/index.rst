@@ -58,7 +58,7 @@ Clone the Confluent Docker Images repository:
   .. sourcecode:: bash
 
     # Clone the git repository
-    $ git clone https://github.com/confluentinc/kafka-streams-examples
+    $ git clone https://github.com/confluentinc/kafka-streams-examples.git
 
     # Change into the directory for this tutorial
     $ cd kafka-streams-examples/
