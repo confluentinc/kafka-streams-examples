@@ -33,6 +33,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.Client;
@@ -124,8 +126,17 @@ public class WordCountInteractiveQueriesExampleTest {
 
     kafkaStreams = WordCountInteractiveQueriesExample.createStreams(
         createStreamConfig(CLUSTER.bootstrapServers(), port, "one"));
+
+    final CountDownLatch startupLatch = new CountDownLatch(1);
+    kafkaStreams.setStateListener((newState, oldState) -> {
+        if (newState == KafkaStreams.State.RUNNING && oldState == KafkaStreams.State.REBALANCING) {
+          startupLatch.countDown();
+        }
+    });
     kafkaStreams.start();
     proxy = WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, port);
+
+    assertTrue("streams failed to start within timeout", startupLatch.await(30, TimeUnit.SECONDS));
 
     final Client client = ClientBuilder.newClient();
 
