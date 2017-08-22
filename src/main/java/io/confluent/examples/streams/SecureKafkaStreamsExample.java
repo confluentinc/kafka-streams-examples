@@ -89,9 +89,9 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * [vagrant@kafka ~]$ git clone https://github.com/confluentinc/examples.git
- * [vagrant@kafka ~]$ cd examples/kafka-streams
- * [vagrant@kafka ~]$ git checkout master
+ * [vagrant@kafka ~]$ git clone https://github.com/confluentinc/kafka-streams-examples.git
+ * [vagrant@kafka ~]$ cd kafka-streams-examples
+ * [vagrant@kafka ~]$ git checkout 3.3.0-post
  *
  * # Build and package the examples.  We skip the test suite because running the test suite
  * # requires more main memory than is available to the Vagrant VM by default.
