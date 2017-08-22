@@ -106,7 +106,7 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
  *
  * <pre>
  * {@code
- * $ java -cp target/streams-examples-3.3.0-standalone.jar \
+ * $ java -cp target/streams-examples-4.0.0-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExample 7070
  * }
  * </pre>
@@ -117,7 +117,7 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
  *
  * <pre>
  * {@code
- * $ java -cp target/streams-examples-3.3.0-standalone.jar \
+ * $ java -cp target/streams-examples-4.0.0-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExample 7071
  * }
  * </pre>

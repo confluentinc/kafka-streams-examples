@@ -315,7 +315,7 @@ Kafka Streams examples via:
 #
 $ mvn clean package
 
-# >>> Creates target/streams-examples-3.3.0-standalone.jar
+# >>> Creates target/streams-examples-4.0.0-standalone.jar
 
 ```
 
@@ -324,7 +324,7 @@ You can now run the example applications as follows:
 ```shell
 # Run an example application from the standalone jar.
 # Here: `WordCountLambdaExample`
-$ java -cp target/streams-examples-3.3.0-standalone.jar \
+$ java -cp target/streams-examples-4.0.0-standalone.jar \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
 
@@ -340,7 +340,7 @@ and then execute as follows:
 ```shell
 # Run an example application from the standalone jar.
 # Here: `WordCountLambdaExample`
-$ java -cp target/streams-examples-3.3.0-standalone.jar \
+$ java -cp target/streams-examples-4.0.0-standalone.jar \
   -Dlog4j.configuration=file:src/main/resources/log4j.properties \
   io.confluent.examples.streams.WordCountLambdaExample
 ```

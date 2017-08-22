@@ -43,7 +43,7 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.ApplicationResetExample
+ * $ java -cp target/streams-examples-4.0.0-standalone.jar io.confluent.examples.streams.ApplicationResetExample
  * }</pre>
  * 4) Write some input data to the source topic (e.g. via {@code kafka-console-producer}).
  * The already running example application (step 3) will automatically process this input data and write the results to the output topics.
@@ -97,7 +97,7 @@ import java.util.Properties;
  * Thus, restart the application via:
  * <pre>
  * {@code
- * $ java -cp target/streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.ApplicationResetExample --reset
+ * $ java -cp target/streams-examples-4.0.0-standalone.jar io.confluent.examples.streams.ApplicationResetExample --reset
  * }</pre>
  * 9) If your console consumer (from step 5) is still running, you should see the same output data again.
  * If it was stopped and you restart it, if will print the result "twice".
