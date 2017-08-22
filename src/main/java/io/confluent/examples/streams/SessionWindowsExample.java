@@ -60,7 +60,7 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
  * <p>
  * 3) Start this example application either in your IDE or on the command line.
  * <p>
- * If via the command line please refer to <a href='https://github.com/confluentinc/examples/tree/master/kafka-streams#packaging-and-running'>Packaging</a>.
+ * If via the command line please refer to <a href='https://github.com/confluentinc/kafka-streams-examples#packaging-and-running'>Packaging</a>.
  * Once packaged you can then run:
  * <pre>
  * {@code

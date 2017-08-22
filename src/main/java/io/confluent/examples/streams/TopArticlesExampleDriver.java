@@ -45,7 +45,7 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
  * You can then run this class directly in your IDE or via the command line.
  *
  * To run via the command line you might want to package as a fatjar first. Please refer to:
- * <a href='https://github.com/confluentinc/examples/tree/master/kafka-streams#packaging-and-running'>Packaging</a>
+ * <a href='https://github.com/confluentinc/kafka-streams-examples#packaging-and-running'>Packaging</a>
  *
  * Once packaged you can then run:
  * <pre>
