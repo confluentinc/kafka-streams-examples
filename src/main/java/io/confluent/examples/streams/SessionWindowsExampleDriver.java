@@ -43,8 +43,9 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-4.0.0-standalone.jar io.confluent.examples.streams.SessionWindowsExampleDriver
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.SessionWindowsExampleDriver
+ * }
+ * </pre>
  */
 public class SessionWindowsExampleDriver {
 

@@ -73,7 +73,7 @@ import java.util.Properties;
  *
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-4.0.0-standalone.jar \
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.InteractiveQueriesExample 7070
  * }
  * </pre>
@@ -84,7 +84,7 @@ import java.util.Properties;
  *
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-4.0.0-standalone.jar \
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.InteractiveQueriesExample 7071
  * }
  * </pre>

@@ -78,8 +78,9 @@ import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-4.0.0-standalone.jar io.confluent.examples.streams.TopArticlesLambdaExample
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.TopArticlesLambdaExample
+ * }
+ * </pre>
  * 4) Write some input data to the source topics (e.g. via {@link TopArticlesExampleDriver}).
  * The already running example application (step 3) will automatically process this input data and
  * write the results to the output topic. The {@link TopArticlesExampleDriver} will print the
@@ -88,8 +89,9 @@ import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
  * {@code
  * # Here: Write input data using the example driver.  Once the driver has stopped generating data,
  * # you can terminate it via Ctrl-C.
- * $ java -cp target/kafka-streams-examples-4.0.0-standalone.jar io.confluent.examples.streams.TopArticlesExampleDriver
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.TopArticlesExampleDriver
+ * }
+ * </pre>
  */
 public class TopArticlesLambdaExample {
 

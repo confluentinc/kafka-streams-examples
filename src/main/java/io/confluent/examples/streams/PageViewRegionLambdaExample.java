@@ -64,7 +64,8 @@ import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * $ bin/kafka-topics --create --topic PageViewsByRegion \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * }</pre>
+ * }
+ * </pre>
  * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be {@code bin/kafka-topics.sh ...}.
  * <p>
  * 3) Start this example application either in your IDE or on the command line.
@@ -73,8 +74,9 @@ import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-4.0.0-standalone.jar io.confluent.examples.streams.PageViewRegionLambdaExample
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.PageViewRegionLambdaExample
+ * }
+ * </pre>
  * 4) Write some input data to the source topics (e.g. via {@link PageViewRegionExampleDriver}).
  * The already running example application (step 3) will automatically process this input data and
  * write the results to the output topic.
@@ -82,8 +84,9 @@ import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
  * {@code
  * # Here: Write input data using the example driver. Once the driver has stopped generating data,
  * # you can terminate it via `Ctrl-C`.
- * $ java -cp target/kafka-streams-examples-4.0.0-standalone.jar io.confluent.examples.streams.PageViewRegionExampleDriver
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.PageViewRegionExampleDriver
+ * }
+ * </pre>
  * 5) Inspect the resulting data in the output topic, e.g. via {@code kafka-console-consumer}.
  * <pre>
  * {@code
@@ -91,14 +94,16 @@ import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
  *                              --new-consumer --bootstrap-server localhost:9092 \
  *                              --property print.key=true \
  *                              --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
- * }</pre>
+ * }
+ * </pre>
  * You should see output data similar to:
  * <pre>
  * {@code
  * [africa@1466515140000]  2
  * [asia@1466514900000]  3
  * ...
- * }</pre>
+ * }
+ * </pre>
  * Here, the output format is "[REGION@WINDOW_START_TIME] COUNT".
  * <p>
  * 6) Once you're done with your experiments, you can stop this example via {@code Ctrl-C}. If needed,

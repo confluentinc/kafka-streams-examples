@@ -47,8 +47,9 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-4.0.0-standalone.jar io.confluent.examples.streams.PageViewRegionExampleDriver
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.PageViewRegionExampleDriver
+ * }
+ * </pre>
  * You should terminate with {@code Ctrl-C}.
  */
 public class PageViewRegionExampleDriver {

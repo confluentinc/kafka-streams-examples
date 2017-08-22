@@ -66,8 +66,9 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-4.0.0-standalone.jar io.confluent.examples.streams.GlobalKTablesExample
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.GlobalKTablesExample
+ * }
+ * </pre>
  * 4) Write some input data to the source topics (e.g. via {@link GlobalKTablesExampleDriver}). The
  * already running example application (step 3) will automatically process this input data and write
  * the results to the output topic.
@@ -75,8 +76,9 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
  * {@code
  * # Here: Write input data using the example driver. The driver will exit once it has received
  * # all EnrichedOrders
- * $ java -cp target/kafka-streams-examples-4.0.0-standalone.jar io.confluent.examples.streams.GlobalKTablesExampleDriver
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.GlobalKTablesExampleDriver
+ * }
+ * </pre>
  * <p>
  * 5) Once you're done with your experiments, you can stop this example via {@code Ctrl-C}. If needed,
  * also stop the Confluent Schema Registry ({@code Ctrl-C}), then stop the Kafka broker ({@code Ctrl-C}), and

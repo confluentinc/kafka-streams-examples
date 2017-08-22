@@ -98,9 +98,10 @@ import java.util.Properties;
  * [vagrant@kafka ~]$ mvn clean -DskipTests=true package
  *
  * # Now we can start this example application
- * [vagrant@kafka ~]$ java -cp target/kafka-streams-examples-4.0.0-standalone.jar \
+ * [vagrant@kafka ~]$ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar \
  *                             io.confluent.examples.streams.SecureKafkaStreamsExample
- * }</pre>
+ * }
+ * </pre>
  * 4) Write some input data to the source topic (e.g. via {@code kafka-console-producer}). The already
  * running example application (step 3) will automatically process this input data and write the
  * results as-is (i.e. unmodified) to the output topic.
@@ -115,21 +116,24 @@ import java.util.Properties;
  * # Every line you enter will become the value of a single Kafka message.
  * $ kafka-console-producer --broker-list localhost:9093 --topic secure-input \
  *                          --producer.config /etc/kafka/producer_ssl.properties
- * }</pre>
+ * }
+ * </pre>
  * 5) Inspect the resulting data in the output topic, e.g. via {@code kafka-console-consumer}.
  * <pre>
  * {@code
  * $ kafka-console-consumer --topic secure-output --from-beginning \
  *                          --new-consumer --bootstrap-server localhost:9093 \
  *                          --consumer.config /etc/kafka/consumer_ssl.properties
- * }</pre>
+ * }
+ * </pre>
  * You should see output data similar to:
  * <pre>
  * {@code
  * kafka streams
  * ships with
  * important security features
- * }</pre>
+ * }
+ * </pre>
  * 6) Once you're done with your experiments, you can stop this example via {@code Ctrl-C}.
  * <p>
  * If you also want to shut down the secure ZooKeeper and Kafka instances, please follow the README
