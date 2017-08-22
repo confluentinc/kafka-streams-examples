@@ -65,7 +65,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     schemaRegistry = new RestApp(
         InstanceSpec.getRandomPort(),
         zookeeperConnect(),
-        KAFKA_SCHEMAS_TOPIC, AVRO_COMPATIBILITY_TYPE);
+        KAFKA_SCHEMAS_TOPIC, AVRO_COMPATIBILITY_TYPE, new Properties());
     schemaRegistry.start();
   }
 
