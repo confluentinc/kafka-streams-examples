@@ -11,7 +11,7 @@
     </parent>
 
     <groupId>io.confluent</groupId>
-    <artifactId>streams-examples</artifactId>
+    <artifactId>kafka-streams-examples</artifactId>
     <packaging>jar</packaging>
 
     <organization>

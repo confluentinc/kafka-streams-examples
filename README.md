@@ -303,7 +303,7 @@ Kafka Streams examples via:
 #
 $ mvn clean package
 
-# >>> Creates target/streams-examples-4.0.0-standalone.jar
+# >>> Creates target/kafka-streams-examples-4.0.0-standalone.jar
 
 ```
 
@@ -312,7 +312,7 @@ You can now run the example applications as follows:
 ```shell
 # Run an example application from the standalone jar.
 # Here: `WordCountLambdaExample`
-$ java -cp target/streams-examples-4.0.0-standalone.jar \
+$ java -cp target/kafka-streams-examples-4.0.0-standalone.jar \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
 
@@ -328,7 +328,7 @@ and then execute as follows:
 ```shell
 # Run an example application from the standalone jar.
 # Here: `WordCountLambdaExample`
-$ java -cp target/streams-examples-4.0.0-standalone.jar \
+$ java -cp target/kafka-streams-examples-4.0.0-standalone.jar \
   -Dlog4j.configuration=file:src/main/resources/log4j.properties \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
@@ -392,7 +392,7 @@ More specifically, we will run the following services:
 * Confluent Schema Registry
 
 You can find detailed documentation at
-http://docs.confluent.io/current/cp-docker-images/docs/tutorials/kafka-streams-examples.html.
+http://docs.confluent.io/current/streams/kafka-streams-examples/docs/index.html
 
 
 <a name="help"/>
