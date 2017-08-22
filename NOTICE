@@ -43,6 +43,7 @@ This project includes:
   kafka-clients under Apache License, Version 2.0
   kafka-schema-registry-client under Apache License 2.0
   kafka-streams under Apache License, Version 2.0
+  kafka-streams-examples under Apache License 2.0
   kafka_2.11 under Apache License, Version 2.0
   LZ4 and xxHash under The Apache Software License, Version 2.0
   Maven Artifact under The Apache Software License, Version 2.0
@@ -68,7 +69,6 @@ This project includes:
   SLF4J API Module under MIT License
   SLF4J LOG4J-12 Binding under MIT License
   snappy-java under The Apache Software License, Version 2.0
-  streams-examples under Apache License 2.0
   The Netty Project under Apache License, Version 2.0
   utils under Apache License 2.0
   XZ for Java under Public Domain
