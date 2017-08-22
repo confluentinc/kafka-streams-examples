@@ -1,4 +1,4 @@
-# Kafka Streams examples
+# Kafka Streams Examples [![Build Status](https://travis-ci.org/confluentinc/kafka-streams-examples.svg?branch=3.3.0-post)](https://travis-ci.org/confluentinc/kafka-streams-examples)
 
 This project contains code examples that demonstrate how to implement real-time applications and event-driven
 microservices using the Streams API of [Apache Kafka](http://kafka.apache.org/) aka Kafka Streams.
@@ -316,14 +316,14 @@ $ java -cp target/kafka-streams-examples-4.0.0-standalone.jar \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
 
-The application will try to read from the specified input topic (in the above example it is ``TextLinesTopic``), 
+The application will try to read from the specified input topic (in the above example it is ``TextLinesTopic``),
 execute the processing logic, and then try to write back to the specified output topic (in the above example it is ``WordsWithCountsTopic``).
 In order to observe the expected output stream, you will need to start a console producer to send messages into the input topic
 and start a console consumer to continuously read from the output topic. More details in how to run the examples can be found
 in the [java docs](src/main/java/io/confluent/examples/streams/WordCountLambdaExample.java#L29) of each example code.
 
-If you want to turn on log4j while running your example application, you can edit the [log4j.properties](src/main/resources/log4j.properties) file 
-and then execute as follows:
+If you want to turn on log4j while running your example application, you can edit the
+[log4j.properties](src/main/resources/log4j.properties) file and then execute as follows:
 
 ```shell
 # Run an example application from the standalone jar.
@@ -406,12 +406,12 @@ http://docs.confluent.io/current/streams/kafka-streams-examples/docs/index.html
       [Introducing Kafka Streams, the new stream processing library of Apache Kafka](https://www.youtube.com/watch?v=o7zSLNiTZbA)
       ([slides](http://www.slideshare.net/MichaelNoll4/introducing-kafka-streams-the-new-stream-processing-library-of-apache-kafka-berlin-buzzwords-2016))
 * Running into problems to use the demos and examples in this project?
-    * First, you should check our [FAQ wiki](https://github.com/confluentinc/examples/wiki/FAQ).
-    * If the FAQ doesn't help you, [create a new GitHub issue](https://github.com/confluentinc/examples/issues).
+    * First, you should check our [FAQ wiki](https://github.com/confluentinc/kafka-streams-examples/wiki/FAQ).
+    * If the FAQ doesn't help you, [create a new GitHub issue](https://github.com/confluentinc/kafka-streams-examples/issues).
 * Want to ask a question, report a bug in Kafka or its Kafka Streams API, request a new Kafka feature?
     * For general questions about Apache Kafka and Confluent Platform, please head over to the
       [Confluent mailing list](https://groups.google.com/forum/?pli=1#!forum/confluent-platform)
       or to the [Apache Kafka mailing lists](http://kafka.apache.org/contact).
     * For questions about the demos and examples in this repository:
-        * Please check our [FAQ wiki](https://github.com/confluentinc/examples/wiki/FAQ) for an answer first.
-        * If the FAQ doesn't help you, [create a new GitHub issue](https://github.com/confluentinc/examples/issues).
+        * Please check our [FAQ wiki](https://github.com/confluentinc/kafka-streams-examples/wiki/FAQ) for an answer first.
+        * If the FAQ doesn't help you, [create a new GitHub issue](https://github.com/confluentinc/kafka-streams-examples/issues).
