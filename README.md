@@ -1,4 +1,4 @@
-# Kafka Streams examples
+# Kafka Streams Examples [![Build Status](https://travis-ci.org/confluentinc/kafka-streams-examples.svg?branch=3.3.0-post)](https://travis-ci.org/confluentinc/kafka-streams-examples)
 
 This project contains code examples that demonstrate how to implement real-time applications and event-driven
 microservices using the Streams API of [Apache Kafka](http://kafka.apache.org/) aka Kafka Streams.
@@ -328,14 +328,14 @@ $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
 
-The application will try to read from the specified input topic (in the above example it is ``TextLinesTopic``), 
+The application will try to read from the specified input topic (in the above example it is ``TextLinesTopic``),
 execute the processing logic, and then try to write back to the specified output topic (in the above example it is ``WordsWithCountsTopic``).
 In order to observe the expected output stream, you will need to start a console producer to send messages into the input topic
 and start a console consumer to continuously read from the output topic. More details in how to run the examples can be found
 in the [java docs](src/main/java/io/confluent/examples/streams/WordCountLambdaExample.java#L29) of each example code.
 
-If you want to turn on log4j while running your example application, you can edit the [log4j.properties](src/main/resources/log4j.properties) file 
-and then execute as follows:
+If you want to turn on log4j while running your example application, you can edit the
+[log4j.properties](src/main/resources/log4j.properties) file and then execute as follows:
 
 ```shell
 # Run an example application from the standalone jar.
