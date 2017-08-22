@@ -360,7 +360,7 @@ $ mvn test    # Runs unit and integration tests
 | -------------------------------------------------------------------------------|-------------------|--------------------|---------------------------------------------------------------------------------------|
 | [master](../../../tree/master/)                                   | 1.0.0-SNAPSHOT | 4.0.0-SNAPSHOT     | You must manually build the `trunk` version of Apache Kafka and the `master` version of Confluent Platform.  See instructions above. |
 | [3.3.x](../../../tree/3.3.x/)                                     | 0.11.0.1-SNAPSHOT | 3.3.1-SNAPSHOT  | You must manually build the `0.11.0` version of Apache Kafka and the `3.3.x` version of Confluent Platform.  See instructions above. |
-| [3.3.0-post](../../../tree/3.3.0-post/)                                     | 0.11.0.0(-cp1)    | 3.3.0              | Works out of the box
+| [3.3.0-post](../../../tree/3.3.0-post/)                                     | 0.11.0.0(-cp1)    | 3.3.0              | Works out of the box |
 
 The `master` branch of this repository represents active development, and may require additional steps on your side to
 make it compile.  Check this README as well as [pom.xml](pom.xml) for any such information.
