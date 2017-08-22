@@ -407,30 +407,6 @@
             </plugin>
 
             <plugin>
-                <groupId>com.spotify</groupId>
-                <artifactId>dockerfile-maven-plugin</artifactId>
-                <version>${dockerfile-maven-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>default</id>
-                        <goals>
-                            <goal>build</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${docker.skip}</skip>
-                            <buildArgs>
-                                <ARTIFACT_ID>${project.artifactId}</ARTIFACT_ID>
-                                <STREAMS_VERSION>${project.version}</STREAMS_VERSION>
-                                <DOCKER_REGISTRY>${docker.registry}</DOCKER_REGISTRY>
-                            </buildArgs>
-                            <tag>${docker.tag}</tag>
-                            <repository>${docker.registry}confluentinc/${project.artifactId}</repository>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <configuration>
@@ -438,13 +414,12 @@
                 </configuration>
             </plugin>
         </plugins>
-
     </build>
 
 
     <profiles>
         <profile>
-            <id>licenses</id>
+            <id>packaging</id>
             <activation>
                 <property>
                     <name>env.BUILD_NUMBER</name>
@@ -493,6 +468,30 @@
                                 <version>${licenses.version}</version>
                             </dependency>
                         </dependencies>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>com.spotify</groupId>
+                        <artifactId>dockerfile-maven-plugin</artifactId>
+                        <version>${dockerfile-maven-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>default</id>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${docker.skip}</skip>
+                                    <buildArgs>
+                                        <ARTIFACT_ID>${project.artifactId}</ARTIFACT_ID>
+                                        <STREAMS_VERSION>${project.version}</STREAMS_VERSION>
+                                        <DOCKER_REGISTRY>${docker.registry}</DOCKER_REGISTRY>
+                                    </buildArgs>
+                                    <tag>${docker.tag}</tag>
+                                    <repository>${docker.registry}confluentinc/${project.artifactId}</repository>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
