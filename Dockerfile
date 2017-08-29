@@ -29,15 +29,15 @@ ARG BUILD_NUMBER=-1
 LABEL io.confluent.docker.build.number=$BUILD_NUMBER
 
 WORKDIR /build
-ENV COMPONENT=kafka-streams-examples
+ENV COMPONENT="${ARTIFACT_ID}"
 
 # We run the Kafka Streams demo application as a non-priviledged user.
 ENV STREAMS_USER="streams"
 ENV STREAMS_GROUP=$STREAMS_USER
 
 ENV STREAMS_EXAMPLES_BRANCH="${CONFLUENT_MAJOR_VERSION}.${CONFLUENT_MINOR_VERSION}.x"
-ENV STREAMS_EXAMPLES_FATJAR="kafka-streams-examples-${CONFLUENT_VERSION}${CONFLUENT_MVN_LABEL}-standalone.jar"
-ENV STREAMS_APP_DIRECTORY="/app"
+ENV STREAMS_EXAMPLES_FATJAR="kafka-streams-examples-${STREAMS_VERSION}${CONFLUENT_MVN_LABEL}-standalone.jar"
+ENV STREAMS_APP_DIRECTORY="/usr/share/java/kafka-streams-examples"
 ENV STREAMS_EXAMPLES_FATJAR_DEPLOYED="$STREAMS_APP_DIRECTORY/$STREAMS_EXAMPLES_FATJAR"
 ENV KAFKA_MUSIC_APP_CLASS="io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExample"
 ENV KAFKA_MUSIC_APP_REST_HOST=localhost
@@ -55,6 +55,9 @@ ADD target/${ARTIFACT_ID}-${STREAMS_VERSION}-package/share/doc/* /usr/share/doc/
 COPY include/etc/confluent/docker /etc/confluent/docker
 
 RUN groupadd $STREAMS_GROUP && useradd -r -g $STREAMS_GROUP $STREAMS_USER
+
+RUN mkdir /etc/$COMPONENT \
+    && chown $STREAMS_USER:$STREAMS_GROUP /etc/$COMPONENT
 
 USER $STREAMS_USER
 
