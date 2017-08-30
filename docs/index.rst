@@ -1,7 +1,7 @@
 .. _docker-tutorial_kafka-streams-examples:
 
-Kafka Streams Examples
-----------------------
+Demo Application
+----------------
 
 In this tutorial we will run Confluent's
 :cp-examples:`Kafka Music demo application|src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java`
