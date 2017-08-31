@@ -14,10 +14,10 @@
 package io.confluent.examples.streams;
 
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData.Record;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -70,7 +70,6 @@ public class PageViewRegionExampleDriver {
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, io.confluent.kafka.serializers.KafkaAvroSerializer.class);
     props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
-    final KafkaProducer<String, GenericRecord> producer = new KafkaProducer<>(props);
 
     final GenericRecordBuilder pageViewBuilder =
       new GenericRecordBuilder(loadSchema("pageview.avsc"));
@@ -82,21 +81,20 @@ public class PageViewRegionExampleDriver {
 
     final Random random = new Random();
     pageViewBuilder.set("industry", "eng");
-    for (final String user : users) {
-      userProfileBuilder.set("experience", "some");
-      userProfileBuilder.set("region", regions[random.nextInt(regions.length)]);
-      producer.send(new ProducerRecord<>(userProfilesTopic, user, userProfileBuilder.build()));
-      // For each user generate some page views
-      IntStream.range(0, random.nextInt(10))
-        .mapToObj(value -> {
+    try (final KafkaProducer<String, GenericRecord> producer = new KafkaProducer<>(props)) {
+      for (final String user : users) {
+        userProfileBuilder.set("experience", "some");
+        userProfileBuilder.set("region", regions[random.nextInt(regions.length)]);
+        producer.send(new ProducerRecord<>(userProfilesTopic, user, userProfileBuilder.build()));
+        // For each user generate some page views
+        IntStream.range(0, random.nextInt(10)).forEach(value -> {
           pageViewBuilder.set("user", user);
           pageViewBuilder.set("page", "index.html");
-          return pageViewBuilder.build();
-        }).forEach(
-        record -> producer.send(new ProducerRecord<>(pageViewsTopic, null, record))
-      );
+          final Record record = pageViewBuilder.build();
+          producer.send(new ProducerRecord<>(pageViewsTopic, null, record));
+        });
+      }
     }
-    producer.flush();
   }
 
   private static void consumeOutput(String bootstrapServers) {
@@ -108,13 +106,12 @@ public class PageViewRegionExampleDriver {
     consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG,
       "pageview-region-lambda-example-consumer");
     consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    final KafkaConsumer<String, Long> consumer = new KafkaConsumer<>(consumerProperties);
 
-    consumer.subscribe(Collections.singleton(resultTopic));
-    while (true) {
-      final ConsumerRecords<String, Long> consumerRecords = consumer.poll(Long.MAX_VALUE);
-      for (final ConsumerRecord<String, Long> consumerRecord : consumerRecords) {
-        System.out.println(consumerRecord.key() + ":" + consumerRecord.value());
+    try (final KafkaConsumer<String, Long> consumer = new KafkaConsumer<>(consumerProperties)) {
+      consumer.subscribe(Collections.singleton(resultTopic));
+      while (true) {
+        final ConsumerRecords<String, Long> consumerRecords = consumer.poll(Long.MAX_VALUE);
+        consumerRecords.forEach(record -> System.out.println(record.key() + ":" + record.value()));
       }
     }
   }
