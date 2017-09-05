@@ -402,9 +402,8 @@ http://docs.confluent.io/current/streams/kafka-streams-examples/docs/index.html
 * Looking for documentation on Apache Kafka's Streams API?
     * We recommend to read the [Kafka Streams chapter](http://docs.confluent.io/current/streams/) in the
       [Confluent Platform documentation](http://docs.confluent.io/current/).
-    * Watch our video talk
-      [Introducing Kafka Streams, the new stream processing library of Apache Kafka](https://www.youtube.com/watch?v=o7zSLNiTZbA)
-      ([slides](http://www.slideshare.net/MichaelNoll4/introducing-kafka-streams-the-new-stream-processing-library-of-apache-kafka-berlin-buzzwords-2016))
+    * Watch our talk
+      [Rethinking Stream Processing with Apache Kafka](https://www.youtube.com/watch?v=ACwnrnVJXuE)
 * Running into problems to use the demos and examples in this project?
     * First, you should check our [FAQ wiki](https://github.com/confluentinc/kafka-streams-examples/wiki/FAQ).
     * If the FAQ doesn't help you, [create a new GitHub issue](https://github.com/confluentinc/kafka-streams-examples/issues).
