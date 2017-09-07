@@ -74,7 +74,7 @@ import java.util.Properties;
  * <pre>
  * {@code
  * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar \
- *      io.confluent.examples.streams.interactivequeries.InteractiveQueriesExample 7070
+ *      io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExample 7070
  * }
  * </pre>
  *
@@ -85,7 +85,7 @@ import java.util.Properties;
  * <pre>
  * {@code
  * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar \
- *      io.confluent.examples.streams.interactivequeries.InteractiveQueriesExample 7071
+ *      io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExample 7071
  * }
  * </pre>
  *
