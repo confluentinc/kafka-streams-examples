@@ -14,6 +14,11 @@
 
 package io.confluent.examples.streams;
 
+import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import io.confluent.kafka.serializers.KafkaAvroDeserializer;
+import io.confluent.kafka.serializers.KafkaAvroSerializer;
+import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
@@ -24,9 +29,9 @@ import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -34,12 +39,6 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-
-import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
-import io.confluent.kafka.serializers.KafkaAvroDeserializer;
-import io.confluent.kafka.serializers.KafkaAvroSerializer;
-import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
 
 import static org.junit.Assert.assertEquals;
 
@@ -75,7 +74,7 @@ public class GenericAvroIntegrationTest {
     //
     // Step 1: Configure and start the processor topology.
     //
-    KStreamBuilder builder = new KStreamBuilder();
+    StreamsBuilder builder = new StreamsBuilder();
 
     Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "generic-avro-integration-test");
@@ -107,7 +106,7 @@ public class GenericAvroIntegrationTest {
     KStream<String, GenericRecord> stream = builder.stream(inputTopic);
     stream.to(stringSerde, genericAvroSerde, outputTopic);
 
-    KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();
 
     //

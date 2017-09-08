@@ -21,9 +21,9 @@ import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.kstream.{KStream, KStreamBuilder, Transformer, TransformerSupplier}
+import org.apache.kafka.streams.kstream.{KStream, Transformer, TransformerSupplier}
 import org.apache.kafka.streams.processor.ProcessorContext
-import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
+import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsBuilder, StreamsConfig}
 import org.apache.kafka.test.TestUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.junit._
@@ -93,7 +93,7 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
       p
     }
 
-    val builder: KStreamBuilder = new KStreamBuilder()
+    val builder: StreamsBuilder = new StreamsBuilder()
 
     val cmsStoreName = "cms-store"
     val cmsStoreSupplier = {
@@ -154,7 +154,7 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
     // Write the results back to Kafka.
     approximateWordCounts.to(Serdes.String(), longSerde, outputTopic)
 
-    val streams: KafkaStreams = new KafkaStreams(builder, streamsConfiguration)
+    val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
     streams.start()
 
     //

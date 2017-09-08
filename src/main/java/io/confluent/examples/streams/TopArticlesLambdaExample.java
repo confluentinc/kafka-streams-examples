@@ -15,6 +15,10 @@
  */
 package io.confluent.examples.streams;
 
+import io.confluent.examples.streams.utils.PriorityQueueSerde;
+import io.confluent.examples.streams.utils.WindowedSerde;
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
@@ -23,9 +27,9 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.kstream.Windowed;
@@ -37,11 +41,6 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Properties;
-
-import io.confluent.examples.streams.utils.PriorityQueueSerde;
-import io.confluent.examples.streams.utils.WindowedSerde;
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
-import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
 
 /**
  *
@@ -165,7 +164,7 @@ public class TopArticlesLambdaExample {
 
     final Serde<Windowed<String>> windowedStringSerde = new WindowedSerde<>(stringSerde);
 
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
     final KStream<byte[], GenericRecord> views = builder.stream(PAGE_VIEWS);
 
@@ -247,7 +246,7 @@ public class TopArticlesLambdaExample {
       });
 
     topViewCounts.to(windowedStringSerde, stringSerde, TOP_NEWS_PER_INDUSTRY_TOPIC);
-    return new KafkaStreams(builder, streamsConfiguration);
+    return new KafkaStreams(builder.build(), streamsConfiguration);
   }
 
 }

@@ -14,6 +14,7 @@
 
 package io.confluent.examples.streams;
 
+import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.LongSerializer;
@@ -23,8 +24,8 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
@@ -37,8 +38,6 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-
-import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -116,7 +115,7 @@ public class TableToTableJoinIntegrationTest {
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
-    KStreamBuilder builder = new KStreamBuilder();
+    StreamsBuilder builder = new StreamsBuilder();
     KTable<String, String> userRegions = builder.table(stringSerde, stringSerde, userRegionTopic, "user-region-store");
     KTable<String, Long> userLastLogins = builder.table(stringSerde, longSerde, userLastLoginTopic, "user-last-login-store");
 
@@ -140,7 +139,7 @@ public class TableToTableJoinIntegrationTest {
     //
     regionAndLastLogin.through(stringSerde, stringSerde, outputTopic, "joined-store");
 
-    KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();
 
     //

@@ -17,9 +17,9 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 
 import java.util.Properties;
 
@@ -110,7 +110,7 @@ public class MapFunctionLambdaExample {
     final Serde<byte[]> byteArraySerde = Serdes.ByteArray();
 
     // In the subsequent lines we define the processing topology of the Streams application.
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
     // Read the input Kafka topic into a KStream instance.
     final KStream<byte[], String> textLines = builder.stream(byteArraySerde, stringSerde, "TextLinesTopic");
@@ -140,7 +140,7 @@ public class MapFunctionLambdaExample {
     // (cf. streaming configuration) do not match the type of this particular KStream instance.
     originalAndUppercased.to(stringSerde, stringSerde, "OriginalAndUppercasedTopic");
 
-    final KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     // Always (and unconditionally) clean local state prior to starting the processing topology.
     // We opt for this unconditional call here because this will make it easier for you to play around with the example
     // when resetting the application for doing a re-run (via the Application Reset Tool,

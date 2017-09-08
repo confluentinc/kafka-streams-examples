@@ -17,8 +17,8 @@ import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 
 import java.util.Properties;
 
@@ -168,10 +168,10 @@ public class SecureKafkaStreamsExample {
     streamsConfiguration.put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, "test1234");
     streamsConfiguration.put(SslConfigs.SSL_KEY_PASSWORD_CONFIG, "test1234");
 
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
     // Write the input data as-is to the output topic.
     builder.stream("secure-input").to("secure-output");
-    final KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     // Always (and unconditionally) clean local state prior to starting the processing topology.
     // We opt for this unconditional call here because this will make it easier for you to play around with the example
     // when resetting the application for doing a re-run (via the Application Reset Tool,

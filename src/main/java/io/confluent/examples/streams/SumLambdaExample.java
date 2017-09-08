@@ -16,9 +16,9 @@ package io.confluent.examples.streams;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
 
 import java.util.Properties;
@@ -101,7 +101,7 @@ public class SumLambdaExample {
     // in order to keep this example interactive.
     streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 10 * 1000);
 
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
     // We assume the input topic contains records where the values are Integers.
     // We don't really care about the keys of the input records;  for simplicity, we assume them
     // to be Integers, too, because we will re-key the stream later on, and the new key will be
@@ -122,7 +122,7 @@ public class SumLambdaExample {
       .reduce((v1, v2) -> v1 + v2, "sum");
     sumOfOddNumbers.to(SUM_OF_ODD_NUMBERS_TOPIC);
 
-    final KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     // Always (and unconditionally) clean local state prior to starting the processing topology.
     // We opt for this unconditional call here because this will make it easier for you to play around with the example
     // when resetting the application for doing a re-run (via the Application Reset Tool,

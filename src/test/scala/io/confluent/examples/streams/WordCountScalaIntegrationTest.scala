@@ -21,8 +21,8 @@ import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.kstream.{KStream, KStreamBuilder, KTable}
-import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
+import org.apache.kafka.streams.kstream.{KStream, KTable}
+import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsBuilder, StreamsConfig}
 import org.apache.kafka.test.TestUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.junit._
@@ -99,7 +99,7 @@ class WordCountScalaIntegrationTest extends AssertionsForJUnit {
     val stringSerde: Serde[String] = Serdes.String()
     val longSerde: Serde[JLong] = Serdes.Long()
 
-    val builder: KStreamBuilder = new KStreamBuilder()
+    val builder: StreamsBuilder = new StreamsBuilder()
 
     // Construct a `KStream` from the input topic, where message values represent lines of text (for
     // the sake of this example, we ignore whatever may be stored in the message keys).
@@ -117,7 +117,7 @@ class WordCountScalaIntegrationTest extends AssertionsForJUnit {
 
     wordCounts.to(stringSerde, longSerde, outputTopic)
 
-    val streams: KafkaStreams = new KafkaStreams(builder, streamsConfiguration)
+    val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
     streams.start()
 
     //

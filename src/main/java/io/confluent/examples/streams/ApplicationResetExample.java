@@ -1,12 +1,11 @@
 package io.confluent.examples.streams;
 
-
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 
 import java.util.Properties;
 
@@ -135,14 +134,14 @@ public class ApplicationResetExample {
 
   public static KafkaStreams run(final String[] args, final Properties streamsConfiguration) {
     // Define the processing topology
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
     final KStream<String, String> input = builder.stream("my-input-topic");
     input.selectKey((key, value) -> value.split(" ")[0])
       .groupByKey()
       .count("count")
       .to(Serdes.String(), Serdes.Long(), "my-output-topic");
 
-    final KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
 
     // Delete the application's local state on reset
     if (args.length > 0 && args[0].equals("--reset")) {

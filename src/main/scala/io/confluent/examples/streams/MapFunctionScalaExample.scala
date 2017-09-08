@@ -19,7 +19,7 @@ import java.util.Properties
 
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams._
-import org.apache.kafka.streams.kstream.{KStream, KStreamBuilder}
+import org.apache.kafka.streams.kstream.KStream
 
 /**
   * Demonstrates how to perform simple, state-less transformations via map functions.
@@ -93,7 +93,7 @@ object MapFunctionScalaExample {
 
   def main(args: Array[String]) {
     val bootstrapServers = if (args.length > 0) args(0) else "localhost:9092"
-    val builder = new KStreamBuilder
+    val builder = new StreamsBuilder
 
     val streamingConfig = {
       val settings = new Properties
@@ -146,7 +146,7 @@ object MapFunctionScalaExample {
     // (cf. streaming configuration) do not match the type of this particular KStream instance.
     originalAndUppercased.to(stringSerde, stringSerde, "OriginalAndUppercasedTopic")
 
-    val stream: KafkaStreams = new KafkaStreams(builder, streamingConfig)
+    val stream: KafkaStreams = new KafkaStreams(builder.build(), streamingConfig)
     stream.start()
   }
 

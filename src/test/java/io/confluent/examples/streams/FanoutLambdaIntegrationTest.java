@@ -11,9 +11,9 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package io.confluent.examples.streams;
 
+import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
@@ -22,9 +22,9 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -33,8 +33,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
-
-import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -84,7 +82,7 @@ public class FanoutLambdaIntegrationTest {
     //
     // Step 1: Configure and start the processor topology.
     //
-    KStreamBuilder builder = new KStreamBuilder();
+    StreamsBuilder builder = new StreamsBuilder();
 
     Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "fanout-lambda-integration-test");
@@ -98,7 +96,7 @@ public class FanoutLambdaIntegrationTest {
     stream2.to(outputTopicB);
     stream3.to(outputTopicC);
 
-    KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();
 
     //

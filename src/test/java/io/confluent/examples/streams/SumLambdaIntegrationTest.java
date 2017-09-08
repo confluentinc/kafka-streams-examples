@@ -14,15 +14,16 @@
 
 package io.confluent.examples.streams;
 
+import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.apache.kafka.common.serialization.IntegerSerializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.test.TestUtils;
 import org.junit.BeforeClass;
@@ -30,10 +31,9 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-
-import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -60,12 +60,12 @@ public class SumLambdaIntegrationTest {
   @Test
   public void shouldSumEvenNumbers() throws Exception {
     List<Integer> inputValues = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-    List<Integer> expectedValues = Arrays.asList(30);
+    List<Integer> expectedValues = Collections.singletonList(30);
 
     //
     // Step 1: Configure and start the processor topology.
     //
-    KStreamBuilder builder = new KStreamBuilder();
+    StreamsBuilder builder = new StreamsBuilder();
 
     Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "sum-lambda-integration-test");
@@ -88,7 +88,7 @@ public class SumLambdaIntegrationTest {
         .reduce((v1, v2) -> v1 + v2, "sum");
     sumOfOddNumbers.to(outputTopic);
 
-    KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();
 
     //

@@ -15,23 +15,22 @@
  */
 package io.confluent.examples.streams;
 
+import io.confluent.examples.streams.avro.WikiFeed;
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Predicate;
 
 import java.util.Properties;
-
-import io.confluent.examples.streams.avro.WikiFeed;
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 
 
 /**
@@ -132,7 +131,7 @@ public class WikipediaFeedAvroExample {
     final Serde<String> stringSerde = Serdes.String();
     final Serde<Long> longSerde = Serdes.Long();
 
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
     // read the source stream
     final KStream<String, WikiFeed> feeds = builder.stream(WIKIPEDIA_FEED);
@@ -160,7 +159,7 @@ public class WikipediaFeedAvroExample {
     // write to the result topic, need to override serdes
     aggregated.to(stringSerde, longSerde, WIKIPEDIA_STATS);
 
-    return new KafkaStreams(builder, streamsConfiguration);
+    return new KafkaStreams(builder.build(), streamsConfiguration);
   }
 
 }

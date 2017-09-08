@@ -13,24 +13,23 @@
  */
 package io.confluent.examples.streams;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.GlobalKTable;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
-
-import java.util.Collections;
-import java.util.Map;
-import java.util.Properties;
-
 import io.confluent.examples.streams.avro.Customer;
 import io.confluent.examples.streams.avro.EnrichedOrder;
 import io.confluent.examples.streams.avro.Order;
 import io.confluent.examples.streams.avro.Product;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.kstream.GlobalKTable;
+import org.apache.kafka.streams.kstream.KStream;
+
+import java.util.Collections;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * Demonstrates how to perform joins between  KStreams and GlobalKTables, i.e. joins that
@@ -113,7 +112,7 @@ public class GlobalKTablesExample {
     // start processing
     streams.start();
     // Add shutdown hook to respond to SIGTERM and gracefully close Kafka Streams
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> streams.close()));
+    Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
   }
 
   public static KafkaStreams createStreams(final String bootstrapServers,
@@ -148,7 +147,7 @@ public class GlobalKTablesExample {
     final SpecificAvroSerde<EnrichedOrder> enrichedOrdersSerde = new SpecificAvroSerde<>();
     enrichedOrdersSerde.configure(serdeConfig, false);
 
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
     // Get the stream of orders
     final KStream<Long, Order> ordersStream = builder.stream(Serdes.Long(), orderSerde, ORDER_TOPIC);
@@ -185,7 +184,7 @@ public class GlobalKTablesExample {
     // write the enriched order to the enriched-order topic
     enrichedOrdersStream.to(Serdes.Long(), enrichedOrdersSerde, ENRICHED_ORDER_TOPIC);
 
-    return new KafkaStreams(builder, new StreamsConfig(streamsConfiguration));
+    return new KafkaStreams(builder.build(), new StreamsConfig(streamsConfiguration));
   }
 
 
