@@ -16,9 +16,9 @@ package io.confluent.examples.streams;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
 
 import java.util.Arrays;
@@ -132,7 +132,7 @@ public class WordCountLambdaExample {
     final Serde<Long> longSerde = Serdes.Long();
 
     // In the subsequent lines we define the processing topology of the Streams application.
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
     // Construct a `KStream` from the input topic "TextLinesTopic", where message values
     // represent lines of text (for the sake of this example, we ignore whatever may be stored
@@ -167,7 +167,7 @@ public class WordCountLambdaExample {
     // Now that we have finished the definition of the processing topology we can actually run
     // it via `start()`.  The Streams application as a whole can be launched just like any
     // normal Java application that has a `main()` method.
-    final KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     // Always (and unconditionally) clean local state prior to starting the processing topology.
     // We opt for this unconditional call here because this will make it easier for you to play around with the example
     // when resetting the application for doing a re-run (via the Application Reset Tool,

@@ -16,6 +16,11 @@
  */
 package io.confluent.examples.streams.interactivequeries.kafkamusic;
 
+import io.confluent.examples.streams.avro.PlayEvent;
+import io.confluent.examples.streams.avro.Song;
+import io.confluent.examples.streams.avro.SongPlayCount;
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
@@ -23,13 +28,11 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.state.HostInfo;
-import org.apache.kafka.streams.state.RocksDBConfigSetter;
-import org.rocksdb.Options;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -42,12 +45,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeSet;
-
-import io.confluent.examples.streams.avro.PlayEvent;
-import io.confluent.examples.streams.avro.Song;
-import io.confluent.examples.streams.avro.SongPlayCount;
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 
 /**
  * Demonstrates how to locate and query state stores (Interactive Queries).
@@ -178,19 +175,6 @@ public class KafkaMusicExample {
   private static final String DEFAULT_BOOTSTRAP_SERVERS = "localhost:9092";
   private static final String DEFAULT_SCHEMA_REGISTRY_URL = "http://localhost:8081";
 
-  public static class CustomRocksDBConfig implements RocksDBConfigSetter {
-
-    @Override
-    public void setConfig(final String storeName, final Options options, final Map<String, Object> configs) {
-      // Workaround: We must ensure that the parallelism is set to >= 2.  There seems to be a known
-      // issue with RocksDB where explicitly setting the parallelism to 1 causes issues (even though
-      // 1 seems to be RocksDB's default for this configuration).
-      int compactionParallelism = Math.max(Runtime.getRuntime().availableProcessors(), 2);
-      // Set number of compaction threads (but not flush threads).
-      options.setIncreaseParallelism(compactionParallelism);
-    }
-  }
-
   public static void main(String[] args) throws Exception {
     if (args.length == 0 || args.length > 4) {
       throw new IllegalArgumentException("usage: ... <portForRestEndpoint> " +
@@ -304,7 +288,7 @@ public class KafkaMusicExample {
     final SpecificAvroSerde<SongPlayCount> songPlayCountSerde = new SpecificAvroSerde<>();
     songPlayCountSerde.configure(serdeConfig, false);
 
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
     // get a stream of play events
     final KStream<String, PlayEvent> playEvents = builder.stream(Serdes.String(),
@@ -381,7 +365,7 @@ public class KafkaMusicExample {
             TOP_FIVE_SONGS_STORE
         );
 
-    return new KafkaStreams(builder, streamsConfiguration);
+    return new KafkaStreams(builder.build(), streamsConfiguration);
 
   }
 

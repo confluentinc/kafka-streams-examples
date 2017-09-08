@@ -20,8 +20,8 @@ import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.kstream.{KStream, KStreamBuilder, KTable}
-import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
+import org.apache.kafka.streams.kstream.{KStream, KTable}
+import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsBuilder, StreamsConfig}
 import org.apache.kafka.test.TestUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.junit._
@@ -119,7 +119,7 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
       p
     }
 
-    val builder: KStreamBuilder = new KStreamBuilder()
+    val builder: StreamsBuilder = new StreamsBuilder()
 
     // This KStream contains information such as "alice" -> 13L.
     //
@@ -158,7 +158,6 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
       .map((_: String, regionWithClicks: (String, Long)) => new KeyValue[String, Long](
       regionWithClicks._1, regionWithClicks._2))
 
-    import FunctionImplicits.BinaryFunctionToReducer
     val clicksPerRegion: KTable[String, Long] = clicksByRegion
         // Compute the total per region by summing the individual click counts per region.
         .groupByKey(stringSerde, longSerde)
@@ -167,7 +166,7 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
     // Write the (continuously updating) results to the output topic.
     clicksPerRegion.to(stringSerde, longSerde, outputTopic)
 
-    val streams: KafkaStreams = new KafkaStreams(builder, streamsConfiguration)
+    val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
     streams.start()
 
     //

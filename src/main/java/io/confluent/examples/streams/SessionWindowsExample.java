@@ -16,22 +16,21 @@
  */
 package io.confluent.examples.streams;
 
+import io.confluent.examples.streams.avro.PlayEvent;
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.SessionWindows;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-
-import io.confluent.examples.streams.avro.PlayEvent;
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 
 /**
  * Demonstrates counting user activity (play-events) into Session Windows
@@ -153,7 +152,7 @@ public class SessionWindowsExample {
         AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
     playEventSerde.configure(serdeConfig, false);
 
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
     builder.stream(Serdes.String(), playEventSerde, PLAY_EVENTS)
         // group by key so we can count by session windows
         .groupByKey(Serdes.String(), playEventSerde)
@@ -166,7 +165,7 @@ public class SessionWindowsExample {
         // write to play-events-per-session topic
         .to(Serdes.String(), Serdes.Long(), PLAY_EVENTS_PER_SESSION);
 
-    return new KafkaStreams(builder, new StreamsConfig(config));
+    return new KafkaStreams(builder.build(), new StreamsConfig(config));
   }
 
 }

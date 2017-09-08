@@ -16,10 +16,10 @@ package io.confluent.examples.streams.interactivequeries;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KGroupedStream;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.TimeWindows;
 
 import java.io.File;
@@ -198,7 +198,7 @@ public class WordCountInteractiveQueriesExample {
 
   static KafkaStreams createStreams(final Properties streamsConfiguration) {
     final Serde<String> stringSerde = Serdes.String();
-    KStreamBuilder builder = new KStreamBuilder();
+    StreamsBuilder builder = new StreamsBuilder();
     KStream<String, String>
         textLines = builder.stream(stringSerde, stringSerde, TEXT_LINES_TOPIC);
 
@@ -213,7 +213,7 @@ public class WordCountInteractiveQueriesExample {
     // 1 minute
     groupedByWord.count(TimeWindows.of(60000), "windowed-word-count");
 
-    return new KafkaStreams(builder, streamsConfiguration);
+    return new KafkaStreams(builder.build(), streamsConfiguration);
   }
 
 }
