@@ -112,8 +112,8 @@ public class PageViewRegionExampleDriver {
       consumer.subscribe(Collections.singleton(resultTopic));
       while (true) {
         final ConsumerRecords<String, Long> consumerRecords = consumer.poll(Long.MAX_VALUE);
-        for (ConsumerRecord<String, Long> record : consumerRecords) {
-          System.out.println(record.key() + ":" + record.value());
+        for (final ConsumerRecord<String, Long> consumerRecord : consumerRecords) {
+          System.out.println(consumerRecord.key() + ":" + consumerRecord.value());
         }
       }
     }
