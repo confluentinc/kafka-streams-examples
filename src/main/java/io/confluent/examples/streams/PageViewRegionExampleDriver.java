@@ -18,6 +18,7 @@ import org.apache.avro.generic.GenericData.Record;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -87,12 +88,12 @@ public class PageViewRegionExampleDriver {
         userProfileBuilder.set("region", regions[random.nextInt(regions.length)]);
         producer.send(new ProducerRecord<>(userProfilesTopic, user, userProfileBuilder.build()));
         // For each user generate some page views
-        IntStream.range(0, random.nextInt(10)).forEach(value -> {
+        for (int i=0; i<random.nextInt(10); i++) {
           pageViewBuilder.set("user", user);
           pageViewBuilder.set("page", "index.html");
           final Record record = pageViewBuilder.build();
           producer.send(new ProducerRecord<>(pageViewsTopic, null, record));
-        });
+        }
       }
     }
   }
@@ -111,7 +112,9 @@ public class PageViewRegionExampleDriver {
       consumer.subscribe(Collections.singleton(resultTopic));
       while (true) {
         final ConsumerRecords<String, Long> consumerRecords = consumer.poll(Long.MAX_VALUE);
-        consumerRecords.forEach(record -> System.out.println(record.key() + ":" + record.value()));
+        for (ConsumerRecord<String, Long> record : consumerRecords) {
+          System.out.println(record.key() + ":" + record.value());
+        }
       }
     }
   }

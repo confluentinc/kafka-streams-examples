@@ -1,6 +1,6 @@
 {"namespace": "io.confluent.examples.streams.avro",
  "type": "record",
- "name": "PageViewRegion",
+ "name": "PageViewByRegion",
  "fields": [
      {"name": "user", "type": "string"},
      {"name": "page", "type": "string"},
