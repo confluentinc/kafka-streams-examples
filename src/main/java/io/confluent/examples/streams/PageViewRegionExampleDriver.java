@@ -14,7 +14,7 @@
 package io.confluent.examples.streams;
 
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericData.Record;
+import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -33,7 +33,6 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.Random;
-import java.util.stream.IntStream;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 
@@ -90,7 +89,7 @@ public class PageViewRegionExampleDriver {
         for (int i=0; i<random.nextInt(10); i++) {
           pageViewBuilder.set("user", user);
           pageViewBuilder.set("page", "index.html");
-          final Record record = pageViewBuilder.build();
+          final GenericData.Record record = pageViewBuilder.build();
           producer.send(new ProducerRecord<>(pageViewsTopic, null, record));
         }
       }
