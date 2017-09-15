@@ -59,8 +59,6 @@ import java.util.Properties;
  * {@code
  * $ bin/kafka-topics --create --topic PageViews \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * $ bin/kafka-topics --create --topic PageViewsByUser \
- *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * $ bin/kafka-topics --create --topic UserProfiles \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * $ bin/kafka-topics --create --topic PageViewsByRegion \
