@@ -15,9 +15,12 @@
  */
 package io.confluent.examples.streams.algebird
 
+import java.util
+
 import com.twitter.algebird.CMSHasher
 import org.apache.kafka.common.serialization.Serde
 import org.apache.kafka.streams.processor.StateStoreSupplier
+import org.apache.kafka.streams.state.StoreBuilder
 
 /**
   * A factory for Kafka Streams to instantiate a [[CMSStore]].
@@ -40,19 +43,26 @@ import org.apache.kafka.streams.processor.StateStoreSupplier
   * }}}
   */
 class CMSStoreSupplier[T: CMSHasher](val name: String,
-                                     val serde: Serde[T],
-                                     val loggingEnabled: Boolean,
-                                     val logConfig: java.util.Map[String, String])
-    extends StateStoreSupplier[CMSStore[T]] {
+                                     val serde: Serde[T])
+    extends StoreBuilder[CMSStore[T]] {
 
-  def this(name: String, serde: Serde[T]) {
-    this(name, serde, true, new java.util.HashMap[String, String])
+  var loggingEnabled = false
+  var logConfig : util.Map[String, String] = new util.HashMap[String, String]()
+
+
+  override def build(): CMSStore[T] = new CMSStore[T](name, loggingEnabled)
+
+  override def withCachingEnabled() = throw new UnsupportedOperationException("caching not supported")
+
+  override def withLoggingEnabled(config: util.Map[String, String]): CMSStoreSupplier[T] = {
+    loggingEnabled = true
+    logConfig.putAll(config)
+    this
   }
 
-  def this(name: String, serde: Serde[T], loggingEnabled: Boolean) {
-    this(name, serde, loggingEnabled, new java.util.HashMap[String, String])
+  override def withLoggingDisabled(): CMSStoreSupplier[T] = {
+    loggingEnabled = false
+    logConfig.clear()
+    this
   }
-
-  override def get(): CMSStore[T] = new CMSStore[T](name)
-
 }

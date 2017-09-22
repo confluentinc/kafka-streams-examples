@@ -25,7 +25,7 @@ import org.apache.avro.specific.SpecificRecord
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.kstream.KStream
+import org.apache.kafka.streams.kstream.{KStream, Produced}
 import org.apache.kafka.streams.{KafkaStreams, StreamsBuilder, StreamsConfig}
 import org.assertj.core.api.Assertions.assertThat
 import org.junit._
@@ -91,7 +91,7 @@ class SpecificAvroScalaIntegrationTest extends AssertionsForJUnit {
     specificAvroSerde.configure(Collections.singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, cluster.schemaRegistryUrl), isKeySerde)
 
     val stream: KStream[String, WikiFeed] = builder.stream(inputTopic)
-    stream.to(stringSerde, specificAvroSerde, outputTopic)
+    stream.to(outputTopic, Produced.`with`(stringSerde, specificAvroSerde))
     val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
     streams.start()
 

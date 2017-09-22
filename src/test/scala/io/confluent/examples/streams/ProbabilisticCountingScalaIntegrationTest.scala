@@ -23,7 +23,7 @@ import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.kstream.{KStream, Transformer, TransformerSupplier}
+import org.apache.kafka.streams.kstream.{KStream, Produced, Transformer, TransformerSupplier}
 import org.apache.kafka.streams.processor.ProcessorContext
 import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsBuilder, StreamsConfig}
 import org.apache.kafka.test.TestUtils
@@ -108,7 +108,8 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
         cfg.put("segment.bytes", segmentSizeBytes)
         cfg
       }
-      new CMSStoreSupplier[String](cmsStoreName, Serdes.String(), changeloggingEnabled, changelogConfig)
+      new CMSStoreSupplier[String](cmsStoreName, Serdes.String())
+        .withLoggingEnabled(changelogConfig)
     }
     builder.addStateStore(cmsStoreSupplier)
 
@@ -154,7 +155,7 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
     // Trick to re-use Kafka's serde for java.lang.Long for scala.Long.
     val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
     // Write the results back to Kafka.
-    approximateWordCounts.to(Serdes.String(), longSerde, outputTopic)
+    approximateWordCounts.to(outputTopic, Produced.`with`(Serdes.String(), longSerde))
 
     val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
     streams.start()

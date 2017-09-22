@@ -23,11 +23,16 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.utils.Bytes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.GlobalKTable;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.state.KeyValueStore;
 
 import java.util.Collections;
 import java.util.Map;
@@ -152,19 +157,24 @@ public class GlobalKTablesExample {
     final StreamsBuilder builder = new StreamsBuilder();
 
     // Get the stream of orders
-    final KStream<Long, Order> ordersStream = builder.stream(Serdes.Long(), orderSerde, ORDER_TOPIC);
+    final KStream<Long, Order> ordersStream = builder.stream(ORDER_TOPIC, Consumed.with(Serdes.Long(), orderSerde));
 
     // Create a global table for customers. The data from this global table
     // will be fully replicated on each instance of this application.
     final GlobalKTable<Long, Customer>
         customers =
-        builder.globalTable(Serdes.Long(), customerSerde, null, CUSTOMER_TOPIC, CUSTOMER_STORE);
+        builder.globalTable(CUSTOMER_TOPIC, Materialized.<Long, Customer, KeyValueStore<Bytes, byte[]>>as(CUSTOMER_STORE)
+                .withKeySerde(Serdes.Long())
+                .withValueSerde(customerSerde));
+
 
     // Create a global table for products. The data from this global table
     // will be fully replicated on each instance of this application.
     final GlobalKTable<Long, Product>
         products =
-        builder.globalTable(Serdes.Long(), productSerde, null, PRODUCT_TOPIC, PRODUCT_STORE);
+        builder.globalTable(PRODUCT_TOPIC, Materialized.<Long, Product, KeyValueStore<Bytes, byte[]>>as(PRODUCT_STORE)
+                .withKeySerde(Serdes.Long())
+                .withValueSerde(productSerde));
 
     // Join the orders stream to the customer global table. As this is global table
     // we can use a non-key based join with out needing to repartition the input stream
@@ -184,7 +194,7 @@ public class GlobalKTablesExample {
                                                                             customerOrder.order));
 
     // write the enriched order to the enriched-order topic
-    enrichedOrdersStream.to(Serdes.Long(), enrichedOrdersSerde, ENRICHED_ORDER_TOPIC);
+    enrichedOrdersStream.to(ENRICHED_ORDER_TOPIC, Produced.with(Serdes.Long(), enrichedOrdersSerde));
 
     return new KafkaStreams(builder.build(), new StreamsConfig(streamsConfiguration));
   }

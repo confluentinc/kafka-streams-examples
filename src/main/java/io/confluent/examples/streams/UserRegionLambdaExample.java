@@ -23,6 +23,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Produced;
 
 import java.util.Properties;
 
@@ -121,14 +122,14 @@ public class UserRegionLambdaExample {
 
     final StreamsBuilder builder = new StreamsBuilder();
 
-    final KTable<String, String> userRegions = builder.table("UserRegions", "UserRegionsStore");
+    final KTable<String, String> userRegions = builder.table("UserRegions");
 
     // Aggregate the user counts of by region
     final KTable<String, Long> regionCounts = userRegions
       // Count by region;
       // no need to specify explicit serdes because the resulting key and value types match our default serde settings
       .groupBy((userId, region) -> KeyValue.pair(region, region))
-      .count("CountsByRegion")
+      .count()
       // discard any regions with only 1 user
       .filter((regionName, count) -> count >= 2);
 
@@ -147,7 +148,7 @@ public class UserRegionLambdaExample {
       .filter((regionName, count) -> count != null);
 
     // write to the result topic, we need to override the value serializer to for type long
-    regionCountsForConsole.to(stringSerde, longSerde, "LargeRegions");
+    regionCountsForConsole.to("LargeRegions", Produced.with(stringSerde, longSerde));
 
     final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     // Always (and unconditionally) clean local state prior to starting the processing topology.

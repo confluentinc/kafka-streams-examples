@@ -23,11 +23,14 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
@@ -117,28 +120,15 @@ public class TableToTableJoinIntegrationTest {
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
     StreamsBuilder builder = new StreamsBuilder();
-    KTable<String, String> userRegions = builder.table(stringSerde, stringSerde, userRegionTopic, "user-region-store");
-    KTable<String, Long> userLastLogins = builder.table(stringSerde, longSerde, userLastLoginTopic, "user-last-login-store");
+    KTable<String, String> userRegions = builder.table(userRegionTopic);
+    KTable<String, Long> userLastLogins = builder.table(userLastLoginTopic, Consumed.with(stringSerde, longSerde));
 
-    KTable<String, String> regionAndLastLogin = userRegions.join(userLastLogins,
-        (regionValue, lastLoginValue) -> regionValue + "/" + lastLoginValue);
+    userRegions.join(userLastLogins,
+                     (regionValue, lastLoginValue) -> regionValue + "/" + lastLoginValue,
+                     Materialized.as("joined-store"))
+            .toStream()
+            .to(outputTopic, Produced.with(Serdes.String(), Serdes.String()));
 
-    // Write the results to the output topic.
-    //
-    // Note (0.10.2 and earlier versions):
-    // We are using `through()` instead of `to()` here because, for didactic reasons, we also want
-    // to create (and validate) a state store for the joined table `regionAndLastLogin` by forcing
-    // its materialization.  This is a required for versions 0.10.2 and earlier, where join results
-    // do not have a state store and there is not (yet) a direct API method to force materialization
-    // in a different way.
-    //
-    // If you don't need to create a state store for the joined table (e.g. because you do not need
-    // to interactively query it), then you should use `to()` instead of `through()` for better
-    // performance:
-    //
-    //    regionAndLastLogin.to(stringSerde, stringSerde, outputTopic);
-    //
-    regionAndLastLogin.through(stringSerde, stringSerde, outputTopic, "joined-store");
 
     KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();

@@ -44,7 +44,7 @@ class CMSStoreChangeLogger[K, V](val storeName: String,
     if (collector != null) {
       val keySerializer = serialization.keySerializer
       val valueSerializer = serialization.valueSerializer
-      collector.send(this.topic, key, value, this.partition, context.timestamp, keySerializer, valueSerializer)
+      collector.send(this.topic, key, value, this.partition, null, keySerializer, valueSerializer)
     }
   }
 

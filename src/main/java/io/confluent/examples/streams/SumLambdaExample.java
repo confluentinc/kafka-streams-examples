@@ -121,8 +121,8 @@ public class SumLambdaExample {
       // no need to specify explicit serdes because the resulting key and value types match our default serde settings
       .groupByKey()
       // Add the numbers to compute the sum.
-      .reduce((v1, v2) -> v1 + v2, "sum");
-    sumOfOddNumbers.to(SUM_OF_ODD_NUMBERS_TOPIC);
+      .reduce((v1, v2) -> v1 + v2);
+    sumOfOddNumbers.toStream().to(SUM_OF_ODD_NUMBERS_TOPIC);
 
     final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     // Always (and unconditionally) clean local state prior to starting the processing topology.

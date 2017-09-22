@@ -22,6 +22,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Produced;
 
 import java.util.Arrays;
 import java.util.Properties;
@@ -144,7 +145,7 @@ public class WordCountLambdaExample {
     // the default serdes specified in the Streams configuration above, because these defaults
     // match what's in the actual topic.  However we explicitly set the deserializers in the
     // call to `stream()` below in order to show how that's done, too.
-    final KStream<String, String> textLines = builder.stream(stringSerde, stringSerde, "TextLinesTopic");
+    final KStream<String, String> textLines = builder.stream("TextLinesTopic");
 
     final Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
 
@@ -161,10 +162,10 @@ public class WordCountLambdaExample {
       //
       // Note: no need to specify explicit serdes because the resulting key and value types match our default serde settings
       .groupBy((key, word) -> word)
-      .count("Counts");
+      .count();
 
     // Write the `KStream<String, Long>` to the output topic.
-    wordCounts.to(stringSerde, longSerde, "WordsWithCountsTopic");
+    wordCounts.toStream().to("WordsWithCountsTopic", Produced.with(stringSerde, longSerde));
 
     // Now that we have finished the definition of the processing topology we can actually run
     // it via `start()`.  The Streams application as a whole can be launched just like any

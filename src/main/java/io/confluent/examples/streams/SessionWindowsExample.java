@@ -20,11 +20,17 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.utils.Bytes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.kstream.SessionWindows;
+import org.apache.kafka.streams.state.SessionStore;
 
 import java.util.Collections;
 import java.util.Map;
@@ -152,17 +158,21 @@ public class SessionWindowsExample {
     playEventSerde.configure(serdeConfig, false);
 
     final StreamsBuilder builder = new StreamsBuilder();
-    builder.stream(Serdes.String(), playEventSerde, PLAY_EVENTS)
+    builder.stream(PLAY_EVENTS, Consumed.with(Serdes.String(), playEventSerde))
         // group by key so we can count by session windows
-        .groupByKey(Serdes.String(), playEventSerde)
-        // count play events per session
-        .count(SessionWindows.with(INACTIVITY_GAP), PLAY_EVENTS_PER_SESSION)
+        .groupByKey(Serialized.with(Serdes.String(), playEventSerde))
+        // window by session
+        .windowedBy(SessionWindows.with(INACTIVITY_GAP))
+            // count play events per session
+        .count(Materialized.<String, Long, SessionStore<Bytes, byte[]>>as(PLAY_EVENTS_PER_SESSION)
+          .withKeySerde(Serdes.String())
+          .withValueSerde(Serdes.Long()))
         // convert to a stream so we can map the key to a string
         .toStream()
         // map key to a readable string
         .map((key, value) -> new KeyValue<>(key.key() + "@" + key.window().start() + "->" + key.window().end(), value))
         // write to play-events-per-session topic
-        .to(Serdes.String(), Serdes.Long(), PLAY_EVENTS_PER_SESSION);
+        .to(PLAY_EVENTS_PER_SESSION, Produced.with(Serdes.String(), Serdes.Long()));
 
     return new KafkaStreams(builder.build(), new StreamsConfig(config));
   }

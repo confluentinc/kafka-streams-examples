@@ -26,6 +26,7 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
@@ -105,18 +106,16 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
     input.groupByKey().aggregate(
         () -> Long.MIN_VALUE,
         (aggKey, value, aggregate) -> Math.max(value, aggregate),
-        Serdes.Long(),
-        "max-store"
+        Materialized.as("max-store")
     );
 
     // windowed MAX() aggregation
-    input.groupByKey().aggregate(
-        () -> Long.MIN_VALUE,
-        (aggKey, value, aggregate) -> Math.max(value, aggregate),
-        TimeWindows.of(TimeUnit.MINUTES.toMillis(1L)).until(TimeUnit.MINUTES.toMillis(5L)),
-        Serdes.Long(),
-        "max-window-store"
-    );
+    input.groupByKey()
+        .windowedBy(TimeWindows.of(TimeUnit.MINUTES.toMillis(1L)).until(TimeUnit.MINUTES.toMillis(5L)))
+        .aggregate(
+            () -> Long.MIN_VALUE,
+            (aggKey, value, aggregate) -> Math.max(value, aggregate),
+            Materialized.as("max-window-store"));
 
     KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();

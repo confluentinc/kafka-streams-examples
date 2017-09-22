@@ -21,6 +21,7 @@ import com.twitter.algebird.TopCMS
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.metrics.Metrics
 import org.apache.kafka.common.serialization.{Serdes, Serializer}
+import org.apache.kafka.common.utils.LogContext
 import org.apache.kafka.streams.processor.internals.MockStreamsMetrics
 import org.apache.kafka.streams.state.KeyValueStoreTestDriver
 import org.apache.kafka.streams.state.internals.ThreadCache
@@ -162,7 +163,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
           observedChangelogRecords.add(new ProducerRecord[K, V](topic, partition, timestamp, key, value))
         }
       }
-      val cache: ThreadCache = new ThreadCache("test", 1024, new MockStreamsMetrics(new Metrics))
+      val cache: ThreadCache = new ThreadCache(new LogContext("test"), 1024, new MockStreamsMetrics(new Metrics))
       val context = new MockProcessorContext(TestUtils.tempDirectory, Serdes.Integer(), TopCMSSerde[String], observingCollector, cache)
       context.setTime(1)
       context

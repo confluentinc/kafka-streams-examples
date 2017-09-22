@@ -27,6 +27,7 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.JoinWindows;
+import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.test.TestUtils;
 import org.junit.BeforeClass;
@@ -104,8 +105,8 @@ public class StreamToStreamJoinIntegrationTest {
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
     StreamsBuilder builder = new StreamsBuilder();
-    KStream<String, String> alerts = builder.stream(stringSerde, stringSerde, adImpressionsTopic);
-    KStream<String, String> incidents = builder.stream(stringSerde, stringSerde, adClicksTopic);
+    KStream<String, String> alerts = builder.stream(adImpressionsTopic);
+    KStream<String, String> incidents = builder.stream(adClicksTopic);
 
     // In this example, we opt to perform an OUTER JOIN between the two streams.  We picked this
     // join type to show how the Streams API will send further join updates downstream whenever,
@@ -115,10 +116,10 @@ public class StreamToStreamJoinIntegrationTest {
         (impressionValue, clickValue) -> impressionValue + "/" + clickValue,
         // KStream-KStream joins are always windowed joins, hence we must provide a join window.
         JoinWindows.of(TimeUnit.SECONDS.toMillis(5)),
-        stringSerde, stringSerde, stringSerde);
+        Joined.with(stringSerde, stringSerde, stringSerde));
 
     // Write the results to the output topic.
-    impressionsAndClicks.to(stringSerde, stringSerde, outputTopic);
+    impressionsAndClicks.to(outputTopic);
 
     KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();

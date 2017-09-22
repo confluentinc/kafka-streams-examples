@@ -27,6 +27,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Produced;
 
 import java.util.Properties;
 
@@ -132,10 +133,10 @@ public class WikipediaFeedAvroLambdaExample {
         .map((key, value) -> new KeyValue<>(value.getUser(), value))
         // no need to specify explicit serdes because the resulting key and value types match our default serde settings
         .groupByKey()
-        .count("Counts");
+        .count();
 
     // write to the result topic, need to override serdes
-    aggregated.to(stringSerde, longSerde, WikipediaFeedAvroExample.WIKIPEDIA_STATS);
+    aggregated.toStream().to(WikipediaFeedAvroExample.WIKIPEDIA_STATS, Produced.with(stringSerde, longSerde));
 
     return new KafkaStreams(builder.build(), streamsConfiguration);
   }
