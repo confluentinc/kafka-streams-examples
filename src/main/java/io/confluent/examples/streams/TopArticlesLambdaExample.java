@@ -43,6 +43,7 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -189,7 +190,7 @@ public class TopArticlesLambdaExample {
     final KTable<Windowed<GenericRecord>, Long> viewCounts = articleViews
       // count the clicks per hour, using tumbling windows with a size of one hour
       .groupByKey(Serialized.with(keyAvroSerde, valueAvroSerde))
-      .windowedBy(TimeWindows.of(60 * 60 * 1000L))
+      .windowedBy(TimeWindows.of(TimeUnit.MINUTES.toMillis(60)))
       .count();
 
     final Comparator<GenericRecord> comparator =

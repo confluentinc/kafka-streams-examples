@@ -115,8 +115,7 @@ public class StreamToStreamJoinIntegrationTest {
     KStream<String, String> impressionsAndClicks = alerts.outerJoin(incidents,
         (impressionValue, clickValue) -> impressionValue + "/" + clickValue,
         // KStream-KStream joins are always windowed joins, hence we must provide a join window.
-        JoinWindows.of(TimeUnit.SECONDS.toMillis(5)),
-        Joined.with(stringSerde, stringSerde, stringSerde));
+        JoinWindows.of(TimeUnit.SECONDS.toMillis(5)));
 
     // Write the results to the output topic.
     impressionsAndClicks.to(outputTopic);

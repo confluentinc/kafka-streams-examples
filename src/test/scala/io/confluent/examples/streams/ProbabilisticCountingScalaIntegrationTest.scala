@@ -18,7 +18,7 @@ package io.confluent.examples.streams
 import java.util
 import java.util.Properties
 
-import io.confluent.examples.streams.algebird.{CMSStore, CMSStoreSupplier}
+import io.confluent.examples.streams.algebird.{CMSStore, CMSStoreBuilder}
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
@@ -108,7 +108,7 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
         cfg.put("segment.bytes", segmentSizeBytes)
         cfg
       }
-      new CMSStoreSupplier[String](cmsStoreName, Serdes.String())
+      new CMSStoreBuilder[String](cmsStoreName, Serdes.String())
         .withLoggingEnabled(changelogConfig)
     }
     builder.addStateStore(cmsStoreSupplier)

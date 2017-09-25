@@ -295,15 +295,16 @@ public class KafkaMusicExample {
     final StreamsBuilder builder = new StreamsBuilder();
 
     // get a stream of play events
-    final KStream<String, PlayEvent> playEvents = builder.stream(PLAY_EVENTS, Consumed.with(Serdes.String(),
-                                                                                            playEventSerde));
+    final KStream<String, PlayEvent> playEvents = builder.stream(
+        PLAY_EVENTS,
+        Consumed.with(Serdes.String(), playEventSerde));
 
     // get table and create a state store to hold all the songs in the store
     final KTable<Long, Song>
-            songTable =
-            builder.table(SONG_FEED, Materialized.<Long, Song, KeyValueStore<Bytes, byte[]>>as(ALL_SONGS)
-                    .withKeySerde(Serdes.Long())
-                    .withValueSerde(valueSongSerde));
+        songTable =
+        builder.table(SONG_FEED, Materialized.<Long, Song, KeyValueStore<Bytes, byte[]>>as(ALL_SONGS)
+            .withKeySerde(Serdes.Long())
+            .withValueSerde(valueSongSerde));
 
     // Accept play events that have a duration >= the minimum
     final KStream<Long, PlayEvent> playsBySongId =
@@ -332,35 +333,13 @@ public class KafkaMusicExample {
     // store "top-five-songs-by-genre", and this state store can then be queried interactively via a REST API (cf.
     // MusicPlaysRestService) for the latest charts per genre.
     songPlayCounts.groupBy((song, plays) ->
-                                   KeyValue.pair(song.getGenre().toLowerCase(),
-                                                 new SongPlayCount(song.getId(), plays)),
-                           Serialized.with(Serdes.String(),
-                                           songPlayCountSerde))
-            // aggregate into a TopFiveSongs instance that will keep track
-            // of the current top five for each genre. The data will be available in the
-            // top-five-songs-genre store
-            .aggregate(TopFiveSongs::new,
-                       (aggKey, value, aggregate) -> {
-                         aggregate.add(value);
-                         return aggregate;
-                       },
-                       (aggKey, value, aggregate) -> {
-                         aggregate.remove(value);
-                         return aggregate;
-                       },
-                       Materialized.<String, TopFiveSongs, KeyValueStore<Bytes, byte[]>>as(TOP_FIVE_SONGS_BY_GENRE_STORE)
-                               .withKeySerde(Serdes.String())
-                               .withValueSerde(topFiveSerde)
-            );
-
-    // Compute the top five chart. The results of this computation will continuously update the state
-    // store "top-five-songs", and this state store can then be queried interactively via a REST API (cf.
-    // MusicPlaysRestService) for the latest charts per genre.
-    songPlayCounts.groupBy((song, plays) ->
-            KeyValue.pair(TOP_FIVE_KEY,
+            KeyValue.pair(song.getGenre().toLowerCase(),
                 new SongPlayCount(song.getId(), plays)),
         Serialized.with(Serdes.String(),
-        songPlayCountSerde))
+            songPlayCountSerde))
+        // aggregate into a TopFiveSongs instance that will keep track
+        // of the current top five for each genre. The data will be available in the
+        // top-five-songs-genre store
         .aggregate(TopFiveSongs::new,
             (aggKey, value, aggregate) -> {
               aggregate.add(value);
@@ -370,9 +349,33 @@ public class KafkaMusicExample {
               aggregate.remove(value);
               return aggregate;
             },
-            Materialized.<String, TopFiveSongs, KeyValueStore<Bytes, byte[]>>as(TOP_FIVE_SONGS_STORE)
-              .withKeySerde(Serdes.String())
-              .withValueSerde(topFiveSerde)
+            Materialized.<String, TopFiveSongs, KeyValueStore<Bytes, byte[]>>as(
+                TOP_FIVE_SONGS_BY_GENRE_STORE)
+                .withKeySerde(Serdes.String())
+                .withValueSerde(topFiveSerde)
+        );
+
+    // Compute the top five chart. The results of this computation will continuously update the state
+    // store "top-five-songs", and this state store can then be queried interactively via a REST API (cf.
+    // MusicPlaysRestService) for the latest charts per genre.
+    songPlayCounts.groupBy((song, plays) ->
+            KeyValue.pair(TOP_FIVE_KEY,
+                new SongPlayCount(song.getId(), plays)),
+        Serialized.with(Serdes.String(),
+            songPlayCountSerde))
+        .aggregate(TopFiveSongs::new,
+            (aggKey, value, aggregate) -> {
+              aggregate.add(value);
+              return aggregate;
+            },
+            (aggKey, value, aggregate) -> {
+              aggregate.remove(value);
+              return aggregate;
+            },
+            Materialized.<String, TopFiveSongs, KeyValueStore<Bytes, byte[]>>as(
+                TOP_FIVE_SONGS_STORE)
+                .withKeySerde(Serdes.String())
+                .withValueSerde(topFiveSerde)
         );
 
     return new KafkaStreams(builder.build(), streamsConfiguration);

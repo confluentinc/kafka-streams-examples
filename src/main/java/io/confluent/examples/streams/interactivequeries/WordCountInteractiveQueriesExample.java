@@ -220,14 +220,13 @@ public class WordCountInteractiveQueriesExample {
 
     // Create a State Store for with the all time word count
     groupedByWord.count(Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("word-count")
-                           .withValueSerde(Serdes.Long())
-    );
+        .withValueSerde(Serdes.Long()));
 
     // Create a Windowed State Store that contains the word count for every
     // 1 minute
-    groupedByWord.windowedBy(TimeWindows.of(60000)).count(
-            Materialized.<String, Long, WindowStore<Bytes, byte[]>>as("windowed-word-count")
-                    .withValueSerde(Serdes.Long()));
+    groupedByWord.windowedBy(TimeWindows.of(60000))
+        .count(Materialized.<String, Long, WindowStore<Bytes, byte[]>>as("windowed-word-count")
+            .withValueSerde(Serdes.Long()));
 
     return new KafkaStreams(builder.build(), streamsConfiguration);
   }

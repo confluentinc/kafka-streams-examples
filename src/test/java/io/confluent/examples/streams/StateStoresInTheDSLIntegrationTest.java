@@ -164,7 +164,7 @@ public class StateStoresInTheDSLIntegrationTest {
 
     // Important (1 of 2): You must add the state store to the topology, otherwise your application
     // will fail at run-time (because the state store is referred to in `transform()` below.
-    builder.addStateStore( wordCountsStore);
+    builder.addStateStore(wordCountsStore);
 
     // Read the input data.  (In this example we ignore whatever is stored in the record keys.)
     KStream<byte[], String> words = builder.stream(inputTopic);

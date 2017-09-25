@@ -163,10 +163,10 @@ public class SessionWindowsExample {
         .groupByKey(Serialized.with(Serdes.String(), playEventSerde))
         // window by session
         .windowedBy(SessionWindows.with(INACTIVITY_GAP))
-            // count play events per session
+        // count play events per session
         .count(Materialized.<String, Long, SessionStore<Bytes, byte[]>>as(PLAY_EVENTS_PER_SESSION)
-          .withKeySerde(Serdes.String())
-          .withValueSerde(Serdes.Long()))
+            .withKeySerde(Serdes.String())
+            .withValueSerde(Serdes.Long()))
         // convert to a stream so we can map the key to a string
         .toStream()
         // map key to a readable string

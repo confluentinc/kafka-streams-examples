@@ -148,6 +148,8 @@ class CMSStore[T: CMSHasher](override val name: String,
 
   private var changeLogger: CMSStoreChangeLogger[Integer, TopCMS[T]] = _
 
+  private var context: ProcessorContext = _
+
   /**
     * The record key used to write to the state's changelog.
     *

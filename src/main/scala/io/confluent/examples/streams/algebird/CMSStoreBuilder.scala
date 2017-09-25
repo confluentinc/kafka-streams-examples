@@ -19,7 +19,6 @@ import java.util
 
 import com.twitter.algebird.CMSHasher
 import org.apache.kafka.common.serialization.Serde
-import org.apache.kafka.streams.processor.StateStoreSupplier
 import org.apache.kafka.streams.state.StoreBuilder
 
 /**
@@ -42,8 +41,8 @@ import org.apache.kafka.streams.state.StoreBuilder
   * new CMSStoreSupplier[String](cmsStoreName, Serdes.String(), changeloggingEnabled, changelogConfig)
   * }}}
   */
-class CMSStoreSupplier[T: CMSHasher](val name: String,
-                                     val serde: Serde[T])
+class CMSStoreBuilder[T: CMSHasher](val name: String,
+                                    val serde: Serde[T])
     extends StoreBuilder[CMSStore[T]] {
 
   var loggingEnabled = false
@@ -54,13 +53,13 @@ class CMSStoreSupplier[T: CMSHasher](val name: String,
 
   override def withCachingEnabled() = throw new UnsupportedOperationException("caching not supported")
 
-  override def withLoggingEnabled(config: util.Map[String, String]): CMSStoreSupplier[T] = {
+  override def withLoggingEnabled(config: util.Map[String, String]): CMSStoreBuilder[T] = {
     loggingEnabled = true
     logConfig.putAll(config)
     this
   }
 
-  override def withLoggingDisabled(): CMSStoreSupplier[T] = {
+  override def withLoggingDisabled(): CMSStoreBuilder[T] = {
     loggingEnabled = false
     logConfig.clear()
     this

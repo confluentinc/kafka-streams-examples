@@ -165,8 +165,7 @@ public class StreamToTableJoinIntegrationTest {
     // lived in "asia") because, at the time her first user-click record is being received and
     // subsequently processed in the `leftJoin`, the latest region update for "alice" is "europe"
     // (which overrides her previous region value of "asia").
-    KTable<String, String> userRegionsTable =
-        builder.table(userRegionsTopic);
+    KTable<String, String> userRegionsTable = builder.table(userRegionsTopic);
 
     // Compute the number of clicks per region, e.g. "europe" -> 13L.
     //

@@ -123,11 +123,12 @@ public class TableToTableJoinIntegrationTest {
     KTable<String, String> userRegions = builder.table(userRegionTopic);
     KTable<String, Long> userLastLogins = builder.table(userLastLoginTopic, Consumed.with(stringSerde, longSerde));
 
+    String storeName = "joined-store";
     userRegions.join(userLastLogins,
-                     (regionValue, lastLoginValue) -> regionValue + "/" + lastLoginValue,
-                     Materialized.as("joined-store"))
-            .toStream()
-            .to(outputTopic, Produced.with(Serdes.String(), Serdes.String()));
+        (regionValue, lastLoginValue) -> regionValue + "/" + lastLoginValue,
+        Materialized.as(storeName))
+        .toStream()
+        .to(outputTopic, Produced.with(Serdes.String(), Serdes.String()));
 
 
     KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
@@ -170,7 +171,7 @@ public class TableToTableJoinIntegrationTest {
     // Verify the (local) state store of the joined table.
     // For a comprehensive demonstration of interactive queries please refer to KafkaMusicExample.
     ReadOnlyKeyValueStore<String, String> readOnlyKeyValueStore =
-        streams.store("joined-store", QueryableStoreTypes.keyValueStore());
+        streams.store(storeName, QueryableStoreTypes.keyValueStore());
     KeyValueIterator<String, String> keyValueIterator = readOnlyKeyValueStore.all();
     assertThat(keyValueIterator).containsExactlyElementsOf(expectedResultsForJoinStateStore);
 
