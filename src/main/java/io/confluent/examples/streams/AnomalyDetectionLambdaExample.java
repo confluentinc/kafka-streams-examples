@@ -28,6 +28,7 @@ import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.kstream.Windowed;
 
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Demonstrates how to count things over time, using time windows. In this specific example we
@@ -133,7 +134,7 @@ public class AnomalyDetectionLambdaExample {
       // count users, using one-minute tumbling windows;
       // no need to specify explicit serdes because the resulting key and value types match our default serde settings
       .groupByKey()
-      .windowedBy(TimeWindows.of(60 * 1000L))
+      .windowedBy(TimeWindows.of(TimeUnit.MINUTES.toMillis(1)))
       .count()
       // get users whose one-minute count is >= 3
       .filter((windowedUserId, count) -> count >= 3);

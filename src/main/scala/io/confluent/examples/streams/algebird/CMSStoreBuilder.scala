@@ -55,6 +55,7 @@ class CMSStoreBuilder[T: CMSHasher](val name: String,
 
   override def withLoggingEnabled(config: util.Map[String, String]): CMSStoreBuilder[T] = {
     loggingEnabled = true
+    logConfig.clear()
     logConfig.putAll(config)
     this
   }

@@ -335,8 +335,7 @@ public class KafkaMusicExample {
     songPlayCounts.groupBy((song, plays) ->
             KeyValue.pair(song.getGenre().toLowerCase(),
                 new SongPlayCount(song.getId(), plays)),
-        Serialized.with(Serdes.String(),
-            songPlayCountSerde))
+        Serialized.with(Serdes.String(), songPlayCountSerde))
         // aggregate into a TopFiveSongs instance that will keep track
         // of the current top five for each genre. The data will be available in the
         // top-five-songs-genre store
@@ -349,8 +348,7 @@ public class KafkaMusicExample {
               aggregate.remove(value);
               return aggregate;
             },
-            Materialized.<String, TopFiveSongs, KeyValueStore<Bytes, byte[]>>as(
-                TOP_FIVE_SONGS_BY_GENRE_STORE)
+            Materialized.<String, TopFiveSongs, KeyValueStore<Bytes, byte[]>>as(TOP_FIVE_SONGS_BY_GENRE_STORE)
                 .withKeySerde(Serdes.String())
                 .withValueSerde(topFiveSerde)
         );
@@ -361,8 +359,7 @@ public class KafkaMusicExample {
     songPlayCounts.groupBy((song, plays) ->
             KeyValue.pair(TOP_FIVE_KEY,
                 new SongPlayCount(song.getId(), plays)),
-        Serialized.with(Serdes.String(),
-            songPlayCountSerde))
+        Serialized.with(Serdes.String(), songPlayCountSerde))
         .aggregate(TopFiveSongs::new,
             (aggKey, value, aggregate) -> {
               aggregate.add(value);
@@ -372,8 +369,7 @@ public class KafkaMusicExample {
               aggregate.remove(value);
               return aggregate;
             },
-            Materialized.<String, TopFiveSongs, KeyValueStore<Bytes, byte[]>>as(
-                TOP_FIVE_SONGS_STORE)
+            Materialized.<String, TopFiveSongs, KeyValueStore<Bytes, byte[]>>as(TOP_FIVE_SONGS_STORE)
                 .withKeySerde(Serdes.String())
                 .withValueSerde(topFiveSerde)
         );
