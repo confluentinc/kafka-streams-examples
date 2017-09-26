@@ -40,11 +40,11 @@ class CMSStoreChangeLogger[K, V](val storeName: String,
     this(storeName, context, context.taskId.partition, serialization)
   }
 
-  def logChange(key: K, value: V) {
+  def logChange(key: K, value: V, timestamp: Long) {
     if (collector != null) {
       val keySerializer = serialization.keySerializer
       val valueSerializer = serialization.valueSerializer
-      collector.send(this.topic, key, value, this.partition, null, keySerializer, valueSerializer)
+      collector.send(this.topic, key, value, this.partition, timestamp, keySerializer, valueSerializer)
     }
   }
 
