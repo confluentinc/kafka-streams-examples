@@ -29,6 +29,7 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Predicate;
+import org.apache.kafka.streams.kstream.Produced;
 
 import java.util.Properties;
 
@@ -154,10 +155,10 @@ public class WikipediaFeedAvroExample {
         })
         // no need to specify explicit serdes because the resulting key and value types match our default serde settings
         .groupByKey()
-        .count("Counts");
+        .count();
 
     // write to the result topic, need to override serdes
-    aggregated.to(stringSerde, longSerde, WIKIPEDIA_STATS);
+    aggregated.toStream().to(WIKIPEDIA_STATS, Produced.with(stringSerde, longSerde));
 
     return new KafkaStreams(builder.build(), streamsConfiguration);
   }

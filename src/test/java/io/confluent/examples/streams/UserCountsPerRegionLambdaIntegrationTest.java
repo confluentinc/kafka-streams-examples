@@ -28,6 +28,7 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.test.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -113,14 +114,14 @@ public class UserCountsPerRegionLambdaIntegrationTest {
 
     StreamsBuilder builder = new StreamsBuilder();
 
-    KTable<String, String> userRegionsTable = builder.table(stringSerde, stringSerde, inputTopic, "UserRegionsStore");
+    KTable<String, String> userRegionsTable = builder.table(inputTopic);
 
     KTable<String, Long> usersPerRegionTable = userRegionsTable
         // no need to specify explicit serdes because the resulting key and value types match our default serde settings
         .groupBy((userId, region) -> KeyValue.pair(region, region))
-        .count("UserCountsByRegion");
+        .count();
 
-    usersPerRegionTable.to(stringSerde, longSerde, outputTopic);
+    usersPerRegionTable.toStream().to(outputTopic, Produced.with(stringSerde, longSerde));
 
     KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();

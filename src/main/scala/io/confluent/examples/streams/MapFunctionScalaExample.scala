@@ -19,7 +19,7 @@ import java.util.Properties
 
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams._
-import org.apache.kafka.streams.kstream.KStream
+import org.apache.kafka.streams.kstream.{KStream, Produced}
 
 /**
   * Demonstrates how to perform simple, state-less transformations via map functions.
@@ -144,7 +144,7 @@ object MapFunctionScalaExample {
     //
     // In this case we must explicitly set the correct serializers because the default serializers
     // (cf. streaming configuration) do not match the type of this particular KStream instance.
-    originalAndUppercased.to(stringSerde, stringSerde, "OriginalAndUppercasedTopic")
+    originalAndUppercased.to("OriginalAndUppercasedTopic", Produced.`with`(stringSerde, stringSerde))
 
     val stream: KafkaStreams = new KafkaStreams(builder.build(), streamingConfig)
     stream.start()

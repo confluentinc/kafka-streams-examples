@@ -86,8 +86,8 @@ public class SumLambdaIntegrationTest {
         .selectKey((k, v) -> 1)
         // no need to specify explicit serdes because the resulting key and value types match our default serde settings
         .groupByKey()
-        .reduce((v1, v2) -> v1 + v2, "sum");
-    sumOfOddNumbers.to(outputTopic);
+        .reduce((v1, v2) -> v1 + v2);
+    sumOfOddNumbers.toStream().to(outputTopic);
 
     KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();

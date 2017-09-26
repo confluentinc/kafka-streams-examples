@@ -17,11 +17,13 @@ package io.confluent.examples.streams;
 
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Produced;
 
 import java.util.Properties;
 
@@ -115,7 +117,7 @@ public class MapFunctionLambdaExample {
     final StreamsBuilder builder = new StreamsBuilder();
 
     // Read the input Kafka topic into a KStream instance.
-    final KStream<byte[], String> textLines = builder.stream(byteArraySerde, stringSerde, "TextLinesTopic");
+    final KStream<byte[], String> textLines = builder.stream("TextLinesTopic", Consumed.with(byteArraySerde, stringSerde));
 
     // Variant 1: using `mapValues`
     final KStream<byte[], String> uppercasedWithMapValues = textLines.mapValues(String::toUpperCase);
@@ -140,7 +142,7 @@ public class MapFunctionLambdaExample {
     //
     // In this case we must explicitly set the correct serializers because the default serializers
     // (cf. streaming configuration) do not match the type of this particular KStream instance.
-    originalAndUppercased.to(stringSerde, stringSerde, "OriginalAndUppercasedTopic");
+    originalAndUppercased.to("OriginalAndUppercasedTopic", Produced.with(stringSerde, stringSerde));
 
     final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     // Always (and unconditionally) clean local state prior to starting the processing topology.

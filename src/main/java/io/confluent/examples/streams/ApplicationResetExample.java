@@ -21,6 +21,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Produced;
 
 import java.util.Properties;
 
@@ -153,8 +154,9 @@ public class ApplicationResetExample {
     final KStream<String, String> input = builder.stream("my-input-topic");
     input.selectKey((key, value) -> value.split(" ")[0])
       .groupByKey()
-      .count("count")
-      .to(Serdes.String(), Serdes.Long(), "my-output-topic");
+      .count()
+      .toStream()
+      .to("my-output-topic", Produced.with(Serdes.String(), Serdes.Long()));
 
     final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
 

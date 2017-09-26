@@ -23,10 +23,12 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.kstream.Windowed;
 
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Demonstrates how to count things over time, using time windows. In this specific example we
@@ -132,7 +134,8 @@ public class AnomalyDetectionLambdaExample {
       // count users, using one-minute tumbling windows;
       // no need to specify explicit serdes because the resulting key and value types match our default serde settings
       .groupByKey()
-      .count(TimeWindows.of(60 * 1000L), "UserCountStore")
+      .windowedBy(TimeWindows.of(TimeUnit.MINUTES.toMillis(1)))
+      .count()
       // get users whose one-minute count is >= 3
       .filter((windowedUserId, count) -> count >= 3);
 
@@ -151,7 +154,7 @@ public class AnomalyDetectionLambdaExample {
       .map((windowedUserId, count) -> new KeyValue<>(windowedUserId.toString(), count));
 
     // write to the result topic
-    anomalousUsersForConsole.to(stringSerde, longSerde, "AnomalousUsers");
+    anomalousUsersForConsole.to("AnomalousUsers", Produced.with(stringSerde, longSerde));
 
     final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     // Always (and unconditionally) clean local state prior to starting the processing topology.

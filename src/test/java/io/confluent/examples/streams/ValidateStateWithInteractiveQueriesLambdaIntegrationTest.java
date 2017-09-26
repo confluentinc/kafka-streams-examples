@@ -26,6 +26,7 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
@@ -102,21 +103,21 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
     KStream<String, Long> input = builder.stream(inputTopic);
 
     // rolling MAX() aggregation
+    String maxStore = "max-store";
     input.groupByKey().aggregate(
         () -> Long.MIN_VALUE,
         (aggKey, value, aggregate) -> Math.max(value, aggregate),
-        Serdes.Long(),
-        "max-store"
+        Materialized.as(maxStore)
     );
 
     // windowed MAX() aggregation
-    input.groupByKey().aggregate(
-        () -> Long.MIN_VALUE,
-        (aggKey, value, aggregate) -> Math.max(value, aggregate),
-        TimeWindows.of(TimeUnit.MINUTES.toMillis(1L)).until(TimeUnit.MINUTES.toMillis(5L)),
-        Serdes.Long(),
-        "max-window-store"
-    );
+    String maxWindowStore = "max-window-store";
+    input.groupByKey()
+        .windowedBy(TimeWindows.of(TimeUnit.MINUTES.toMillis(1L)).until(TimeUnit.MINUTES.toMillis(5L)))
+        .aggregate(
+            () -> Long.MIN_VALUE,
+            (aggKey, value, aggregate) -> Math.max(value, aggregate),
+            Materialized.as(maxWindowStore));
 
     KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();
@@ -136,9 +137,9 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
     // Step 3: Validate the application's state by interactively querying its state stores.
     //
     ReadOnlyKeyValueStore<String, Long> keyValueStore =
-        IntegrationTestUtils.waitUntilStoreIsQueryable("max-store", QueryableStoreTypes.keyValueStore(), streams);
+        IntegrationTestUtils.waitUntilStoreIsQueryable(maxStore, QueryableStoreTypes.keyValueStore(), streams);
     ReadOnlyWindowStore<String, Long> windowStore =
-        IntegrationTestUtils.waitUntilStoreIsQueryable("max-window-store", QueryableStoreTypes.windowStore(), streams);
+        IntegrationTestUtils.waitUntilStoreIsQueryable(maxWindowStore, QueryableStoreTypes.windowStore(), streams);
 
     // Wait a bit so that the input data can be fully processed to ensure that the stores can
     // actually be populated with data.  Running the build on (slow) Travis CI in particular

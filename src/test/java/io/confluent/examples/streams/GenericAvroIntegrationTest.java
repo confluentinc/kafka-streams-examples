@@ -33,6 +33,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Produced;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -105,7 +106,7 @@ public class GenericAvroIntegrationTest {
         Collections.singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl()),
         isKeySerde);
     KStream<String, GenericRecord> stream = builder.stream(inputTopic);
-    stream.to(stringSerde, genericAvroSerde, outputTopic);
+    stream.to(outputTopic, Produced.with(stringSerde, genericAvroSerde));
 
     KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();

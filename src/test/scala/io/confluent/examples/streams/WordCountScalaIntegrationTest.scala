@@ -22,7 +22,7 @@ import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.kstream.{KStream, KTable}
+import org.apache.kafka.streams.kstream.{KStream, KTable, Produced}
 import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsBuilder, StreamsConfig}
 import org.apache.kafka.test.TestUtils
 import org.assertj.core.api.Assertions.assertThat
@@ -114,9 +114,9 @@ class WordCountScalaIntegrationTest extends AssertionsForJUnit {
         .flatMapValues(value => value.toLowerCase.split("\\W+").toIterable.asJava)
         // no need to specify explicit serdes because the resulting key and value types match our default serde settings
         .groupBy((_, word) => word)
-        .count("Counts")
+        .count()
 
-    wordCounts.to(stringSerde, longSerde, outputTopic)
+    wordCounts.toStream.to(outputTopic, Produced.`with`(stringSerde, longSerde))
 
     val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
     streams.start()

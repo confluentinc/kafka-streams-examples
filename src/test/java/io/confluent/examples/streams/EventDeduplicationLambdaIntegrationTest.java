@@ -31,7 +31,7 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
-import org.apache.kafka.streams.processor.StateStoreSupplier;
+import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.apache.kafka.streams.state.WindowStore;
 import org.apache.kafka.streams.state.WindowStoreIterator;
@@ -220,14 +220,18 @@ public class EventDeduplicationLambdaIntegrationTest {
     // on de-duplicating late-arriving records.
     long maintainDurationPerEventInMs = TimeUnit.MINUTES.toMillis(10);
 
-    StateStoreSupplier deduplicationStoreSupplier = Stores.create("eventId-store")
-        .withKeys(Serdes.String()) // must match the return type of the Transformer's id extractor
-        .withValues(Serdes.Long())
-        .persistent()
-        .windowed(maintainDurationPerEventInMs, TimeUnit.MINUTES.toMillis(30), 3, false)
-        .build();
+    StoreBuilder<WindowStore<String, Long>> dedupStoreBuilder = Stores.windowStoreBuilder(
+            Stores.persistentWindowStore("eventId-store",
+                                         TimeUnit.MINUTES.toMillis(30),
+                                         3,
+                                         maintainDurationPerEventInMs,
+                                         false
+            ),
+            Serdes.String(),
+            Serdes.Long());
 
-    builder.addStateStore(deduplicationStoreSupplier);
+
+    builder.addStateStore(dedupStoreBuilder);
 
     KStream<byte[], String> input = builder.stream(inputTopic);
     KStream<byte[], String> deduplicated = input.transform(

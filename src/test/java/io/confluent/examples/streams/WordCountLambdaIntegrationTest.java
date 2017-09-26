@@ -29,6 +29,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.test.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -117,9 +118,9 @@ public class WordCountLambdaIntegrationTest {
         .flatMapValues(value -> Arrays.asList(pattern.split(value.toLowerCase())))
         // no need to specify explicit serdes because the resulting key and value types match our default serde settings
         .groupBy((key, word) -> word)
-        .count("Counts");
+        .count();
 
-    wordCounts.to(stringSerde, longSerde, outputTopic);
+    wordCounts.toStream().to(outputTopic, Produced.with(stringSerde, longSerde));
 
     KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();

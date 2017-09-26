@@ -24,12 +24,15 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.test.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -149,7 +152,7 @@ public class StreamToTableJoinIntegrationTest {
     //
     // Because this is a KStream ("record stream"), multiple records for the same user will be
     // considered as separate click-count events, each of which will be added to the total count.
-    KStream<String, Long> userClicksStream = builder.stream(stringSerde, longSerde, userClicksTopic);
+    KStream<String, Long> userClicksStream = builder.stream(userClicksTopic, Consumed.with(stringSerde, longSerde));
 
     // This KTable contains information such as "alice" -> "europe".
     //
@@ -162,8 +165,7 @@ public class StreamToTableJoinIntegrationTest {
     // lived in "asia") because, at the time her first user-click record is being received and
     // subsequently processed in the `leftJoin`, the latest region update for "alice" is "europe"
     // (which overrides her previous region value of "asia").
-    KTable<String, String> userRegionsTable =
-        builder.table(stringSerde, stringSerde, userRegionsTopic, "UserRegionsStore");
+    KTable<String, String> userRegionsTable = builder.table(userRegionsTopic);
 
     // Compute the number of clicks per region, e.g. "europe" -> 13L.
     //
@@ -185,11 +187,11 @@ public class StreamToTableJoinIntegrationTest {
         // Change the stream from <user> -> <region, clicks> to <region> -> <clicks>
         .map((user, regionWithClicks) -> new KeyValue<>(regionWithClicks.getRegion(), regionWithClicks.getClicks()))
         // Compute the total per region by summing the individual click counts per region.
-        .groupByKey(stringSerde, longSerde)
-        .reduce((firstClicks, secondClicks) -> firstClicks + secondClicks, "ClicksPerRegionUnwindowed");
+        .groupByKey(Serialized.with(stringSerde, longSerde))
+        .reduce((firstClicks, secondClicks) -> firstClicks + secondClicks);
 
     // Write the (continuously updating) results to the output topic.
-    clicksPerRegion.to(stringSerde, longSerde, outputTopic);
+    clicksPerRegion.toStream().to(outputTopic, Produced.with(stringSerde, longSerde));
 
     KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();
