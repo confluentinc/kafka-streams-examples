@@ -167,7 +167,6 @@ public class GlobalKTablesExample {
                 .withKeySerde(Serdes.Long())
                 .withValueSerde(customerSerde));
 
-
     // Create a global table for products. The data from this global table
     // will be fully replicated on each instance of this application.
     final GlobalKTable<Long, Product>

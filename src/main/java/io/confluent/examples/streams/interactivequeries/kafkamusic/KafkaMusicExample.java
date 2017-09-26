@@ -31,6 +31,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Materialized;
@@ -316,8 +317,7 @@ public class KafkaMusicExample {
     // join the plays with song as we will use it later for charting
     final KStream<Long, Song> songPlays = playsBySongId.leftJoin(songTable,
         (value1, song) -> song,
-        Serdes.Long(),
-        playEventSerde);
+        Joined.with(Serdes.Long(), playEventSerde, valueSongSerde));
 
     // create a state store to track song play counts
     final KTable<Song, Long> songPlayCounts = songPlays.groupBy((songId, song) -> song,
