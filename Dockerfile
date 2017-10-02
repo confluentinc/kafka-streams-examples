@@ -14,9 +14,10 @@
 # limitations under the License.
 
 # Builds a docker image for Confluent's example applications for the Kafka Streams API
-ARG DOCKER_REGISTRY
+ARG DOCKER_UPSTREAM_REGISTRY
+ARG DOCKER_UPSTREAM_TAG
 
-FROM ${DOCKER_REGISTRY}confluentinc/cp-base
+FROM ${DOCKER_UPSTREAM_REGISTRY}confluentinc/cp-base:${DOCKER_UPSTREAM_TAG}
 
 ARG STREAMS_VERSION
 ARG ARTIFACT_ID
