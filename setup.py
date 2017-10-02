@@ -8,14 +8,14 @@ remote_requirements = '\n'.join(str(r.req) for r in parse_requirements("requirem
 
 setuptools.setup(
     name='kafka-streams-examples-tests',
-    version='0.0.1',
+    version='3.3.0',
 
     author="Confluent, Inc.",
-    author_email="partner-support@confluent.io",
+    author_email="tools@confluent.io",
 
     description='Docker image tests',
 
-    url="https://github.com/confluentinc/kafka-connect-images",
+    url="https://github.com/confluentinc/kafka-streams-examples",
 
     install_requires=remote_requirements,
 

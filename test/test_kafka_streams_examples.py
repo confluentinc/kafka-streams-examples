@@ -37,7 +37,7 @@ class ConfigTest(unittest.TestCase):
         assert "PASS" in cls.cluster.run_command_on_service(service, KAFKA_MUSIC_APP_HEALTH_CHECK.format(url=list_running_app_instances_url))
 
     def test_required_config_failure(self):
-        self.assertTrue("STREAMS_BOOTSTRAP_SERVERS is required." in self.cluster.service_logs("failing-config", stopped=True))
+        assert "STREAMS_BOOTSTRAP_SERVERS is required." in self.cluster.service_logs("failing-config", stopped=True)
 
     def test_default_config(self):
         self.is_kafka_music_app_healthy_for_service("default-config")
@@ -102,7 +102,8 @@ class StandaloneNetworkingTest(unittest.TestCase):
             image="confluentinc/cp-kafka-streams-examples",
             command=KAFKA_MUSIC_APP_HEALTH_CHECK.format(url=list_running_app_instances_url_host),
             host_config={'NetworkMode': 'host'})
-        self.assertTrue("PASS" in host_network_logs)
+
+        assert "PASS" in host_network_logs
 
         # Verify outside access to the containerized application over the bridge network from a new container
         list_running_app_instances_url_bridge = "http://{host}:{port}/kafka-music/instances".format(host="kafka-streams-examples-bridge", port=17070)
@@ -110,7 +111,8 @@ class StandaloneNetworkingTest(unittest.TestCase):
             image="confluentinc/cp-kafka-streams-examples",
             command=KAFKA_MUSIC_APP_HEALTH_CHECK.format(url=list_running_app_instances_url_bridge),
             host_config={'NetworkMode': 'standalone-network-test_acme'})
-        self.assertTrue("PASS" in bridge_network_logs)
+
+        assert "PASS" in bridge_network_logs
 
     def test_host_network(self):
         # Verify access to the containerized application from inside its own container
@@ -122,4 +124,5 @@ class StandaloneNetworkingTest(unittest.TestCase):
             image="confluentinc/cp-kafka-streams-examples",
             command=KAFKA_MUSIC_APP_HEALTH_CHECK.format(url=list_running_app_instances_url),
             host_config={'NetworkMode': 'host'})
-        self.assertTrue("PASS" in logs)
+
+        assert "PASS" in logs
