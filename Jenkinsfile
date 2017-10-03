@@ -7,7 +7,8 @@ docker_oraclejdk8 {
     dockerUpstreamTag = 'latest'  // Temporary; use trunk-latest when available
     mvnPhase = 'package'  // streams examples integration-test needs host-based networking, won't work in CI as-is
     mvnSkipDeploy = true
-    nodeLabel = 'docker-oraclejdk8-compose'
+    // add for integration-test
+    // nodeLabel = 'docker-oraclejdk8-compose'
     slackChannel = '#streams-team'
     upstreamProjects = 'confluentinc/common'
     withPush = true
