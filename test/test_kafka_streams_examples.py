@@ -23,7 +23,7 @@ class ConfigTest(unittest.TestCase):
     def setUpClass(cls):
         cls.cluster = utils.TestCluster("config-test", FIXTURES_DIR, "standalone-config.yml")
         cls.cluster.start()
-        assert "PASS" in cls.cluster.run_command_on_service("zookeeper", ZK_READY.format(servers="localhost:2181"))
+        assert "PASS" in cls.cluster.run_command_on_service("zookeeper", ZK_READY.format(servers="zookeeper:2181"))
         assert "PASS" in cls.cluster.run_command_on_service("kafka", KAFKA_READY.format(num_brokers=1))
         assert "PASS" in cls.cluster.run_command_on_service("schema-registry", SR_READY.format(host="schema-registry", port=8081))
 
@@ -33,7 +33,7 @@ class ConfigTest(unittest.TestCase):
 
     @classmethod
     def is_kafka_music_app_healthy_for_service(cls, service):
-        list_running_app_instances_url = "http://{host}:{port}/kafka-music/instances".format(host="localhost", port=7070)
+        list_running_app_instances_url = "http://{host}:{port}/kafka-music/instances".format(host=service, port=7070)
         assert "PASS" in cls.cluster.run_command_on_service(service, KAFKA_MUSIC_APP_HEALTH_CHECK.format(url=list_running_app_instances_url))
 
     def test_required_config_failure(self):
@@ -76,7 +76,7 @@ class StandaloneNetworkingTest(unittest.TestCase):
     def setUpClass(cls):
         cls.cluster = utils.TestCluster("standalone-network-test", FIXTURES_DIR, "standalone-network.yml")
         cls.cluster.start()
-        assert "PASS" in cls.cluster.run_command_on_service("zookeeper-bridge", ZK_READY.format(servers="localhost:12181"))
+        assert "PASS" in cls.cluster.run_command_on_service("zookeeper-bridge", ZK_READY.format(servers="zookeeper-bridge:12181"))
         assert "PASS" in cls.cluster.run_command_on_service("kafka-bridge", KAFKA_READY.format(num_brokers=1))
         assert "PASS" in cls.cluster.run_command_on_service("schema-registry-bridge", SR_READY.format(host="schema-registry-bridge", port=18081))
         assert "PASS" in cls.cluster.run_command_on_service("zookeeper-host", ZK_READY.format(servers="localhost:32181"))
