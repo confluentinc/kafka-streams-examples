@@ -15,7 +15,7 @@
 
 # Builds a docker image for Confluent's example applications for the Kafka Streams API
 ARG DOCKER_UPSTREAM_REGISTRY
-ARG DOCKER_UPSTREAM_TAG
+ARG DOCKER_UPSTREAM_TAG=latest
 
 FROM ${DOCKER_UPSTREAM_REGISTRY}confluentinc/cp-base:${DOCKER_UPSTREAM_TAG}
 
