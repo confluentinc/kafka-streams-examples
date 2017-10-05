@@ -224,11 +224,11 @@ public class EventDeduplicationLambdaIntegrationTest {
 
     // The number of segments has no impact on "correctness".
     // Using more segments implies larger overhead but allows for more fined grained record expiration
-    // Note: the specified retention time, is a _minimum_ time span and no strict upper time bound
+    // Note: the specified retention time is a _minimum_ time span and no strict upper time bound
     int numberOfSegments = 3;
 
     // retention period must be at least window size -- for this use case, we don't need a longer retention period
-    // and thus, just use the window size as retention time
+    // and thus just use the window size as retention time
     long retentionPeriod = maintainDurationPerEventInMs;
 
     StoreBuilder<WindowStore<String, Long>> dedupStoreBuilder = Stores.windowStoreBuilder(

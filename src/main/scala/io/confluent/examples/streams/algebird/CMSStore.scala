@@ -145,7 +145,7 @@ class CMSStore[T: CMSHasher](override val name: String,
     */
   private var cms: TopCMS[T] = cmsMonoid.zero
 
-  private var lastUpdate: Long = 0L
+  private var timestampOfLastStateStoreUpdate: Long = 0L
 
   private var changeLogger: CMSStoreChangeLogger[Integer, TopCMS[T]] = _
 
@@ -223,7 +223,7 @@ class CMSStore[T: CMSHasher](override val name: String,
     */
   def put(item: T, timestamp: Long): Unit = {
     cms = cms + item
-    lastUpdate = timestamp
+    timestampOfLastStateStoreUpdate = timestamp
   }
 
   /**
@@ -260,7 +260,7 @@ class CMSStore[T: CMSHasher](override val name: String,
     */
   override def flush() {
     if (loggingEnabled) {
-      changeLogger.logChange(changelogKey, cms, lastUpdate)
+      changeLogger.logChange(changelogKey, cms, timestampOfLastStateStoreUpdate)
     }
   }
 

@@ -100,7 +100,7 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
     val cmsStoreName = "cms-store"
     val cmsStoreBuilder = {
       val changeloggingEnabled = true
-      val changelogConfig: util.HashMap[String, String] = {
+`      val changelogConfig: util.HashMap[String, String] = {
         val cfg = new java.util.HashMap[String, String]
         // The CMSStore's changelog will typically have rather few and small records per partition.
         // To improve efficiency we thus set a smaller log segment size than Kafka's default of 1GB.
