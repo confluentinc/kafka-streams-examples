@@ -79,6 +79,8 @@ public class EventDeduplicationLambdaIntegrationTest {
   private static String inputTopic = "inputTopic";
   private static String outputTopic = "outputTopic";
 
+  private static String storeName = "eventId-store";
+
   @BeforeClass
   public static void startKafkaCluster() throws Exception {
     CLUSTER.createTopic(inputTopic);
@@ -133,7 +135,7 @@ public class EventDeduplicationLambdaIntegrationTest {
     @SuppressWarnings("unchecked")
     public void init(final ProcessorContext context) {
       this.context = context;
-      eventIdStore = (WindowStore<E, Long>) context.getStateStore("eventId-store");
+      eventIdStore = (WindowStore<E, Long>) context.getStateStore(storeName);
     }
 
     public KeyValue<K, V> transform(final K key, final V value) {
@@ -220,10 +222,19 @@ public class EventDeduplicationLambdaIntegrationTest {
     // on de-duplicating late-arriving records.
     long maintainDurationPerEventInMs = TimeUnit.MINUTES.toMillis(10);
 
+    // The number of segments has no impact on "correctness".
+    // Using more segments implies larger overhead but allows for more fined grained record expiration
+    // Note: the specified retention time is a _minimum_ time span and no strict upper time bound
+    int numberOfSegments = 3;
+
+    // retention period must be at least window size -- for this use case, we don't need a longer retention period
+    // and thus just use the window size as retention time
+    long retentionPeriod = maintainDurationPerEventInMs;
+
     StoreBuilder<WindowStore<String, Long>> dedupStoreBuilder = Stores.windowStoreBuilder(
-            Stores.persistentWindowStore("eventId-store",
-                                         TimeUnit.MINUTES.toMillis(30),
-                                         3,
+            Stores.persistentWindowStore(storeName,
+                                         retentionPeriod,
+                                         numberOfSegments,
                                          maintainDurationPerEventInMs,
                                          false
             ),
@@ -239,7 +250,7 @@ public class EventDeduplicationLambdaIntegrationTest {
         // which we can perform de-duplication.  If your records are different, adapt the extractor
         // function as needed.
         () -> new DeduplicationTransformer<>(maintainDurationPerEventInMs, (key, value) -> value),
-        "eventId-store");
+        storeName);
     deduplicated.to(outputTopic);
 
     KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
