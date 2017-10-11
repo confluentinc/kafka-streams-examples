@@ -25,7 +25,6 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.util.Utf8;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -37,7 +36,6 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.kstream.Windowed;
-import org.apache.kafka.streams.state.KeyValueStore;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -232,11 +230,8 @@ public class TopArticlesLambdaExample {
           return queue;
         },
 
-        // TODO: need to change this, after Damian's PR got merged to AK
-        Materialized.<Windowed<String>, PriorityQueue<GenericRecord>, KeyValueStore<Bytes, byte[]>>as("someTopicName")
-            .withKeySerde(windowedStringSerde)
-            .withValueSerde(new PriorityQueueSerde<>(comparator, valueAvroSerde))
-      );
+        Materialized.with(windowedStringSerde, new PriorityQueueSerde<>(comparator, valueAvroSerde))
+        );
 
     final int topN = 100;
     final KTable<Windowed<String>, String> topViewCounts = allViewCounts
