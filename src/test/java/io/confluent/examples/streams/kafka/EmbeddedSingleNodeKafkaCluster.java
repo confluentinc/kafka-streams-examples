@@ -42,6 +42,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
   private KafkaEmbedded broker;
   private RestApp schemaRegistry;
   private final Properties brokerConfig;
+  private boolean running = false;
 
   /**
    * Creates and starts the cluster.
@@ -81,6 +82,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
         zookeeperConnect(),
         KAFKA_SCHEMAS_TOPIC, AVRO_COMPATIBILITY_TYPE);
     schemaRegistry.start();
+    running = true;
   }
 
   private Properties effectiveBrokerConfigFrom(Properties brokerConfig, ZooKeeperEmbedded zookeeper) {
@@ -111,23 +113,29 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
    * Stops the cluster.
    */
   public void stop() {
+    System.out.println("Stopping Confluent");
     try {
-      if (schemaRegistry != null) {
-        schemaRegistry.stop();
+      try {
+        if (schemaRegistry != null) {
+          schemaRegistry.stop();
+        }
+      } catch (Exception e) {
+        throw new RuntimeException(e);
       }
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-    if (broker != null) {
-      broker.stop();
-    }
-    try {
-      if (zookeeper != null) {
-        zookeeper.stop();
+      if (broker != null) {
+        broker.stop();
       }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+      try {
+        if (zookeeper != null) {
+          zookeeper.stop();
+        }
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    } finally {
+      running = false;
     }
+    System.out.println("Confluent Stopped");
   }
 
   /**
@@ -193,4 +201,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     broker.createTopic(topic, partitions, replication, topicConfig);
   }
 
+  public boolean isRunning() {
+    return running;
+  }
 }
