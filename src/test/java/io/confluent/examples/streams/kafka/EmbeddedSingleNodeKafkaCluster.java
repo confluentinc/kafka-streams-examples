@@ -18,14 +18,13 @@ package io.confluent.examples.streams.kafka;
 import io.confluent.examples.streams.zookeeper.ZooKeeperEmbedded;
 import io.confluent.kafka.schemaregistry.RestApp;
 import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
+import java.io.IOException;
+import java.util.Properties;
 import kafka.server.KafkaConfig$;
 import org.apache.curator.test.InstanceSpec;
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.Properties;
 
 /**
  * Runs an in-memory, "embedded" Kafka cluster with 1 ZooKeeper instance, 1 Kafka broker, and 1
@@ -42,7 +41,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
   private KafkaEmbedded broker;
   private RestApp schemaRegistry;
   private final Properties brokerConfig;
-  private boolean running = false;
+  private boolean running;
 
   /**
    * Creates and starts the cluster.
@@ -113,7 +112,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
    * Stops the cluster.
    */
   public void stop() {
-    System.out.println("Stopping Confluent");
+    log.info("Stopping Confluent");
     try {
       try {
         if (schemaRegistry != null) {
@@ -135,7 +134,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     } finally {
       running = false;
     }
-    System.out.println("Confluent Stopped");
+    log.info("Confluent Stopped");
   }
 
   /**
