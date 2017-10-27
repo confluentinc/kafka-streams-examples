@@ -126,7 +126,6 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
     //
     // Because this is a KStream ("record stream"), multiple records for the same user will be
     // considered as separate click-count events, each of which will be added to the total count.
-
     val userClicksStream: KStream[String, Long] = builder.stream(userClicksTopic, Consumed.`with`(stringSerde, longSerde))
 
     // This KTable contains information such as "alice" -> "europe".

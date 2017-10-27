@@ -109,19 +109,26 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
   def shouldExactlyCountSmallNumbersOfItems(): Unit = {
     // Given
     val store: CMSStore[String] = new CMSStore[String](anyStoreName)
-    val items: Seq[String] = Seq("foo", "bar", "foo", "foo", "quux", "bar", "foo")
+    val items = Seq(
+      ("foo", System.currentTimeMillis()),
+      ("bar", System.currentTimeMillis()),
+      ("foo", System.currentTimeMillis()),
+      ("foo", System.currentTimeMillis()),
+      ("quux", System.currentTimeMillis()),
+      ("bar", System.currentTimeMillis()),
+      ("foor", System.currentTimeMillis()))
     val processorContext = createTestContext()
     store.init(processorContext, store)
 
     // When
-    items.foreach(store.put)
+    items.foreach(x => store.put(x._1, x._2))
 
     // Note: We intentionally do not flush the store in this test.
 
     // Then
     assertThat(store.totalCount).isEqualTo(items.size)
-    assertThat(store.heavyHitters).isEqualTo(items.toSet)
-    val expWordCounts: Map[String, Int] = items.groupBy(identity).mapValues(_.length)
+    assertThat(store.heavyHitters).isEqualTo(items.map(x => x._1).toSet)
+    val expWordCounts: Map[String, Int] = items.map(x => x._1).groupBy(identity).mapValues(_.length)
     expWordCounts.foreach { case (word, count) => assertThat(store.get(word)).isEqualTo(count) }
   }
 
@@ -134,12 +141,15 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     store.init(processorContext, store)
 
     // When
-    val items = Seq("one", "two", "three")
-    items.foreach(store.put)
+    val items = Seq(
+      ("one", System.currentTimeMillis()),
+      ("two", System.currentTimeMillis()),
+      ("three", System.currentTimeMillis()))
+    items.foreach(x => store.put(x._1, x._2))
     store.flush()
 
     // Then
-    val cms: TopCMS[String] = store.cmsFrom(items)
+    val cms: TopCMS[String] = store.cmsFrom(items.map(x => x._1))
     assertThat(driver.flushedEntryStored(store.changelogKey)).isEqualTo(cms)
     assertThat(driver.flushedEntryRemoved(store.changelogKey)).isFalse
   }
@@ -169,10 +179,15 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
       context
     }
     store.init(processorContext, store)
-    val items = Seq("one", "two", "three", "four", "five")
+    val items = Seq(
+      ("one", System.currentTimeMillis()),
+      ("two", System.currentTimeMillis()),
+      ("three", System.currentTimeMillis()),
+      ("four", System.currentTimeMillis()),
+      ("firve", System.currentTimeMillis()))
 
     // When
-    items.foreach(store.put)
+    items.foreach(x => store.put(x._1, x._2))
     // Then
     assertThat(observedChangelogRecords.size()).isEqualTo(0)
 
@@ -191,8 +206,11 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     store.init(processorContext, store)
 
     // When
-    val items = Seq("one", "two", "three")
-    items.foreach(store.put)
+    val items = Seq(
+      ("one", System.currentTimeMillis()),
+      ("two", System.currentTimeMillis()),
+      ("three", System.currentTimeMillis()))
+    items.foreach(x => store.put(x._1, x._2))
     store.flush()
 
     // Then
