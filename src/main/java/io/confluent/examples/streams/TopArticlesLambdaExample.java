@@ -31,6 +31,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.kstream.TimeWindows;
@@ -229,8 +230,8 @@ public class TopArticlesLambdaExample {
           return queue;
         },
 
-        new PriorityQueueSerde<>(comparator, valueAvroSerde)
-      );
+        Materialized.with(windowedStringSerde, new PriorityQueueSerde<>(comparator, valueAvroSerde))
+        );
 
     final int topN = 100;
     final KTable<Windowed<String>, String> topViewCounts = allViewCounts
