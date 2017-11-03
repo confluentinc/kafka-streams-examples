@@ -18,14 +18,13 @@ package io.confluent.examples.streams.kafka;
 import io.confluent.examples.streams.zookeeper.ZooKeeperEmbedded;
 import io.confluent.kafka.schemaregistry.RestApp;
 import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
+import java.io.IOException;
+import java.util.Properties;
 import kafka.server.KafkaConfig$;
 import org.apache.curator.test.InstanceSpec;
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.Properties;
 
 /**
  * Runs an in-memory, "embedded" Kafka cluster with 1 ZooKeeper instance, 1 Kafka broker, and 1
@@ -42,6 +41,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
   private KafkaEmbedded broker;
   private RestApp schemaRegistry;
   private final Properties brokerConfig;
+  private boolean running;
 
   /**
    * Creates and starts the cluster.
@@ -81,6 +81,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
         zookeeperConnect(),
         KAFKA_SCHEMAS_TOPIC, AVRO_COMPATIBILITY_TYPE);
     schemaRegistry.start();
+    running = true;
   }
 
   private Properties effectiveBrokerConfigFrom(Properties brokerConfig, ZooKeeperEmbedded zookeeper) {
@@ -111,23 +112,29 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
    * Stops the cluster.
    */
   public void stop() {
+    log.info("Stopping Confluent");
     try {
-      if (schemaRegistry != null) {
-        schemaRegistry.stop();
+      try {
+        if (schemaRegistry != null) {
+          schemaRegistry.stop();
+        }
+      } catch (Exception e) {
+        throw new RuntimeException(e);
       }
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-    if (broker != null) {
-      broker.stop();
-    }
-    try {
-      if (zookeeper != null) {
-        zookeeper.stop();
+      if (broker != null) {
+        broker.stop();
       }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+      try {
+        if (zookeeper != null) {
+          zookeeper.stop();
+        }
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    } finally {
+      running = false;
     }
+    log.info("Confluent Stopped");
   }
 
   /**
@@ -193,4 +200,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     broker.createTopic(topic, partitions, replication, topicConfig);
   }
 
+  public boolean isRunning() {
+    return running;
+  }
 }
