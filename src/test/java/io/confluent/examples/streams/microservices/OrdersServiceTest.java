@@ -66,9 +66,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
     final Client client = ClientBuilder.newClient();
 
     //Given a rest service
-    rest = new OrdersService(
-        new HostInfo("localhost", port)
-    );
+    rest = new OrdersService(new HostInfo("localhost", port));
     rest.start(CLUSTER.bootstrapServers());
 
     //When we POST an order

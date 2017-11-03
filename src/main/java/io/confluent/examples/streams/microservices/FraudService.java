@@ -72,8 +72,7 @@ public class FraudService implements Service {
     //Ditch the windowing and rekey
     KStream<String, OrderValue> ordersWithTotals = aggregate
         .toStream((windowedKey, orderValue) -> windowedKey.key())
-        .filter((k, v) -> v
-            != null)//When elements are evicted from a session window they create delete events. Filter these out.
+        .filter((k, v) -> v != null)//When elements are evicted from a session window they create delete events. Filter these out.
         .selectKey((id, orderValue) -> orderValue.getOrder().getId());
 
     //Now branch the stream into two, for pass and fail, based on whether the windowed total is over Fraud Limit

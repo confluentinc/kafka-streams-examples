@@ -77,8 +77,7 @@ public class InventoryService implements Service {
         //Limit to newly created orders
         .filter((id, order) -> OrderState.CREATED.equals(order.getState()))
         //Join Orders to Inventory so we can compare each order to its corresponding stock value
-        .join(warehouseInventory, KeyValue::new, Topics.WAREHOUSE_INVENTORY.keySerde(),
-            Topics.ORDERS.valueSerde())
+        .join(warehouseInventory, KeyValue::new, Topics.WAREHOUSE_INVENTORY.keySerde(), Topics.ORDERS.valueSerde())
         //Validate the order based on how much stock we have both in the warehouse and locally 'reserved' stock
         .transform(InventoryValidator::new, RESERVED_STOCK_STORE_NAME)
         //Push the result into the Order Validations topic
@@ -89,8 +88,7 @@ public class InventoryService implements Service {
         MicroserviceUtils.baseStreamsConfig(bootstrapServers, stateDir, INVENTORY_SERVICE_APP_ID));
   }
 
-  private static class InventoryValidator implements
-      Transformer<Product, KeyValue<Order, Integer>, KeyValue<String, OrderValidation>> {
+  private static class InventoryValidator implements Transformer<Product, KeyValue<Order, Integer>, KeyValue<String, OrderValidation>> {
 
     private KeyValueStore<Product, Long> reservedStocksStore;
 

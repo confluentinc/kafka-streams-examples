@@ -35,7 +35,6 @@ public class OrderDetailsServiceTest extends MicroserviceTestUtils {
 
   @Test
   public void shouldPassAndFailOrders() throws Exception {
-
     //Given
     orderValService = new OrderDetailsService();
 
