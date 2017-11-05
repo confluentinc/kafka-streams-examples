@@ -209,9 +209,11 @@ public class OrdersService implements Service {
   }
 
   /**
-   * The key could be located in a state store on this node, or on a different node.
-   * Check if location metadata is available and if it isn't, which can happen on startup
-   * or during a rebalance, block until it is.
+   * Use Kafka Streams' Queryable State API to work out if a key/value pair is located on
+   * this node, or on another Kafka Streams node. This returned HostStoreInfo can be used
+   * to redirect an HTTP request to the node that has the data.
+   * <p>
+   * If metadata is available, which can happen on startup, or during a rebalance, block until it is.
    */
   private HostStoreInfo getKeyLocationOrBlock(String id, AsyncResponse asyncResponse) {
     HostStoreInfo locationOfKey;
