@@ -21,7 +21,6 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
-import org.apache.kafka.streams.kstream.KTable;
 
 import java.util.Arrays;
 import java.util.Properties;
@@ -48,9 +47,9 @@ import java.util.regex.Pattern;
  * 2) Create the input and output topics used by this example.
  * <pre>
  * {@code
- * $ bin/kafka-topics --create --topic TextLinesTopic \
+ * $ bin/kafka-topics --create --topic streams-plaintext-input \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * $ bin/kafka-topics --create --topic WordsWithCountsTopic \
+ * $ bin/kafka-topics --create --topic streams-wordcount-output \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * }</pre>
  * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be {@code bin/kafka-topics.sh ...}.
@@ -63,9 +62,9 @@ import java.util.regex.Pattern;
  * {@code
  * $ java -cp target/kafka-streams-examples-3.3.1-SNAPSHOT-standalone.jar io.confluent.examples.streams.WordCountLambdaExample
  * }</pre>
- * 4) Write some input data to the source topic "TextLinesTopic" (e.g. via {@code kafka-console-producer}).
+ * 4) Write some input data to the source topic "streams-plaintext-input" (e.g. via {@code kafka-console-producer}).
  * The already running example application (step 3) will automatically process this input data and write the
- * results to the output topic "WordsWithCountsTopic".
+ * results to the output topic "streams-wordcount-output".
  * <pre>
  * {@code
  * # Start the console producer. You can then enter input data by writing some line of text, followed by ENTER:
@@ -75,12 +74,12 @@ import java.util.regex.Pattern;
  * #   join kafka summit<ENTER>
  * #
  * # Every line you enter will become the value of a single Kafka message.
- * $ bin/kafka-console-producer --broker-list localhost:9092 --topic TextLinesTopic
+ * $ bin/kafka-console-producer --broker-list localhost:9092 --topic streams-plaintext-input
  * }</pre>
  * 5) Inspect the resulting data in the output topic, e.g. via {@code kafka-console-consumer}.
  * <pre>
  * {@code
- * $ bin/kafka-console-consumer --topic WordsWithCountsTopic --from-beginning \
+ * $ bin/kafka-console-consumer --topic streams-wordcount-output --from-beginning \
  *                              --new-consumer --bootstrap-server localhost:9092 \
  *                              --property print.key=true \
  *                              --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
@@ -143,11 +142,11 @@ public class WordCountLambdaExample {
     // the default serdes specified in the Streams configuration above, because these defaults
     // match what's in the actual topic.  However we explicitly set the deserializers in the
     // call to `stream()` below in order to show how that's done, too.
-    final KStream<String, String> textLines = builder.stream(stringSerde, stringSerde, "TextLinesTopic");
+    final KStream<String, String> textLines = builder.stream(stringSerde, stringSerde, "streams-plaintext-input");
 
     final Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
 
-    final KTable<String, Long> wordCounts = textLines
+    final KStream<String, Long> wordCounts = textLines
       // Split each text line, by whitespace, into words.  The text lines are the record
       // values, i.e. we can ignore whatever data is in the record keys and thus invoke
       // `flatMapValues()` instead of the more generic `flatMap()`.
@@ -160,10 +159,11 @@ public class WordCountLambdaExample {
       //
       // Note: no need to specify explicit serdes because the resulting key and value types match our default serde settings
       .groupBy((key, word) -> word)
-      .count("Counts");
+      .count("Counts")
+      .toStream();
 
     // Write the `KStream<String, Long>` to the output topic.
-    wordCounts.to(stringSerde, longSerde, "WordsWithCountsTopic");
+    wordCounts.to(stringSerde, longSerde, "streams-wordcount-output");
 
     // Now that we have finished the definition of the processing topology we can actually run
     // it via `start()`.  The Streams application as a whole can be launched just like any
