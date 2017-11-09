@@ -62,16 +62,10 @@ import java.util.regex.Pattern;
  * Once packaged you can then run:
  * <pre>
  * {@code
-<<<<<<< HEAD
  * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.WordCountLambdaExample
  * }
  * </pre>
- * 4) Write some input data to the source topic "TextLinesTopic" (e.g. via {@code kafka-console-producer}).
-=======
- * $ java -cp target/kafka-streams-examples-3.3.1-SNAPSHOT-standalone.jar io.confluent.examples.streams.WordCountLambdaExample
- * }</pre>
  * 4) Write some input data to the source topic "streams-plaintext-input" (e.g. via {@code kafka-console-producer}).
->>>>>>> origin/3.3.x
  * The already running example application (step 3) will automatically process this input data and write the
  * results to the output topic "streams-wordcount-output".
  * <pre>
