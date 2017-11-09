@@ -98,7 +98,7 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
     val builder: StreamsBuilder = new StreamsBuilder()
 
     val cmsStoreName = "cms-store"
-    val cmsStoreSupplier = {
+    val cmsStoreBuilder = {
       val changeloggingEnabled = true
       val changelogConfig: util.HashMap[String, String] = {
         val cfg = new java.util.HashMap[String, String]
@@ -111,7 +111,7 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
       new CMSStoreBuilder[String](cmsStoreName, Serdes.String())
         .withLoggingEnabled(changelogConfig)
     }
-    builder.addStateStore(cmsStoreSupplier)
+    builder.addStateStore(cmsStoreBuilder)
 
     class ProbabilisticCounter extends Transformer[Array[Byte], String, KeyValue[String, Long]] {
 
@@ -125,7 +125,7 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
 
       override def transform(key: Array[Byte], value: String): KeyValue[String, Long] = {
         // Count the record value, think: "+ 1"
-        cmsState.put(value)
+        cmsState.put(value, this.processorContext.timestamp())
 
         // In this example: emit the latest count estimate for the record value.  We could also do
         // something different, e.g. periodically output the latest heavy hitters via `punctuate`.
