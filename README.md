@@ -101,8 +101,10 @@ There are two kinds of examples:
   -- demonstrates the usage of the application reset tool (`bin/kafka-streams-application-reset`)
 * [GlobalKTablesExample](src/main/java/io/confluent/examples/streams/GlobalKTablesExample.java) (Java 8+)
   -- demonstrates joining between `KStream` and `GlobalKTable`.
+* [Microservice Examples](src/main/java/io/confluent/examples/streams/microservices) (Java 8+)
+  -- demonstrates a small microservice ecosystem implemented with Kafka Streams.
 * And [further examples](src/main/java/io/confluent/examples/streams/).
-
+  
 We also provide several **integration tests**, which demonstrate end-to-end data pipelines.  Here, we spawn embedded Kafka
 clusters and the [Confluent Schema Registry](https://github.com/confluentinc/schema-registry), feed input data to them
 (using the standard Kafka producer client), process the data using Kafka Streams, and finally read and verify the output
