@@ -17,11 +17,11 @@ NB - this is demo code, not a production system and certain elements are left fo
 # Getting Started:
 To play with this ecosystem the simplest way is to run the tests and fiddle with the code. Each test boots a self-contained Kafka cluster so it's easy to play with different queries and configurations. 
 
-# Running the examples:
+# Running the Examples:
 * Requires Java 1.8
 * mvn install -Dmaven.test.skip=true
 
-# Outstanding work
+# Outstanding Work
 - Currently bare bones testing only. Should add tests using KStreamTestDriver to demonstrate how to build tests quickly. 
 - Test framework needs to implement multiple Kafka instances to ensure accuracy in partitioned mode. 
 - The implementation of the Order Details Service using a producer and consumer probably isn't that useful. Lets port this to KStreams
