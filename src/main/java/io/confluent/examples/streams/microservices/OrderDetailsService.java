@@ -163,7 +163,7 @@ public class OrderDetailsService implements Service {
 
   public static void main(String[] args) throws Exception {
     OrderDetailsService service = new OrderDetailsService();
-    service.startService(MicroserviceUtils.parseArgsAndConfigure(args));
+    service.start(MicroserviceUtils.parseArgsAndConfigure(args));
     addShutdownHookAndBlock(service);
   }
 }
