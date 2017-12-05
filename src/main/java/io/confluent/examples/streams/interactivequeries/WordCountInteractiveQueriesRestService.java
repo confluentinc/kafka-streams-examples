@@ -44,8 +44,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import io.confluent.examples.streams.interactivequeries.kafkamusic.SongPlayCountBean;
-
 /**
  *  A simple REST proxy that runs embedded in the {@link WordCountInteractiveQueriesExample}. This is used to
  *  demonstrate how a developer can use the Interactive Queries APIs exposed by Kafka Streams to
