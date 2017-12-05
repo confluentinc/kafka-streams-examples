@@ -58,7 +58,8 @@ public class WordCountInteractiveQueriesRestService {
   private HostInfo hostInfo;
   private final Client client = ClientBuilder.newBuilder().register(JacksonFeature.class).build();
 
-  WordCountInteractiveQueriesRestService(final KafkaStreams streams, HostInfo hostInfo) {
+  WordCountInteractiveQueriesRestService(final KafkaStreams streams,
+                                         final HostInfo hostInfo) {
     this.streams = streams;
     this.metadataService = new MetadataService(streams);
     this.hostInfo = hostInfo;
