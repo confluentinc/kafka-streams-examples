@@ -18,6 +18,7 @@ package io.confluent.examples.streams.interactivequeries;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.state.HostInfo;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
@@ -35,10 +36,15 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+
+import io.confluent.examples.streams.interactivequeries.kafkamusic.SongPlayCountBean;
 
 /**
  *  A simple REST proxy that runs embedded in the {@link WordCountInteractiveQueriesExample}. This is used to
@@ -51,10 +57,14 @@ public class WordCountInteractiveQueriesRestService {
   private final KafkaStreams streams;
   private final MetadataService metadataService;
   private Server jettyServer;
+  private HostInfo hostInfo;
+  private final Client client = ClientBuilder.newBuilder().register(JacksonFeature.class).build();
 
-  WordCountInteractiveQueriesRestService(final KafkaStreams streams) {
+  WordCountInteractiveQueriesRestService(final KafkaStreams streams, HostInfo hostInfo) {
     this.streams = streams;
     this.metadataService = new MetadataService(streams);
+    this.hostInfo = hostInfo;
+
   }
 
   /**
@@ -68,6 +78,11 @@ public class WordCountInteractiveQueriesRestService {
   @Produces(MediaType.APPLICATION_JSON)
   public KeyValueBean byKey(@PathParam("storeName") final String storeName,
                         @PathParam("key") final String key) {
+
+    HostStoreInfo hostStoreInfo = streamsMetadataForStoreAndKey(storeName, key);
+    if (!thisHost(hostStoreInfo)){
+       return fetchByKey(hostStoreInfo, "state/keyvalue/"+storeName+"/"+key);
+    }
 
     // Lookup the KeyValueStore with the provided storeName
     final ReadOnlyKeyValueStore<String, Long> store = streams.store(storeName, QueryableStoreTypes.<String, Long>keyValueStore());
@@ -83,6 +98,13 @@ public class WordCountInteractiveQueriesRestService {
     return new KeyValueBean(key, value);
   }
 
+  private KeyValueBean fetchByKey(final HostStoreInfo host, final String path) {
+    return client.target(String.format("http://%s:%d/%s", host.getHost(), host.getPort(), path))
+        .request(MediaType.APPLICATION_JSON_TYPE)
+        .get(new GenericType<KeyValueBean>() {
+        });
+  }
+
   /**
    * Get all of the key-value pairs available in a store
    * @param storeName   store to query
@@ -95,7 +117,6 @@ public class WordCountInteractiveQueriesRestService {
   public List<KeyValueBean> allForStore(@PathParam("storeName") final String storeName) {
     return rangeForKeyValueStore(storeName, ReadOnlyKeyValueStore::all);
   }
-
 
   /**
    * Get all of the key-value pairs that have keys within the range from...to
@@ -203,10 +224,6 @@ public class WordCountInteractiveQueriesRestService {
 
     // Get the KeyValue Store
     final ReadOnlyKeyValueStore<String, Long> store = streams.store(storeName, QueryableStoreTypes.keyValueStore());
-    if (store == null) {
-      throw new NotFoundException();
-    }
-
     final List<KeyValueBean> results = new ArrayList<>();
     // Apply the function, i.e., query the store
     final KeyValueIterator<String, Long> range = rangeFunction.apply(store);
@@ -218,6 +235,11 @@ public class WordCountInteractiveQueriesRestService {
     }
 
     return results;
+  }
+
+  private boolean thisHost(final HostStoreInfo host) {
+    return host.getHost().equals(hostInfo.host()) &&
+           host.getPort() == hostInfo.port();
   }
 
   /**
