@@ -27,6 +27,7 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.kstream.TimeWindows;
+import org.apache.kafka.streams.state.HostInfo;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.WindowStore;
 
@@ -143,6 +144,7 @@ import java.util.Properties;
 public class WordCountInteractiveQueriesExample {
 
   static final String TEXT_LINES_TOPIC = "TextLinesTopic";
+  static final String DEFAULT_HOST = "localhost";
 
   public static void main(String[] args) throws Exception {
     if (args.length == 0 || args.length > 2) {
@@ -202,8 +204,9 @@ public class WordCountInteractiveQueriesExample {
 
   static WordCountInteractiveQueriesRestService startRestProxy(final KafkaStreams streams, final int port)
       throws Exception {
+    final HostInfo hostInfo = new HostInfo(DEFAULT_HOST, port);
     final WordCountInteractiveQueriesRestService
-        wordCountInteractiveQueriesRestService = new WordCountInteractiveQueriesRestService(streams);
+        wordCountInteractiveQueriesRestService = new WordCountInteractiveQueriesRestService(streams, hostInfo);
     wordCountInteractiveQueriesRestService.start(port);
     return wordCountInteractiveQueriesRestService;
   }
