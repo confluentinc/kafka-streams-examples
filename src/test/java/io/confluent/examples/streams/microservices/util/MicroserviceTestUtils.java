@@ -1,7 +1,5 @@
 package io.confluent.examples.streams.microservices.util;
 
-import static java.util.Collections.singletonList;
-
 import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.OrderValidation;
 import io.confluent.examples.streams.avro.microservices.Product;
@@ -9,13 +7,7 @@ import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.microservices.domain.Schemas.Topic;
 import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
+import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import kafka.server.KafkaConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -31,6 +23,18 @@ import org.junit.ClassRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
+
+import static java.util.Collections.singletonList;
+
 public class MicroserviceTestUtils {
 
   private static final Logger log = LoggerFactory.getLogger(MicroserviceTestUtils.class);
@@ -39,13 +43,16 @@ public class MicroserviceTestUtils {
 
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster(
-      MicroserviceTestUtils.propsWith(
+      new Properties() {
+        {
           //Transactions need durability so the defaults require multiple nodes.
           //For testing purposes set transactions to work with a single kafka broker.
-          new KeyValue<>(KafkaConfig.TransactionsTopicReplicationFactorProp(), "1"),
-          new KeyValue<>(KafkaConfig.TransactionsTopicMinISRProp(), "1"),
-          new KeyValue<>(KafkaConfig.TransactionsTopicPartitionsProp(), "1")
-      ));
+          put(KafkaConfig.TransactionsTopicReplicationFactorProp(), "1");
+          put(KafkaConfig.TransactionsTopicMinISRProp(), "1");
+          put(KafkaConfig.TransactionsTopicPartitionsProp(), "1");
+          put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, "30000");
+        }
+      });
 
   protected static Properties producerConfig(EmbeddedSingleNodeKafkaCluster cluster) {
     Properties producerConfig = new Properties();
@@ -160,59 +167,55 @@ public class MicroserviceTestUtils {
           Thread.sleep(200);
           log.info("Closing tailer...");
         } catch (InterruptedException e) {
+          e.printStackTrace();
         }
       }
     }
   }
 
-  public static Properties propsWith(KeyValue... props) {
-    Properties properties = new Properties();
-    for (KeyValue kv : props) {
-      properties.put(kv.key, kv.value);
-    }
-    return properties;
+  public static <K, V> void send(Topic<K, V> topic, KeyValue<K, V> record) {
+    send(topic, Collections.singletonList(record));
   }
 
-  public static <K, V> void send(Topic topic, KeyValue<K, V>... stuff) {
-    KafkaProducer<Long, Order> producer = new KafkaProducer(producerConfig(CLUSTER),
-        topic.keySerde().serializer(), topic.valueSerde().serializer());
-    try {
-      for (KeyValue<K, V> order : stuff) {
-        producer.send(new ProducerRecord(topic.name(), order.key, order.value)).get();
+  public static <K, V> void send(Topic<K, V> topic, Collection<KeyValue<K, V>> stuff) {
+    try (KafkaProducer<K, V> producer = new KafkaProducer<>(
+        producerConfig(CLUSTER),
+        topic.keySerde().serializer(),
+        topic.valueSerde().serializer()))
+    {
+      for (KeyValue<K, V> record : stuff) {
+        producer.send(new ProducerRecord<>(topic.name(), record.key, record.value)).get();
       }
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
-    } finally {
-      producer.close();
     }
   }
 
   public static void sendOrders(List<Order> orders) {
-    List<KeyValue> collect = orders.stream().map(o -> new KeyValue(o.getId(), o))
+    List<KeyValue<String, Order>> collect = orders.stream().map(o -> new KeyValue<>(o.getId(), o))
         .collect(Collectors.toList());
-    send(Topics.ORDERS, collect.toArray(new KeyValue[]{}));
+    send(Topics.ORDERS, collect);
   }
 
   public static void sendOrderValuations(List<OrderValidation> orderValidations) {
-    List<KeyValue> collect = orderValidations.stream().map(o -> new KeyValue(o.getOrderId(), o))
+    List<KeyValue<String, OrderValidation>> collect = orderValidations.stream().map(o -> new KeyValue<>(o.getOrderId(), o))
         .collect(Collectors.toList());
-    send(Topics.ORDER_VALIDATIONS, collect.toArray(new KeyValue[]{}));
+    send(Topics.ORDER_VALIDATIONS, collect);
   }
 
   public static void sendInventory(List<KeyValue<Product, Integer>> inventory,
       Schemas.Topic<Product, Integer> topic) {
-    KafkaProducer<Product, Integer> stockProducer = new KafkaProducer<>(producerConfig(CLUSTER),
+    try (KafkaProducer<Product, Integer> stockProducer = new KafkaProducer<>(
+        producerConfig(CLUSTER),
         topic.keySerde().serializer(),
-        Schemas.Topics.WAREHOUSE_INVENTORY.valueSerde().serializer());
-    try {
-      for (KeyValue kv : inventory) {
-        stockProducer.send(new ProducerRecord(Topics.WAREHOUSE_INVENTORY.name(), kv.key, kv.value))
+        Schemas.Topics.WAREHOUSE_INVENTORY.valueSerde().serializer()))
+    {
+      for (KeyValue<Product, Integer> kv : inventory) {
+        stockProducer.send(new ProducerRecord<>(Topics.WAREHOUSE_INVENTORY.name(), kv.key, kv.value))
             .get();
       }
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
-    } finally {
-      stockProducer.close();
     }
   }
 }
