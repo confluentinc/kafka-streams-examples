@@ -10,6 +10,6 @@ docker_oraclejdk8 {
     // add for integration-test
     // nodeLabel = 'docker-oraclejdk8-compose'
     slackChannel = '#streams-team'
-    upstreamProjects = 'confluentinc/common'
+    upstreamProjects = 'confluentinc/rest-utils'
     withPush = true
 }
