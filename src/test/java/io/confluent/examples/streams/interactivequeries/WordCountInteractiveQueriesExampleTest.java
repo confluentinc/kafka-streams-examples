@@ -18,7 +18,9 @@ package io.confluent.examples.streams.interactivequeries;
 import com.google.common.collect.Sets;
 import io.confluent.examples.streams.IntegrationTestUtils;
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
@@ -59,10 +61,14 @@ public class WordCountInteractiveQueriesExampleTest {
 
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
-  public static final String WORD_COUNT =
+  private static final String WORD_COUNT =
       "interactive-queries-wordcount-example-word-count-repartition";
-  public static final String WINDOWED_WORD_COUNT =
+  private static final String WINDOWED_WORD_COUNT =
       "interactive-queries-wordcount-example-windowed-word-count-repartition";
+  private static final String WORD_COUNT_OUTPUT =
+      "interactive-queries-wordcount-example-word-count-changelog";
+  private static final String WINDOWED_WORD_COUNT_OUTPUT =
+      "interactive-queries-wordcount-example-windowed-word-count-changelog";
 
   @Rule
   public final TemporaryFolder temp = new TemporaryFolder();
@@ -89,7 +95,6 @@ public class WordCountInteractiveQueriesExampleTest {
     if (proxy != null) {
       proxy.stop();
     }
-
   }
 
   public static int randomFreeLocalPort() throws IOException {
@@ -158,6 +163,15 @@ public class WordCountInteractiveQueriesExampleTest {
     assertThat(wordCountInstances, hasItem(
         new HostStoreInfo("localhost", port, Sets.newHashSet("word-count", "windowed-word-count"))
     ));
+
+    Properties consumerConfig = new Properties();
+    consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+    consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
+    consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
+    consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "wait-for-output-consumer");
+    consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig, WORD_COUNT_OUTPUT, inputValues.size());
+    IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig, WINDOWED_WORD_COUNT_OUTPUT, inputValues.size());
 
     // Fetch all key-value pairs from the word-count store
     final Invocation.Builder
@@ -260,14 +274,15 @@ public class WordCountInteractiveQueriesExampleTest {
     return results;
   }
 
-  private Properties createStreamConfig(final String bootStrap, final int port, String stateDir)
+  private Properties createStreamConfig(final String bootStrap,
+                                        final int port,
+                                        final String stateDir)
       throws
       IOException {
     Properties streamsConfiguration = new Properties();
     // Give the Streams application a unique name.  The name must be unique in the Kafka cluster
     // against which the application is run.
-    streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG,
-        "interactive-queries-wordcount-example");
+    streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "interactive-queries-wordcount-example");
     // Where to find Kafka broker(s).
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrap);
     // The host:port the embedded REST proxy will run on
@@ -278,6 +293,8 @@ public class WordCountInteractiveQueriesExampleTest {
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
     // Set the default value serde
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+    streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, "100");
+    streamsConfiguration.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, "0");
     return streamsConfiguration;
   }
 }
