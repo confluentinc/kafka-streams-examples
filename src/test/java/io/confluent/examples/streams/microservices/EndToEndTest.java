@@ -1,5 +1,27 @@
 package io.confluent.examples.streams.microservices;
 
+import io.confluent.examples.streams.avro.microservices.OrderState;
+import io.confluent.examples.streams.avro.microservices.Product;
+import io.confluent.examples.streams.microservices.domain.Schemas;
+import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
+import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
+import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
+import io.confluent.examples.streams.microservices.util.Paths;
+import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.state.HostInfo;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.GenericType;
+import java.util.ArrayList;
+import java.util.List;
+
 import static io.confluent.examples.streams.avro.microservices.Product.JUMPERS;
 import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
 import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
@@ -9,39 +31,17 @@ import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-import io.confluent.examples.streams.avro.microservices.OrderState;
-import io.confluent.examples.streams.avro.microservices.Product;
-import io.confluent.examples.streams.microservices.domain.Schemas;
-import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
-import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
-import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
-import io.confluent.examples.streams.microservices.util.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericType;
-import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.state.HostInfo;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class EndToEndTest extends MicroserviceTestUtils {
 
   private static final Logger log = LoggerFactory.getLogger(EndToEndTest.class);
   private static final String HOST = "localhost";
   private List<Service> services = new ArrayList<>();
-  private static int restPort;
   private OrderBean returnedBean;
   private long startTime;
   private Paths path;
 
   @Test
-  public void shouldCreateNewOrderAndGetBackValidatedOrder() throws Exception {
+  public void shouldCreateNewOrderAndGetBackValidatedOrder() {
     OrderBean inputOrder = new OrderBean(id(1L), 2L, OrderState.CREATED, Product.JUMPERS, 1, 1d);
     Client client = ClientBuilder.newClient();
 
@@ -62,7 +62,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
   }
 
   @Test
-  public void shouldProcessManyValidOrdersEndToEnd() throws Exception {
+  public void shouldProcessManyValidOrdersEndToEnd() {
     Client client = ClientBuilder.newClient();
 
     //Add inventory required by the inventory service
@@ -97,7 +97,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
   }
 
   @Test
-  public void shouldProcessManyInvalidOrdersEndToEnd() throws Exception {
+  public void shouldProcessManyInvalidOrdersEndToEnd() {
     final Client client = ClientBuilder.newClient();
 
     //Add inventory required by the inventory service
@@ -147,7 +147,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
     Topics.ALL.keySet().forEach(CLUSTER::createTopic);
     Schemas.configureSerdesWithSchemaRegistryUrl(CLUSTER.schemaRegistryUrl());
-    restPort = randomFreeLocalPort();
+    int restPort = randomFreeLocalPort();
 
     services.add(new FraudService());
     services.add(new InventoryService());
@@ -162,7 +162,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     services.forEach(Service::stop);
     stopTailers();
     CLUSTER.stop();

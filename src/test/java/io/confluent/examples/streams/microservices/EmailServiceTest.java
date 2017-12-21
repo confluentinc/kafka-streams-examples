@@ -1,11 +1,5 @@
 package io.confluent.examples.streams.microservices;
 
-import static io.confluent.examples.streams.avro.microservices.OrderState.CREATED;
-import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
-import static io.confluent.examples.streams.microservices.domain.Schemas.Topics;
-import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import io.confluent.examples.streams.avro.microservices.Customer;
 import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.Payment;
@@ -16,6 +10,12 @@ import org.apache.kafka.test.TestUtils;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static io.confluent.examples.streams.avro.microservices.OrderState.CREATED;
+import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
+import static io.confluent.examples.streams.microservices.domain.Schemas.Topics;
+import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class EmailServiceTest extends MicroserviceTestUtils {
 
@@ -35,7 +35,7 @@ public class EmailServiceTest extends MicroserviceTestUtils {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     emailService.stop();
     CLUSTER.stop();
   }
@@ -56,14 +56,14 @@ public class EmailServiceTest extends MicroserviceTestUtils {
       complete = true;
     });
 
-    send(Topics.CUSTOMERS, new KeyValue(customer.getId(), customer));
-    send(Topics.ORDERS, new KeyValue(order.getId(), order));
-    send(Topics.PAYMENTS, new KeyValue(payment.getId(), payment));
+    send(Topics.CUSTOMERS, new KeyValue<>(customer.getId(), customer));
+    send(Topics.ORDERS, new KeyValue<>(order.getId(), order));
+    send(Topics.PAYMENTS, new KeyValue<>(payment.getId(), payment));
 
     //When
     emailService.start(CLUSTER.bootstrapServers());
 
     //Then
-    TestUtils.waitForCondition(() -> complete == true, "Email was never sent.");
+    TestUtils.waitForCondition(() -> complete, "Email was never sent.");
   }
 }
