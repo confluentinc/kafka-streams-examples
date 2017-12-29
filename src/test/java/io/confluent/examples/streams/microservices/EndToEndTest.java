@@ -24,6 +24,8 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.state.HostInfo;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,9 +45,9 @@ public class EndToEndTest extends MicroserviceTestUtils {
   @Test
   public void shouldCreateNewOrderAndGetBackValidatedOrder() throws Exception {
     OrderBean inputOrder = new OrderBean(id(1L), 2L, OrderState.CREATED, Product.JUMPERS, 1, 1d);
-    Client client = ClientBuilder.newClient();
+      Client client = getClient();
 
-    //Add inventory required by the inventory service with enough items in stock to pass validation
+      //Add inventory required by the inventory service with enough items in stock to pass validation
     List<KeyValue<Product, Integer>> inventory = asList(
         new KeyValue<>(UNDERPANTS, 75),
         new KeyValue<>(JUMPERS, 10)
@@ -61,11 +63,12 @@ public class EndToEndTest extends MicroserviceTestUtils {
     assertThat(returnedBean.getState()).isEqualTo(OrderState.VALIDATED);
   }
 
-  @Test
-  public void shouldProcessManyValidOrdersEndToEnd() throws Exception {
-    Client client = ClientBuilder.newClient();
 
-    //Add inventory required by the inventory service
+    @Test
+  public void shouldProcessManyValidOrdersEndToEnd() throws Exception {
+        Client client = getClient();
+
+        //Add inventory required by the inventory service
     List<KeyValue<Product, Integer>> inventory = asList(
         new KeyValue<>(UNDERPANTS, 75),
         new KeyValue<>(JUMPERS, 10)
@@ -98,9 +101,9 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
   @Test
   public void shouldProcessManyInvalidOrdersEndToEnd() throws Exception {
-    final Client client = ClientBuilder.newClient();
+      final Client client = getClient();
 
-    //Add inventory required by the inventory service
+      //Add inventory required by the inventory service
     List<KeyValue<Product, Integer>> inventory = asList(
         new KeyValue<>(UNDERPANTS, 75000),
         new KeyValue<>(JUMPERS, 0) //***nothing in stock***
@@ -130,6 +133,15 @@ public class EndToEndTest extends MicroserviceTestUtils {
       ));
     }
   }
+
+  private Client getClient() {
+    ClientConfig clientConfig = new ClientConfig();
+    clientConfig.property(ClientProperties.CONNECT_TIMEOUT, 30000)
+                .property(ClientProperties.READ_TIMEOUT, 30000);
+
+    return ClientBuilder.newClient(clientConfig);
+  }
+
 
   private void startTimer() {
     startTime = System.currentTimeMillis();
