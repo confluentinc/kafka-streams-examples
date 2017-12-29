@@ -45,7 +45,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
   @Test
   public void shouldCreateNewOrderAndGetBackValidatedOrder() throws Exception {
     OrderBean inputOrder = new OrderBean(id(1L), 2L, OrderState.CREATED, Product.JUMPERS, 1, 1d);
-      Client client = getClient();
+      final Client client = getClient();
 
       //Add inventory required by the inventory service with enough items in stock to pass validation
     List<KeyValue<Product, Integer>> inventory = asList(
@@ -66,7 +66,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
     @Test
   public void shouldProcessManyValidOrdersEndToEnd() throws Exception {
-        Client client = getClient();
+        final Client client = getClient();
 
         //Add inventory required by the inventory service
     List<KeyValue<Product, Integer>> inventory = asList(
@@ -135,7 +135,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
   }
 
   private Client getClient() {
-    ClientConfig clientConfig = new ClientConfig();
+    final ClientConfig clientConfig = new ClientConfig();
     clientConfig.property(ClientProperties.CONNECT_TIMEOUT, 30000)
                 .property(ClientProperties.READ_TIMEOUT, 30000);
 
