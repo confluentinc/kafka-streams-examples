@@ -41,13 +41,14 @@ public class EndToEndTest extends MicroserviceTestUtils {
   private OrderBean returnedBean;
   private long startTime;
   private Paths path;
+  private Client client;
 
   @Test
   public void shouldCreateNewOrderAndGetBackValidatedOrder() throws Exception {
     OrderBean inputOrder = new OrderBean(id(1L), 2L, OrderState.CREATED, Product.JUMPERS, 1, 1d);
-      final Client client = getClient();
+    client = getClient();
 
-      //Add inventory required by the inventory service with enough items in stock to pass validation
+    //Add inventory required by the inventory service with enough items in stock to pass validation
     List<KeyValue<Product, Integer>> inventory = asList(
         new KeyValue<>(UNDERPANTS, 75),
         new KeyValue<>(JUMPERS, 10)
@@ -64,11 +65,11 @@ public class EndToEndTest extends MicroserviceTestUtils {
   }
 
 
-    @Test
+  @Test
   public void shouldProcessManyValidOrdersEndToEnd() throws Exception {
-        final Client client = getClient();
+    client = getClient();
 
-        //Add inventory required by the inventory service
+    //Add inventory required by the inventory service
     List<KeyValue<Product, Integer>> inventory = asList(
         new KeyValue<>(UNDERPANTS, 75),
         new KeyValue<>(JUMPERS, 10)
@@ -101,9 +102,9 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
   @Test
   public void shouldProcessManyInvalidOrdersEndToEnd() throws Exception {
-      final Client client = getClient();
+    client = getClient();
 
-      //Add inventory required by the inventory service
+    //Add inventory required by the inventory service
     List<KeyValue<Product, Integer>> inventory = asList(
         new KeyValue<>(UNDERPANTS, 75000),
         new KeyValue<>(JUMPERS, 0) //***nothing in stock***
@@ -136,12 +137,10 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
   private Client getClient() {
     final ClientConfig clientConfig = new ClientConfig();
-    clientConfig.property(ClientProperties.CONNECT_TIMEOUT, 30000)
-                .property(ClientProperties.READ_TIMEOUT, 30000);
-
+    clientConfig.property(ClientProperties.CONNECT_TIMEOUT, 60000)
+        .property(ClientProperties.READ_TIMEOUT, 60000);
     return ClientBuilder.newClient(clientConfig);
   }
-
 
   private void startTimer() {
     startTime = System.currentTimeMillis();
@@ -178,6 +177,9 @@ public class EndToEndTest extends MicroserviceTestUtils {
     services.forEach(Service::stop);
     stopTailers();
     CLUSTER.stop();
+    if (client != null) {
+      client.close();
+    }
   }
 
   private GenericType<OrderBean> newBean() {
