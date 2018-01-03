@@ -90,6 +90,9 @@ public class OrderDetailsService implements Service {
     }
   }
 
+  /**
+   * Offsets need to be tracked manually so they can be committed with the transaction
+   */
   private void recordOffset(Map<TopicPartition, OffsetAndMetadata> consumedOffsets,
       ConsumerRecord<String, Order> record) {
     OffsetAndMetadata nextOffset = new OffsetAndMetadata(record.offset() + 1);
