@@ -65,23 +65,39 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This class provides a REST interface to write and read orders using a CQRS pattern
- * (https://martinfowler.com/bliki/CQRS.html). Three methods are exposed over HTTP: <p> -
- * POST(Order) -> Writes and order and returns location of the resource. <p> - GET(OrderId)
- * (Optional timeout) -> Returns requested order, blocking for timeout if no id present. <p> -
- * GET(OrderId)/Validated (Optional timeout) <p> POST does what you might expect: it adds an Order
- * to the system returning when Kafka sends the appropriate acknowledgement. <p> GET accesses an
- * inbuilt Materialized View, of Orders, which are kept in a State Store inside the service. This
- * CQRS-styled view is updated asynchronously wrt the HTTP POST. <p> Calling GET(id) when the ID is
- * not present will block the caller until either the order is added to the view, or the passed
- * TIMEOUT period elapses. This allows the caller to read-their-own-writes. <p> In addition HTTP
- * POST returns the location of the order submitted in the response. <p> Calling GET/id/validated
- * will block until the FAILED/VALIDATED order is available in the View. <p> The View can also be
- * scaled out linearly simply by adding more instances of the view service, and requests to any of
- * the REST endpoints will be automatically forwarded to the correct instance for the key requested
- * orderId via Kafka's Queryable State feature. <p> Non-blocking IO is used for all operations other
- * than the intialization of state stores on startup or rebalance which will block calling Jetty
- * thread. <p> NB This demo code only includes a partial implementation of the holding of
- * outstanding requests and as such would lead timeouts if used in a production use case.
+ * (https://martinfowler.com/bliki/CQRS.html). Three methods are exposed over HTTP:
+ * <p>
+ * - POST(Order) -> Writes and order and returns location of the resource.
+ * <p>
+ * - GET(OrderId) (Optional timeout) -> Returns requested order, blocking for timeout if no id present.
+ * <p>
+ * - GET(OrderId)/Validated (Optional timeout)
+ * <p>
+ * POST does what you might expect: it adds an Order to the system returning when Kafka sends the appropriate
+ * acknowledgement.
+ * <p>
+ * GET accesses an inbuilt Materialized View, of Orders, which are kept in a
+ * State Store inside the service. This CQRS-styled view is updated asynchronously wrt the HTTP
+ * POST.
+ * <p>
+ * Calling GET(id) when the ID is not present will block the caller until either the order
+ * is added to the view, or the passed TIMEOUT period elapses. This allows the caller to
+ * read-their-own-writes.
+ * <p>
+ * In addition HTTP POST returns the location of the order submitted in the response.
+ * <p>
+ * Calling GET/id/validated will block until the FAILED/VALIDATED order is available in
+ * the View.
+ * <p>
+ * The View can also be scaled out linearly simply by adding more instances of the
+ * view service, and requests to any of the REST endpoints will be automatically forwarded to the
+ * correct instance for the key requested orderId via Kafka's Queryable State feature.
+ * <p>
+ * Non-blocking IO is used for all operations other than the intialization of state stores on
+ * startup or rebalance which will block calling Jetty thread.
+ *<p>
+ * NB This demo code only includes a partial implementation of the holding of outstanding requests
+ * and as such would lead timeouts if used in a production use case.
  */
 @Path("v1")
 public class OrdersService implements Service {
