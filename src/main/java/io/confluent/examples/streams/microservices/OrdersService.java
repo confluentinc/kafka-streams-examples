@@ -225,7 +225,7 @@ public class OrdersService implements Service {
       }
       try {
         //Sleep a bit until metadata becomes available
-        Thread.sleep(Math.min(Long.valueOf(CALL_TIMEOUT), 200));
+        Thread.sleep(Math.min(Long.parseLong(CALL_TIMEOUT), 200));
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
@@ -364,14 +364,14 @@ public class OrdersService implements Service {
 
   public static void main(String[] args) throws Exception {
 
-    final String bootstrapServers = args.length > 1 ? args[1] : "localhost:9092";
-    final String schemaRegistryUrl = args.length > 2 ? args[2] : "http://localhost:8081";
-    final String restHostname = args.length > 3 ? args[3] : "localhost";
-    final String restPort = args.length > 4 ? args[4] : Integer.toString(randomFreeLocalPort());
+    final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
+    final String schemaRegistryUrl = args.length > 1 ? args[1] : "http://localhost:8081";
+    final String restHostname = args.length > 2 ? args[2] : "localhost";
+    final String restPort = args.length > 3 ? args[3] : Integer.toString(randomFreeLocalPort());
 
     Schemas.configureSerdesWithSchemaRegistryUrl(schemaRegistryUrl);
     OrdersService service = new OrdersService(
-        new HostInfo(restHostname, Integer.valueOf(restPort)));
+        new HostInfo(restHostname, Integer.parseInt(restPort)));
     service.start(bootstrapServers);
     addShutdownHookAndBlock(service);
   }

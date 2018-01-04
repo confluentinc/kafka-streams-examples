@@ -5,6 +5,7 @@ import io.confluent.examples.streams.microservices.Service;
 import io.confluent.examples.streams.microservices.domain.Schemas;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -48,8 +49,8 @@ public class MicroserviceUtils {
           "[<bootstrap.servers> (optional, default: " + DEFAULT_BOOTSTRAP_SERVERS + ")] " +
           "[<schema.registry.url> (optional, default: " + DEFAULT_SCHEMA_REGISTRY_URL + ")] ");
     }
-    final String bootstrapServers = args.length > 1 ? args[1] : "localhost:9092";
-    final String schemaRegistryUrl = args.length > 2 ? args[2] : "http://localhost:8081";
+    final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
+    final String schemaRegistryUrl = args.length > 1 ? args[1] : "http://localhost:8081";
 
     log.info("Connecting to Kafka cluster via bootstrap servers " + bootstrapServers);
     log.info("Connecting to Confluent schema registry at " + schemaRegistryUrl);
@@ -105,7 +106,7 @@ public class MicroserviceUtils {
 
         @Override
         public byte[] serialize(String topic, Product pt) {
-          return pt.toString().getBytes();
+          return pt.toString().getBytes(StandardCharsets.UTF_8);
         }
 
         @Override
@@ -123,7 +124,7 @@ public class MicroserviceUtils {
 
         @Override
         public Product deserialize(String topic, byte[] bytes) {
-          return Product.valueOf(new String(bytes));
+          return Product.valueOf(new String(bytes, StandardCharsets.UTF_8));
         }
 
         @Override

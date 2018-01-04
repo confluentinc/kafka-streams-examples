@@ -91,6 +91,7 @@ public class GlobalKTablesExampleDriver {
     while(received < expected) {
       final ConsumerRecords<Long, EnrichedOrder> records = consumer.poll(Long.MAX_VALUE);
       records.forEach(record -> System.out.println(record.value()));
+      received += records.count();
     }
     consumer.close();
   }
