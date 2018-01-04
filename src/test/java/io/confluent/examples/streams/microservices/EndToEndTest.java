@@ -9,6 +9,8 @@ import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
 import io.confluent.examples.streams.microservices.util.Paths;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.state.HostInfo;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,11 +41,12 @@ public class EndToEndTest extends MicroserviceTestUtils {
   private OrderBean returnedBean;
   private long startTime;
   private Paths path;
+  private Client client;
 
   @Test
   public void shouldCreateNewOrderAndGetBackValidatedOrder() {
     OrderBean inputOrder = new OrderBean(id(1L), 2L, OrderState.CREATED, Product.JUMPERS, 1, 1d);
-    Client client = ClientBuilder.newClient();
+    client = getClient();
 
     //Add inventory required by the inventory service with enough items in stock to pass validation
     List<KeyValue<Product, Integer>> inventory = asList(
@@ -61,9 +64,10 @@ public class EndToEndTest extends MicroserviceTestUtils {
     assertThat(returnedBean.getState()).isEqualTo(OrderState.VALIDATED);
   }
 
+
   @Test
-  public void shouldProcessManyValidOrdersEndToEnd() {
-    Client client = ClientBuilder.newClient();
+  public void shouldProcessManyValidOrdersEndToEnd() throws Exception {
+    client = getClient();
 
     //Add inventory required by the inventory service
     List<KeyValue<Product, Integer>> inventory = asList(
@@ -97,8 +101,8 @@ public class EndToEndTest extends MicroserviceTestUtils {
   }
 
   @Test
-  public void shouldProcessManyInvalidOrdersEndToEnd() {
-    final Client client = ClientBuilder.newClient();
+  public void shouldProcessManyInvalidOrdersEndToEnd() throws Exception {
+    client = getClient();
 
     //Add inventory required by the inventory service
     List<KeyValue<Product, Integer>> inventory = asList(
@@ -129,6 +133,13 @@ public class EndToEndTest extends MicroserviceTestUtils {
           inputOrder.getPrice()
       ));
     }
+  }
+
+  private Client getClient() {
+    final ClientConfig clientConfig = new ClientConfig();
+    clientConfig.property(ClientProperties.CONNECT_TIMEOUT, 60000)
+        .property(ClientProperties.READ_TIMEOUT, 60000);
+    return ClientBuilder.newClient(clientConfig);
   }
 
   private void startTimer() {
@@ -166,6 +177,9 @@ public class EndToEndTest extends MicroserviceTestUtils {
     services.forEach(Service::stop);
     stopTailers();
     CLUSTER.stop();
+    if (client != null) {
+      client.close();
+    }
   }
 
   private GenericType<OrderBean> newBean() {
