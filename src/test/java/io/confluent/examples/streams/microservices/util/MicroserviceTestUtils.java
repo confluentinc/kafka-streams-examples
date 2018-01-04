@@ -19,6 +19,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.test.TestUtils;
+import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +54,14 @@ public class MicroserviceTestUtils {
           put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, "30000");
         }
       });
+
+  @AfterClass
+  public static void stopCluster() {
+    log.info("stopping cluster");
+    if (CLUSTER.isRunning()) {
+      CLUSTER.stop();
+    }
+  }
 
   protected static Properties producerConfig(EmbeddedSingleNodeKafkaCluster cluster) {
     Properties producerConfig = new Properties();
