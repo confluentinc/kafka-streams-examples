@@ -58,7 +58,7 @@ public class ValidationsAggregatorService implements Service {
         .aggregate(
             () -> 0L,
             (id, result, total) -> PASS.equals(result.getValidationResult()) ? total + 1 : total,
-            TimeWindows.of(5 * MIN),
+            TimeWindows.of(5 * MIN).advanceBy(1 * MIN),
             Serdes.Long()
         )
         //get rid of window
@@ -67,7 +67,7 @@ public class ValidationsAggregatorService implements Service {
         .filter((k, total) -> total >= numberOfRules)
         //Join back to orders
         .join(orders, (id, order) ->
-                //Set the order to Validated and bump the version on it's ID
+                //Set the order to Validated
                 newBuilder(order).setState(VALIDATED).build()
             , JoinWindows.of(5 * MIN), ORDERS.keySerde(), Serdes.Long(), ORDERS.valueSerde())
         //Push the validated order into the orders topic
