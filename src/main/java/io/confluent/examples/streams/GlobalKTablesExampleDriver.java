@@ -73,9 +73,11 @@ public class GlobalKTablesExampleDriver {
     receiveEnrichedOrders(bootstrapServers, schemaRegistryUrl, RECORDS_TO_GENERATE);
   }
 
-  private static void receiveEnrichedOrders(final String bootstrapServers,
-                                                           final String schemaRegistryUrl,
-                                                           final int expected) {
+  private static void receiveEnrichedOrders(
+      final String bootstrapServers,
+      final String schemaRegistryUrl,
+      final int expected
+  ) {
     final Properties consumerProps = new Properties();
     consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "global-tables-consumer");
@@ -91,14 +93,16 @@ public class GlobalKTablesExampleDriver {
     while(received < expected) {
       final ConsumerRecords<Long, EnrichedOrder> records = consumer.poll(Long.MAX_VALUE);
       records.forEach(record -> System.out.println(record.value()));
+      received += records.count();
     }
     consumer.close();
   }
 
-  static List<Customer> generateCustomers(final String bootstrapServers,
-                                                 final String schemaRegistryUrl,
-                                                 final int count) {
-
+  static List<Customer> generateCustomers(
+      final String bootstrapServers,
+      final String schemaRegistryUrl,
+      final int count
+  ) {
     final SpecificAvroSerde<Customer> customerSerde = createSerde(schemaRegistryUrl);
     final Properties producerProperties = new Properties();
     producerProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -120,10 +124,11 @@ public class GlobalKTablesExampleDriver {
     return allCustomers;
   }
 
-  static List<Product> generateProducts(final String bootstrapServers,
-                                               final String schemaRegistryUrl,
-                                               final int count) {
-
+  static List<Product> generateProducts(
+      final String bootstrapServers,
+      final String schemaRegistryUrl,
+      final int count
+  ) {
     final SpecificAvroSerde<Product> productSerde = createSerde(schemaRegistryUrl);
 
     final Properties producerProperties = new Properties();
@@ -144,12 +149,13 @@ public class GlobalKTablesExampleDriver {
     return allProducts;
   }
 
-  static List<Order> generateOrders(final String bootstrapServers,
-                                             final String schemaRegistryUrl,
-                                             final int numCustomers,
-                                             final int numProducts,
-                                             final int count) {
-
+  static List<Order> generateOrders(
+      final String bootstrapServers,
+      final String schemaRegistryUrl,
+      final int numCustomers,
+      final int numProducts,
+      final int count
+  ) {
     final SpecificAvroSerde<Order> ordersSerde = createSerde(schemaRegistryUrl);
 
     final Properties producerProperties = new Properties();

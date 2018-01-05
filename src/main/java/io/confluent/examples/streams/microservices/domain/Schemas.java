@@ -57,7 +57,7 @@ public class Schemas {
 
   public static class Topics {
 
-    public static Map<String, Topic> ALL = new HashMap<>();
+    public static final Map<String, Topic> ALL = new HashMap<>();
     public static Topic<String, Order> ORDERS;
     public static Topic<String, Payment> PAYMENTS;
     public static Topic<Long, Customer> CUSTOMERS;

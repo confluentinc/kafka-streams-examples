@@ -150,7 +150,7 @@ public class WordCountInteractiveQueriesExample {
     if (args.length == 0 || args.length > 2) {
       throw new IllegalArgumentException("usage: ... <portForRestEndPoint> [<bootstrap.servers> (optional)]");
     }
-    final int port = Integer.valueOf(args[0]);
+    final int port = Integer.parseInt(args[0]);
     final String bootstrapServers = args.length > 1 ? args[1] : "localhost:9092";
 
     Properties streamsConfiguration = new Properties();
