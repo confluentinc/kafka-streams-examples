@@ -12,16 +12,20 @@ import io.confluent.examples.streams.avro.microservices.OrderValidation;
 import io.confluent.examples.streams.avro.microservices.Product;
 import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
 import io.confluent.examples.streams.microservices.util.MicroserviceUtils;
+import java.util.HashMap;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
-import org.apache.kafka.streams.processor.StateStoreSupplier;
 import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,15 +65,20 @@ public class InventoryService implements Service {
   private KafkaStreams processStreams(final String bootstrapServers, final String stateDir) {
 
     //Latch onto instances of the orders and inventory topics
-    KStreamBuilder builder = new KStreamBuilder();
-    KStream<String, Order> orders = builder.stream(Topics.ORDERS.keySerde(), Topics.ORDERS.valueSerde(), Topics.ORDERS.name());
-    KTable<Product, Integer> warehouseInventory = builder.table(Topics.WAREHOUSE_INVENTORY.keySerde(), Topics.WAREHOUSE_INVENTORY.valueSerde(), Topics.WAREHOUSE_INVENTORY.name());
+    StreamsBuilder builder = new StreamsBuilder();
+    KStream<String, Order> orders = builder
+        .stream(Topics.ORDERS.name(),
+            Consumed.with(Topics.ORDERS.keySerde(), Topics.ORDERS.valueSerde()));
+    KTable<Product, Integer> warehouseInventory = builder
+        .table(Topics.WAREHOUSE_INVENTORY.name(), Consumed
+            .with(Topics.WAREHOUSE_INVENTORY.keySerde(), Topics.WAREHOUSE_INVENTORY.valueSerde()));
 
     //Create a store to reserve inventory whilst the order is processed.
     //This will be prepopulated from Kafka before the service starts processing
-    StateStoreSupplier reservedStock = Stores.create(RESERVED_STOCK_STORE_NAME)
-        .withKeys(Topics.WAREHOUSE_INVENTORY.keySerde()).withValues(Serdes.Long())
-        .persistent().build();
+    StoreBuilder reservedStock = Stores
+        .keyValueStoreBuilder(Stores.persistentKeyValueStore(RESERVED_STOCK_STORE_NAME),
+            Topics.WAREHOUSE_INVENTORY.keySerde(), Serdes.Long())
+        .withLoggingEnabled(new HashMap<>());
     builder.addStateStore(reservedStock);
 
     //First change orders stream to be keyed by Product (so we can join with warehouse inventory)
@@ -77,18 +86,20 @@ public class InventoryService implements Service {
         //Limit to newly created orders
         .filter((id, order) -> OrderState.CREATED.equals(order.getState()))
         //Join Orders to Inventory so we can compare each order to its corresponding stock value
-        .join(warehouseInventory, KeyValue::new, Topics.WAREHOUSE_INVENTORY.keySerde(), Topics.ORDERS.valueSerde())
+        .join(warehouseInventory, KeyValue::new, Joined.with(Topics.WAREHOUSE_INVENTORY.keySerde(),
+            Topics.ORDERS.valueSerde(), Serdes.Integer()))
         //Validate the order based on how much stock we have both in the warehouse and locally 'reserved' stock
         .transform(InventoryValidator::new, RESERVED_STOCK_STORE_NAME)
         //Push the result into the Order Validations topic
-        .to(Topics.ORDER_VALIDATIONS.keySerde(), Topics.ORDER_VALIDATIONS.valueSerde(),
-            Topics.ORDER_VALIDATIONS.name());
+        .to(Topics.ORDER_VALIDATIONS.name(), Produced.with(Topics.ORDER_VALIDATIONS.keySerde(),
+            Topics.ORDER_VALIDATIONS.valueSerde()));
 
-    return new KafkaStreams(builder,
+    return new KafkaStreams(builder.build(),
         MicroserviceUtils.baseStreamsConfig(bootstrapServers, stateDir, INVENTORY_SERVICE_APP_ID));
   }
 
-  private static class InventoryValidator implements Transformer<Product, KeyValue<Order, Integer>, KeyValue<String, OrderValidation>> {
+  private static class InventoryValidator implements
+      Transformer<Product, KeyValue<Order, Integer>, KeyValue<String, OrderValidation>> {
 
     private KeyValueStore<Product, Long> reservedStocksStore;
 

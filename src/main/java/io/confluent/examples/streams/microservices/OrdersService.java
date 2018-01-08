@@ -43,14 +43,20 @@ import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.utils.Bytes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.errors.InvalidStateStoreException;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
+import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Predicate;
+import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.state.HostInfo;
+import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
+import org.apache.kafka.streams.state.Stores;
 import org.eclipse.jetty.server.Server;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ManagedAsync;
@@ -120,13 +126,20 @@ public class OrdersService implements Service {
    * we check to see if there is an outstanding HTTP GET request waiting to be
    * fulfilled.
    */
-  private KStreamBuilder createOrdersMaterializedView() {
-    KStreamBuilder builder = new KStreamBuilder();
-    builder.stream(ORDERS.keySerde(), ORDERS.valueSerde(), ORDERS.name())
-        .groupByKey(ORDERS.keySerde(), ORDERS.valueSerde())
-        .reduce((agg, newVal) -> newVal, ORDERS_STORE_NAME)
+  private StreamsBuilder createOrdersMaterializedView() {
+    StreamsBuilder builder = new StreamsBuilder();
+
+    builder.stream(ORDERS.name(), Consumed.with(ORDERS.keySerde(), ORDERS.valueSerde()))
+        .groupByKey(Serialized.with(ORDERS.keySerde(), ORDERS.valueSerde()))
+        .reduce((agg, newVal) -> newVal, store())
         .toStream().foreach(this::maybeCompleteLongPollGet);
     return builder;
+  }
+
+  private Materialized<String, Order, KeyValueStore<Bytes, byte[]>> store() {
+    return Materialized.<String, Order>as(Stores.persistentKeyValueStore(ORDERS_STORE_NAME))
+          .withKeySerde(ORDERS.keySerde())
+          .withValueSerde(ORDERS.valueSerde());
   }
 
   private void maybeCompleteLongPollGet(String id, Order order) {
@@ -171,6 +184,7 @@ public class OrdersService implements Service {
   }
 
   class FilteredResponse<K, V> {
+
     private AsyncResponse asyncResponse;
     private Predicate predicate;
 
@@ -188,7 +202,8 @@ public class OrdersService implements Service {
    * @param predicate a filter that for this fetch, so for example we might fetch only VALIDATED
    * orders.
    */
-  private void fetchLocal(String id, AsyncResponse asyncResponse, Predicate<String, Order> predicate) {
+  private void fetchLocal(String id, AsyncResponse asyncResponse,
+      Predicate<String, Order> predicate) {
     log.info("running GET on this node");
     try {
       Order order = ordersStore().get(id);
@@ -209,11 +224,10 @@ public class OrdersService implements Service {
   }
 
   /**
-   * Use Kafka Streams' Queryable State API to work out if a key/value pair is located on
-   * this node, or on another Kafka Streams node. This returned HostStoreInfo can be used
-   * to redirect an HTTP request to the node that has the data.
-   * <p>
-   * If metadata is available, which can happen on startup, or during a rebalance, block until it is.
+   * Use Kafka Streams' Queryable State API to work out if a key/value pair is located on this node,
+   * or on another Kafka Streams node. This returned HostStoreInfo can be used to redirect an HTTP
+   * request to the node that has the data. <p> If metadata is available, which can happen on
+   * startup, or during a rebalance, block until it is.
    */
   private HostStoreInfo getKeyLocationOrBlock(String id, AsyncResponse asyncResponse) {
     HostStoreInfo locationOfKey;
@@ -310,7 +324,7 @@ public class OrdersService implements Service {
   }
 
   private KafkaStreams startKStreams(String bootstrapServers) {
-    KafkaStreams streams = new KafkaStreams(createOrdersMaterializedView(),
+    KafkaStreams streams = new KafkaStreams(createOrdersMaterializedView().build(),
         config(bootstrapServers));
     metadataService = new MetadataService(streams);
     streams.cleanUp(); //don't do this in prod as it clears your state stores
