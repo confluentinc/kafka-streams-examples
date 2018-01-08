@@ -70,18 +70,20 @@ public class OrderDetailsService implements Service {
 
       while (running) {
         ConsumerRecords<String, Order> records = consumer.poll(100);
-        producer.beginTransaction();
-        for (ConsumerRecord<String, Order> record : records) {
-          Order order = record.value();
-          if (OrderState.CREATED.equals(order.getState())) {
-            //Validate the order then send the result (but note we are in a transaction so
-            //nothing will be "seen" downstream until we commit the transaction below)
-            producer.send(result(order, isValid(order) ? PASS : FAIL));
-            recordOffset(consumedOffsets, record);
+        if (records.count() > 0) {
+          producer.beginTransaction();
+          for (ConsumerRecord<String, Order> record : records) {
+            Order order = record.value();
+            if (OrderState.CREATED.equals(order.getState())) {
+              //Validate the order then send the result (but note we are in a transaction so
+              //nothing will be "seen" downstream until we commit the transaction below)
+              producer.send(result(order, isValid(order) ? PASS : FAIL));
+              recordOffset(consumedOffsets, record);
+            }
           }
+          producer.sendOffsetsToTransaction(consumedOffsets, CONSUMER_GROUP_ID);
+          producer.commitTransaction();
         }
-        producer.sendOffsetsToTransaction(consumedOffsets, CONSUMER_GROUP_ID);
-        producer.commitTransaction();
       }
     } finally {
       close();
@@ -90,8 +92,8 @@ public class OrderDetailsService implements Service {
 
   private void recordOffset(Map<TopicPartition, OffsetAndMetadata> consumedOffsets,
       ConsumerRecord<String, Order> record) {
-    consumedOffsets.put(new TopicPartition(record.topic(), record.partition()),
-        new OffsetAndMetadata(record.offset()));
+    OffsetAndMetadata nextOffset = new OffsetAndMetadata(record.offset() + 1);
+    consumedOffsets.put(new TopicPartition(record.topic(), record.partition()), nextOffset);
   }
 
   private ProducerRecord<String, OrderValidation> result(Order order,

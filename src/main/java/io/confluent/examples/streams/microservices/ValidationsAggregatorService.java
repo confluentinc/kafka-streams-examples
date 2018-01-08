@@ -15,11 +15,16 @@ import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.OrderState;
 import io.confluent.examples.streams.avro.microservices.OrderValidation;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.JoinWindows;
+import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
-import org.apache.kafka.streams.kstream.TimeWindows;
+import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.Serialized;
+import org.apache.kafka.streams.kstream.SessionWindows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +38,21 @@ public class ValidationsAggregatorService implements Service {
 
   private static final Logger log = LoggerFactory.getLogger(ValidationsAggregatorService.class);
   private static final String ORDERS_SERVICE_APP_ID = "orders-service";
+  private final Consumed<String, OrderValidation> serdes1 = Consumed
+      .with(ORDER_VALIDATIONS.keySerde(), ORDER_VALIDATIONS.valueSerde());
+  private final Consumed<String, Order> serdes2 = Consumed.with(ORDERS.keySerde(),
+      ORDERS.valueSerde());
+  private final Serialized<String, OrderValidation> serdes3 = Serialized
+      .with(ORDER_VALIDATIONS.keySerde(), ORDER_VALIDATIONS.valueSerde());
+  private final Joined<String, Long, Order> serdes4 = Joined
+      .with(ORDERS.keySerde(), Serdes.Long(), ORDERS.valueSerde());
+  private final Produced<String, Order> serdes5 = Produced
+      .with(ORDERS.keySerde(), ORDERS.valueSerde());
+  private final Serialized<String, Order> serdes6 = Serialized
+      .with(ORDERS.keySerde(), ORDERS.valueSerde());
+  private final Joined<String, OrderValidation, Order> serdes7 = Joined
+      .with(ORDERS.keySerde(), ORDER_VALIDATIONS.valueSerde(), ORDERS.valueSerde());
+
   private KafkaStreams streams;
 
   @Override
@@ -46,47 +66,50 @@ public class ValidationsAggregatorService implements Service {
   private KafkaStreams aggregateOrderValidations(String bootstrapServers, String stateDir) {
     final int numberOfRules = 3; //TODO put into a KTable to make dynamically configurable
 
-    KStreamBuilder builder = new KStreamBuilder();
+    StreamsBuilder builder = new StreamsBuilder();
     KStream<String, OrderValidation> validations = builder
-        .stream(ORDER_VALIDATIONS.keySerde(), ORDER_VALIDATIONS.valueSerde(), ORDER_VALIDATIONS.name());
+        .stream(ORDER_VALIDATIONS.name(), serdes1);
     KStream<String, Order> orders = builder
-        .stream(ORDERS.keySerde(), ORDERS.valueSerde(), ORDERS.name())
+        .stream(ORDERS.name(), serdes2)
         .filter((id, order) -> OrderState.CREATED.equals(order.getState()));
 
     //If all rules pass then validate the order
-    validations.groupByKey(ORDER_VALIDATIONS.keySerde(), ORDER_VALIDATIONS.valueSerde())
+    validations
+        .groupByKey(serdes3)
+        .windowedBy(SessionWindows.with(5 * MIN))
         .aggregate(
             () -> 0L,
             (id, result, total) -> PASS.equals(result.getValidationResult()) ? total + 1 : total,
-            TimeWindows.of(5 * MIN),
-            Serdes.Long()
+            (k, a, b) -> b == null ? a : b, //include a merger as we're using session windows.
+            Materialized.with(null, Serdes.Long())
         )
         //get rid of window
         .toStream((windowedKey, total) -> windowedKey.key())
+        //When elements are evicted from a session window they create delete events. Filter these.
+        .filter((k1, v) -> v != null)
         //only include results were all rules passed validation
         .filter((k, total) -> total >= numberOfRules)
         //Join back to orders
         .join(orders, (id, order) ->
-                //Set the order to Validated and bump the version on it's ID
+                //Set the order to Validated
                 newBuilder(order).setState(VALIDATED).build()
-            , JoinWindows.of(5 * MIN), ORDERS.keySerde(), Serdes.Long(), ORDERS.valueSerde())
+            , JoinWindows.of(5 * MIN), serdes4)
         //Push the validated order into the orders topic
-        .to(ORDERS.keySerde(), ORDERS.valueSerde(), ORDERS.name());
+        .to(ORDERS.name(), serdes5);
 
     //If any rule fails then fail the order
     validations.filter((id, rule) -> FAIL.equals(rule.getValidationResult()))
         .join(orders, (id, order) ->
                 //Set the order to Failed and bump the version on it's ID
                 newBuilder(order).setState(OrderState.FAILED).build(),
-            JoinWindows.of(5 * MIN), ORDERS.keySerde(), ORDER_VALIDATIONS.valueSerde(),
-            ORDERS.valueSerde())
+            JoinWindows.of(5 * MIN), serdes7)
         //there could be multiple failed rules for each order so collapse to a single order
-        .groupByKey(ORDERS.keySerde(), ORDERS.valueSerde())
+        .groupByKey(serdes6)
         .reduce((order, v1) -> order)
         //Push the validated order into the orders topic
-        .to(ORDERS.keySerde(), ORDERS.valueSerde(), ORDERS.name());
+        .toStream().to(ORDERS.name(), Produced.with(ORDERS.keySerde(), ORDERS.valueSerde()));
 
-    return new KafkaStreams(builder,
+    return new KafkaStreams(builder.build(),
         baseStreamsConfig(bootstrapServers, stateDir, ORDERS_SERVICE_APP_ID));
   }
 
