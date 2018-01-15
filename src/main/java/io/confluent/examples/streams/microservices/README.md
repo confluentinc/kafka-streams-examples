@@ -18,6 +18,7 @@ NB - this is demo code, not a production system and certain elements are left fo
 To play with this ecosystem the simplest way is to run the tests and fiddle with the code. Each test boots a self-contained Kafka cluster so it's easy to play with different queries and configurations. 
 The best place to start is [EndToEndTest.java](https://github.com/confluentinc/kafka-streams-examples/blob/3.3.1-post/src/test/java/io/confluent/examples/streams/microservices/EndToEndTest.java)
 
+If you prefer you can also run the services individually. To do this you need to start Kafka and Zookeeper independently, compile this project with maven, then run each service. There are instructions regarding how to do this in top-level readme of this project. 
 
 # Running the Examples:
 * Requires Java 1.8
@@ -26,5 +27,5 @@ The best place to start is [EndToEndTest.java](https://github.com/confluentinc/k
 # Outstanding Work
 - Currently bare bones testing only. Should add tests using KStreamTestDriver to demonstrate how to build tests quickly. 
 - Test framework needs to implement multiple Kafka instances to ensure accuracy in partitioned mode. 
-- The implementation of the Order Details Service using a producer and consumer probably isn't that useful. Lets port this to KStreams
+- The implementation of the Order Details Service using a producer and consumer. This is useful for demo purposes, but would be better implemented as a streams job (less code!). 
 - Demo embedded KSQL around the input of Inventory (which can be done without Avro support)
