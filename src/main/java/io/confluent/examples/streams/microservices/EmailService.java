@@ -68,15 +68,9 @@ public class EmailService implements Service {
         JoinWindows.of(1 * MIN), serdes)
         //Next join to the GKTable of Customers
         .join(customers,
-            (key1, tuple) -> {
-              System.out.println("1->"+tuple.order.getCustomerId());
-              return tuple.order.getCustomerId();
-            },
+            (key1, tuple) -> tuple.order.getCustomerId(),
             // note how, because we use a GKtable, we can join on any attribute of the Customer.
-            (tuple, customer) -> {
-              System.out.println("2->"+customer);
-              return tuple.setCustomer(customer);
-            })
+            (tuple, customer) -> tuple.setCustomer(customer))
         //Now for each tuple send an email.
         .peek((key, emailTuple)
             -> emailer.sendEmail(emailTuple)
