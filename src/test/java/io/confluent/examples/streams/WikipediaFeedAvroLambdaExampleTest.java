@@ -18,6 +18,7 @@ package io.confluent.examples.streams;
 import io.confluent.examples.streams.avro.WikiFeed;
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import kafka.server.KafkaConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -35,7 +36,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,7 +47,11 @@ import static org.hamcrest.core.IsEqual.equalTo;
 public class WikipediaFeedAvroLambdaExampleTest {
 
   @ClassRule
-  public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
+  public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster(new Properties() {
+    {
+      put(KafkaConfig.ZkConnectionTimeoutMsProp(), "30000");
+    }
+  });
   private KafkaStreams streams;
 
   @BeforeClass
@@ -57,7 +61,7 @@ public class WikipediaFeedAvroLambdaExampleTest {
   }
 
   @Before
-  public void createStreams() throws IOException {
+  public void createStreams() {
     streams =
         WikipediaFeedAvroLambdaExample.buildWikipediaFeed(CLUSTER.bootstrapServers(),
                                                           CLUSTER.schemaRegistryUrl(),
@@ -70,7 +74,7 @@ public class WikipediaFeedAvroLambdaExampleTest {
   }
 
   @Test
-  public void shouldRunTheWikipediaFeedLambdaExample() throws Exception {
+  public void shouldRunTheWikipediaFeedLambdaExample() {
     final Properties props = new Properties();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
