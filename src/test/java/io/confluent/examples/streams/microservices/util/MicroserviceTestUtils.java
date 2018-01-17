@@ -51,7 +51,7 @@ public class MicroserviceTestUtils {
           put(KafkaConfig.TransactionsTopicReplicationFactorProp(), "1");
           put(KafkaConfig.TransactionsTopicMinISRProp(), "1");
           put(KafkaConfig.TransactionsTopicPartitionsProp(), "1");
-          put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, "30000");
+          put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, "60000");
         }
       });
 
