@@ -93,8 +93,8 @@ public class FanoutLambdaIntegrationTest {
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
     KStream<byte[], String> stream1 = builder.stream(inputTopicA);
-    KStream<byte[], String> stream2 = stream1.mapValues(String::toUpperCase);
-    KStream<byte[], String> stream3 = stream1.mapValues(String::toLowerCase);
+    KStream<byte[], String> stream2 = stream1.mapValues(s -> s.toUpperCase());
+    KStream<byte[], String> stream3 = stream1.mapValues(s -> s.toLowerCase());
     stream2.to(outputTopicB);
     stream3.to(outputTopicC);
 
