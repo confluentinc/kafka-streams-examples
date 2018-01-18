@@ -75,7 +75,7 @@ public class MapFunctionLambdaIntegrationTest {
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
     KStream<byte[], String> input = builder.stream(inputTopic);
-    KStream<byte[], String> uppercased = input.mapValues(String::toUpperCase);
+    KStream<byte[], String> uppercased = input.mapValues(s -> s.toUpperCase());
     uppercased.to(outputTopic);
 
     KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
