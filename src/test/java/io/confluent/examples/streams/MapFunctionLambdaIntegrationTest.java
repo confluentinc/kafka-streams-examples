@@ -27,6 +27,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.ValueMapper;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -52,7 +53,7 @@ public class MapFunctionLambdaIntegrationTest {
   private static String outputTopic = "outputTopic";
 
   @BeforeClass
-  public static void startKafkaCluster() throws Exception {
+  public static void startKafkaCluster() {
     CLUSTER.createTopic(inputTopic);
     CLUSTER.createTopic(outputTopic);
   }
@@ -75,7 +76,7 @@ public class MapFunctionLambdaIntegrationTest {
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
     KStream<byte[], String> input = builder.stream(inputTopic);
-    KStream<byte[], String> uppercased = input.mapValues(String::toUpperCase);
+    KStream<byte[], String> uppercased = input.mapValues((ValueMapper<String, String>) String::toUpperCase);
     uppercased.to(outputTopic);
 
     KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
