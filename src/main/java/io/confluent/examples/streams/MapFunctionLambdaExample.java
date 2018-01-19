@@ -24,6 +24,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.ValueMapper;
 
 import java.util.Properties;
 
@@ -95,7 +96,7 @@ import java.util.Properties;
  */
 public class MapFunctionLambdaExample {
 
-  public static void main(final String[] args) throws Exception {
+  public static void main(final String[] args) {
     final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
     final Properties streamsConfiguration = new Properties();
     // Give the Streams application a unique name.  The name must be unique in the Kafka cluster
@@ -120,7 +121,7 @@ public class MapFunctionLambdaExample {
     final KStream<byte[], String> textLines = builder.stream("TextLinesTopic", Consumed.with(byteArraySerde, stringSerde));
 
     // Variant 1: using `mapValues`
-    final KStream<byte[], String> uppercasedWithMapValues = textLines.mapValues(String::toUpperCase);
+    final KStream<byte[], String> uppercasedWithMapValues = textLines.mapValues((ValueMapper<String, String>) String::toLowerCase);
 
     // Write (i.e. persist) the results to a new Kafka topic called "UppercasedTextLinesTopic".
     //
