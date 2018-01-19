@@ -21,6 +21,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
+import java.net.BindException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,7 +58,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
     //When we POST order and immediately GET on the returned location
     client.target(path.urlPost()).request(APPLICATION_JSON_TYPE).post(Entity.json(inputOrder));
-    returnedBean = client.target(path.urlGetValidated(1)).queryParam("timeout", MIN / 2)
+    returnedBean = client.target(path.urlGetValidated(1)).queryParam("timeout", MIN)
         .request(APPLICATION_JSON_TYPE).get(newBean());
 
     //Then
@@ -84,7 +85,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
       //POST & GET order
       client.target(path.urlPost()).request(APPLICATION_JSON_TYPE).post(Entity.json(inputOrder));
-      returnedBean = client.target(path.urlGetValidated(i)).queryParam("timeout", MIN / 2)
+      returnedBean = client.target(path.urlGetValidated(i)).queryParam("timeout", MIN)
           .request(APPLICATION_JSON_TYPE).get(newBean());
 
       endTimer();
@@ -119,7 +120,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
       //POST & GET order
       client.target(path.urlPost()).request(APPLICATION_JSON_TYPE).post(Entity.json(inputOrder));
-      returnedBean = client.target(path.urlGetValidated(i)).queryParam("timeout", MIN / 2)
+      returnedBean = client.target(path.urlGetValidated(i)).queryParam("timeout", MIN)
           .request(APPLICATION_JSON_TYPE).get(newBean());
 
       endTimer();
@@ -158,16 +159,36 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
     Topics.ALL.keySet().forEach(CLUSTER::createTopic);
     Schemas.configureSerdesWithSchemaRegistryUrl(CLUSTER.schemaRegistryUrl());
-    int restPort = randomFreeLocalPort();
 
     services.add(new FraudService());
     services.add(new InventoryService());
     services.add(new OrderDetailsService());
     services.add(new ValidationsAggregatorService());
-    services.add(new OrdersService(new HostInfo(HOST, restPort)));
 
     tailAllTopicsToConsole(CLUSTER.bootstrapServers());
     services.forEach(s -> s.start(CLUSTER.bootstrapServers()));
+
+    int restPort = -1;
+    int retries = 5;
+    while (retries > 0) {
+      restPort = randomFreeLocalPort();
+      final OrdersService ordersService = new OrdersService(new HostInfo(HOST, restPort));
+      try {
+        ordersService.start(CLUSTER.bootstrapServers());
+        services.add(ordersService);
+        break;
+      } catch (final RuntimeException exception) {
+        if (exception.getCause() instanceof BindException) {
+          --retries;
+        } else {
+          throw exception;
+        }
+        ordersService.stop();
+      }
+    }
+    if (retries == 0) {
+      throw new RuntimeException("Could not get free port after 5 retries.");
+    }
 
     path = new Paths("localhost", restPort);
   }
