@@ -19,13 +19,11 @@ import io.confluent.examples.streams.zookeeper.ZooKeeperEmbedded;
 import io.confluent.kafka.schemaregistry.RestApp;
 import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
 import kafka.server.KafkaConfig$;
-import org.apache.curator.test.InstanceSpec;
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.BindException;
 import java.util.Properties;
 
 /**
@@ -78,25 +76,8 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     log.debug("Kafka instance is running at {}, connected to ZooKeeper at {}",
         broker.brokerList(), broker.zookeeperConnect());
 
-    RestApp schemaRegistry = null;
-    int retries = 5;
-    while (retries > 0) {
-      schemaRegistry = new RestApp(
-          InstanceSpec.getRandomPort(),
-          zookeeperConnect(),
-          KAFKA_SCHEMAS_TOPIC, AVRO_COMPATIBILITY_TYPE);
-      try {
-        schemaRegistry.start();
-        break;
-      } catch (final BindException exception) {
-        --retries;
-        schemaRegistry.stop();
-      }
-    }
-    if (retries == 0) {
-      throw new RuntimeException("Could not get free port after 5 retries.");
-    }
-    this.schemaRegistry = schemaRegistry;
+    schemaRegistry = new RestApp(0, zookeeperConnect(), KAFKA_SCHEMAS_TOPIC, AVRO_COMPATIBILITY_TYPE);
+    schemaRegistry.start();
     running = true;
   }
 
