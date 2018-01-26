@@ -18,13 +18,12 @@ package io.confluent.examples.streams
 import java.util
 import java.util.Properties
 
-import io.confluent.examples.streams.algebird.{CMSStore, CMSStoreBuilder}
+import io.confluent.examples.streams.algebird.{CMSStore, CMSStoreBuilder, ProbabilisticCounter}
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.kstream.{KStream, Produced, Transformer, TransformerSupplier}
-import org.apache.kafka.streams.processor.ProcessorContext
+import org.apache.kafka.streams.kstream.{KStream, Produced, TransformerSupplier}
 import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsBuilder, StreamsConfig}
 import org.apache.kafka.test.TestUtils
 import org.assertj.core.api.Assertions.assertThat
@@ -35,7 +34,7 @@ import org.scalatest.junit.AssertionsForJUnit
   * End-to-end integration test that demonstrates how to probabilistically count items in an input stream.
   *
   * This example uses a custom state store implementation, [[CMSStore]], that is backed by a
-  * Count-Min Sketch data structure.
+  * Count-Min Sketch data structure.  The algorithm is WordCount.
   */
 class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
 
@@ -96,46 +95,8 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
     }
 
     val builder: StreamsBuilder = new StreamsBuilder()
-
     val cmsStoreName = "cms-store"
-    val cmsStoreBuilder = {
-      val changeloggingEnabled = true
-      val changelogConfig: util.HashMap[String, String] = {
-        val cfg = new java.util.HashMap[String, String]
-        // The CMSStore's changelog will typically have rather few and small records per partition.
-        // To improve efficiency we thus set a smaller log segment size than Kafka's default of 1GB.
-        val segmentSizeBytes = (20 * 1024 * 1024).toString
-        cfg.put("segment.bytes", segmentSizeBytes)
-        cfg
-      }
-      new CMSStoreBuilder[String](cmsStoreName, Serdes.String())
-        .withLoggingEnabled(changelogConfig)
-    }
-    builder.addStateStore(cmsStoreBuilder)
-
-    class ProbabilisticCounter extends Transformer[Array[Byte], String, KeyValue[String, Long]] {
-
-      private var cmsState: CMSStore[String] = _
-      private var processorContext: ProcessorContext = _
-
-      override def init(processorContext: ProcessorContext): Unit = {
-        this.processorContext = processorContext
-        cmsState = this.processorContext.getStateStore(cmsStoreName).asInstanceOf[CMSStore[String]]
-      }
-
-      override def transform(key: Array[Byte], value: String): KeyValue[String, Long] = {
-        // Count the record value, think: "+ 1"
-        cmsState.put(value, this.processorContext.timestamp())
-
-        // In this example: emit the latest count estimate for the record value.  We could also do
-        // something different, e.g. periodically output the latest heavy hitters via `punctuate`.
-        KeyValue.pair[String, Long](value, cmsState.get(value))
-      }
-
-      override def punctuate(l: Long): KeyValue[String, Long] = null
-
-      override def close(): Unit = {}
-    }
+    builder.addStateStore(createCMSStoreBuilder(cmsStoreName))
 
     // Read the input from Kafka.
     val textLines: KStream[Array[Byte], String] = builder.stream(inputTopic)
@@ -145,10 +106,10 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
     import collection.JavaConverters.asJavaIterableConverter
 
     val approximateWordCounts: KStream[String, Long] = textLines
-        .flatMapValues(value => value.toLowerCase.split("\\W+").toIterable.asJava)
+        .flatMapValues(textLine => textLine.toLowerCase.split("\\W+").toIterable.asJava)
         .transform(
           new TransformerSupplier[Array[Byte], String, KeyValue[String, Long]] {
-            override def get() = new ProbabilisticCounter
+            override def get() = new ProbabilisticCounter(cmsStoreName)
           },
           cmsStoreName)
 
@@ -195,6 +156,19 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
     // will actually be exact counts.  However, for large amounts of input data we would expect to
     // observe approximate counts (where the approximate counts would be >= true exact counts).
     assertThat(actualWordCounts).containsExactlyElementsOf(expectedWordCounts.asJava)
+  }
+
+  private def createCMSStoreBuilder(cmsStoreName: String): CMSStoreBuilder[String] = {
+    val changelogConfig: util.HashMap[String, String] = {
+      val cfg = new java.util.HashMap[String, String]
+      // The CMSStore's changelog will typically have rather few and small records per partition.
+      // To improve efficiency we thus set a smaller log segment size than Kafka's default of 1GB.
+      val segmentSizeBytes = (20 * 1024 * 1024).toString
+      cfg.put("segment.bytes", segmentSizeBytes)
+      cfg
+    }
+    new CMSStoreBuilder[String](cmsStoreName, Serdes.String())
+        .withLoggingEnabled(changelogConfig)
   }
 
 }
