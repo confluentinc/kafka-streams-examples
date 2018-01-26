@@ -31,14 +31,13 @@ import org.apache.kafka.streams.state.StoreBuilder
   * default of 1GB.
   *
   * {{{
-  * val changeloggingEnabled = true
   * val changelogConfig = {
   *   val cfg = new java.util.HashMap[String, String]
   *   val segmentSizeBytes = (20 * 1024 * 1024).toString
   *   cfg.put("segment.bytes", segmentSizeBytes)
   *   cfg
   * }
-  * new CMSStoreSupplier[String](cmsStoreName, Serdes.String(), changeloggingEnabled, changelogConfig)
+  * new CMSStoreBuilder[String](cmsStoreName, Serdes.String()).withLoggingEnabled(changelogConfig)
   * }}}
   */
 class CMSStoreBuilder[T: CMSHasher](val name: String,
@@ -53,6 +52,9 @@ class CMSStoreBuilder[T: CMSHasher](val name: String,
 
   override def withCachingEnabled() = throw new UnsupportedOperationException("caching not supported")
 
+  /**
+    * To enable fault-tolerance for the [[CMSStore]].
+    */
   override def withLoggingEnabled(config: util.Map[String, String]): CMSStoreBuilder[T] = {
     loggingEnabled = true
     logConfig.clear()
@@ -60,6 +62,9 @@ class CMSStoreBuilder[T: CMSHasher](val name: String,
     this
   }
 
+  /**
+    * To disable fault-tolerance for the [[CMSStore]].
+    */
   override def withLoggingDisabled(): CMSStoreBuilder[T] = {
     loggingEnabled = false
     logConfig.clear()
