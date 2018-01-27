@@ -1,14 +1,5 @@
 package io.confluent.examples.streams.microservices;
 
-import static io.confluent.examples.streams.avro.microservices.Order.newBuilder;
-import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.MIN;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.randomFreeLocalPort;
-import static java.util.Arrays.asList;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.junit.Assert.fail;
-
 import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.OrderState;
 import io.confluent.examples.streams.avro.microservices.Product;
@@ -17,40 +8,39 @@ import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
 import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
 import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
 import io.confluent.examples.streams.microservices.util.Paths;
-import java.net.HttpURLConnection;
+import org.junit.After;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
-import org.apache.kafka.streams.state.HostInfo;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import java.net.HttpURLConnection;
+
+import static io.confluent.examples.streams.avro.microservices.Order.newBuilder;
+import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.MIN;
+import static java.util.Arrays.asList;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.junit.Assert.fail;
 
 public class OrdersServiceTest extends MicroserviceTestUtils {
 
-  private int port;
   private OrdersService rest;
   private OrdersService rest2;
-  private Paths paths;
 
   @BeforeClass
-  public static void startKafkaCluster() throws Exception {
+  public static void startKafkaCluster() {
     CLUSTER.createTopic(Topics.ORDERS.name());
     Schemas.configureSerdesWithSchemaRegistryUrl(CLUSTER.schemaRegistryUrl());
   }
 
-  @Before
-  public void start() throws Exception {
-    port = randomFreeLocalPort();
-    paths = new Paths("localhost", port);
-  }
-
   @After
-  public void shutdown() throws Exception {
+  public void shutdown() {
     if (rest != null) {
       rest.stop();
     }
@@ -60,14 +50,15 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
   }
 
   @Test
-  public void shouldPostOrderAndGetItBack() throws Exception {
+  public void shouldPostOrderAndGetItBack() {
     OrderBean bean = new OrderBean(id(1L), 2L, OrderState.CREATED, Product.JUMPERS, 10, 100d);
 
     final Client client = ClientBuilder.newClient();
 
     //Given a rest service
-    rest = new OrdersService(new HostInfo("localhost", port));
+    rest = new OrdersService("localhost");
     rest.start(CLUSTER.bootstrapServers());
+    Paths paths = new Paths("localhost", rest.port());
 
     //When we POST an order
     Response response = client.target(paths.urlPost())
@@ -107,10 +98,9 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
     final Client client = ClientBuilder.newClient();
 
     //Given a rest service
-    rest = new OrdersService(
-        new HostInfo("localhost", port)
-    );
+    rest = new OrdersService("localhost");
     rest.start(CLUSTER.bootstrapServers());
+    Paths paths = new Paths("localhost", rest.port());
 
     //When we post an order
     client.target(paths.urlPost())
@@ -139,10 +129,9 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
     final Client client = ClientBuilder.newClient();
 
     //Start the rest interface
-    rest = new OrdersService(
-        new HostInfo("localhost", port)
-    );
+    rest = new OrdersService("localhost");
     rest.start(CLUSTER.bootstrapServers());
+    Paths paths = new Paths("localhost", rest.port());
 
     //Then GET order should timeout
     try {
@@ -160,17 +149,15 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
   @Test
   public void shouldGetOrderByIdWhenOnDifferentHost() throws Exception {
     OrderBean order = new OrderBean(id(1L), 2L, OrderState.VALIDATED, Product.JUMPERS, 10, 100d);
-    int port1 = randomFreeLocalPort();
-    int port2 = randomFreeLocalPort();
     final Client client = ClientBuilder.newClient();
 
     //Given two rest servers on different ports
-    Paths paths1 = new Paths("localhost", port1);
-    Paths paths2 = new Paths("localhost", port2);
-    rest = new OrdersService(new HostInfo("localhost", port1));
+    rest = new OrdersService("localhost");
     rest.start(CLUSTER.bootstrapServers());
-    rest2 = new OrdersService(new HostInfo("localhost", port2));
+    Paths paths1 = new Paths("localhost", rest.port());
+    rest2 = new OrdersService("localhost");
     rest2.start(CLUSTER.bootstrapServers());
+    Paths paths2 = new Paths("localhost", rest2.port());
 
     //And one order
     client.target(paths1.urlPost())
