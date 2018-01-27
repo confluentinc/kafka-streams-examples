@@ -8,7 +8,6 @@ import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
 import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
 import io.confluent.examples.streams.microservices.util.Paths;
 import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.state.HostInfo;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.junit.After;
@@ -21,7 +20,6 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
-import java.net.BindException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +27,6 @@ import static io.confluent.examples.streams.avro.microservices.Product.JUMPERS;
 import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
 import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.MIN;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.randomFreeLocalPort;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -168,29 +165,10 @@ public class EndToEndTest extends MicroserviceTestUtils {
     tailAllTopicsToConsole(CLUSTER.bootstrapServers());
     services.forEach(s -> s.start(CLUSTER.bootstrapServers()));
 
-    int restPort = -1;
-    int retries = 5;
-    while (retries > 0) {
-      restPort = randomFreeLocalPort();
-      final OrdersService ordersService = new OrdersService(new HostInfo(HOST, restPort));
-      try {
-        ordersService.start(CLUSTER.bootstrapServers());
-        services.add(ordersService);
-        break;
-      } catch (final RuntimeException exception) {
-        if (exception.getCause() instanceof BindException) {
-          --retries;
-        } else {
-          throw exception;
-        }
-        ordersService.stop();
-      }
-    }
-    if (retries == 0) {
-      throw new RuntimeException("Could not get free port after 5 retries.");
-    }
-
-    path = new Paths("localhost", restPort);
+    final OrdersService ordersService = new OrdersService(HOST, restPort);
+    ordersService.start(CLUSTER.bootstrapServers());
+    path = new Paths("localhost", ordersService.port());
+    services.add(ordersService);
   }
 
   @After
