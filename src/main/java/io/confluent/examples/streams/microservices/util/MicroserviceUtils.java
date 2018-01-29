@@ -3,13 +3,6 @@ package io.confluent.examples.streams.microservices.util;
 import io.confluent.examples.streams.avro.microservices.Product;
 import io.confluent.examples.streams.microservices.Service;
 import io.confluent.examples.streams.microservices.domain.Schemas;
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.TimeUnit;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.core.Response;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -28,19 +21,18 @@ import org.rocksdb.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.core.Response;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+
 public class MicroserviceUtils {
 
   private static final Logger log = LoggerFactory.getLogger(MicroserviceUtils.class);
   private static final String DEFAULT_BOOTSTRAP_SERVERS = "localhost:9092";
   private static final String DEFAULT_SCHEMA_REGISTRY_URL = "http://localhost:8081";
   public static final long MIN = 60 * 1000L;
-
-  public static int randomFreeLocalPort() throws IOException {
-    ServerSocket s = new ServerSocket(0);
-    int port = s.getLocalPort();
-    s.close();
-    return port;
-  }
 
   public static String parseArgsAndConfigure(String[] args) {
     if (args.length > 2) {

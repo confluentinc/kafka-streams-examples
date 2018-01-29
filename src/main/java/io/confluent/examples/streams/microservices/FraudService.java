@@ -1,20 +1,10 @@
 package io.confluent.examples.streams.microservices;
 
-import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.FAIL;
-import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.PASS;
-import static io.confluent.examples.streams.avro.microservices.OrderValidationType.FRAUD_CHECK;
-import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS;
-import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDER_VALIDATIONS;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.baseStreamsConfig;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.parseArgsAndConfigure;
-
 import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.OrderState;
 import io.confluent.examples.streams.avro.microservices.OrderValidation;
 import io.confluent.examples.streams.avro.microservices.OrderValue;
 import io.confluent.examples.streams.microservices.domain.Schemas;
-import java.util.Properties;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
@@ -25,6 +15,17 @@ import org.apache.kafka.streams.kstream.SessionWindows;
 import org.apache.kafka.streams.kstream.Windowed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Properties;
+
+import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.FAIL;
+import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.PASS;
+import static io.confluent.examples.streams.avro.microservices.OrderValidationType.FRAUD_CHECK;
+import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS;
+import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDER_VALIDATIONS;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.baseStreamsConfig;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.parseArgsAndConfigure;
 
 
 /**
@@ -114,4 +115,5 @@ public class FraudService implements Service {
       streams.close();
     }
   }
+
 }

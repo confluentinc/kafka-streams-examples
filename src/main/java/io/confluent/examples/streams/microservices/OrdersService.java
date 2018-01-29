@@ -1,17 +1,5 @@
 package io.confluent.examples.streams.microservices;
 
-import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS;
-import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDER_VALIDATIONS;
-import static io.confluent.examples.streams.microservices.domain.beans.OrderBean.fromBean;
-import static io.confluent.examples.streams.microservices.domain.beans.OrderBean.toBean;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.baseStreamsConfig;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.randomFreeLocalPort;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.setTimeout;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.startJetty;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.startProducer;
-import static org.apache.kafka.streams.state.StreamsMetadata.NOT_AVAILABLE;
-
 import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.OrderState;
 import io.confluent.examples.streams.interactivequeries.HostStoreInfo;
@@ -19,11 +7,23 @@ import io.confluent.examples.streams.interactivequeries.MetadataService;
 import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
 import io.confluent.examples.streams.microservices.util.Paths;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
+import org.apache.kafka.clients.producer.Callback;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.errors.InvalidStateStoreException;
+import org.apache.kafka.streams.kstream.KStreamBuilder;
+import org.apache.kafka.streams.kstream.Predicate;
+import org.apache.kafka.streams.state.QueryableStoreTypes;
+import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
+import org.eclipse.jetty.server.Server;
+import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.server.ManagedAsync;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -39,23 +39,22 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.apache.kafka.clients.producer.Callback;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.errors.InvalidStateStoreException;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
-import org.apache.kafka.streams.kstream.Predicate;
-import org.apache.kafka.streams.state.HostInfo;
-import org.apache.kafka.streams.state.QueryableStoreTypes;
-import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
-import org.eclipse.jetty.server.Server;
-import org.glassfish.jersey.jackson.JacksonFeature;
-import org.glassfish.jersey.server.ManagedAsync;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS;
+import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDER_VALIDATIONS;
+import static io.confluent.examples.streams.microservices.domain.beans.OrderBean.fromBean;
+import static io.confluent.examples.streams.microservices.domain.beans.OrderBean.toBean;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.baseStreamsConfig;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.setTimeout;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.startJetty;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.startProducer;
+import static org.apache.kafka.streams.state.StreamsMetadata.NOT_AVAILABLE;
 
 /**
  * This class provides a REST interface to write and read orders using a CQRS pattern
@@ -102,7 +101,8 @@ public class OrdersService implements Service {
   private final String SERVICE_APP_ID = getClass().getSimpleName();
   private final Client client = ClientBuilder.newBuilder().register(JacksonFeature.class).build();
   private Server jettyServer;
-  private HostInfo hostInfo;
+  private String host;
+  private int port;
   private KafkaStreams streams;
   private MetadataService metadataService;
   private KafkaProducer<String, Order> producer;
@@ -111,8 +111,13 @@ public class OrdersService implements Service {
   // different users and (b) periodically purge old entries from this map.
   private Map<String, FilteredResponse> outstandingRequests = new ConcurrentHashMap<>();
 
-  public OrdersService(HostInfo hostInfo) {
-    this.hostInfo = hostInfo;
+  public OrdersService(String host, int port) {
+    this.host = host;
+    this.port = port;
+  }
+
+  public OrdersService(String host) {
+    this(host, 0);
   }
 
   /**
@@ -239,8 +244,8 @@ public class OrdersService implements Service {
   }
 
   private boolean thisHost(final HostStoreInfo host) {
-    return host.getHost().equals(hostInfo.host()) &&
-        host.getPort() == hostInfo.port();
+    return host.getHost().equals(this.host) &&
+        host.getPort() == port;
   }
 
   private void fetchFromOtherHost(final String path, AsyncResponse asyncResponse, long timeout) {
@@ -303,9 +308,10 @@ public class OrdersService implements Service {
 
   @Override
   public void start(String bootstrapServers) {
+    jettyServer = startJetty(port, this);
+    port = jettyServer.getURI().getPort(); // update port, in case port was zero
     producer = startProducer(bootstrapServers, ORDER_VALIDATIONS);
     streams = startKStreams(bootstrapServers);
-    jettyServer = startJetty(hostInfo.port(), this);
     log.info("Started Service " + getClass().getSimpleName());
   }
 
@@ -320,7 +326,7 @@ public class OrdersService implements Service {
 
   private Properties config(String bootstrapServers) {
     Properties props = baseStreamsConfig(bootstrapServers, "/tmp/kafka-streams", SERVICE_APP_ID);
-    props.put(StreamsConfig.APPLICATION_SERVER_CONFIG, hostInfo.host() + ":" + hostInfo.port());
+    props.put(StreamsConfig.APPLICATION_SERVER_CONFIG, host + ":" + port);
     return props;
   }
 
@@ -339,6 +345,10 @@ public class OrdersService implements Service {
         e.printStackTrace();
       }
     }
+  }
+
+  public int port() {
+    return port;
   }
 
   private HostStoreInfo getHostForOrderId(String orderId) {
@@ -367,11 +377,10 @@ public class OrdersService implements Service {
     final String bootstrapServers = args.length > 1 ? args[1] : "localhost:9092";
     final String schemaRegistryUrl = args.length > 2 ? args[2] : "http://localhost:8081";
     final String restHostname = args.length > 3 ? args[3] : "localhost";
-    final String restPort = args.length > 4 ? args[4] : Integer.toString(randomFreeLocalPort());
+    final String restPort = args.length > 4 ? args[4] : null;
 
     Schemas.configureSerdesWithSchemaRegistryUrl(schemaRegistryUrl);
-    OrdersService service = new OrdersService(
-        new HostInfo(restHostname, Integer.valueOf(restPort)));
+    OrdersService service = new OrdersService(restHostname, restPort == null ? 0 : Integer.valueOf(restPort));
     service.start(bootstrapServers);
     addShutdownHookAndBlock(service);
   }
