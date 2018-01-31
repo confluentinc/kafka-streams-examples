@@ -162,7 +162,7 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
     val clicksPerRegion: KTable[String, Long] = clicksByRegion
         // Compute the total per region by summing the individual click counts per region.
         .groupByKey(Serialized.`with`(stringSerde, longSerde))
-        .reduce((firstClicks: Long, secondClicks: Long) => firstClicks + secondClicks: Long)
+        .reduce(_ + _)
 
     // Write the (continuously updating) results to the output topic.
     clicksPerRegion.toStream().to(outputTopic, Produced.`with`(stringSerde, longSerde))
