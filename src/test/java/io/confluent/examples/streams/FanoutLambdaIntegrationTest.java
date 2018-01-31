@@ -27,7 +27,6 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.ValueMapper;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -94,8 +93,8 @@ public class FanoutLambdaIntegrationTest {
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
     KStream<byte[], String> stream1 = builder.stream(inputTopicA);
-    KStream<byte[], String> stream2 = stream1.mapValues((ValueMapper<String, String>) String::toUpperCase);
-    KStream<byte[], String> stream3 = stream1.mapValues((ValueMapper<String, String>) String::toLowerCase);
+    KStream<byte[], String> stream2 = stream1.mapValues((v -> v.toUpperCase()));
+    KStream<byte[], String> stream3 = stream1.mapValues(v -> v.toLowerCase());
     stream2.to(outputTopicB);
     stream3.to(outputTopicC);
 

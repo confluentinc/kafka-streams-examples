@@ -24,7 +24,6 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.ValueMapper;
 
 import java.util.Properties;
 
@@ -121,7 +120,7 @@ public class MapFunctionLambdaExample {
     final KStream<byte[], String> textLines = builder.stream("TextLinesTopic", Consumed.with(byteArraySerde, stringSerde));
 
     // Variant 1: using `mapValues`
-    final KStream<byte[], String> uppercasedWithMapValues = textLines.mapValues((ValueMapper<String, String>) String::toLowerCase);
+    final KStream<byte[], String> uppercasedWithMapValues = textLines.mapValues(v -> v.toLowerCase());
 
     // Write (i.e. persist) the results to a new Kafka topic called "UppercasedTextLinesTopic".
     //
