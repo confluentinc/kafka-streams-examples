@@ -30,7 +30,6 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.kstream.TransformerSupplier;
-import org.apache.kafka.streams.kstream.ValueMapper;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.ProcessorSupplier;
 import org.junit.BeforeClass;
@@ -145,7 +144,7 @@ public class MixAndMatchLambdaIntegrationTest {
 
     KStream<byte[], String> input = builder.stream(inputTopic);
     KStream<byte[], String> uppercasedAndAnonymized = input
-        .mapValues((ValueMapper<String, String>) String::toUpperCase)
+        .mapValues(v -> v.toUpperCase())
         .transform(AnonymizeIpAddressTransformer::new);
     uppercasedAndAnonymized.to(outputTopic);
 
