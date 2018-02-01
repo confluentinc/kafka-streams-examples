@@ -77,7 +77,7 @@ import org.apache.kafka.streams.kstream.{KStream, Produced}
   *
   * {{{
   * $ bin/kafka-console-consumer --new-consumer --bootstrap-server localhost:9092 --topic UppercasedTextLinesTopic --from-beginning
-  * $ bin/kafka-console-consumer --new-consumer --bootstrap-server localhost:9092 --topic OriginalAndUppercasedTopic --from-beginning
+  * $ bin/kafka-console-consumer --new-consumer --bootstrap-server localhost:9092 --topic OriginalAndUppercasedTopic --from-beginning  --property print.key=true
   * }}}
   *
   * You should see output data similar to:
