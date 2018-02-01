@@ -25,6 +25,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -143,8 +144,13 @@ public class TopArticlesLambdaExampleTest {
     pageViewBuilder.set("page", page);
     for (int i = 0; i< count; i++) {
       pageViewBuilder.set("user", users[random.nextInt(users.length)]);
-      producer.send(new ProducerRecord<>(TopArticlesLambdaExample.PAGE_VIEWS,
-                                         pageViewBuilder.build()));
+      try {
+        producer.send(new ProducerRecord<>(TopArticlesLambdaExample.PAGE_VIEWS,
+                pageViewBuilder.build()));
+      } catch (SerializationException e) {
+        System.out.println(e.toString());
+        throw e;
+      }
     }
     producer.flush();
   }
