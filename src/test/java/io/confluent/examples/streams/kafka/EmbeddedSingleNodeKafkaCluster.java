@@ -85,6 +85,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     Properties effectiveConfig = new Properties();
     effectiveConfig.putAll(brokerConfig);
     effectiveConfig.put(KafkaConfig$.MODULE$.ZkConnectProp(), zookeeper.connectString());
+    effectiveConfig.put(KafkaConfig$.MODULE$.ZkSessionTimeoutMsProp(), 30 * 1000);
     effectiveConfig.put(KafkaConfig$.MODULE$.PortProp(), DEFAULT_BROKER_PORT);
 
     effectiveConfig.put(KafkaConfig$.MODULE$.DeleteTopicEnableProp(), true);
