@@ -79,7 +79,7 @@ services:
 
   # Continuously generates input data for the Kafka Music application.
   kafka-music-data-generator:
-    image: confluentinc/kafka-streams-examples:4.0.0-SNAPSHOT
+    image: confluentinc/kafka-streams-examples:4.0.0
     hostname: kafka-music-data-generator
     depends_on:
       - kafka
@@ -104,7 +104,7 @@ services:
 
   # Runs the Kafka Music application.
   kafka-music-application:
-    image: confluentinc/kafka-streams-examples:4.0.0-SNAPSHOT
+    image: confluentinc/kafka-streams-examples:4.0.0
     hostname: kafka-music-application
     depends_on:
       - kafka
