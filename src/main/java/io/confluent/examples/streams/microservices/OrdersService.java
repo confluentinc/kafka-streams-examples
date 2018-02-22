@@ -103,13 +103,13 @@ public class OrdersService implements Service {
   private Server jettyServer;
   private String host;
   private int port;
-  private KafkaStreams streams;
+  private KafkaStreams streams = null;
   private MetadataService metadataService;
   private KafkaProducer<String, Order> producer;
 
   //In a real implementation we would need to (a) support outstanding requests for the same Id/filter from
   // different users and (b) periodically purge old entries from this map.
-  private Map<String, FilteredResponse> outstandingRequests = new ConcurrentHashMap<>();
+  private Map<String, FilteredResponse<String, Order>> outstandingRequests = new ConcurrentHashMap<>();
 
   public OrdersService(String host, int port) {
     this.host = host;
@@ -135,7 +135,7 @@ public class OrdersService implements Service {
   }
 
   private void maybeCompleteLongPollGet(String id, Order order) {
-    FilteredResponse callback = outstandingRequests.get(id);
+    FilteredResponse<String, Order> callback = outstandingRequests.get(id);
     if (callback != null && callback.predicate.test(id, order)) {
       callback.asyncResponse.resume(toBean(order));
     }
@@ -177,7 +177,7 @@ public class OrdersService implements Service {
 
   class FilteredResponse<K, V> {
     private AsyncResponse asyncResponse;
-    private Predicate predicate;
+    private Predicate<K, V> predicate;
 
     FilteredResponse(AsyncResponse asyncResponse, Predicate<K, V> predicate) {
       this.asyncResponse = asyncResponse;
@@ -199,13 +199,13 @@ public class OrdersService implements Service {
       Order order = ordersStore().get(id);
       if (order == null || !predicate.test(id, order)) {
         log.info("Delaying get as order not present for id " + id);
-        outstandingRequests.put(id, new FilteredResponse(asyncResponse, predicate));
+        outstandingRequests.put(id, new FilteredResponse<>(asyncResponse, predicate));
       } else {
         asyncResponse.resume(toBean(order));
       }
     } catch (InvalidStateStoreException e) {
       //Store not ready so delay
-      outstandingRequests.put(id, new FilteredResponse(asyncResponse, predicate));
+      outstandingRequests.put(id, new FilteredResponse<>(asyncResponse, predicate));
     }
   }
 
@@ -344,6 +344,13 @@ public class OrdersService implements Service {
       } catch (Exception e) {
         e.printStackTrace();
       }
+    }
+  }
+
+  // for testing only
+  void cleanLocalState() {
+    if (streams != null) {
+      streams.cleanUp();
     }
   }
 
