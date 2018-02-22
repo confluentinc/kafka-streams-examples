@@ -19,12 +19,20 @@ import io.confluent.examples.streams.zookeeper.ZooKeeperEmbedded;
 import io.confluent.kafka.schemaregistry.RestApp;
 import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
 import kafka.server.KafkaConfig$;
+import kafka.utils.ZkUtils;
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
+import org.apache.kafka.common.security.JaasUtils;
+import org.apache.kafka.test.TestCondition;
+import org.apache.kafka.test.TestUtils;
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * Runs an in-memory, "embedded" Kafka cluster with 1 ZooKeeper instance, 1 Kafka broker, and 1
@@ -38,6 +46,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
   private static final String AVRO_COMPATIBILITY_TYPE = AvroCompatibilityLevel.NONE.name;
 
   private ZooKeeperEmbedded zookeeper;
+  private ZkUtils zkUtils = null;
   private KafkaEmbedded broker;
   private RestApp schemaRegistry;
   private final Properties brokerConfig;
@@ -68,6 +77,12 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     log.debug("Starting a ZooKeeper instance...");
     zookeeper = new ZooKeeperEmbedded();
     log.debug("ZooKeeper instance is running at {}", zookeeper.connectString());
+
+    zkUtils = ZkUtils.apply(
+        zookeeper.connectString(),
+        30000,
+        30000,
+        JaasUtils.isZkSecurityEnabled());
 
     Properties effectiveBrokerConfig = effectiveBrokerConfigFrom(brokerConfig, zookeeper);
     log.debug("Starting a Kafka instance on port {} ...",
@@ -198,7 +213,40 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     broker.createTopic(topic, partitions, replication, topicConfig);
   }
 
+  /**
+   * Deletes multiple topics and blocks until all topics got deleted.
+   *
+   * @param timeoutMs the max time to wait for the topics to be deleted (does not block if {@code <= 0})
+   * @param topics the name of the topics
+   */
+  public void deleteTopicsAndWait(final long timeoutMs, final String... topics) throws InterruptedException {
+    for (final String topic : topics) {
+      try {
+        broker.deleteTopic(topic);
+      } catch (final UnknownTopicOrPartitionException e) { }
+    }
+
+    if (timeoutMs > 0) {
+      TestUtils.waitForCondition(new TopicsDeletedCondition(topics), timeoutMs, "Topics not deleted after " + timeoutMs + " milli seconds.");
+    }
+  }
+
   public boolean isRunning() {
     return running;
   }
+
+  private final class TopicsDeletedCondition implements TestCondition {
+    final Set<String> deletedTopics = new HashSet<>();
+
+    private TopicsDeletedCondition(final String... topics) {
+      Collections.addAll(deletedTopics, topics);
+    }
+
+    @Override
+    public boolean conditionMet() {
+      final Set<String> allTopics = new HashSet<>(scala.collection.JavaConversions.seqAsJavaList(zkUtils.getAllTopics()));
+      return !allTopics.removeAll(deletedTopics);
+    }
+  }
+
 }
