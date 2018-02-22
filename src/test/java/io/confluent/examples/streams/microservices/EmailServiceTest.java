@@ -11,6 +11,8 @@ import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collections;
+
 import static io.confluent.examples.streams.avro.microservices.OrderState.CREATED;
 import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
 import static io.confluent.examples.streams.microservices.domain.Schemas.Topics;
@@ -56,9 +58,9 @@ public class EmailServiceTest extends MicroserviceTestUtils {
       complete = true;
     });
 
-    send(Topics.CUSTOMERS, new KeyValue<>(customer.getId(), customer));
-    send(Topics.ORDERS, new KeyValue<>(order.getId(), order));
-    send(Topics.PAYMENTS, new KeyValue<>(payment.getId(), payment));
+    send(Topics.CUSTOMERS, Collections.singleton(new KeyValue<>(customer.getId(), customer)));
+    send(Topics.ORDERS, Collections.singleton(new KeyValue<>(order.getId(), order)));
+    send(Topics.PAYMENTS, Collections.singleton(new KeyValue<>(payment.getId(), payment)));
 
     //When
     emailService.start(CLUSTER.bootstrapServers());

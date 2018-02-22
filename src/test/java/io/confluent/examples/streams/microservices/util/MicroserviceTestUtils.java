@@ -192,8 +192,8 @@ public class MicroserviceTestUtils {
         topic.keySerde().serializer(),
         topic.valueSerde().serializer()))
     {
-      for (KeyValue<K, V> record : stuff) {
-        producer.send(new ProducerRecord<>(topic.name(), record.key, record.value)).get();
+      for (KeyValue<K, V> order : stuff) {
+        producer.send(new ProducerRecord<>(topic.name(), order.key, order.value)).get();
       }
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
