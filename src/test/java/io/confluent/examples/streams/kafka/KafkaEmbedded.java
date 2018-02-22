@@ -175,4 +175,21 @@ public class KafkaEmbedded {
     zkClient.close();
   }
 
+  /**
+   * Delete a Kafka topic.
+   *
+   * @param topic The name of the topic.
+   */
+  public void deleteTopic(String topic) {
+    log.debug("Deleting topic {}", topic);
+    ZkClient zkClient = new ZkClient(
+        zookeeperConnect(),
+        DEFAULT_ZK_SESSION_TIMEOUT_MS,
+        DEFAULT_ZK_CONNECTION_TIMEOUT_MS,
+        ZKStringSerializer$.MODULE$);
+    boolean isSecure = false;
+    ZkUtils zkUtils = new ZkUtils(zkClient, new ZkConnection(zookeeperConnect()), isSecure);
+    AdminUtils.deleteTopic(zkUtils, topic);
+    zkClient.close();
+  }
 }
