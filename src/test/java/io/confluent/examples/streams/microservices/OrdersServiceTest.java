@@ -9,6 +9,7 @@ import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
 import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
 import io.confluent.examples.streams.microservices.util.Paths;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -19,11 +20,11 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.net.HttpURLConnection;
+import java.util.Collections;
 
 import static io.confluent.examples.streams.avro.microservices.Order.newBuilder;
 import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.MIN;
-import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.Assert.fail;
@@ -35,7 +36,6 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
   @BeforeClass
   public static void startKafkaCluster() {
-    CLUSTER.createTopic(Topics.ORDERS.name());
     Schemas.configureSerdesWithSchemaRegistryUrl(CLUSTER.schemaRegistryUrl());
   }
 
@@ -43,10 +43,19 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
   public void shutdown() {
     if (rest != null) {
       rest.stop();
+      rest.cleanLocalState();
     }
     if (rest2 != null) {
       rest2.stop();
+      rest2.cleanLocalState();
     }
+  }
+
+  @Before
+  public void prepareKafkaCluster() throws Exception {
+    CLUSTER.deleteTopicsAndWait(30000, Topics.ORDERS.name(), "OrdersService-orders-store-changelog");
+    CLUSTER.createTopic(Topics.ORDERS.name());
+    Schemas.configureSerdesWithSchemaRegistryUrl(CLUSTER.schemaRegistryUrl());
   }
 
   @Test
@@ -91,8 +100,8 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
 
   @Test
-  public void shouldGetValidatedOrderOnRequest() throws Exception {
-    Order orderV1 = new Order(id(1L), 2L, OrderState.CREATED, Product.JUMPERS, 10, 100d);
+  public void shouldGetValidatedOrderOnRequest() {
+    Order orderV1 = new Order(id(1L), 3L, OrderState.CREATED, Product.JUMPERS, 10, 100d);
     OrderBean beanV1 = OrderBean.toBean(orderV1);
 
     final Client client = ClientBuilder.newClient();
@@ -108,7 +117,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
         .post(Entity.json(beanV1));
 
     //Simulate the order being validated
-    MicroserviceTestUtils.sendOrders(asList(
+    MicroserviceTestUtils.sendOrders(Collections.singletonList(
         newBuilder(orderV1)
             .setState(OrderState.VALIDATED)
             .build()));
@@ -125,7 +134,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
   }
 
   @Test
-  public void shouldTimeoutGetIfNoResponseIsFound() throws Exception {
+  public void shouldTimeoutGetIfNoResponseIsFound() {
     final Client client = ClientBuilder.newClient();
 
     //Start the rest interface
@@ -147,8 +156,8 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
   }
 
   @Test
-  public void shouldGetOrderByIdWhenOnDifferentHost() throws Exception {
-    OrderBean order = new OrderBean(id(1L), 2L, OrderState.VALIDATED, Product.JUMPERS, 10, 100d);
+  public void shouldGetOrderByIdWhenOnDifferentHost() {
+    OrderBean order = new OrderBean(id(1L), 4L, OrderState.VALIDATED, Product.JUMPERS, 10, 100d);
     final Client client = ClientBuilder.newClient();
 
     //Given two rest servers on different ports
