@@ -18,6 +18,7 @@ package io.confluent.examples.streams.kafka;
 import io.confluent.examples.streams.zookeeper.ZooKeeperEmbedded;
 import io.confluent.kafka.schemaregistry.RestApp;
 import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
+import kafka.Kafka;
 import kafka.server.KafkaConfig$;
 import kafka.utils.ZkUtils;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
@@ -101,7 +102,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     effectiveConfig.putAll(brokerConfig);
     effectiveConfig.put(KafkaConfig$.MODULE$.ZkConnectProp(), zookeeper.connectString());
     effectiveConfig.put(KafkaConfig$.MODULE$.PortProp(), DEFAULT_BROKER_PORT);
-
+    effectiveConfig.put(KafkaConfig$.MODULE$.ZkConnectionTimeoutMsProp(), 60 * 1000);
     effectiveConfig.put(KafkaConfig$.MODULE$.DeleteTopicEnableProp(), true);
     effectiveConfig.put(KafkaConfig$.MODULE$.LogCleanerDedupeBufferSizeProp(), 2 * 1024 * 1024L);
     effectiveConfig.put(KafkaConfig$.MODULE$.GroupMinSessionTimeoutMsProp(), 0);
