@@ -130,7 +130,7 @@ public class WikipediaFeedAvroLambdaExampleTest {
       records.forEach(record -> actual.put(record.key(), record.value()));
     }
 
-    assertThat(expected, equalTo(actual));
+    assertThat(actual, equalTo(expected));
 
   }
 
