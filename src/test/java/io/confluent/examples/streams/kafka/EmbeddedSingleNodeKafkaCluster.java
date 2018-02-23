@@ -52,7 +52,6 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
   private RestApp schemaRegistry;
   private final Properties brokerConfig;
   private boolean running;
-  private boolean kafkaStarted = false;
 
   /**
    * Creates and starts the cluster.
@@ -90,16 +89,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     log.info("Starting a Kafka instance on port {} ...",
              effectiveBrokerConfig.getProperty(KafkaConfig$.MODULE$.PortProp()));
 
-    new Thread(() -> {
-      try {
-        broker = new KafkaEmbedded(effectiveBrokerConfig);
-        kafkaStarted = true;
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }).start();
-
-    TestUtils.waitForCondition(() -> kafkaStarted, 25 *1000L, "Embedded broker not starting in time");
+    broker = new KafkaEmbedded(effectiveBrokerConfig);
 
     log.info("Kafka instance is running at {}, connected to ZooKeeper at {}",
         broker.brokerList(), broker.zookeeperConnect());
