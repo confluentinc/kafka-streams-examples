@@ -60,7 +60,7 @@ public class TopArticlesLambdaExampleTest {
   private KafkaStreams streams;
 
   @BeforeClass
-  public static void createTopics() throws InterruptedException {
+  public static void createTopics() {
     CLUSTER.createTopic(TopArticlesLambdaExample.TOP_NEWS_PER_INDUSTRY_TOPIC);
     CLUSTER.createTopic(TopArticlesLambdaExample.PAGE_VIEWS);
   }
@@ -123,7 +123,7 @@ public class TopArticlesLambdaExampleTest {
     consumer.subscribe(Collections.singletonList(TopArticlesLambdaExample.TOP_NEWS_PER_INDUSTRY_TOPIC));
 
     final Map<String, List<String>> received = new HashMap<>();
-    final long timeout = System.currentTimeMillis() + 45000L;
+    final long timeout = System.currentTimeMillis() + 30000L;
     boolean done = false;
     while(System.currentTimeMillis() < timeout && !done) {
       final ConsumerRecords<Windowed<String>, String> records = consumer.poll(10);

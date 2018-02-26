@@ -106,7 +106,7 @@ public class UserCountsPerRegionLambdaIntegrationTest {
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     // The commit interval for flushing records to state stores and downstream must be lower than
     // this integration test's timeout (30 secs) to ensure we observe the expected processing results.
-    streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 5 * 1000);
+    streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 10 * 1000);
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
@@ -146,7 +146,7 @@ public class UserCountsPerRegionLambdaIntegrationTest {
     consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
     List<KeyValue<String, Long>> actualClicksPerRegion = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig,
-        outputTopic, expectedUsersPerRegion.size(), 45 * 1000L);
+        outputTopic, expectedUsersPerRegion.size());
     streams.close();
     assertThat(actualClicksPerRegion).containsExactlyElementsOf(expectedUsersPerRegion);
   }

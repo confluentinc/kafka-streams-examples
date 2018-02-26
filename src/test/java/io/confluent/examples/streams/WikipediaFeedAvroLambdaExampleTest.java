@@ -125,7 +125,7 @@ public class WikipediaFeedAvroLambdaExampleTest {
 
     consumer.subscribe(Collections.singleton(WikipediaFeedAvroExample.WIKIPEDIA_STATS));
 
-    final long timeout = System.currentTimeMillis() + 45000L;
+    final long timeout = System.currentTimeMillis() + 30000L;
     while(!actual.equals(expected) && System.currentTimeMillis() < timeout) {
       final ConsumerRecords<String, Long> records = consumer.poll(1000);
       records.forEach(record -> actual.put(record.key(), record.value()));
