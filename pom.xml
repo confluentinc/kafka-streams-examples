@@ -38,7 +38,6 @@
         </repository>
     </repositories>
 
-    <!-- Temporarily needed until Confluent 3.3.1 is released. -->
     <pluginRepositories>
         <pluginRepository>
             <id>confluent</id>
