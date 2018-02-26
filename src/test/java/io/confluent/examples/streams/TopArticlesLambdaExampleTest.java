@@ -63,8 +63,6 @@ public class TopArticlesLambdaExampleTest {
   public static void createTopics() throws InterruptedException {
     CLUSTER.createTopic(TopArticlesLambdaExample.TOP_NEWS_PER_INDUSTRY_TOPIC);
     CLUSTER.createTopic(TopArticlesLambdaExample.PAGE_VIEWS);
-
-    CLUSTER.confirmTopicsCreated(30 * 1000L,TopArticlesLambdaExample.TOP_NEWS_PER_INDUSTRY_TOPIC, TopArticlesLambdaExample.PAGE_VIEWS);
   }
 
   @Before
@@ -125,7 +123,7 @@ public class TopArticlesLambdaExampleTest {
     consumer.subscribe(Collections.singletonList(TopArticlesLambdaExample.TOP_NEWS_PER_INDUSTRY_TOPIC));
 
     final Map<String, List<String>> received = new HashMap<>();
-    final long timeout = System.currentTimeMillis() + 30000L;
+    final long timeout = System.currentTimeMillis() + 45000L;
     boolean done = false;
     while(System.currentTimeMillis() < timeout && !done) {
       final ConsumerRecords<Windowed<String>, String> records = consumer.poll(10);

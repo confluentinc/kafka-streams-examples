@@ -55,10 +55,9 @@ public class WikipediaFeedAvroLambdaExampleTest {
   private KafkaStreams streams;
 
   @BeforeClass
-  public static void createTopics()  throws InterruptedException {
+  public static void createTopics() {
     CLUSTER.createTopic(WIKIPEDIA_FEED);
     CLUSTER.createTopic(WIKIPEDIA_STATS);
-    CLUSTER.confirmTopicsCreated(30 * 1000L, WIKIPEDIA_FEED, WIKIPEDIA_STATS);
   }
 
   @Before
@@ -85,31 +84,24 @@ public class WikipediaFeedAvroLambdaExampleTest {
     props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl());
     final KafkaProducer<String, WikiFeed> producer = new KafkaProducer<>(props);
 
-    Callback logingCallback  = (r, e) -> {
-        if (e != null) {
-          System.out.println(WikipediaFeedAvroLambdaExampleTest.class.getName() + " failed to produce message " + e.getMessage());
-        } else {
-          System.out.println("Wikipedia message produced");
-        }
-    };
 
     producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
-                                       new WikiFeed("donna", true, "first post")), logingCallback);
+                                       new WikiFeed("donna", true, "first post")));
 
     producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
-                                       new WikiFeed("donna", true, "second post")), logingCallback);
+                                       new WikiFeed("donna", true, "second post")));
 
     producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
-                                       new WikiFeed("donna", true, "third post")), logingCallback);
+                                       new WikiFeed("donna", true, "third post")));
 
     producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
-                                       new WikiFeed("becca", true, "first post")), logingCallback);
+                                       new WikiFeed("becca", true, "first post")));
 
     producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
-                                       new WikiFeed("becca", true, "second post")), logingCallback);
+                                       new WikiFeed("becca", true, "second post")));
 
     producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
-                                       new WikiFeed("john", true, "first post")),logingCallback);
+                                       new WikiFeed("john", true, "first post")));
     producer.flush();
 
     streams.start();
@@ -133,7 +125,7 @@ public class WikipediaFeedAvroLambdaExampleTest {
 
     consumer.subscribe(Collections.singleton(WikipediaFeedAvroExample.WIKIPEDIA_STATS));
 
-    final long timeout = System.currentTimeMillis() + 30000L;
+    final long timeout = System.currentTimeMillis() + 45000L;
     while(!actual.equals(expected) && System.currentTimeMillis() < timeout) {
       final ConsumerRecords<String, Long> records = consumer.poll(1000);
       records.forEach(record -> actual.put(record.key(), record.value()));

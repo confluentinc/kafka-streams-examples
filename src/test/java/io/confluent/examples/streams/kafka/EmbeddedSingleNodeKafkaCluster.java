@@ -217,18 +217,6 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     broker.createTopic(topic, partitions, replication, topicConfig);
   }
 
-
-    /**
-     * Used to verify all expected topics are created
-     * @param timeout
-     * @param topics
-     * @throws InterruptedException
-     */
-  public void confirmTopicsCreated(long timeout, String... topics) throws InterruptedException{
-      String topicNames = Arrays.toString(topics);
-      TestUtils.waitForCondition(new TopicsCreatedCondition(Arrays.asList(topics)), timeout, "Topics " + topicNames + " not created after " + timeout + "millis");
-  }
-
   /**
    * Deletes multiple topics and blocks until all topics got deleted.
    *
@@ -263,21 +251,6 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
       final Set<String> allTopics = new HashSet<>(scala.collection.JavaConversions.seqAsJavaList(zkUtils.getAllTopics()));
       return !allTopics.removeAll(deletedTopics);
     }
-  }
-
-
-  private final class TopicsCreatedCondition implements TestCondition {
-      final Set<String> createdTopics = new HashSet<>();
-
-      public TopicsCreatedCondition(final List<String> topics ) {
-          createdTopics.addAll(topics);
-      }
-
-      @Override
-      public boolean conditionMet() {
-          final Set<String> topics = new HashSet<>(scala.collection.JavaConversions.seqAsJavaList(zkUtils.getAllTopics()));
-          return topics.containsAll(createdTopics);
-      }
   }
 
 }
