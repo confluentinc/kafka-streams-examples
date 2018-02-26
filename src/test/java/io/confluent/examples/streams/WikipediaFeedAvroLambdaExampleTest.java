@@ -85,13 +85,12 @@ public class WikipediaFeedAvroLambdaExampleTest {
     props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl());
     final KafkaProducer<String, WikiFeed> producer = new KafkaProducer<>(props);
 
-    Callback logingCallback  = new Callback() {
-      @Override
-      public void onCompletion(RecordMetadata recordMetadata, Exception e) {
+    Callback logingCallback  = (r, e) -> {
         if (e != null) {
           System.out.println(WikipediaFeedAvroLambdaExampleTest.class.getName() + " failed to produce message " + e.getMessage());
+        } else {
+          System.out.println("Wikipedia message produced");
         }
-      }
     };
 
     producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,

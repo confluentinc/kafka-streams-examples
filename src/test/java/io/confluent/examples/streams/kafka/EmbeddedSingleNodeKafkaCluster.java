@@ -83,8 +83,8 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
 
     zkUtils = ZkUtils.apply(
         zookeeper.connectString(),
-        30000,
-        30000,
+        60000,
+        60000,
         JaasUtils.isZkSecurityEnabled());
 
     Properties effectiveBrokerConfig = effectiveBrokerConfigFrom(brokerConfig, zookeeper);
@@ -97,7 +97,6 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
         broker.brokerList(), broker.zookeeperConnect());
 
     schemaRegistry = new RestApp(0, zookeeperConnect(), KAFKA_SCHEMAS_TOPIC, AVRO_COMPATIBILITY_TYPE);
-    schemaRegistry.prop.put("kafkastore.init.timeout.ms", 60000);
     schemaRegistry.start();
     running = true;
   }
