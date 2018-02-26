@@ -21,9 +21,11 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -41,6 +43,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import static io.confluent.examples.streams.WikipediaFeedAvroExample.WIKIPEDIA_FEED;
+import static io.confluent.examples.streams.WikipediaFeedAvroExample.WIKIPEDIA_STATS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 
@@ -51,9 +55,10 @@ public class WikipediaFeedAvroLambdaExampleTest {
   private KafkaStreams streams;
 
   @BeforeClass
-  public static void createTopics() {
-    CLUSTER.createTopic(WikipediaFeedAvroExample.WIKIPEDIA_FEED);
-    CLUSTER.createTopic(WikipediaFeedAvroExample.WIKIPEDIA_STATS);
+  public static void createTopics()  throws InterruptedException {
+    CLUSTER.createTopic(WIKIPEDIA_FEED);
+    CLUSTER.createTopic(WIKIPEDIA_STATS);
+    CLUSTER.confirmTopicsCreated(30 * 1000L, WIKIPEDIA_FEED, WIKIPEDIA_STATS);
   }
 
   @Before
@@ -80,23 +85,32 @@ public class WikipediaFeedAvroLambdaExampleTest {
     props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl());
     final KafkaProducer<String, WikiFeed> producer = new KafkaProducer<>(props);
 
-    producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
-                                       new WikiFeed("donna", true, "first post")));
+    Callback logingCallback  = new Callback() {
+      @Override
+      public void onCompletion(RecordMetadata recordMetadata, Exception e) {
+        if (e != null) {
+          System.out.println(WikipediaFeedAvroLambdaExampleTest.class.getName() + " failed to produce message " + e.getMessage());
+        }
+      }
+    };
 
     producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
-                                       new WikiFeed("donna", true, "second post")));
+                                       new WikiFeed("donna", true, "first post")), logingCallback);
 
     producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
-                                       new WikiFeed("donna", true, "third post")));
+                                       new WikiFeed("donna", true, "second post")), logingCallback);
 
     producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
-                                       new WikiFeed("becca", true, "first post")));
+                                       new WikiFeed("donna", true, "third post")), logingCallback);
 
     producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
-                                       new WikiFeed("becca", true, "second post")));
+                                       new WikiFeed("becca", true, "first post")), logingCallback);
 
     producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
-                                       new WikiFeed("john", true, "first post")));
+                                       new WikiFeed("becca", true, "second post")), logingCallback);
+
+    producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
+                                       new WikiFeed("john", true, "first post")),logingCallback);
     producer.flush();
 
     streams.start();

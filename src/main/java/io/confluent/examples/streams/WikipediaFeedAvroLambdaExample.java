@@ -133,6 +133,7 @@ public class WikipediaFeedAvroLambdaExample {
         .count("Counts");
 
     // write to the result topic, need to override serdes
+    aggregated.toStream().peek((key, value) -> System.out.println("Wikipedia feed key-value " + key + ":" + value));
     aggregated.to(stringSerde, longSerde, WikipediaFeedAvroExample.WIKIPEDIA_STATS);
 
     return new KafkaStreams(builder, streamsConfiguration);
