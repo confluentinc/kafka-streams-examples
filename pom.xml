@@ -38,6 +38,13 @@
         </repository>
     </repositories>
 
+    <pluginRepositories>
+        <pluginRepository>
+            <id>confluent</id>
+            <url>https://packages.confluent.io/maven/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
     <properties>
         <algebird.version>0.13.0</algebird.version>
         <avro.version>1.8.2</avro.version>
