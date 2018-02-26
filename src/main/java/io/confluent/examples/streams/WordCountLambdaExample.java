@@ -33,9 +33,9 @@ import java.util.regex.Pattern;
  * computes a simple word occurrence histogram from an input text. This example uses lambda
  * expressions and thus works with Java 8+ only.
  * <p>
- * In this example, the input stream reads from a topic named "TextLinesTopic", where the values of
+ * In this example, the input stream reads from a topic named "streams-plaintext-input", where the values of
  * messages represent lines of text; and the histogram output is written to topic
- * "WordsWithCountsTopic", where each record is an updated count of a single word, i.e. {@code word (String) -> currentCount (Long)}.
+ * "streams-wordcount-output", where each record is an updated count of a single word, i.e. {@code word (String) -> currentCount (Long)}.
  * <p>
  * Note: Before running this example you must 1) create the source topic (e.g. via {@code kafka-topics --create ...}),
  * then 2) start this example and 3) write some data to the source topic (e.g. via {@code kafka-console-producer}).
@@ -137,11 +137,11 @@ public class WordCountLambdaExample {
     // In the subsequent lines we define the processing topology of the Streams application.
     final StreamsBuilder builder = new StreamsBuilder();
 
-    // Construct a `KStream` from the input topic "TextLinesTopic", where message values
+    // Construct a `KStream` from the input topic "streams-plaintext-input", where message values
     // represent lines of text (for the sake of this example, we ignore whatever may be stored
     // in the message keys).
     //
-    // Note: We could also just call `builder.stream("TextLinesTopic")` if we wanted to leverage
+    // Note: We could also just call `builder.stream("streams-plaintext-input")` if we wanted to leverage
     // the default serdes specified in the Streams configuration above, because these defaults
     // match what's in the actual topic.  However we explicitly set the deserializers in the
     // call to `stream()` below in order to show how that's done, too.
