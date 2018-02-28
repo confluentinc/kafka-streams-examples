@@ -242,6 +242,7 @@ public class TopArticlesLambdaExample {
         return sb.toString();
       });
 
+    topViewCounts.toStream().peek((key, value) -> System.out.println("TopArticles feed key-value " + key + ":" + value));
     topViewCounts.to(windowedStringSerde, stringSerde, TOP_NEWS_PER_INDUSTRY_TOPIC);
     return new KafkaStreams(builder, streamsConfiguration);
   }

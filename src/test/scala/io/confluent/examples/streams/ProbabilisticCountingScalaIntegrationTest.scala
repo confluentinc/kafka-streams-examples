@@ -50,6 +50,7 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
   def startKafkaCluster() {
     cluster.createTopic(inputTopic)
     cluster.createTopic(outputTopic)
+    cluster.confirmTopicsCreated(30 * 1000L, inputTopic, outputTopic)
   }
 
   @Test

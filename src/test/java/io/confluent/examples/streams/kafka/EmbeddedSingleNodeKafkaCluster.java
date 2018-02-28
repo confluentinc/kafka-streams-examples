@@ -30,8 +30,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
@@ -81,15 +83,17 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
 
     zkUtils = ZkUtils.apply(
         zookeeper.connectString(),
-        30000,
-        30000,
+        60000,
+        60000,
         JaasUtils.isZkSecurityEnabled());
 
     Properties effectiveBrokerConfig = effectiveBrokerConfigFrom(brokerConfig, zookeeper);
-    log.debug("Starting a Kafka instance on port {} ...",
-        effectiveBrokerConfig.getProperty(KafkaConfig$.MODULE$.PortProp()));
+    log.info("Starting a Kafka instance on port {} ...",
+             effectiveBrokerConfig.getProperty(KafkaConfig$.MODULE$.PortProp()));
+
     broker = new KafkaEmbedded(effectiveBrokerConfig);
-    log.debug("Kafka instance is running at {}, connected to ZooKeeper at {}",
+
+    log.info("Kafka instance is running at {}, connected to ZooKeeper at {}",
         broker.brokerList(), broker.zookeeperConnect());
 
     schemaRegistry = new RestApp(0, zookeeperConnect(), KAFKA_SCHEMAS_TOPIC, AVRO_COMPATIBILITY_TYPE);
@@ -213,6 +217,18 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     broker.createTopic(topic, partitions, replication, topicConfig);
   }
 
+
+    /**
+     * Used to verify all expected topics are created
+     * @param timeout
+     * @param topics
+     * @throws InterruptedException
+     */
+  public void confirmTopicsCreated(long timeout, String... topics) throws InterruptedException{
+      String topicNames = Arrays.toString(topics);
+      TestUtils.waitForCondition(new TopicsCreatedCondition(Arrays.asList(topics)), timeout, "Topics " + topicNames + " not created after " + timeout + "millis");
+  }
+
   /**
    * Deletes multiple topics and blocks until all topics got deleted.
    *
@@ -247,6 +263,21 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
       final Set<String> allTopics = new HashSet<>(scala.collection.JavaConversions.seqAsJavaList(zkUtils.getAllTopics()));
       return !allTopics.removeAll(deletedTopics);
     }
+  }
+
+
+  private final class TopicsCreatedCondition implements TestCondition {
+      final Set<String> createdTopics = new HashSet<>();
+
+      public TopicsCreatedCondition(final List<String> topics ) {
+          createdTopics.addAll(topics);
+      }
+
+      @Override
+      public boolean conditionMet() {
+          final Set<String> topics = new HashSet<>(scala.collection.JavaConversions.seqAsJavaList(zkUtils.getAllTopics()));
+          return topics.containsAll(createdTopics);
+      }
   }
 
 }

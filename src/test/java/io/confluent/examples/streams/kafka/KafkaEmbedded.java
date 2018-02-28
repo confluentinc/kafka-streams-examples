@@ -57,6 +57,7 @@ public class KafkaEmbedded {
   private final TemporaryFolder tmpFolder;
   private final KafkaServer kafka;
 
+
   /**
    * Creates and starts an embedded Kafka broker.
    *
@@ -72,10 +73,10 @@ public class KafkaEmbedded {
     boolean loggingEnabled = true;
 
     KafkaConfig kafkaConfig = new KafkaConfig(effectiveConfig, loggingEnabled);
-    log.debug("Starting embedded Kafka broker (with log.dirs={} and ZK ensemble at {}) ...",
+    log.info("Starting embedded Kafka broker (with log.dirs={} and ZK ensemble at {}) ...",
         logDir, zookeeperConnect());
     kafka = TestUtils.createServer(kafkaConfig, Time.SYSTEM);
-    log.debug("Startup of embedded Kafka broker at {} completed (with ZK ensemble at {}) ...",
+    log.info("Startup of embedded Kafka broker at {} completed (with ZK ensemble at {}) ...",
         brokerList(), zookeeperConnect());
   }
 
