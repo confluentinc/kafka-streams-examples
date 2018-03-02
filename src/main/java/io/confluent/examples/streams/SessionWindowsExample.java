@@ -53,9 +53,9 @@ import java.util.concurrent.TimeUnit;
  * 2) Create the input/intermediate/output topics used by this example.
  * <pre>
  * {@code
- * $ bin/kafka-topics --create --topic play-events \
+ * $ bin/kafka-topics.sh --create --topic play-events \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * $ bin/kafka-topics --create --topic play-events-per-session \
+ * $ bin/kafka-topics.sh --create --topic play-events-per-session \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * }
  * </pre>

@@ -54,13 +54,13 @@ import java.util.Properties;
  * 2) Create the input/intermediate/output topics used by this example.
  * <pre>
  * {@code
- * $ bin/kafka-topics --create --topic order \
+ * $ bin/kafka-topics.sh --create --topic order \
  *                    --zookeeper localhost:2181 --partitions 4 --replication-factor 1
- * $ bin/kafka-topics --create --topic customer \
+ * $ bin/kafka-topics.sh --create --topic customer \
  *                    --zookeeper localhost:2181 --partitions 3 --replication-factor 1
- * $ bin/kafka-topics --create --topic product \
+ * $ bin/kafka-topics.sh --create --topic product \
  *                    --zookeeper localhost:2181 --partitions 2 --replication-factor 1
- * $ bin/kafka-topics --create --topic enriched-order \
+ * $ bin/kafka-topics.sh --create --topic enriched-order \
  *                    --zookeeper localhost:2181 --partitions 4 --replication-factor 1
  * }</pre>
  * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be

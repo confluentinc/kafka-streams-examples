@@ -87,9 +87,9 @@ import java.util.TreeSet;
  *
  * <pre>
  * {@code
- * $ bin/kafka-topics --create --topic play-events \
+ * $ bin/kafka-topics.sh --create --topic play-events \
  *                    --zookeeper localhost:2181 --partitions 4 --replication-factor 1
- * $ bin/kafka-topics --create --topic song-feed \
+ * $ bin/kafka-topics.sh --create --topic song-feed \
  *                    --zookeeper localhost:2181 --partitions 4 --replication-factor 1
  *
  * }

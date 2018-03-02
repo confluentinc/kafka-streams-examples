@@ -39,9 +39,9 @@ import java.util.Properties;
  * 2) Create the input and output topics used by this example.
  * <pre>
  * {@code
- * $ bin/kafka-topics --create --topic numbers-topic \
+ * $ bin/kafka-topics.sh --create --topic numbers-topic \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * $ bin/kafka-topics --create --topic sum-of-odd-numbers-topic \
+ * $ bin/kafka-topics.sh --create --topic sum-of-odd-numbers-topic \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * }</pre>
  * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be {@code `bin/kafka-topics.sh ...}.
@@ -68,7 +68,7 @@ import java.util.Properties;
  * 5) Inspect the resulting data in the output topics, e.g. via {@code kafka-console-consumer}.
  * <pre>
  * {@code
- * $ bin/kafka-console-consumer --topic sum-of-odd-numbers-topic --from-beginning \
+ * $ bin/kafka-console-consumer.sh --topic sum-of-odd-numbers-topic --from-beginning \
  *                              --new-consumer --bootstrap-server localhost:9092 \
  *                              --property value.deserializer=org.apache.kafka.common.serialization.IntegerDeserializer
  * }</pre>

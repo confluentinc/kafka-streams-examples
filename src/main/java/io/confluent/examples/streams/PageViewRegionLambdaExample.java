@@ -59,11 +59,11 @@ import java.util.concurrent.TimeUnit;
  * 2) Create the input/intermediate/output topics used by this example.
  * <pre>
  * {@code
- * $ bin/kafka-topics --create --topic PageViews \
+ * $ bin/kafka-topics.sh --create --topic PageViews \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * $ bin/kafka-topics --create --topic UserProfiles \
+ * $ bin/kafka-topics.sh --create --topic UserProfiles \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * $ bin/kafka-topics --create --topic PageViewsByRegion \
+ * $ bin/kafka-topics.sh --create --topic PageViewsByRegion \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * }
  * </pre>
@@ -91,7 +91,7 @@ import java.util.concurrent.TimeUnit;
  * 5) Inspect the resulting data in the output topic, e.g. via {@code kafka-console-consumer}.
  * <pre>
  * {@code
- * $ bin/kafka-console-consumer --topic PageViewsByRegion --from-beginning \
+ * $ bin/kafka-console-consumer.sh --topic PageViewsByRegion --from-beginning \
  *                              --new-consumer --bootstrap-server localhost:9092 \
  *                              --property print.key=true \
  *                              --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer

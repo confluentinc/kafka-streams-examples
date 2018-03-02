@@ -41,9 +41,9 @@ import java.util.Properties;
  * 2) Create the input and output topics used by this example.
  * <pre>
  * {@code
- * $ bin/kafka-topics --create --topic UserRegions \
+ * $ bin/kafka-topics.sh --create --topic UserRegions \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * $ bin/kafka-topics --create --topic LargeRegions \
+ * $ bin/kafka-topics.sh --create --topic LargeRegions \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * }</pre>
  * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be {@code bin/kafka-topics.sh ...}.
@@ -78,13 +78,13 @@ import java.util.Properties;
  * #
  * # Here, the part before the comma will become the message key, and the part after the comma will
  * # become the message value.
- * $ bin/kafka-console-producer --broker-list localhost:9092 --topic UserRegions \
+ * $ bin/kafka-console-producer.sh --broker-list localhost:9092 --topic UserRegions \
  *                              --property parse.key=true --property key.separator=,
  * }</pre>
  * 5) Inspect the resulting data in the output topics, e.g. via {@code kafka-console-consumer}.
  * <pre>
  * {@code
- * $ bin/kafka-console-consumer --topic LargeRegions --from-beginning \
+ * $ bin/kafka-console-consumer.sh --topic LargeRegions --from-beginning \
  *                              --new-consumer --bootstrap-server localhost:9092 \
  *                              --property print.key=true \
  *                              --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer

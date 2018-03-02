@@ -43,11 +43,11 @@ import java.util.Properties;
  * 2) Create the input, intermediate, and output topics used by this example.
  * <pre>
  * {@code
- * $ bin/kafka-topics --create --topic my-input-topic \
+ * $ bin/kafka-topics.sh --create --topic my-input-topic \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * $ bin/kafka-topics --create --topic rekeyed-topic \
+ * $ bin/kafka-topics.sh --create --topic rekeyed-topic \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * $ bin/kafka-topics --create --topic my-output-topic \
+ * $ bin/kafka-topics.sh --create --topic my-output-topic \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * }</pre>
  * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be {@code bin/kafka-topics.sh ...}.
@@ -72,12 +72,12 @@ import java.util.Properties;
  * #    all streams lead to kafka<ENTER>
  * #
  * # Every line you enter will become the value of a single Kafka message.
- * $ bin/kafka-console-producer --broker-list localhost:9092 --topic my-input-topic
+ * $ bin/kafka-console-producer.sh --broker-list localhost:9092 --topic my-input-topic
  * }</pre>
  * 5) Inspect the resulting data in the output topic, e.g. via {@code kafka-console-consumer}.
  * <pre>
  * {@code
- * $ bin/kafka-console-consumer --topic my-output-topic --from-beginning \
+ * $ bin/kafka-console-consumer.sh --topic my-output-topic --from-beginning \
  *                              --new-consumer --bootstrap-server localhost:9092 \
  *                              --property print.key=true \
  *                              --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
