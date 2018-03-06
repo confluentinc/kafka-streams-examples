@@ -84,27 +84,27 @@ results (using the standard Kafka consumer client).
 
 > Tip: Run `mvn test` to launch the integration tests.
 
-| Name  | Java 8+ | Java 7+ | Scala |
+| Integration Test Name  | Java 8+ | Java 7+ | Scala |
 | --- | --- | --- | --- |
-| WordCount | [WordCountLambdaIntegrationTest](src/test/java/io/confluent/examples/streams/WordCountLambdaIntegrationTest.java) | | [WordCountScalaIntegrationTest](src/test/scala/io/confluent/examples/streams/WordCountScalaIntegrationTest.scala)
-| WordCountInteractiveQueries | | [WordCountInteractiveQueriesExampleTest](src/test/java/io/confluent/examples/streams/interactivequeries/WordCountInteractiveQueriesExampleTest.java)
-| EventDeduplication | [EventDeduplicationLambdaIntegrationTest](src/test/java/io/confluent/examples/streams/EventDeduplicationLambdaIntegrationTest.java)
-| GlobalKTable | | [GlobalKTableExampleTest](src/test/java/io/confluent/examples/streams/GlobalKTablesExampleTest.java)
-| HandlingCorruptedInput | | [HandlingCorruptedInputRecordsIntegrationTest](src/test/java/io/confluent/examples/streams/HandlingCorruptedInputRecordsIntegrationTest.java)
-| KafkaMusic | | [KafkaMusicExampleTest](src/test/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExampleTest.java)
-| MapFunction | [MapFunctionLambdaIntegrationTest](src/test/java/io/confluent/examples/streams/MapFunctionLambdaIntegrationTest.java)
-| MixAndMatch | [MixAndMatchLambdaIntegrationTest](src/test/java/io/confluent/examples/streams/MixAndMatchLambdaIntegrationTest.java)
-| PassThrough | | [PassThroughIntegrationTest](src/test/java/io/confluent/examples/streams/PassThroughIntegrationTest.java)
-| SessionWindows | | [SessionWindowsExampleTest](src/test/java/io/confluent/examples/streams/SessionWindowsExampleTest.java)
-| Sum | [SumLambdaIntegrationTest](src/test/java/io/confluent/examples/streams/SumLambdaIntegrationTest.java)
-| StreamToStream | | [StreamToStreamJoinIntegrationTest](src/test/java/io/confluent/examples/streams/StreamToStreamJoinIntegrationTest.java)
-| StreamToTable | | [StreamToTableJoinIntegrationTest](src/test/java/io/confluent/examples/streams/StreamToTableJoinIntegrationTest.java) |  [StreamToTableJoinScalaIntegrationTest](src/test/scala/io/confluent/examples/streams/StreamToTableJoinScalaIntegrationTest.scala)
-| TableToTable | | [TableToTableJoinIntegrationTest](src/test/java/io/confluent/examples/streams/TableToTableJoinIntegrationTest.java)
-| UserCountsPerRegion | [UserCountsPerRegionLambdaIntegrationTest](src/test/java/io/confluent/examples/streams/UserCountsPerRegionLambdaIntegrationTest.java)
-| GenericAvro | | [GenericAvroIntegrationTest](src/test/java/io/confluent/examples/streams/GenericAvroIntegrationTest.java) |  [GenericAvroScalaIntegrationTest](src/test/scala/io/confluent/examples/streams/GenericAvroScalaIntegrationTest.scala)
-| SpecificAvro | | [SpecificAvroIntegrationTest](src/test/java/io/confluent/examples/streams/SpecificAvroIntegrationTest.java) | [SpecificAvroScalaIntegrationTest](src/test/scala/io/confluent/examples/streams/SpecificAvroScalaIntegrationTest.scala)
-| ValidateState | [ValidateStateWithInteractiveQueriesLambdaIntegrationTest](src/test/java/io/confluent/examples/streams/ValidateStateWithInteractiveQueriesLambdaIntegrationTest.java)
-| ProbabilisticCounting*** | | | [ProbabilisticCountingScalaIntegrationTest](src/test/scala/io/confluent/examples/streams/ProbabilisticCountingScalaIntegrationTest.scala)
+| WordCount | [Java 8+ Integration Test](src/test/java/io/confluent/examples/streams/WordCountLambdaIntegrationTest.java) | | [Scala Integration Test](src/test/scala/io/confluent/examples/streams/WordCountScalaIntegrationTest.scala)
+| WordCountInteractiveQueries | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/interactivequeries/WordCountInteractiveQueriesExampleTest.java)
+| EventDeduplication | [Java 8+ Integration Test](src/test/java/io/confluent/examples/streams/EventDeduplicationLambdaIntegrationTest.java)
+| GlobalKTable | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/GlobalKTablesExampleTest.java)
+| HandlingCorruptedInput | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/HandlingCorruptedInputRecordsIntegrationTest.java)
+| KafkaMusic | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExampleTest.java)
+| MapFunction | [Java 8+ Integration Test](src/test/java/io/confluent/examples/streams/MapFunctionLambdaIntegrationTest.java)
+| MixAndMatch | [Java 8+ Integration Test](src/test/java/io/confluent/examples/streams/MixAndMatchLambdaIntegrationTest.java)
+| PassThrough | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/PassThroughIntegrationTest.java)
+| SessionWindows | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/SessionWindowsExampleTest.java)
+| Sum | [java 8+ Integration Test](src/test/java/io/confluent/examples/streams/SumLambdaIntegrationTest.java)
+| StreamToStream | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/StreamToStreamJoinIntegrationTest.java)
+| StreamToTable | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/StreamToTableJoinIntegrationTest.java) |  [Scala Integration Test](src/test/scala/io/confluent/examples/streams/StreamToTableJoinScalaIntegrationTest.scala)
+| TableToTable | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/TableToTableJoinIntegrationTest.java)
+| UserCountsPerRegion | [Java 8+ Integration Test](src/test/java/io/confluent/examples/streams/UserCountsPerRegionLambdaIntegrationTest.java)
+| GenericAvro | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/GenericAvroIntegrationTest.java) |  [Scala Integration Test](src/test/scala/io/confluent/examples/streams/GenericAvroScalaIntegrationTest.scala)
+| SpecificAvro | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/SpecificAvroIntegrationTest.java) | [Scala Integration Test](src/test/scala/io/confluent/examples/streams/SpecificAvroScalaIntegrationTest.scala)
+| ValidateState | [Java 8+ Integration Test](src/test/java/io/confluent/examples/streams/ValidateStateWithInteractiveQueriesLambdaIntegrationTest.java)
+| ProbabilisticCounting*** | | | [Scala Integration Test](src/test/scala/io/confluent/examples/streams/ProbabilisticCountingScalaIntegrationTest.scala)
 
 
 ***demonstrates how to probabilistically count items in an input stream by implementing a custom state store
