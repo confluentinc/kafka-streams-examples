@@ -12,8 +12,8 @@ For more information take a look at the
 Table of Contents
 
 * [Available examples](#available-examples)
-    * [Java](#examples-java)
-    * [Scala](#examples-scala)
+    * [Java](#examples)
+    * [Scala](#examples)
 * [Requirements](#requirements)
     * [Apache Kafka](#requirements-kafka)
     * [Confluent Platform](#requirements-confluent-platform)
@@ -50,7 +50,7 @@ There are two kinds of examples:
 
 ## Examples
 
-<a name="examples-java"/>
+<a name="examples"/>
 
 | Name | Concepts used | Java 8+ | Java 7+ | Scala |
 | --- | --- | --- | --- | --- |
