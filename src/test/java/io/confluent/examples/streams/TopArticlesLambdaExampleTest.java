@@ -30,7 +30,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.kstream.Windowed;
-import org.apache.kafka.streams.kstream.internals.WindowedDeserializer;
+import org.apache.kafka.streams.kstream.WindowedSerdes;
 import org.apache.kafka.test.TestUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -114,8 +114,7 @@ public class TopArticlesLambdaExampleTest {
     consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, "top-articles-consumer");
     consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    final Deserializer<Windowed<String>>
-        windowedDeserializer = new WindowedDeserializer<>(Serdes.String().deserializer());
+    final Deserializer<Windowed<String>> windowedDeserializer = WindowedSerdes.timeWindowedSerdeFrom(String.class).deserializer();
     final KafkaConsumer<Windowed<String>, String> consumer = new KafkaConsumer<>(consumerProperties,
                                                                                  windowedDeserializer,
                                                                                  Serdes.String().deserializer());
@@ -123,7 +122,7 @@ public class TopArticlesLambdaExampleTest {
     consumer.subscribe(Collections.singletonList(TopArticlesLambdaExample.TOP_NEWS_PER_INDUSTRY_TOPIC));
 
     final Map<String, List<String>> received = new HashMap<>();
-    final long timeout = System.currentTimeMillis() + 30000L;
+    final long timeout = System.currentTimeMillis() + 60_000L;
     boolean done = false;
     while(System.currentTimeMillis() < timeout && !done) {
       final ConsumerRecords<Windowed<String>, String> records = consumer.poll(10);

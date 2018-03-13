@@ -16,7 +16,6 @@
 package io.confluent.examples.streams;
 
 import io.confluent.examples.streams.utils.PriorityQueueSerde;
-import io.confluent.examples.streams.utils.WindowedSerde;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
 import org.apache.avro.Schema;
@@ -36,6 +35,7 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.kstream.Windowed;
+import org.apache.kafka.streams.kstream.WindowedSerdes;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,7 +50,7 @@ import java.util.concurrent.TimeUnit;
  *
  * In this example, we count the TopN articles from a stream of page views (aka clickstreams) that
  * reads from a topic named "PageViews". We filter the PageViews stream so that we only consider
- * pages of type article, and then map the recored key to effectively nullify the user, such that
+ * pages of type article, and then map the record key to effectively nullify the user, such that
  * the we can count page views by (page, industry). The counts per (page, industry) are then
  * grouped by industry and aggregated into a PriorityQueue with descending order. Finally we
  * perform a mapValues to fetch the top 100 articles per industry.
@@ -165,7 +165,7 @@ public class TopArticlesLambdaExample {
     final Serde<GenericRecord> valueAvroSerde = new GenericAvroSerde();
     valueAvroSerde.configure(serdeConfig, false);
 
-    final Serde<Windowed<String>> windowedStringSerde = new WindowedSerde<>(stringSerde);
+    final Serde<Windowed<String>> windowedStringSerde = WindowedSerdes.timeWindowedSerdeFrom(String.class);
 
     final StreamsBuilder builder = new StreamsBuilder();
 

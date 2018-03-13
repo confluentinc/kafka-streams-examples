@@ -31,7 +31,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.kstream.Windowed;
-import org.apache.kafka.streams.kstream.internals.WindowedDeserializer;
+import org.apache.kafka.streams.kstream.WindowedSerdes;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -111,7 +111,7 @@ public class TopArticlesExampleDriver {
     consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG,
         "top-articles-lambda-example-consumer");
     consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    final Deserializer<Windowed<String>> windowedDeserializer = new WindowedDeserializer<>(Serdes.String().deserializer());
+    final Deserializer<Windowed<String>> windowedDeserializer = WindowedSerdes.timeWindowedSerdeFrom(String.class).deserializer();
     final KafkaConsumer<Windowed<String>, String> consumer = new KafkaConsumer<>(consumerProperties,
                                                                                  windowedDeserializer,
                                                                                  Serdes.String().deserializer());
