@@ -41,7 +41,7 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.SessionWindowsExampleDriver
+ * $ java -cp target/kafka-streams-examples-3.3.1-SNAPSHOT-standalone.jar io.confluent.examples.streams.SessionWindowsExampleDriver
  * }</pre>
  */
 public class SessionWindowsExampleDriver {

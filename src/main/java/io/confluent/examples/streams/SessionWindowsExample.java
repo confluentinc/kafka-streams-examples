@@ -61,7 +61,7 @@ import java.util.concurrent.TimeUnit;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.SessionWindowsExample
+ * $ java -cp target/kafka-streams-examples-3.3.1-SNAPSHOT-standalone.jar io.confluent.examples.streams.SessionWindowsExample
  * }</pre>
  * 4) Write some input data to the source topics (e.g. via {@link SessionWindowsExampleDriver}). The
  * already running example application (step 3) will automatically process this input data and write
@@ -70,7 +70,7 @@ import java.util.concurrent.TimeUnit;
  * {@code
  * # Here: Write input data using the example driver. The driver will also consume, and print, the data from the output
  * topic. The driver will stop when it has received all output records
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.SessionWindowsExampleDriver
+ * $ java -cp target/kafka-streams-examples-3.3.1-SNAPSHOT-standalone.jar io.confluent.examples.streams.SessionWindowsExampleDriver
  * }</pre>
  * You should see output data similar to:
  * <pre>

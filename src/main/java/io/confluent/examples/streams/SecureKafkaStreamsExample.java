@@ -93,14 +93,14 @@ import java.util.Properties;
  * {@code
  * [vagrant@kafka ~]$ git clone https://github.com/confluentinc/kafka-streams-examples.git
  * [vagrant@kafka ~]$ cd kafka-streams-examples
- * [vagrant@kafka ~]$ git checkout 3.3.0-post
+ * [vagrant@kafka ~]$ git checkout 3.3.x
  *
  * # Build and package the examples.  We skip the test suite because running the test suite
  * # requires more main memory than is available to the Vagrant VM by default.
  * [vagrant@kafka ~]$ mvn clean -DskipTests=true package
  *
  * # Now we can start this example application
- * [vagrant@kafka ~]$ java -cp target/kafka-streams-examples-3.3.0-standalone.jar \
+ * [vagrant@kafka ~]$ java -cp target/kafka-streams-examples-3.3.1-SNAPSHOT-standalone.jar \
  *                             io.confluent.examples.streams.SecureKafkaStreamsExample
  * }</pre>
  * 4) Write some input data to the source topic (e.g. via {@code kafka-console-producer}). The already

@@ -55,7 +55,7 @@ import org.apache.kafka.streams.kstream.{KStream, KStreamBuilder}
   * Once packaged you can then run:
   *
   * {{{
-  * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.MapFunctionScalaExample
+  * $ java -cp target/kafka-streams-examples-3.3.1-SNAPSHOT-standalone.jar io.confluent.examples.streams.MapFunctionScalaExample
   * }
   * }}}
   *
@@ -78,7 +78,7 @@ import org.apache.kafka.streams.kstream.{KStream, KStreamBuilder}
   *
   * {{{
   * $ bin/kafka-console-consumer --new-consumer --bootstrap-server localhost:9092 --topic UppercasedTextLinesTopic --from-beginning
-  * $ bin/kafka-console-consumer --new-consumer --bootstrap-server localhost:9092 --topic OriginalAndUppercasedTopic --from-beginning
+  * $ bin/kafka-console-consumer --new-consumer --bootstrap-server localhost:9092 --topic OriginalAndUppercasedTopic --from-beginning  --property print.key=true
   * }}}
   *
   * You should see output data similar to:
