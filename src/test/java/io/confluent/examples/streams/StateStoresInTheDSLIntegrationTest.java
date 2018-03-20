@@ -25,14 +25,15 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
+import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.kstream.TransformerSupplier;
 import org.apache.kafka.streams.processor.ProcessorContext;
-import org.apache.kafka.streams.processor.StateStoreSupplier;
 import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.apache.kafka.test.TestUtils;
 import org.junit.BeforeClass;
@@ -143,7 +144,7 @@ public class StateStoresInTheDSLIntegrationTest {
     //
     // Step 1: Configure and start the processor topology.
     //
-    KStreamBuilder builder = new KStreamBuilder();
+    StreamsBuilder builder = new StreamsBuilder();
 
     Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "state-store-dsl-lambda-integration-test");
@@ -155,11 +156,11 @@ public class StateStoresInTheDSLIntegrationTest {
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
     // Create a state store manually.
-    StateStoreSupplier wordCountsStore = Stores.create("WordCountsStore")
-        .withKeys(Serdes.String())
-        .withValues(Serdes.Long())
-        .persistent()
-        .build();
+    StoreBuilder<KeyValueStore<String, Long>> wordCountsStore = Stores.keyValueStoreBuilder(
+            Stores.persistentKeyValueStore("WordCountsStore"),
+            Serdes.String(),
+            Serdes.Long())
+            .withCachingEnabled();
 
     // Important (1 of 2): You must add the state store to the topology, otherwise your application
     // will fail at run-time (because the state store is referred to in `transform()` below.
@@ -178,9 +179,9 @@ public class StateStoresInTheDSLIntegrationTest {
     KStream<String, Long> wordCounts =
         words.transform(new WordCountTransformerSupplier(wordCountsStore.name()), wordCountsStore.name());
 
-    wordCounts.to(Serdes.String(), Serdes.Long(), outputTopic);
+    wordCounts.to(outputTopic, Produced.with(Serdes.String(), Serdes.Long()));
 
-    KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();
 
     //

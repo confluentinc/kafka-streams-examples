@@ -25,10 +25,11 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.test.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -107,7 +108,7 @@ public class WordCountLambdaIntegrationTest {
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
-    KStreamBuilder builder = new KStreamBuilder();
+    StreamsBuilder builder = new StreamsBuilder();
 
     KStream<String, String> textLines = builder.stream(inputTopic);
 
@@ -117,11 +118,11 @@ public class WordCountLambdaIntegrationTest {
         .flatMapValues(value -> Arrays.asList(pattern.split(value.toLowerCase())))
         // no need to specify explicit serdes because the resulting key and value types match our default serde settings
         .groupBy((key, word) -> word)
-        .count("Counts");
+        .count();
 
-    wordCounts.to(stringSerde, longSerde, outputTopic);
+    wordCounts.toStream().to(outputTopic, Produced.with(stringSerde, longSerde));
 
-    KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();
 
     //

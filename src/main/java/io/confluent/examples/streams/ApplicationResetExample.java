@@ -18,9 +18,10 @@ package io.confluent.examples.streams;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
+import org.apache.kafka.streams.kstream.Produced;
 
 import java.util.Properties;
 
@@ -57,8 +58,9 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.ApplicationResetExample
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.ApplicationResetExample
+ * }
+ * </pre>
  * 4) Write some input data to the source topic (e.g. via {@code kafka-console-producer}).
  * The already running example application (step 3) will automatically process this input data and write the results to the output topics.
  * <pre>
@@ -111,7 +113,7 @@ import java.util.Properties;
  * Thus, restart the application via:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.ApplicationResetExample --reset
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.ApplicationResetExample --reset
  * }</pre>
  * 9) If your console consumer (from step 5) is still running, you should see the same output data again.
  * If it was stopped and you restart it, if will print the result "twice".
@@ -148,14 +150,15 @@ public class ApplicationResetExample {
 
   public static KafkaStreams run(final String[] args, final Properties streamsConfiguration) {
     // Define the processing topology
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
     final KStream<String, String> input = builder.stream("my-input-topic");
     input.selectKey((key, value) -> value.split(" ")[0])
       .groupByKey()
-      .count("count")
-      .to(Serdes.String(), Serdes.Long(), "my-output-topic");
+      .count()
+      .toStream()
+      .to("my-output-topic", Produced.with(Serdes.String(), Serdes.Long()));
 
-    final KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
 
     // Delete the application's local state on reset
     if (args.length > 0 && args[0].equals("--reset")) {

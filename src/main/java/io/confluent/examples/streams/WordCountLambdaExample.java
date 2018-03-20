@@ -18,10 +18,11 @@ package io.confluent.examples.streams;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Produced;
 
 import java.util.Arrays;
 import java.util.Properties;
@@ -32,9 +33,9 @@ import java.util.regex.Pattern;
  * computes a simple word occurrence histogram from an input text. This example uses lambda
  * expressions and thus works with Java 8+ only.
  * <p>
- * In this example, the input stream reads from a topic named "TextLinesTopic", where the values of
+ * In this example, the input stream reads from a topic named "streams-plaintext-input", where the values of
  * messages represent lines of text; and the histogram output is written to topic
- * "WordsWithCountsTopic", where each record is an updated count of a single word, i.e. {@code word (String) -> currentCount (Long)}.
+ * "streams-wordcount-output", where each record is an updated count of a single word, i.e. {@code word (String) -> currentCount (Long)}.
  * <p>
  * Note: Before running this example you must 1) create the source topic (e.g. via {@code kafka-topics --create ...}),
  * then 2) start this example and 3) write some data to the source topic (e.g. via {@code kafka-console-producer}).
@@ -48,9 +49,9 @@ import java.util.regex.Pattern;
  * 2) Create the input and output topics used by this example.
  * <pre>
  * {@code
- * $ bin/kafka-topics --create --topic TextLinesTopic \
+ * $ bin/kafka-topics --create --topic streams-plaintext-input \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * $ bin/kafka-topics --create --topic WordsWithCountsTopic \
+ * $ bin/kafka-topics --create --topic streams-wordcount-output \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * }</pre>
  * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be {@code bin/kafka-topics.sh ...}.
@@ -61,11 +62,12 @@ import java.util.regex.Pattern;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.WordCountLambdaExample
- * }</pre>
- * 4) Write some input data to the source topic "TextLinesTopic" (e.g. via {@code kafka-console-producer}).
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.WordCountLambdaExample
+ * }
+ * </pre>
+ * 4) Write some input data to the source topic "streams-plaintext-input" (e.g. via {@code kafka-console-producer}).
  * The already running example application (step 3) will automatically process this input data and write the
- * results to the output topic "WordsWithCountsTopic".
+ * results to the output topic "streams-wordcount-output".
  * <pre>
  * {@code
  * # Start the console producer. You can then enter input data by writing some line of text, followed by ENTER:
@@ -75,12 +77,12 @@ import java.util.regex.Pattern;
  * #   join kafka summit<ENTER>
  * #
  * # Every line you enter will become the value of a single Kafka message.
- * $ bin/kafka-console-producer --broker-list localhost:9092 --topic TextLinesTopic
+ * $ bin/kafka-console-producer --broker-list localhost:9092 --topic streams-plaintext-input
  * }</pre>
  * 5) Inspect the resulting data in the output topic, e.g. via {@code kafka-console-consumer}.
  * <pre>
  * {@code
- * $ bin/kafka-console-consumer --topic WordsWithCountsTopic --from-beginning \
+ * $ bin/kafka-console-consumer --topic streams-wordcount-output --from-beginning \
  *                              --new-consumer --bootstrap-server localhost:9092 \
  *                              --property print.key=true \
  *                              --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
@@ -133,17 +135,17 @@ public class WordCountLambdaExample {
     final Serde<Long> longSerde = Serdes.Long();
 
     // In the subsequent lines we define the processing topology of the Streams application.
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
-    // Construct a `KStream` from the input topic "TextLinesTopic", where message values
+    // Construct a `KStream` from the input topic "streams-plaintext-input", where message values
     // represent lines of text (for the sake of this example, we ignore whatever may be stored
     // in the message keys).
     //
-    // Note: We could also just call `builder.stream("TextLinesTopic")` if we wanted to leverage
+    // Note: We could also just call `builder.stream("streams-plaintext-input")` if we wanted to leverage
     // the default serdes specified in the Streams configuration above, because these defaults
     // match what's in the actual topic.  However we explicitly set the deserializers in the
     // call to `stream()` below in order to show how that's done, too.
-    final KStream<String, String> textLines = builder.stream(stringSerde, stringSerde, "TextLinesTopic");
+    final KStream<String, String> textLines = builder.stream("streams-plaintext-input");
 
     final Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
 
@@ -160,15 +162,15 @@ public class WordCountLambdaExample {
       //
       // Note: no need to specify explicit serdes because the resulting key and value types match our default serde settings
       .groupBy((key, word) -> word)
-      .count("Counts");
+      .count();
 
-    // Write the `KStream<String, Long>` to the output topic.
-    wordCounts.to(stringSerde, longSerde, "WordsWithCountsTopic");
+    // Write the `KTable<String, Long>` to the output topic.
+    wordCounts.toStream().to("streams-wordcount-output", Produced.with(stringSerde, longSerde));
 
     // Now that we have finished the definition of the processing topology we can actually run
     // it via `start()`.  The Streams application as a whole can be launched just like any
     // normal Java application that has a `main()` method.
-    final KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     // Always (and unconditionally) clean local state prior to starting the processing topology.
     // We opt for this unconditional call here because this will make it easier for you to play around with the example
     // when resetting the application for doing a re-run (via the Application Reset Tool,

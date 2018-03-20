@@ -21,8 +21,8 @@ import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.kstream.{KStream, KStreamBuilder, KTable}
-import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
+import org.apache.kafka.streams.kstream.{KStream, KTable, Produced, Serialized}
+import org.apache.kafka.streams._
 import org.apache.kafka.test.TestUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.junit._
@@ -120,13 +120,13 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
       p
     }
 
-    val builder: KStreamBuilder = new KStreamBuilder()
+    val builder: StreamsBuilder = new StreamsBuilder()
 
     // This KStream contains information such as "alice" -> 13L.
     //
     // Because this is a KStream ("record stream"), multiple records for the same user will be
     // considered as separate click-count events, each of which will be added to the total count.
-    val userClicksStream: KStream[String, Long] = builder.stream(stringSerde, longSerde, userClicksTopic)
+    val userClicksStream: KStream[String, Long] = builder.stream(userClicksTopic, Consumed.`with`(stringSerde, longSerde))
 
     // This KTable contains information such as "alice" -> "europe".
     //
@@ -139,7 +139,7 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
     // lived in "asia") because, at the time her first user-click record is being received and
     // subsequently processed in the `leftJoin`, the latest region update for "alice" is "europe"
     // (which overrides her previous region value of "asia").
-    val userRegionsTable: KTable[String, String] = builder.table(stringSerde, stringSerde, userRegionsTopic, "UserRegionsStore")
+    val userRegionsTable: KTable[String, String] = builder.table(userRegionsTopic, Consumed.`with`(stringSerde, stringSerde))
 
     // Compute the number of clicks per region, e.g. "europe" -> 13L.
     //
@@ -159,16 +159,15 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
       .map((_: String, regionWithClicks: (String, Long)) => new KeyValue[String, Long](
       regionWithClicks._1, regionWithClicks._2))
 
-    import FunctionImplicits.BinaryFunctionToReducer
     val clicksPerRegion: KTable[String, Long] = clicksByRegion
         // Compute the total per region by summing the individual click counts per region.
-        .groupByKey(stringSerde, longSerde)
-        .reduce((firstClicks: Long, secondClicks: Long) => firstClicks + secondClicks: Long, "ClicksPerRegionUnwindowedScala")
+        .groupByKey(Serialized.`with`(stringSerde, longSerde))
+        .reduce(_ + _)
 
     // Write the (continuously updating) results to the output topic.
-    clicksPerRegion.to(stringSerde, longSerde, outputTopic)
+    clicksPerRegion.toStream().to(outputTopic, Produced.`with`(stringSerde, longSerde))
 
-    val streams: KafkaStreams = new KafkaStreams(builder, streamsConfiguration)
+    val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
     streams.start()
 
     //

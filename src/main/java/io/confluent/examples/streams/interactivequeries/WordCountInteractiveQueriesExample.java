@@ -17,13 +17,19 @@ package io.confluent.examples.streams.interactivequeries;
 
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.utils.Bytes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KGroupedStream;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
+import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.state.HostInfo;
+import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.WindowStore;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -76,8 +82,8 @@ import java.util.Properties;
  *
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar \
- *      io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExample 7070
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar \
+ *      io.confluent.examples.streams.interactivequeries.InteractiveQueriesExample 7070
  * }
  * </pre>
  *
@@ -87,8 +93,8 @@ import java.util.Properties;
  *
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar \
- *      io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExample 7071
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar \
+ *      io.confluent.examples.streams.interactivequeries.InteractiveQueriesExample 7071
  * }
  * </pre>
  *
@@ -154,6 +160,10 @@ public class WordCountInteractiveQueriesExample {
     streamsConfiguration.put(StreamsConfig.CLIENT_ID_CONFIG, "interactive-queries-example-client");
     // Where to find Kafka broker(s).
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+    // Set the default key serde
+    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+    // Set the default value serde
+    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
     // Provide the details of our embedded http service that we'll use to connect to this streams
     // instance and discover locations of stores.
     streamsConfiguration.put(StreamsConfig.APPLICATION_SERVER_CONFIG, "localhost:" + port);
@@ -203,22 +213,25 @@ public class WordCountInteractiveQueriesExample {
 
   static KafkaStreams createStreams(final Properties streamsConfiguration) {
     final Serde<String> stringSerde = Serdes.String();
-    KStreamBuilder builder = new KStreamBuilder();
+    StreamsBuilder builder = new StreamsBuilder();
     KStream<String, String>
-        textLines = builder.stream(stringSerde, stringSerde, TEXT_LINES_TOPIC);
+        textLines = builder.stream(TEXT_LINES_TOPIC, Consumed.with(Serdes.String(), Serdes.String()));
 
     final KGroupedStream<String, String> groupedByWord = textLines
         .flatMapValues(value -> Arrays.asList(value.toLowerCase().split("\\W+")))
-        .groupBy((key, word) -> word, stringSerde, stringSerde);
+        .groupBy((key, word) -> word, Serialized.with(stringSerde, stringSerde));
 
     // Create a State Store for with the all time word count
-    groupedByWord.count("word-count");
+    groupedByWord.count(Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("word-count")
+        .withValueSerde(Serdes.Long()));
 
     // Create a Windowed State Store that contains the word count for every
     // 1 minute
-    groupedByWord.count(TimeWindows.of(60000), "windowed-word-count");
+    groupedByWord.windowedBy(TimeWindows.of(60000))
+        .count(Materialized.<String, Long, WindowStore<Bytes, byte[]>>as("windowed-word-count")
+            .withValueSerde(Serdes.Long()));
 
-    return new KafkaStreams(builder, streamsConfiguration);
+    return new KafkaStreams(builder.build(), streamsConfiguration);
   }
 
 }

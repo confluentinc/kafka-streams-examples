@@ -56,13 +56,12 @@ import org.apache.kafka.streams.state.StateSerdes
   * In a Kafka Streams application, you'd typically create this store as such:
   *
   * {{{
-  * val builder: KStreamBuilder = new KStreamBuilder()
+  * val builder: StreamsBuilder = new StreamsBuilder()
   *
   * // In this example, we create a store for type [[String]].
   * // It's recommended to reduce Kafka's log segment size for the changelogs of CMS stores, which
-  * // you can do by passing the respective Kafka setting to the store supplier.  See
-  * // [[CMSStoreSupplier]] for details.
-  * builder.addStateStore(new CMSStoreSupplier[String]("my-cms-store-name", Serdes.String()))
+  * // you can do by passing the respective Kafka setting to the CMSStoreBuilder via `withLoggingEnabled()`.
+  * builder.addStateStore(new CMSStoreBuilder[String]("my-cms-store-name", Serdes.String()))
   * }}}
   *
   * Then you'd use the store within a [[org.apache.kafka.streams.processor.Processor]] or a
@@ -146,6 +145,8 @@ class CMSStore[T: CMSHasher](override val name: String,
     */
   private var cms: TopCMS[T] = cmsMonoid.zero
 
+  private var timestampOfLastStateStoreUpdate: Long = 0L
+
   private var changeLogger: CMSStoreChangeLogger[Integer, TopCMS[T]] = _
 
   /**
@@ -220,7 +221,10 @@ class CMSStore[T: CMSHasher](override val name: String,
     *
     * @param item item to be counted
     */
-  def put(item: T): Unit = cms = cms + item
+  def put(item: T, timestamp: Long): Unit = {
+    cms = cms + item
+    timestampOfLastStateStoreUpdate = timestamp
+  }
 
   /**
     * The top items counted so far, with the percentage-based cut-off being defined by the CMS
@@ -256,7 +260,7 @@ class CMSStore[T: CMSHasher](override val name: String,
     */
   override def flush() {
     if (loggingEnabled) {
-      changeLogger.logChange(changelogKey, cms)
+      changeLogger.logChange(changelogKey, cms, timestampOfLastStateStoreUpdate)
     }
   }
 
