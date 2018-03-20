@@ -19,7 +19,7 @@ import java.util.Properties
 
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams._
-import org.apache.kafka.streams.kstream.{KStream, KStreamBuilder}
+import org.apache.kafka.streams.kstream.{KStream, Produced}
 
 /**
   * Demonstrates how to perform simple, state-less transformations via map functions.
@@ -55,8 +55,7 @@ import org.apache.kafka.streams.kstream.{KStream, KStreamBuilder}
   * Once packaged you can then run:
   *
   * {{{
-  * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.MapFunctionScalaExample
-  * }
+  * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.MapFunctionScalaExample
   * }}}
   *
   * 4) Write some input data to the source topics (e.g. via `kafka-console-producer`.  The already
@@ -94,7 +93,7 @@ object MapFunctionScalaExample {
 
   def main(args: Array[String]) {
     val bootstrapServers = if (args.length > 0) args(0) else "localhost:9092"
-    val builder = new KStreamBuilder
+    val builder = new StreamsBuilder
 
     val streamingConfig = {
       val settings = new Properties
@@ -145,9 +144,9 @@ object MapFunctionScalaExample {
     //
     // In this case we must explicitly set the correct serializers because the default serializers
     // (cf. streaming configuration) do not match the type of this particular KStream instance.
-    originalAndUppercased.to(stringSerde, stringSerde, "OriginalAndUppercasedTopic")
+    originalAndUppercased.to("OriginalAndUppercasedTopic", Produced.`with`(stringSerde, stringSerde))
 
-    val stream: KafkaStreams = new KafkaStreams(builder, streamingConfig)
+    val stream: KafkaStreams = new KafkaStreams(builder.build(), streamingConfig)
     stream.start()
   }
 

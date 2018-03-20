@@ -19,14 +19,16 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.kstream.Windowed;
 
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Demonstrates how to count things over time, using time windows. In this specific example we
@@ -56,7 +58,7 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.AnomalyDetectionLambdaExample
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.AnomalyDetectionLambdaExample
  * }</pre>
  * <p>
  * 4) Write some input data to the source topic (e.g. via {@code kafka-console-producer}. The already
@@ -119,7 +121,7 @@ public class AnomalyDetectionLambdaExample {
     final Serde<String> stringSerde = Serdes.String();
     final Serde<Long> longSerde = Serdes.Long();
 
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
     // Read the source stream.  In this example, we ignore whatever is stored in the record key and
     // assume the record value contains the username (and each record would represent a single
@@ -132,7 +134,8 @@ public class AnomalyDetectionLambdaExample {
       // count users, using one-minute tumbling windows;
       // no need to specify explicit serdes because the resulting key and value types match our default serde settings
       .groupByKey()
-      .count(TimeWindows.of(60 * 1000L), "UserCountStore")
+      .windowedBy(TimeWindows.of(TimeUnit.MINUTES.toMillis(1)))
+      .count()
       // get users whose one-minute count is >= 3
       .filter((windowedUserId, count) -> count >= 3);
 
@@ -151,9 +154,9 @@ public class AnomalyDetectionLambdaExample {
       .map((windowedUserId, count) -> new KeyValue<>(windowedUserId.toString(), count));
 
     // write to the result topic
-    anomalousUsersForConsole.to(stringSerde, longSerde, "AnomalousUsers");
+    anomalousUsersForConsole.to("AnomalousUsers", Produced.with(stringSerde, longSerde));
 
-    final KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     // Always (and unconditionally) clean local state prior to starting the processing topology.
     // We opt for this unconditional call here because this will make it easier for you to play around with the example
     // when resetting the application for doing a re-run (via the Application Reset Tool,

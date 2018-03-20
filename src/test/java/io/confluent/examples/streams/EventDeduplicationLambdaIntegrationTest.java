@@ -25,13 +25,13 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
-import org.apache.kafka.streams.processor.StateStoreSupplier;
+import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.apache.kafka.streams.state.WindowStore;
 import org.apache.kafka.streams.state.WindowStoreIterator;
@@ -78,6 +78,8 @@ public class EventDeduplicationLambdaIntegrationTest {
 
   private static String inputTopic = "inputTopic";
   private static String outputTopic = "outputTopic";
+
+  private static String storeName = "eventId-store";
 
   @BeforeClass
   public static void startKafkaCluster() throws Exception {
@@ -133,7 +135,7 @@ public class EventDeduplicationLambdaIntegrationTest {
     @SuppressWarnings("unchecked")
     public void init(final ProcessorContext context) {
       this.context = context;
-      eventIdStore = (WindowStore<E, Long>) context.getStateStore("eventId-store");
+      eventIdStore = (WindowStore<E, Long>) context.getStateStore(storeName);
     }
 
     public KeyValue<K, V> transform(final K key, final V value) {
@@ -198,7 +200,7 @@ public class EventDeduplicationLambdaIntegrationTest {
     //
     // Step 1: Configure and start the processor topology.
     //
-    KStreamBuilder builder = new KStreamBuilder();
+    StreamsBuilder builder = new StreamsBuilder();
 
     Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "deduplication-lambda-integration-test");
@@ -220,14 +222,27 @@ public class EventDeduplicationLambdaIntegrationTest {
     // on de-duplicating late-arriving records.
     long maintainDurationPerEventInMs = TimeUnit.MINUTES.toMillis(10);
 
-    StateStoreSupplier deduplicationStoreSupplier = Stores.create("eventId-store")
-        .withKeys(Serdes.String()) // must match the return type of the Transformer's id extractor
-        .withValues(Serdes.Long())
-        .persistent()
-        .windowed(maintainDurationPerEventInMs, TimeUnit.MINUTES.toMillis(30), 3, false)
-        .build();
+    // The number of segments has no impact on "correctness".
+    // Using more segments implies larger overhead but allows for more fined grained record expiration
+    // Note: the specified retention time is a _minimum_ time span and no strict upper time bound
+    int numberOfSegments = 3;
 
-    builder.addStateStore(deduplicationStoreSupplier);
+    // retention period must be at least window size -- for this use case, we don't need a longer retention period
+    // and thus just use the window size as retention time
+    long retentionPeriod = maintainDurationPerEventInMs;
+
+    StoreBuilder<WindowStore<String, Long>> dedupStoreBuilder = Stores.windowStoreBuilder(
+            Stores.persistentWindowStore(storeName,
+                                         retentionPeriod,
+                                         numberOfSegments,
+                                         maintainDurationPerEventInMs,
+                                         false
+            ),
+            Serdes.String(),
+            Serdes.Long());
+
+
+    builder.addStateStore(dedupStoreBuilder);
 
     KStream<byte[], String> input = builder.stream(inputTopic);
     KStream<byte[], String> deduplicated = input.transform(
@@ -235,10 +250,10 @@ public class EventDeduplicationLambdaIntegrationTest {
         // which we can perform de-duplication.  If your records are different, adapt the extractor
         // function as needed.
         () -> new DeduplicationTransformer<>(maintainDurationPerEventInMs, (key, value) -> value),
-        "eventId-store");
+        storeName);
     deduplicated.to(outputTopic);
 
-    KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();
 
     //

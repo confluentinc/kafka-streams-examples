@@ -92,7 +92,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     log.debug("Kafka instance is running at {}, connected to ZooKeeper at {}",
         broker.brokerList(), broker.zookeeperConnect());
 
-    schemaRegistry = new RestApp(0, zookeeperConnect(), KAFKA_SCHEMAS_TOPIC, AVRO_COMPATIBILITY_TYPE);
+    schemaRegistry = new RestApp(0, zookeeperConnect(), KAFKA_SCHEMAS_TOPIC, AVRO_COMPATIBILITY_TYPE, new Properties());
     schemaRegistry.start();
     running = true;
   }

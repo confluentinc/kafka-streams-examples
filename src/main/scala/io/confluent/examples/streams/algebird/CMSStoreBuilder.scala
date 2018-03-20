@@ -15,9 +15,11 @@
  */
 package io.confluent.examples.streams.algebird
 
+import java.util
+
 import com.twitter.algebird.CMSHasher
 import org.apache.kafka.common.serialization.Serde
-import org.apache.kafka.streams.processor.StateStoreSupplier
+import org.apache.kafka.streams.state.StoreBuilder
 
 /**
   * A factory for Kafka Streams to instantiate a [[CMSStore]].
@@ -29,30 +31,43 @@ import org.apache.kafka.streams.processor.StateStoreSupplier
   * default of 1GB.
   *
   * {{{
-  * val changeloggingEnabled = true
   * val changelogConfig = {
   *   val cfg = new java.util.HashMap[String, String]
   *   val segmentSizeBytes = (20 * 1024 * 1024).toString
   *   cfg.put("segment.bytes", segmentSizeBytes)
   *   cfg
   * }
-  * new CMSStoreSupplier[String](cmsStoreName, Serdes.String(), changeloggingEnabled, changelogConfig)
+  * new CMSStoreBuilder[String](cmsStoreName, Serdes.String()).withLoggingEnabled(changelogConfig)
   * }}}
   */
-class CMSStoreSupplier[T: CMSHasher](val name: String,
-                                     val serde: Serde[T],
-                                     val loggingEnabled: Boolean,
-                                     val logConfig: java.util.Map[String, String])
-    extends StateStoreSupplier[CMSStore[T]] {
+class CMSStoreBuilder[T: CMSHasher](val name: String,
+                                    val serde: Serde[T])
+    extends StoreBuilder[CMSStore[T]] {
 
-  def this(name: String, serde: Serde[T]) {
-    this(name, serde, true, new java.util.HashMap[String, String])
+  var loggingEnabled = false
+  var logConfig : util.Map[String, String] = new util.HashMap[String, String]()
+
+
+  override def build(): CMSStore[T] = new CMSStore[T](name, loggingEnabled)
+
+  override def withCachingEnabled() = throw new UnsupportedOperationException("caching not supported")
+
+  /**
+    * To enable fault-tolerance for the [[CMSStore]].
+    */
+  override def withLoggingEnabled(config: util.Map[String, String]): CMSStoreBuilder[T] = {
+    loggingEnabled = true
+    logConfig.clear()
+    logConfig.putAll(config)
+    this
   }
 
-  def this(name: String, serde: Serde[T], loggingEnabled: Boolean) {
-    this(name, serde, loggingEnabled, new java.util.HashMap[String, String])
+  /**
+    * To disable fault-tolerance for the [[CMSStore]].
+    */
+  override def withLoggingDisabled(): CMSStoreBuilder[T] = {
+    loggingEnabled = false
+    logConfig.clear()
+    this
   }
-
-  override def get(): CMSStore[T] = new CMSStore[T](name)
-
 }

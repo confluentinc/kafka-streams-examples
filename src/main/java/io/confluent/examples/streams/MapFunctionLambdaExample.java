@@ -17,11 +17,13 @@ package io.confluent.examples.streams;
 
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
+import org.apache.kafka.streams.kstream.Produced;
 
 import java.util.Properties;
 
@@ -58,8 +60,9 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.MapFunctionLambdaExample
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.MapFunctionLambdaExample
+ * }
+ * </pre>
  * 4) Write some input data to the source topic (e.g. via {@code kafka-console-producer}). The already
  * running example application (step 3) will automatically process this input data and write the
  * results to the output topics.
@@ -111,10 +114,10 @@ public class MapFunctionLambdaExample {
     final Serde<byte[]> byteArraySerde = Serdes.ByteArray();
 
     // In the subsequent lines we define the processing topology of the Streams application.
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
     // Read the input Kafka topic into a KStream instance.
-    final KStream<byte[], String> textLines = builder.stream(byteArraySerde, stringSerde, "TextLinesTopic");
+    final KStream<byte[], String> textLines = builder.stream("TextLinesTopic", Consumed.with(byteArraySerde, stringSerde));
 
     // Variant 1: using `mapValues`
     final KStream<byte[], String> uppercasedWithMapValues = textLines.mapValues(String::toUpperCase);
@@ -139,9 +142,9 @@ public class MapFunctionLambdaExample {
     //
     // In this case we must explicitly set the correct serializers because the default serializers
     // (cf. streaming configuration) do not match the type of this particular KStream instance.
-    originalAndUppercased.to(stringSerde, stringSerde, "OriginalAndUppercasedTopic");
+    originalAndUppercased.to("OriginalAndUppercasedTopic", Produced.with(stringSerde, stringSerde));
 
-    final KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     // Always (and unconditionally) clean local state prior to starting the processing topology.
     // We opt for this unconditional call here because this will make it easier for you to play around with the example
     // when resetting the application for doing a re-run (via the Application Reset Tool,

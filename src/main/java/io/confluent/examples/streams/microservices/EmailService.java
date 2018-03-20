@@ -14,6 +14,7 @@ import io.confluent.examples.streams.avro.microservices.Payment;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.kstream.GlobalKTable;
 import org.apache.kafka.streams.kstream.JoinWindows;
+import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.slf4j.Logger;
@@ -29,8 +30,13 @@ public class EmailService implements Service {
 
   private static final Logger log = LoggerFactory.getLogger(EmailService.class);
   private static final String APP_ID = "email-service";
+  public static final Joined<String, Order, Payment> serdes = Joined
+      .with(ORDERS.keySerde(), ORDERS.valueSerde(), PAYMENTS.valueSerde());
+
   private KafkaStreams streams;
   private Emailer emailer;
+  private Joined<String, Order, Payment> serdes4 = Joined
+      .with(ORDERS.keySerde(), ORDERS.valueSerde(), PAYMENTS.valueSerde());
 
   public EmailService(Emailer emailer) {
     this.emailer = emailer;
@@ -58,11 +64,11 @@ public class EmailService implements Service {
 
     //Join the two streams and the table then send an email for each
     orders.join(payments, EmailTuple::new,
-        //Join Orders and Payments streams with a 30s window
-        JoinWindows.of(1 * MIN), ORDERS.keySerde(), ORDERS.valueSerde(), PAYMENTS.valueSerde())
+        //Join Orders and Payments streams
+        JoinWindows.of(1 * MIN), serdes)
         //Next join to the GKTable of Customers
         .join(customers,
-            (key, tuple) -> tuple.order.getCustomerId(),
+            (key1, tuple) -> tuple.order.getCustomerId(),
             // note how, because we use a GKtable, we can join on any attribute of the Customer.
             (tuple, customer) -> tuple.setCustomer(customer))
         //Now for each tuple send an email.
@@ -97,11 +103,11 @@ public class EmailService implements Service {
   }
 
   interface Emailer {
-
     void sendEmail(EmailTuple details);
   }
 
   public class EmailTuple {
+
     public Order order;
     public Payment payment;
     public Customer customer;
@@ -114,6 +120,15 @@ public class EmailService implements Service {
     EmailTuple setCustomer(Customer customer) {
       this.customer = customer;
       return this;
+    }
+
+    @Override
+    public String toString() {
+      return "EmailTuple{" +
+          "order=" + order +
+          ", payment=" + payment +
+          ", customer=" + customer +
+          '}';
     }
   }
 }

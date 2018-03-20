@@ -7,6 +7,7 @@ import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.microservices.domain.Schemas.Topic;
 import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
+import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import kafka.server.KafkaConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -26,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
@@ -42,13 +44,16 @@ public class MicroserviceTestUtils {
 
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster(
-      MicroserviceTestUtils.propsWith(
+      new Properties() {
+        {
           //Transactions need durability so the defaults require multiple nodes.
           //For testing purposes set transactions to work with a single kafka broker.
-          new KeyValue<>(KafkaConfig.TransactionsTopicReplicationFactorProp(), "1"),
-          new KeyValue<>(KafkaConfig.TransactionsTopicMinISRProp(), "1"),
-          new KeyValue<>(KafkaConfig.TransactionsTopicPartitionsProp(), "1")
-      ));
+          put(KafkaConfig.TransactionsTopicReplicationFactorProp(), "1");
+          put(KafkaConfig.TransactionsTopicMinISRProp(), "1");
+          put(KafkaConfig.TransactionsTopicPartitionsProp(), "1");
+          put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, "60000");
+        }
+      });
 
   @AfterClass
   public static void stopCluster() {
@@ -171,22 +176,22 @@ public class MicroserviceTestUtils {
           Thread.sleep(200);
           log.info("Closing tailer...");
         } catch (InterruptedException e) {
+          e.printStackTrace();
         }
       }
     }
   }
 
-  public static Properties propsWith(KeyValue... props) {
-    Properties properties = new Properties();
-    for (KeyValue kv : props) {
-      properties.put(kv.key, kv.value);
-    }
-    return properties;
+  public static <K, V> void send(Topic<K, V> topic, KeyValue<K, V> record) {
+    send(topic, Collections.singletonList(record));
   }
 
   public static <K, V> void send(Topic<K, V> topic, Collection<KeyValue<K, V>> stuff) {
-    try (KafkaProducer<K, V> producer = new KafkaProducer<>(producerConfig(CLUSTER),
-      topic.keySerde().serializer(), topic.valueSerde().serializer())) {
+    try (KafkaProducer<K, V> producer = new KafkaProducer<>(
+        producerConfig(CLUSTER),
+        topic.keySerde().serializer(),
+        topic.valueSerde().serializer()))
+    {
       for (KeyValue<K, V> order : stuff) {
         producer.send(new ProducerRecord<>(topic.name(), order.key, order.value)).get();
       }
@@ -209,9 +214,11 @@ public class MicroserviceTestUtils {
 
   public static void sendInventory(List<KeyValue<Product, Integer>> inventory,
       Schemas.Topic<Product, Integer> topic) {
-    try (KafkaProducer<Product, Integer> stockProducer = new KafkaProducer<>(producerConfig(CLUSTER),
+    try (KafkaProducer<Product, Integer> stockProducer = new KafkaProducer<>(
+        producerConfig(CLUSTER),
         topic.keySerde().serializer(),
-        Schemas.Topics.WAREHOUSE_INVENTORY.valueSerde().serializer())) {
+        Schemas.Topics.WAREHOUSE_INVENTORY.valueSerde().serializer()))
+    {
       for (KeyValue<Product, Integer> kv : inventory) {
         stockProducer.send(new ProducerRecord<>(Topics.WAREHOUSE_INVENTORY.name(), kv.key, kv.value))
             .get();

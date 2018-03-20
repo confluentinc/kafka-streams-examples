@@ -25,15 +25,19 @@ import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.Serializer;
+import org.apache.kafka.common.utils.Bytes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.state.HostInfo;
-import org.apache.kafka.streams.state.RocksDBConfigSetter;
-import org.rocksdb.Options;
+import org.apache.kafka.streams.state.KeyValueStore;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -104,7 +108,7 @@ import java.util.TreeSet;
  *
  * <pre>
  * {@code
- * $ java -cp target/streams-examples-3.3.0-standalone.jar \
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExample 7070
  * }
  * </pre>
@@ -115,7 +119,7 @@ import java.util.TreeSet;
  *
  * <pre>
  * {@code
- * $ java -cp target/streams-examples-3.3.0-standalone.jar \
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExample 7071
  * }
  * </pre>
@@ -175,19 +179,6 @@ public class KafkaMusicExample {
   private static final String DEFAULT_REST_ENDPOINT_HOSTNAME = "localhost";
   private static final String DEFAULT_BOOTSTRAP_SERVERS = "localhost:9092";
   private static final String DEFAULT_SCHEMA_REGISTRY_URL = "http://localhost:8081";
-
-  public static class CustomRocksDBConfig implements RocksDBConfigSetter {
-
-    @Override
-    public void setConfig(final String storeName, final Options options, final Map<String, Object> configs) {
-      // Workaround: We must ensure that the parallelism is set to >= 2.  There seems to be a known
-      // issue with RocksDB where explicitly setting the parallelism to 1 causes issues (even though
-      // 1 seems to be RocksDB's default for this configuration).
-      int compactionParallelism = Math.max(Runtime.getRuntime().availableProcessors(), 2);
-      // Set number of compaction threads (but not flush threads).
-      options.setIncreaseParallelism(compactionParallelism);
-    }
-  }
 
   public static void main(String[] args) throws Exception {
     if (args.length == 0 || args.length > 4) {
@@ -302,17 +293,19 @@ public class KafkaMusicExample {
     final SpecificAvroSerde<SongPlayCount> songPlayCountSerde = new SpecificAvroSerde<>();
     songPlayCountSerde.configure(serdeConfig, false);
 
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
     // get a stream of play events
-    final KStream<String, PlayEvent> playEvents = builder.stream(Serdes.String(),
-        playEventSerde,
-        PLAY_EVENTS);
+    final KStream<String, PlayEvent> playEvents = builder.stream(
+        PLAY_EVENTS,
+        Consumed.with(Serdes.String(), playEventSerde));
 
     // get table and create a state store to hold all the songs in the store
     final KTable<Long, Song>
         songTable =
-        builder.table(Serdes.Long(), valueSongSerde, SONG_FEED, ALL_SONGS);
+        builder.table(SONG_FEED, Materialized.<Long, Song, KeyValueStore<Bytes, byte[]>>as(ALL_SONGS)
+            .withKeySerde(Serdes.Long())
+            .withValueSerde(valueSongSerde));
 
     // Accept play events that have a duration >= the minimum
     final KStream<Long, PlayEvent> playsBySongId =
@@ -324,12 +317,14 @@ public class KafkaMusicExample {
     // join the plays with song as we will use it later for charting
     final KStream<Long, Song> songPlays = playsBySongId.leftJoin(songTable,
         (value1, song) -> song,
-        Serdes.Long(),
-        playEventSerde);
+        Joined.with(Serdes.Long(), playEventSerde, valueSongSerde));
 
     // create a state store to track song play counts
-    final KTable<Song, Long> songPlayCounts = songPlays.groupBy((songId, song) -> song, keySongSerde, valueSongSerde)
-        .count(SONG_PLAY_COUNT_STORE);
+    final KTable<Song, Long> songPlayCounts = songPlays.groupBy((songId, song) -> song,
+                                                                Serialized.with(keySongSerde, valueSongSerde))
+            .count(Materialized.<Song, Long, KeyValueStore<Bytes, byte[]>>as(SONG_PLAY_COUNT_STORE)
+                           .withKeySerde(valueSongSerde)
+                           .withValueSerde(Serdes.Long()));
 
     final TopFiveSerde topFiveSerde = new TopFiveSerde();
 
@@ -340,8 +335,7 @@ public class KafkaMusicExample {
     songPlayCounts.groupBy((song, plays) ->
             KeyValue.pair(song.getGenre().toLowerCase(),
                 new SongPlayCount(song.getId(), plays)),
-        Serdes.String(),
-        songPlayCountSerde)
+        Serialized.with(Serdes.String(), songPlayCountSerde))
         // aggregate into a TopFiveSongs instance that will keep track
         // of the current top five for each genre. The data will be available in the
         // top-five-songs-genre store
@@ -354,8 +348,9 @@ public class KafkaMusicExample {
               aggregate.remove(value);
               return aggregate;
             },
-            topFiveSerde,
-            TOP_FIVE_SONGS_BY_GENRE_STORE
+            Materialized.<String, TopFiveSongs, KeyValueStore<Bytes, byte[]>>as(TOP_FIVE_SONGS_BY_GENRE_STORE)
+                .withKeySerde(Serdes.String())
+                .withValueSerde(topFiveSerde)
         );
 
     // Compute the top five chart. The results of this computation will continuously update the state
@@ -364,8 +359,7 @@ public class KafkaMusicExample {
     songPlayCounts.groupBy((song, plays) ->
             KeyValue.pair(TOP_FIVE_KEY,
                 new SongPlayCount(song.getId(), plays)),
-        Serdes.String(),
-        songPlayCountSerde)
+        Serialized.with(Serdes.String(), songPlayCountSerde))
         .aggregate(TopFiveSongs::new,
             (aggKey, value, aggregate) -> {
               aggregate.add(value);
@@ -375,11 +369,12 @@ public class KafkaMusicExample {
               aggregate.remove(value);
               return aggregate;
             },
-            topFiveSerde,
-            TOP_FIVE_SONGS_STORE
+            Materialized.<String, TopFiveSongs, KeyValueStore<Bytes, byte[]>>as(TOP_FIVE_SONGS_STORE)
+                .withKeySerde(Serdes.String())
+                .withValueSerde(topFiveSerde)
         );
 
-    return new KafkaStreams(builder, streamsConfiguration);
+    return new KafkaStreams(builder.build(), streamsConfiguration);
 
   }
 

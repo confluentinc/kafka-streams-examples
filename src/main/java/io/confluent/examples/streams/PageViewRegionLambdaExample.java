@@ -25,15 +25,17 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.kstream.Windowed;
 
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Demonstrates how to perform a join between a KStream and a KTable, i.e. an example of a stateful
@@ -63,7 +65,8 @@ import java.util.Properties;
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * $ bin/kafka-topics --create --topic PageViewsByRegion \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * }</pre>
+ * }
+ * </pre>
  * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be {@code bin/kafka-topics.sh ...}.
  * <p>
  * 3) Start this example application either in your IDE or on the command line.
@@ -72,8 +75,9 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.PageViewRegionLambdaExample
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.PageViewRegionLambdaExample
+ * }
+ * </pre>
  * 4) Write some input data to the source topics (e.g. via {@link PageViewRegionExampleDriver}).
  * The already running example application (step 3) will automatically process this input data and
  * write the results to the output topic.
@@ -81,8 +85,9 @@ import java.util.Properties;
  * {@code
  * # Here: Write input data using the example driver. Once the driver has stopped generating data,
  * # you can terminate it via `Ctrl-C`.
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.PageViewRegionExampleDriver
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.PageViewRegionExampleDriver
+ * }
+ * </pre>
  * 5) Inspect the resulting data in the output topic, e.g. via {@code kafka-console-consumer}.
  * <pre>
  * {@code
@@ -90,14 +95,16 @@ import java.util.Properties;
  *                              --new-consumer --bootstrap-server localhost:9092 \
  *                              --property print.key=true \
  *                              --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
- * }</pre>
+ * }
+ * </pre>
  * You should see output data similar to:
  * <pre>
  * {@code
  * [africa@1466515140000]  2
  * [asia@1466514900000]  3
  * ...
- * }</pre>
+ * }
+ * </pre>
  * Here, the output format is "[REGION@WINDOW_START_TIME] COUNT".
  * <p>
  * 6) Once you're done with your experiments, you can stop this example via {@code Ctrl-C}. If needed,
@@ -129,7 +136,7 @@ public class PageViewRegionLambdaExample {
     final Serde<String> stringSerde = Serdes.String();
     final Serde<Long> longSerde = Serdes.Long();
 
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
     // Create a stream of page view events from the PageViews topic, where the key of
     // a record is assumed to be null and the value an Avro GenericRecord
@@ -147,7 +154,7 @@ public class PageViewRegionLambdaExample {
     // where the key of a record is assumed to be the user id (String) and its value
     // an Avro GenericRecord.  See `userprofile.avsc` under `src/main/avro/` for the
     // corresponding Avro schema.
-    final KTable<String, GenericRecord> userProfiles = builder.table("UserProfiles", "UserProfilesStore");
+    final KTable<String, GenericRecord> userProfiles = builder.table("UserProfiles");
 
     // Create a changelog stream as a projection of the value to the region attribute only
     final KTable<String, String> userRegions = userProfiles.mapValues(record ->
@@ -173,7 +180,8 @@ public class PageViewRegionLambdaExample {
       .map((user, viewRegion) -> new KeyValue<>(viewRegion.get("region").toString(), viewRegion))
       // count views by region, using hopping windows of size 5 minutes that advance every 1 minute
       .groupByKey() // no need to specify explicit serdes because the resulting key and value types match our default serde settings
-      .count(TimeWindows.of(5 * 60 * 1000L).advanceBy(60 * 1000L), "GeoPageViewsStore");
+      .windowedBy(TimeWindows.of(TimeUnit.MINUTES.toMillis(5)).advanceBy(TimeUnit.MINUTES.toMillis(1)))
+      .count();
 
     // Note: The following operations would NOT be needed for the actual pageview-by-region
     // computation, which would normally stop at `count` above.  We use the operations
@@ -185,9 +193,9 @@ public class PageViewRegionLambdaExample {
       // kafka-console-consumer can't print to console out-of-the-box) to `String`
       .toStream((windowedRegion, count) -> windowedRegion.toString());
 
-    viewsByRegionForConsole.to(stringSerde, longSerde, "PageViewsByRegion");
+    viewsByRegionForConsole.to("PageViewsByRegion", Produced.with(stringSerde, longSerde));
 
-    final KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     // Always (and unconditionally) clean local state prior to starting the processing topology.
     // We opt for this unconditional call here because this will make it easier for you to play around with the example
     // when resetting the application for doing a re-run (via the Application Reset Tool,
