@@ -43,9 +43,13 @@ import java.util.stream.IntStream;
  * <a href='https://github.com/confluentinc/kafka-streams-examples#packaging-and-running'>Packaging</a>
  *
  * Once packaged you can then run:
- * java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.WikipediaFeedAvroExampleDriver
+ * <pre>
+ * {@code
+ * java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.WikipediaFeedAvroExampleDriver
+ * }
+ * </pre>
  *
- * You should terminate with Ctrl-C
+ * You should terminate with {@code Ctrl-C}.
  */
 public class WikipediaFeedAvroExampleDriver {
 

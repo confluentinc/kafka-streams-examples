@@ -23,10 +23,11 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Produced;
 
 import java.util.Properties;
 
@@ -54,8 +55,9 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.WikipediaFeedAvroLambdaExample
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.WikipediaFeedAvroLambdaExample
+ * }
+ * </pre>
  * 4) Write some input data to the source topics (e.g. via {@link WikipediaFeedAvroExampleDriver}).
  * The already running example application (step 3) will automatically process this input data and
  * write the results to the output topic. The {@link WikipediaFeedAvroExampleDriver} will print the
@@ -64,8 +66,9 @@ import java.util.Properties;
  * {@code
  * # Here: Write input data using the example driver.  Once the driver has stopped generating data,
  * # you can terminate it via Ctrl-C.
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.WikipediaFeedAvroExampleDriver
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.WikipediaFeedAvroExampleDriver
+ * }
+ * </pre>
  */
 public class WikipediaFeedAvroLambdaExample {
 
@@ -117,7 +120,7 @@ public class WikipediaFeedAvroLambdaExample {
     final Serde<String> stringSerde = Serdes.String();
     final Serde<Long> longSerde = Serdes.Long();
 
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
     // read the source stream
     final KStream<String, WikiFeed> feeds = builder.stream(WikipediaFeedAvroExample.WIKIPEDIA_FEED);
@@ -130,12 +133,12 @@ public class WikipediaFeedAvroLambdaExample {
         .map((key, value) -> new KeyValue<>(value.getUser(), value))
         // no need to specify explicit serdes because the resulting key and value types match our default serde settings
         .groupByKey()
-        .count("Counts");
+        .count();
 
     // write to the result topic, need to override serdes
-    aggregated.to(stringSerde, longSerde, WikipediaFeedAvroExample.WIKIPEDIA_STATS);
+    aggregated.toStream().to(WikipediaFeedAvroExample.WIKIPEDIA_STATS, Produced.with(stringSerde, longSerde));
 
-    return new KafkaStreams(builder, streamsConfiguration);
+    return new KafkaStreams(builder.build(), streamsConfiguration);
   }
 
 }

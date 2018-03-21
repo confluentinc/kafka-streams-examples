@@ -19,10 +19,11 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Produced;
 
 import java.util.Properties;
 
@@ -53,8 +54,9 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.UserRegionLambdaExample
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.UserRegionLambdaExample
+ * }
+ * </pre>
  * 4) Write some input data to the source topics (e.g. via {@code kafka-console-producer}). The already
  * running example application (step 3) will automatically process this input data and write the
  * results to the output topic.
@@ -118,16 +120,16 @@ public class UserRegionLambdaExample {
     final Serde<String> stringSerde = Serdes.String();
     final Serde<Long> longSerde = Serdes.Long();
 
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
-    final KTable<String, String> userRegions = builder.table("UserRegions", "UserRegionsStore");
+    final KTable<String, String> userRegions = builder.table("UserRegions");
 
     // Aggregate the user counts of by region
     final KTable<String, Long> regionCounts = userRegions
       // Count by region;
       // no need to specify explicit serdes because the resulting key and value types match our default serde settings
       .groupBy((userId, region) -> KeyValue.pair(region, region))
-      .count("CountsByRegion")
+      .count()
       // discard any regions with only 1 user
       .filter((regionName, count) -> count >= 2);
 
@@ -146,9 +148,9 @@ public class UserRegionLambdaExample {
       .filter((regionName, count) -> count != null);
 
     // write to the result topic, we need to override the value serializer to for type long
-    regionCountsForConsole.to(stringSerde, longSerde, "LargeRegions");
+    regionCountsForConsole.to("LargeRegions", Produced.with(stringSerde, longSerde));
 
-    final KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     // Always (and unconditionally) clean local state prior to starting the processing topology.
     // We opt for this unconditional call here because this will make it easier for you to play around with the example
     // when resetting the application for doing a re-run (via the Application Reset Tool,

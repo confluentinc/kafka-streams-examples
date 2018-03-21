@@ -20,11 +20,17 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.utils.Bytes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
+import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.kstream.SessionWindows;
+import org.apache.kafka.streams.state.SessionStore;
 
 import java.util.Collections;
 import java.util.Map;
@@ -51,7 +57,8 @@ import java.util.concurrent.TimeUnit;
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * $ bin/kafka-topics --create --topic play-events-per-session \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * }</pre>
+ * }
+ * </pre>
  * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be
  * `bin/kafka-topics.sh ...`.
  * <p>
@@ -61,8 +68,9 @@ import java.util.concurrent.TimeUnit;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.SessionWindowsExample
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.SessionWindowsExample
+ * }
+ * </pre>
  * 4) Write some input data to the source topics (e.g. via {@link SessionWindowsExampleDriver}). The
  * already running example application (step 3) will automatically process this input data and write
  * the results to the output topic.
@@ -70,8 +78,9 @@ import java.util.concurrent.TimeUnit;
  * {@code
  * # Here: Write input data using the example driver. The driver will also consume, and print, the data from the output
  * topic. The driver will stop when it has received all output records
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.SessionWindowsExampleDriver
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.SessionWindowsExampleDriver
+ * }
+ * </pre>
  * You should see output data similar to:
  * <pre>
  * {@code
@@ -148,20 +157,24 @@ public class SessionWindowsExample {
         AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
     playEventSerde.configure(serdeConfig, false);
 
-    final KStreamBuilder builder = new KStreamBuilder();
-    builder.stream(Serdes.String(), playEventSerde, PLAY_EVENTS)
+    final StreamsBuilder builder = new StreamsBuilder();
+    builder.stream(PLAY_EVENTS, Consumed.with(Serdes.String(), playEventSerde))
         // group by key so we can count by session windows
-        .groupByKey(Serdes.String(), playEventSerde)
+        .groupByKey(Serialized.with(Serdes.String(), playEventSerde))
+        // window by session
+        .windowedBy(SessionWindows.with(INACTIVITY_GAP))
         // count play events per session
-        .count(SessionWindows.with(INACTIVITY_GAP), PLAY_EVENTS_PER_SESSION)
+        .count(Materialized.<String, Long, SessionStore<Bytes, byte[]>>as(PLAY_EVENTS_PER_SESSION)
+            .withKeySerde(Serdes.String())
+            .withValueSerde(Serdes.Long()))
         // convert to a stream so we can map the key to a string
         .toStream()
         // map key to a readable string
         .map((key, value) -> new KeyValue<>(key.key() + "@" + key.window().start() + "->" + key.window().end(), value))
         // write to play-events-per-session topic
-        .to(Serdes.String(), Serdes.Long(), PLAY_EVENTS_PER_SESSION);
+        .to(PLAY_EVENTS_PER_SESSION, Produced.with(Serdes.String(), Serdes.Long()));
 
-    return new KafkaStreams(builder, new StreamsConfig(config));
+    return new KafkaStreams(builder.build(), new StreamsConfig(config));
   }
 
 }

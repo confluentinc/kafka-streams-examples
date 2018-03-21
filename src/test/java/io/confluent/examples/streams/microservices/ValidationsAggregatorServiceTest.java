@@ -35,6 +35,7 @@ public class ValidationsAggregatorServiceTest extends MicroserviceTestUtils {
     CLUSTER.createTopic(Topics.ORDERS.name());
     CLUSTER.createTopic(Topics.ORDER_VALIDATIONS.name());
     Schemas.configureSerdesWithSchemaRegistryUrl(CLUSTER.schemaRegistryUrl());
+    MicroserviceTestUtils.tailAllTopicsToConsole(CLUSTER.bootstrapServers());
   }
 
   @Test

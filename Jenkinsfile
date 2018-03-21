@@ -9,6 +9,7 @@ docker_oraclejdk8 {
     mvnSkipDeploy = true
     // add for integration-test
     // nodeLabel = 'docker-oraclejdk8-compose'
+    slackChannel = '#streams-team'
+    upstreamProjects = 'confluentinc/rest-utils'
     withPush = true
-
 }

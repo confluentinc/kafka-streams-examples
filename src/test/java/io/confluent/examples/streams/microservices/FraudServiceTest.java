@@ -1,5 +1,15 @@
 package io.confluent.examples.streams.microservices;
 
+import io.confluent.examples.streams.avro.microservices.Order;
+import io.confluent.examples.streams.avro.microservices.OrderValidation;
+import io.confluent.examples.streams.microservices.domain.Schemas;
+import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
+import org.junit.After;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.util.List;
+
 import static io.confluent.examples.streams.avro.microservices.OrderState.CREATED;
 import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.FAIL;
 import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.PASS;
@@ -11,19 +21,8 @@ import static io.confluent.examples.streams.microservices.domain.beans.OrderId.i
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.confluent.examples.streams.avro.microservices.Order;
-import io.confluent.examples.streams.avro.microservices.OrderValidation;
-import io.confluent.examples.streams.microservices.domain.Schemas;
-import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
-import java.util.List;
-import org.junit.After;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 public class FraudServiceTest extends MicroserviceTestUtils {
 
-  private List<Order> orders;
-  private List<OrderValidation> expected;
   private FraudService fraudService;
 
   @BeforeClass
@@ -38,7 +37,7 @@ public class FraudServiceTest extends MicroserviceTestUtils {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     fraudService.stop();
     CLUSTER.stop();
   }
@@ -48,7 +47,7 @@ public class FraudServiceTest extends MicroserviceTestUtils {
     //Given
     fraudService = new FraudService();
 
-    orders = asList(
+    List<Order> orders = asList(
         new Order(id(0L), 0L, CREATED, UNDERPANTS, 3, 5.00d),
         new Order(id(1L), 0L, CREATED, JUMPERS, 1, 75.00d),
         new Order(id(2L), 1L, CREATED, JUMPERS, 1, 75.00d),
@@ -64,7 +63,7 @@ public class FraudServiceTest extends MicroserviceTestUtils {
     fraudService.start(CLUSTER.bootstrapServers());
 
     //Then there should be failures for the two orders that push customers over their limit.
-    expected = asList(
+    List<OrderValidation> expected = asList(
         new OrderValidation(id(0L), FRAUD_CHECK, PASS),
         new OrderValidation(id(1L), FRAUD_CHECK, PASS),
         new OrderValidation(id(2L), FRAUD_CHECK, PASS),

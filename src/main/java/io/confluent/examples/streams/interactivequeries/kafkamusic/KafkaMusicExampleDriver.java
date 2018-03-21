@@ -44,7 +44,7 @@ import java.util.Random;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/streams-examples-3.3.0-standalone.jar \
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExampleDriver
  * }
  * </pre>

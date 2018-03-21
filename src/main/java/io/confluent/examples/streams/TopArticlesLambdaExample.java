@@ -27,10 +27,13 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.kstream.Windowed;
 
@@ -41,6 +44,7 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -77,8 +81,9 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.TopArticlesLambdaExample
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.TopArticlesLambdaExample
+ * }
+ * </pre>
  * 4) Write some input data to the source topics (e.g. via {@link TopArticlesExampleDriver}).
  * The already running example application (step 3) will automatically process this input data and
  * write the results to the output topic. The {@link TopArticlesExampleDriver} will print the
@@ -87,8 +92,9 @@ import java.util.Properties;
  * {@code
  * # Here: Write input data using the example driver.  Once the driver has stopped generating data,
  * # you can terminate it via Ctrl-C.
- * $ java -cp target/kafka-streams-examples-3.3.0-standalone.jar io.confluent.examples.streams.TopArticlesExampleDriver
- * }</pre>
+ * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.TopArticlesExampleDriver
+ * }
+ * </pre>
  */
 public class TopArticlesLambdaExample {
 
@@ -161,7 +167,7 @@ public class TopArticlesLambdaExample {
 
     final Serde<Windowed<String>> windowedStringSerde = new WindowedSerde<>(stringSerde);
 
-    final KStreamBuilder builder = new KStreamBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
     final KStream<byte[], GenericRecord> views = builder.stream(PAGE_VIEWS);
 
@@ -183,8 +189,9 @@ public class TopArticlesLambdaExample {
 
     final KTable<Windowed<GenericRecord>, Long> viewCounts = articleViews
       // count the clicks per hour, using tumbling windows with a size of one hour
-      .groupByKey(keyAvroSerde, valueAvroSerde)
-      .count(TimeWindows.of(60 * 60 * 1000L), "PageViewCountStore");
+      .groupByKey(Serialized.with(keyAvroSerde, valueAvroSerde))
+      .windowedBy(TimeWindows.of(TimeUnit.MINUTES.toMillis(60)))
+      .count();
 
     final Comparator<GenericRecord> comparator =
       (o1, o2) -> (int) ((Long) o2.get("count") - (Long) o1.get("count"));
@@ -205,8 +212,7 @@ public class TopArticlesLambdaExample {
           viewStats.put("count", count);
           return new KeyValue<>(windowedIndustry, viewStats);
         },
-        windowedStringSerde,
-        valueAvroSerde
+        Serialized.with(windowedStringSerde, valueAvroSerde)
       ).aggregate(
         // the initializer
         () -> new PriorityQueue<>(comparator),
@@ -223,9 +229,8 @@ public class TopArticlesLambdaExample {
           return queue;
         },
 
-        new PriorityQueueSerde<>(comparator, valueAvroSerde),
-        "AllArticles"
-      );
+        Materialized.with(windowedStringSerde, new PriorityQueueSerde<>(comparator, valueAvroSerde))
+        );
 
     final int topN = 100;
     final KTable<Windowed<String>, String> topViewCounts = allViewCounts
@@ -242,8 +247,8 @@ public class TopArticlesLambdaExample {
         return sb.toString();
       });
 
-    topViewCounts.to(windowedStringSerde, stringSerde, TOP_NEWS_PER_INDUSTRY_TOPIC);
-    return new KafkaStreams(builder, streamsConfiguration);
+    topViewCounts.toStream().to(TOP_NEWS_PER_INDUSTRY_TOPIC, Produced.with(windowedStringSerde, stringSerde));
+    return new KafkaStreams(builder.build(), streamsConfiguration);
   }
 
 }
