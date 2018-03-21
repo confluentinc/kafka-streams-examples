@@ -278,6 +278,7 @@
                         <configuration>
                             <sources>
                                 <source>src/main/scala</source>
+								<source>${project.build.directory}/generated-sources</source>
                             </sources>
                         </configuration>
                     </execution>
@@ -290,6 +291,7 @@
                         <configuration>
                             <sources>
                                 <source>src/test/scala</source>
+								<source>${project.build.directory}/generated-sources</source>
                             </sources>
                         </configuration>
                     </execution>
