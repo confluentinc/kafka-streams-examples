@@ -71,22 +71,12 @@ public class KafkaMusicExampleDriver {
     final String SONGFILENAME= "song_source.csv";
     final InputStream inputStream = KafkaMusicExample.class.getClassLoader().getResourceAsStream(SONGFILENAME);
     final InputStreamReader streamReader = new InputStreamReader(inputStream, UTF_8);
-    final BufferedReader br = new BufferedReader(streamReader);
-    try {
+    try (final BufferedReader br = new BufferedReader(streamReader)) {
       String line = null;
       while ((line = br.readLine()) != null) {
         final String[] values = line.split(",");
-        Song newSong = new Song(Long.parseLong(values[0]),values[1],values[2],values[3],values[4]);
+        final Song newSong = new Song(Long.parseLong(values[0]), values[1], values[2], values[3], values[4]);
         songs.add(newSong);
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
-    } finally {
-      try {
-        if (br != null)
-          br.close();
-      } catch (IOException ex) {
-        ex.printStackTrace();
       }
     }
 
