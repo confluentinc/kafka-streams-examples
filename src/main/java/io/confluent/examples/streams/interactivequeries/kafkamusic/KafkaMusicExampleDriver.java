@@ -26,11 +26,17 @@ import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.Serdes;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 
 /**
@@ -57,69 +63,19 @@ public class KafkaMusicExampleDriver {
     final String schemaRegistryUrl = args.length > 1 ? args[1] : "http://localhost:8081";
     System.out.println("Connecting to Kafka cluster via bootstrap servers " + bootstrapServers);
     System.out.println("Connecting to Confluent schema registry at " + schemaRegistryUrl);
-    final List<Song> songs = Arrays.asList(new Song(1L,
-                                                    "Fresh Fruit For Rotting Vegetables",
-                                                    "Dead Kennedys",
-                                                    "Chemical Warfare",
-                                                    "Punk"),
-                                           new Song(2L,
-                                                    "We Are the League",
-                                                    "Anti-Nowhere League",
-                                                    "Animal",
-                                                    "Punk"),
-                                           new Song(3L,
-                                                    "Live In A Dive",
-                                                    "Subhumans",
-                                                    "All Gone Dead",
-                                                    "Punk"),
-                                           new Song(4L,
-                                                    "PSI",
-                                                    "Wheres The Pope?",
-                                                    "Fear Of God",
-                                                    "Punk"),
-                                           new Song(5L,
-                                                    "Totally Exploited",
-                                                    "The Exploited",
-                                                    "Punks Not Dead",
-                                                    "Punk"),
-                                           new Song(6L,
-                                                    "The Audacity Of Hype",
-                                                    "Jello Biafra And The Guantanamo School Of "
-                                                    + "Medicine",
-                                                    "Three Strikes",
-                                                    "Punk"),
-                                           new Song(7L,
-                                                    "Licensed to Ill",
-                                                    "The Beastie Boys",
-                                                    "Fight For Your Right",
-                                                    "Hip Hop"),
-                                           new Song(8L,
-                                                    "De La Soul Is Dead",
-                                                    "De La Soul",
-                                                    "Oodles Of O's",
-                                                    "Hip Hop"),
-                                           new Song(9L,
-                                                    "Straight Outta Compton",
-                                                    "N.W.A",
-                                                    "Gangsta Gangsta",
-                                                    "Hip Hop"),
-                                           new Song(10L,
-                                                    "Fear Of A Black Planet",
-                                                    "Public Enemy",
-                                                    "911 Is A Joke",
-                                                    "Hip Hop"),
-                                           new Song(11L,
-                                                    "Curtain Call - The Hits",
-                                                    "Eminem",
-                                                    "Fack",
-                                                    "Hip Hop"),
-                                           new Song(12L,
-                                                    "The Calling",
-                                                    "Hilltop Hoods",
-                                                    "The Calling",
-                                                    "Hip Hop")
 
-    );
+    // Read comma-delimited file of songs into Array
+    List<Song> songs = new ArrayList<>();
+    final String SONGFILENAME= "song_source.csv";
+    InputStream inputStream = KafkaMusicExample.class.getClassLoader().getResourceAsStream(SONGFILENAME);
+    InputStreamReader streamReader = new InputStreamReader(inputStream, UTF_8);
+    BufferedReader br = new BufferedReader(streamReader);
+    for (String line; (line = br.readLine()) != null;) {
+      String[] values = line.split(",");
+      Song newSong = new Song(Long.parseLong(values[0]),values[1],values[2],values[3],values[4]);
+      songs.add(newSong);
+    }
+    br.close();
 
     final Properties props = new Properties();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
