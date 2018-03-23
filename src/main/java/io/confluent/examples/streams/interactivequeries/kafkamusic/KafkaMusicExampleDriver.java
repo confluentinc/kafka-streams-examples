@@ -37,6 +37,8 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import java.io.IOException;
+
 
 
 /**
@@ -65,17 +67,28 @@ public class KafkaMusicExampleDriver {
     System.out.println("Connecting to Confluent schema registry at " + schemaRegistryUrl);
 
     // Read comma-delimited file of songs into Array
-    List<Song> songs = new ArrayList<>();
+    final List<Song> songs = new ArrayList<>();
     final String SONGFILENAME= "song_source.csv";
-    InputStream inputStream = KafkaMusicExample.class.getClassLoader().getResourceAsStream(SONGFILENAME);
-    InputStreamReader streamReader = new InputStreamReader(inputStream, UTF_8);
-    BufferedReader br = new BufferedReader(streamReader);
-    for (String line; (line = br.readLine()) != null;) {
-      String[] values = line.split(",");
-      Song newSong = new Song(Long.parseLong(values[0]),values[1],values[2],values[3],values[4]);
-      songs.add(newSong);
+    final InputStream inputStream = KafkaMusicExample.class.getClassLoader().getResourceAsStream(SONGFILENAME);
+    final InputStreamReader streamReader = new InputStreamReader(inputStream, UTF_8);
+    final BufferedReader br = new BufferedReader(streamReader);
+    try {
+      String line = null;
+      while ((line = br.readLine()) != null) {
+        final String[] values = line.split(",");
+        Song newSong = new Song(Long.parseLong(values[0]),values[1],values[2],values[3],values[4]);
+        songs.add(newSong);
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    } finally {
+      try {
+        if (br != null)
+          br.close();
+      } catch (IOException ex) {
+        ex.printStackTrace();
+      }
     }
-    br.close();
 
     final Properties props = new Properties();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
