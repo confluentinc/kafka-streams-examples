@@ -21,6 +21,7 @@ import io.confluent.examples.streams.avro.Order;
 import io.confluent.examples.streams.avro.Product;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
@@ -34,9 +35,15 @@ import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.KeyValueStore;
 
+import org.apache.kafka.streams.processor.internals.DefaultKafkaClientSupplier;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
+import java.text.SimpleDateFormat;
 
 /**
  * Demonstrates how to perform joins between  KStreams and GlobalKTables, i.e. joins that
@@ -98,13 +105,27 @@ public class GlobalKTablesExample {
   static final String CUSTOMER_STORE = "customer-store";
   static final String PRODUCT_STORE = "product-store";
   static final String ENRICHED_ORDER_TOPIC = "enriched-order";
+  static final String TIMESTAMP = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(System.currentTimeMillis());
+
+  // Custom implementation of KafkaClientSupplier is required to prevent C3 from thinking GlobalKTable is
+  // overconsuming the topic when there are more than one instance of this application (MMA-2306)
+  static public class CustomClientSupplier extends DefaultKafkaClientSupplier {
+    @Override
+    public Consumer<byte[], byte[]> getRestoreConsumer(Map<String, Object> config) {
+      config.remove(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG);
+      config.remove(ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG);
+      return new KafkaConsumer<>(config, new ByteArrayDeserializer(), new ByteArrayDeserializer());
+    }
+  }
 
   public static void main(String[] args) {
     final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
     final String schemaRegistryUrl = args.length > 1 ? args[1] : "http://localhost:8081";
+
+    // Append timestamp to the stateDir to allow multiple instances to run at the same time
     final KafkaStreams
         streams =
-        createStreams(bootstrapServers, schemaRegistryUrl, "/tmp/kafka-streams-global-tables");
+        createStreams(bootstrapServers, schemaRegistryUrl, "/tmp/kafka-streams-global-tables-" + TIMESTAMP);
     // Always (and unconditionally) clean local state prior to starting the processing topology.
     // We opt for this unconditional call here because this will make it easier for you to play around with the example
     // when resetting the application for doing a re-run (via the Application Reset Tool,
@@ -137,6 +158,11 @@ public class GlobalKTablesExample {
     // Set to earliest so we don't miss any data that arrived in the topics before the process
     // started
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    // Set interceptor for C3
+    streamsConfiguration.put(StreamsConfig.PRODUCER_PREFIX + ProducerConfig.INTERCEPTOR_CLASSES_CONFIG,
+        "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor");
+    streamsConfiguration.put(StreamsConfig.CONSUMER_PREFIX + ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG,
+        "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor");
 
     // create and configure the SpecificAvroSerdes required in this example
     final SpecificAvroSerde<Order> orderSerde = new SpecificAvroSerde<>();
@@ -195,7 +221,7 @@ public class GlobalKTablesExample {
     // write the enriched order to the enriched-order topic
     enrichedOrdersStream.to(ENRICHED_ORDER_TOPIC, Produced.with(Serdes.Long(), enrichedOrdersSerde));
 
-    return new KafkaStreams(builder.build(), new StreamsConfig(streamsConfiguration));
+    return new KafkaStreams(builder.build(), new StreamsConfig(streamsConfiguration), new CustomClientSupplier());
   }
 
 

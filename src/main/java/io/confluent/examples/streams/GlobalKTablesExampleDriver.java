@@ -25,6 +25,7 @@ import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.avro.specific.SpecificRecord;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -67,10 +68,21 @@ public class GlobalKTablesExampleDriver {
   public static void main(String[] args) {
     final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
     final String schemaRegistryUrl = args.length > 1 ? args[1] : "http://localhost:8081";
-    generateCustomers(bootstrapServers, schemaRegistryUrl, RECORDS_TO_GENERATE);
-    generateProducts(bootstrapServers, schemaRegistryUrl, RECORDS_TO_GENERATE);
-    generateOrders(bootstrapServers, schemaRegistryUrl, RECORDS_TO_GENERATE, RECORDS_TO_GENERATE, RECORDS_TO_GENERATE);
-    receiveEnrichedOrders(bootstrapServers, schemaRegistryUrl, RECORDS_TO_GENERATE);
+
+    // Perform data generation in infinite loop for C3
+    while (true) {
+      generateCustomers(bootstrapServers, schemaRegistryUrl, RECORDS_TO_GENERATE);
+      generateProducts(bootstrapServers, schemaRegistryUrl, RECORDS_TO_GENERATE);
+      generateOrders(bootstrapServers, schemaRegistryUrl, RECORDS_TO_GENERATE, RECORDS_TO_GENERATE, RECORDS_TO_GENERATE);
+      receiveEnrichedOrders(bootstrapServers, schemaRegistryUrl, RECORDS_TO_GENERATE);
+      try {
+        Thread.sleep(3000);
+      }
+      catch (Exception e) {
+        System.out.println(e.toString());
+        System.exit(1);
+      }
+    }
   }
 
   private static void receiveEnrichedOrders(final String bootstrapServers,
@@ -84,13 +96,19 @@ public class GlobalKTablesExampleDriver {
     consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
     consumerProps.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
     consumerProps.put(KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG, true);
+    // Added interceptor to push metrics to C3
+    consumerProps.put(ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG,
+            "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor");
 
     final KafkaConsumer<Long, EnrichedOrder> consumer = new KafkaConsumer<>(consumerProps);
     consumer.subscribe(Collections.singleton(ENRICHED_ORDER_TOPIC));
     int received = 0;
     while(received < expected) {
       final ConsumerRecords<Long, EnrichedOrder> records = consumer.poll(Long.MAX_VALUE);
-      records.forEach(record -> System.out.println(record.value()));
+      for (ConsumerRecord<Long, EnrichedOrder> record: records) {
+        System.out.println(record.value());
+        received += 1;
+      }
     }
     consumer.close();
   }
@@ -102,6 +120,9 @@ public class GlobalKTablesExampleDriver {
     final SpecificAvroSerde<Customer> customerSerde = createSerde(schemaRegistryUrl);
     final Properties producerProperties = new Properties();
     producerProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+    // Added interceptor to push metrics to C3
+    producerProperties.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG,
+            "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor");
 
     final KafkaProducer<Long, Customer>
         customerProducer =
@@ -128,6 +149,9 @@ public class GlobalKTablesExampleDriver {
 
     final Properties producerProperties = new Properties();
     producerProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+    // Added interceptor to push metrics to C3
+    producerProperties.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG,
+            "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor");
 
     final KafkaProducer<Long, Product>
         producer =
@@ -135,7 +159,7 @@ public class GlobalKTablesExampleDriver {
     final List<Product> allProducts = new ArrayList<>();
     for(long i = 0; i < count; i++) {
       final Product product = new Product(randomString(10),
-                                          randomString(RECORDS_TO_GENERATE),
+                                          randomString(20),
                                           randomString(20));
       allProducts.add(product);
       producer.send(new ProducerRecord<>(PRODUCT_TOPIC, i, product));
@@ -154,6 +178,9 @@ public class GlobalKTablesExampleDriver {
 
     final Properties producerProperties = new Properties();
     producerProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+    // Added interceptor to push metrics to C3
+    producerProperties.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG,
+            "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor");
 
     final KafkaProducer<Long, Order>
         producer =
