@@ -25,7 +25,7 @@ import org.apache.kafka.common.utils.LogContext
 import org.apache.kafka.streams.processor.internals.MockStreamsMetrics
 import org.apache.kafka.streams.state.KeyValueStoreTestDriver
 import org.apache.kafka.streams.state.internals.ThreadCache
-import org.apache.kafka.test.{MockProcessorContext, NoOpRecordCollector, TestUtils}
+import org.apache.kafka.test.{InternalMockProcessorContext, NoOpRecordCollector, TestUtils}
 import org.assertj.core.api.Assertions.assertThat
 import org.junit._
 import org.scalatest.junit.AssertionsForJUnit
@@ -37,14 +37,14 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
 
   private def createTestContext[T](driver: KeyValueStoreTestDriver[Integer, TopCMS[T]] = createTestDriver[T](),
                                    changelogRecords: Option[Seq[(Int, TopCMS[T])]] = None
-                                  ): MockProcessorContext = {
+                                  ): InternalMockProcessorContext = {
     // Write the records to the store's changelog
     changelogRecords.getOrElse(Seq.empty).foreach { case (key, cms) => driver.addEntryToRestoreLog(key, cms) }
 
     // The processor context is what makes the restore data available to a store during
     // the store's initialization, hence this is what we must return back.
-    val processorContext: MockProcessorContext = {
-      val pc = driver.context.asInstanceOf[MockProcessorContext]
+    val processorContext: InternalMockProcessorContext = {
+      val pc = driver.context.asInstanceOf[InternalMockProcessorContext]
       pc.setTime(1)
       pc
     }
@@ -174,7 +174,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
         }
       }
       val cache: ThreadCache = new ThreadCache(new LogContext("test"), 1024, new MockStreamsMetrics(new Metrics))
-      val context = new MockProcessorContext(TestUtils.tempDirectory, Serdes.Integer(), TopCMSSerde[String], observingCollector, cache)
+      val context = new InternalMockProcessorContext(TestUtils.tempDirectory, Serdes.Integer(), TopCMSSerde[String], observingCollector, cache)
       context.setTime(1)
       context
     }
@@ -240,7 +240,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     val driver: KeyValueStoreTestDriver[Integer, TopCMS[String]] = createTestDriver[String]()
     val store: CMSStore[String] = new CMSStore[String](anyStoreName, loggingEnabled = true)
     val items: Seq[String] = Seq("foo", "bar", "foo", "foo", "quux", "bar", "foo")
-    val processorContext: MockProcessorContext = {
+    val processorContext: InternalMockProcessorContext = {
       val changelogKeyDoesNotMatter = 123
       val cms: TopCMS[String] = store.cmsFrom(items)
       val changelogRecords = Seq((changelogKeyDoesNotMatter, cms))
@@ -261,7 +261,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     // Given
     val driver: KeyValueStoreTestDriver[Integer, TopCMS[String]] = createTestDriver[String]()
     val store: CMSStore[String] = new CMSStore[String](anyStoreName, loggingEnabled = true)
-    val processorContext: MockProcessorContext = {
+    val processorContext: InternalMockProcessorContext = {
       val changelogKeyDoesNotMatter = 123
       val tombstone: TopCMS[String] = null
       val changelogRecords = Seq((changelogKeyDoesNotMatter, tombstone))
@@ -285,7 +285,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     val expectedItems = Seq("foo", "bar", "foo", "foo", "quux", "bar", "foo")
     val unexpectedItems1 = Seq("something", "entirely", "different")
     val unexpectedItems2 = Seq("even", "more", "different")
-    val processorContext: MockProcessorContext = {
+    val processorContext: InternalMockProcessorContext = {
       val cms = store.cmsFrom(expectedItems)
       val differentCms1 = store.cmsFrom(unexpectedItems1)
       val differentCms2 = store.cmsFrom(unexpectedItems2)
@@ -317,7 +317,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     // Given
     val store: CMSStore[String] = new CMSStore[String](anyStoreName, loggingEnabled = false)
     val items: Seq[String] = Seq("foo", "bar", "foo", "foo", "quux", "bar", "foo")
-    val processorContext: MockProcessorContext = {
+    val processorContext: InternalMockProcessorContext = {
       val changelogKeyDoesNotMatter = 123
       val cms: TopCMS[String] = store.cmsFrom(items)
       val changelogRecords = Seq((changelogKeyDoesNotMatter, cms))
