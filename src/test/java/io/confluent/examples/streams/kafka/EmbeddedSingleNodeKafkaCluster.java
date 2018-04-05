@@ -97,6 +97,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     log.debug("Kafka instance is running at {}, connected to ZooKeeper at {}",
         broker.brokerList(), broker.zookeeperConnect());
 
+    // Left in intentionally we can use these properties when 3.3.2 is released
     Properties schemaRegistryProps = new Properties();
 
     schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, KAFKASTORE_OPERATION_TIMEOUT_MS);
@@ -104,7 +105,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_INIT_TIMEOUT_CONFIG, KAFKASTORE_INIT_TIMEOUT);
 
     schemaRegistry = new RestApp(0, zookeeperConnect(), KAFKA_SCHEMAS_TOPIC, AVRO_COMPATIBILITY_TYPE);
-    schemaRegistry.addConfigs(schemaRegistryProps);
+    //TODO add schemaRegistry.addConfigs(schemaRegistryProps); back in once 3.3.2 is released
     schemaRegistry.start();
     running = true;
   }
