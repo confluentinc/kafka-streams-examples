@@ -15,6 +15,11 @@
  */
 package io.confluent.examples.streams.kafka;
 
+import io.confluent.examples.streams.zookeeper.ZooKeeperEmbedded;
+import io.confluent.kafka.schemaregistry.RestApp;
+import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
+import kafka.server.KafkaConfig$;
+import kafka.utils.ZkUtils;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.test.TestCondition;
@@ -28,13 +33,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
-
-import io.confluent.examples.streams.zookeeper.ZooKeeperEmbedded;
-import io.confluent.kafka.schemaregistry.RestApp;
-import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
-import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
-import kafka.server.KafkaConfig$;
-import kafka.utils.ZkUtils;
 
 /**
  * Runs an in-memory, "embedded" Kafka cluster with 1 ZooKeeper instance, 1 Kafka broker, and 1
@@ -97,15 +95,19 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     log.debug("Kafka instance is running at {}, connected to ZooKeeper at {}",
         broker.brokerList(), broker.zookeeperConnect());
 
-    // Left in intentionally we can use these properties when 3.3.2 is released
-    Properties schemaRegistryProps = new Properties();
-
-    schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, KAFKASTORE_OPERATION_TIMEOUT_MS);
-    schemaRegistryProps.put(SchemaRegistryConfig.DEBUG_CONFIG, KAFKASTORE_DEBUG);
-    schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_INIT_TIMEOUT_CONFIG, KAFKASTORE_INIT_TIMEOUT);
+    // TODO: use this properties when 3.3.2 is released (left intentionally; compare TODO below)
+    // note: this fix only goes to 3.3.x branches---don't merge into 4.x branches; 4.x branches have a different fix
+    // this fix also requires to update pom.xml do depend on schema registry 3.3.2 (test artifact for unit tests only)
+    //Properties schemaRegistryProps = new Properties();
+    //schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, KAFKASTORE_OPERATION_TIMEOUT_MS);
+    //schemaRegistryProps.put(SchemaRegistryConfig.DEBUG_CONFIG, KAFKASTORE_DEBUG);
+    //schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_INIT_TIMEOUT_CONFIG, KAFKASTORE_INIT_TIMEOUT);
 
     schemaRegistry = new RestApp(0, zookeeperConnect(), KAFKA_SCHEMAS_TOPIC, AVRO_COMPATIBILITY_TYPE);
-    //TODO add schemaRegistry.addConfigs(schemaRegistryProps); back in once 3.3.2 is released
+    // TODO: pass properties to schema registry when 3.3.2 is released (left intentionally; compare TODO above)
+    // note: this fix only goes to 3.3.x branches---don't merge into 4.x branches; 4.x branches have a different fix
+    // this fix also requires to update pom.xml do depend on schema registry 3.3.2 (test artifact for unit tests only)
+    //schemaRegistry.addConfigs(schemaRegistryProps);
     schemaRegistry.start();
     running = true;
   }
