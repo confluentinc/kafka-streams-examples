@@ -15,6 +15,11 @@
  */
 package io.confluent.examples.streams.kafka;
 
+import io.confluent.examples.streams.zookeeper.ZooKeeperEmbedded;
+import io.confluent.kafka.schemaregistry.RestApp;
+import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
+import kafka.server.KafkaConfig$;
+import kafka.utils.ZkUtils;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.test.TestCondition;
@@ -28,13 +33,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
-
-import io.confluent.examples.streams.zookeeper.ZooKeeperEmbedded;
-import io.confluent.kafka.schemaregistry.RestApp;
-import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
-import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
-import kafka.server.KafkaConfig$;
-import kafka.utils.ZkUtils;
 
 /**
  * Runs an in-memory, "embedded" Kafka cluster with 1 ZooKeeper instance, 1 Kafka broker, and 1
