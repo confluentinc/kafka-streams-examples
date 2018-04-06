@@ -18,6 +18,7 @@ package io.confluent.examples.streams.kafka;
 import io.confluent.examples.streams.zookeeper.ZooKeeperEmbedded;
 import io.confluent.kafka.schemaregistry.RestApp;
 import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
+import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import kafka.server.KafkaConfig$;
 import kafka.utils.ZkUtils;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
