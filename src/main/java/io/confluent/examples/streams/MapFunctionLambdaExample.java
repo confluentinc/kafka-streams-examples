@@ -45,11 +45,11 @@ import java.util.Properties;
  * 2) Create the input and output topics used by this example.
  * <pre>
  * {@code
- * $ bin/kafka-topics --create --topic TextLinesTopic \
+ * $ bin/kafka-topics.sh --create --topic TextLinesTopic \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * $ bin/kafka-topics --create --topic UppercasedTextLinesTopic \
+ * $ bin/kafka-topics.sh --create --topic UppercasedTextLinesTopic \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * $ bin/kafka-topics --create --topic OriginalAndUppercasedTopic \
+ * $ bin/kafka-topics.sh --create --topic OriginalAndUppercasedTopic \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * }</pre>
  * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be {@code bin/kafka-topics.sh ...}.
@@ -74,14 +74,14 @@ import java.util.Properties;
  * #   all streams lead to kafka<ENTER>
  * #
  * # Every line you enter will become the value of a single Kafka message.
- * $ bin/kafka-console-producer --broker-list localhost:9092 --topic TextLinesTopic
+ * $ bin/kafka-console-producer.sh --broker-list localhost:9092 --topic TextLinesTopic
  * }</pre>
  * 5) Inspect the resulting data in the output topics, e.g. via {@code kafka-console-consumer}.
  * <pre>
  * {@code
- * $ bin/kafka-console-consumer --topic UppercasedTextLinesTopic --from-beginning \
+ * $ bin/kafka-console-consumer.sh --topic UppercasedTextLinesTopic --from-beginning \
  *                              --new-consumer --bootstrap-server localhost:9092
- * $ bin/kafka-console-consumer --topic OriginalAndUppercasedTopic --from-beginning \
+ * $ bin/kafka-console-consumer.sh --topic OriginalAndUppercasedTopic --from-beginning \
  *                              --new-consumer --bootstrap-server localhost:9092 --property print.key=true
  * }</pre>
  * You should see output data similar to:

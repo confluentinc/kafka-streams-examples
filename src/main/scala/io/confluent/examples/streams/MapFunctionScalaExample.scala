@@ -40,9 +40,9 @@ import org.apache.kafka.streams.kstream.{KStream, Produced}
   * 2) Create the input and output topics used by this example.
   *
   * {{{
-  * $ bin/kafka-topics --create --topic TextLinesTopic --zookeeper localhost:2181 --partitions 1 --replication-factor 1
-  * $ bin/kafka-topics --create --topic UppercasedTextLinesTopic --zookeeper localhost:2181 --partitions 1 --replication-factor 1
-  * $ bin/kafka-topics --create --topic OriginalAndUppercasedTopic --zookeeper localhost:2181 --partitions 1 --replication-factor 1
+  * $ bin/kafka-topics.sh --create --topic TextLinesTopic --zookeeper localhost:2181 --partitions 1 --replication-factor 1
+  * $ bin/kafka-topics.sh --create --topic UppercasedTextLinesTopic --zookeeper localhost:2181 --partitions 1 --replication-factor 1
+  * $ bin/kafka-topics.sh --create --topic OriginalAndUppercasedTopic --zookeeper localhost:2181 --partitions 1 --replication-factor 1
   * }}}
   *
   * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be
@@ -70,14 +70,14 @@ import org.apache.kafka.streams.kstream.{KStream, Produced}
   * #   all streams lead to kafka<ENTER>
   * #
   * # Every line you enter will become the value of a single Kafka message.
-  * $ bin/kafka-console-producer --broker-list localhost:9092 --topic TextLinesTopic
+  * $ bin/kafka-console-producer.sh --broker-list localhost:9092 --topic TextLinesTopic
   * }}}
   *
   * 5) Inspect the resulting data in the output topics, e.g. via `kafka-console-consumer`.
   *
   * {{{
-  * $ bin/kafka-console-consumer --new-consumer --bootstrap-server localhost:9092 --topic UppercasedTextLinesTopic --from-beginning
-  * $ bin/kafka-console-consumer --new-consumer --bootstrap-server localhost:9092 --topic OriginalAndUppercasedTopic --from-beginning  --property print.key=true
+  * $ bin/kafka-console-consumer.sh --new-consumer --bootstrap-server localhost:9092 --topic UppercasedTextLinesTopic --from-beginning
+  * $ bin/kafka-console-consumer.sh --new-consumer --bootstrap-server localhost:9092 --topic OriginalAndUppercasedTopic --from-beginning  --property print.key=true
   * }}}
   *
   * You should see output data similar to:

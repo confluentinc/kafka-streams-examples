@@ -68,9 +68,9 @@ import java.util.concurrent.TimeUnit;
  * 2) Create the input/intermediate/output topics used by this example.
  * <pre>
  * {@code
- * $ bin/kafka-topics --create --topic PageViews \
+ * $ bin/kafka-topics.sh --create --topic PageViews \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * $ bin/kafka-topics --create --topic TopNewsPerIndustry \
+ * $ bin/kafka-topics.sh --create --topic TopNewsPerIndustry \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * }</pre>
  * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be {@code bin/kafka-topics.sh ...}.

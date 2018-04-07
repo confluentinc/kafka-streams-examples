@@ -45,9 +45,9 @@ import java.util.Properties;
  * <p> 2) Create the input/intermediate/output topics used by this example.
  * <pre>
  * {@code
- * $ bin/kafka-topics --create --topic WikipediaFeed \
+ * $ bin/kafka-topics.sh --create --topic WikipediaFeed \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * $ bin/kafka-topics --create --topic WikipediaStats \
+ * $ bin/kafka-topics.sh --create --topic WikipediaStats \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * }</pre>
  * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be {@code bin/kafka-topics.sh ...}.

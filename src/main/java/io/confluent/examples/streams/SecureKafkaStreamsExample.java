@@ -66,9 +66,9 @@ import java.util.Properties;
  *
  * # Create the topics `secure-input` and `secure-output`.
  * # See comment after the code box in case you run into an authentication failure.
- * [vagrant@kafka ~]$ kafka-topics --create --topic secure-input \
+ * [vagrant@kafka ~]$ kafka-topics.sh --create --topic secure-input \
  *                                 --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * [vagrant@kafka ~]$ kafka-topics --create --topic secure-output \
+ * [vagrant@kafka ~]$ kafka-topics.sh --create --topic secure-output \
  *                                 --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * }</pre>
  * Note on "authentication failure": If you attempt to create a topic right after you started
@@ -116,14 +116,14 @@ import java.util.Properties;
  * #   important security features<ENTER>
  * #
  * # Every line you enter will become the value of a single Kafka message.
- * $ kafka-console-producer --broker-list localhost:9093 --topic secure-input \
+ * $ kafka-console-producer.sh --broker-list localhost:9093 --topic secure-input \
  *                          --producer.config /etc/kafka/producer_ssl.properties
  * }
  * </pre>
  * 5) Inspect the resulting data in the output topic, e.g. via {@code kafka-console-consumer}.
  * <pre>
  * {@code
- * $ kafka-console-consumer --topic secure-output --from-beginning \
+ * $ kafka-console-consumer.sh --topic secure-output --from-beginning \
  *                          --new-consumer --bootstrap-server localhost:9093 \
  *                          --consumer.config /etc/kafka/consumer_ssl.properties
  * }

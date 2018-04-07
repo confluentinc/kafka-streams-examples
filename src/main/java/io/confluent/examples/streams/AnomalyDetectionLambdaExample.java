@@ -45,9 +45,9 @@ import java.util.concurrent.TimeUnit;
  * 2) Create the input and output topics used by this example.
  * <pre>
  * {@code
- * $ bin/kafka-topics --create --topic UserClicks \
+ * $ bin/kafka-topics.sh --create --topic UserClicks \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * $ bin/kafka-topics --create --topic AnomalousUsers \
+ * $ bin/kafka-topics.sh --create --topic AnomalousUsers \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * }</pre>
  * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be {@code bin/kafka-topics.sh ...}.
@@ -85,7 +85,7 @@ import java.util.concurrent.TimeUnit;
  * 5) Inspect the resulting data in the output topic, e.g. via {@code kafka-console-consumer}.
  * <pre>
  * {@code
- * $ bin/kafka-console-consumer --topic AnomalousUsers --from-beginning \
+ * $ bin/kafka-console-consumer.sh --topic AnomalousUsers --from-beginning \
  *                              --new-consumer --bootstrap-server localhost:9092 \
  *                              --property print.key=true \
  *                              --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
