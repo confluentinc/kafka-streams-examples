@@ -29,6 +29,8 @@ import org.apache.kafka.streams.state.QueryableStoreType;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.ReadOnlyWindowStore;
 import org.apache.kafka.streams.state.WindowStoreIterator;
+import org.apache.kafka.test.TestUtils;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -241,11 +243,14 @@ public class IntegrationTestUtils {
    * @param <K>      the store's key type
    * @param <V>      the store's value type
    */
-  public static <K, V> void assertThatKeyValueStoreContains(ReadOnlyKeyValueStore<K, V> store, Map<K, V> expected) {
-    for (K key : expected.keySet()) {
-      V actualValue = store.get(key);
-      assertThat(actualValue).isEqualTo(expected.get(key));
-    }
+  public static <K, V> void assertThatKeyValueStoreContains(ReadOnlyKeyValueStore<K, V> store, Map<K, V> expected)
+      throws InterruptedException {
+    TestUtils.waitForCondition(() ->
+            expected.keySet()
+                .stream()
+                .allMatch(k -> expected.get(k).equals(store.get(k))),
+        30000,
+        "Expected values not found in KV store");
   }
 
   /**
@@ -256,23 +261,20 @@ public class IntegrationTestUtils {
    * @param <K>      the store's key type
    * @param <V>      the store's value type
    */
-  public static <K, V> void assertThatOldestWindowContains(ReadOnlyWindowStore<K, V> store, Map<K, V> expected) {
-    long fromBeginningOfTimeMs = 0;
-    long toNowInProcessingTimeMs = System.currentTimeMillis();
-    for (K key : expected.keySet()) {
-      long windowCounter = 0;
-      // For each key, `ReadOnlyWindowStore#fetch()` guarantees that the iterator iterates through
-      // the windows in ascending-time order; that is, the first window (if any) is the oldest
-      // available window for that key.
-      try (WindowStoreIterator<V> iterator = store.fetch(key, fromBeginningOfTimeMs, toNowInProcessingTimeMs)) {
-        while (iterator.hasNext() && windowCounter <= 1) {
-          windowCounter++;
-          KeyValue<Long, V> next = iterator.next();
-          V actualValue = next.value;
-          assertThat(actualValue).isEqualTo(expected.get(key));
-        }
-      }
-    }
-  }
+  public static <K, V> void assertThatOldestWindowContains(ReadOnlyWindowStore<K, V> store, Map<K, V> expected)
+      throws InterruptedException {
+    final long fromBeginningOfTimeMs = 0;
+    final long toNowInProcessingTimeMs = System.currentTimeMillis();
+    TestUtils.waitForCondition(() ->
+        expected.keySet().stream().allMatch(k -> {
+          try (WindowStoreIterator<V> iterator = store.fetch(k, fromBeginningOfTimeMs, toNowInProcessingTimeMs)) {
+            if (iterator.hasNext()) {
+              return expected.get(k).equals(iterator.next().value);
+            }
+            return false;
+          }
+        }),
+        30000,
+        "Expected values not found in WindowStore"); }
 
 }

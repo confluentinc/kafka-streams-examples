@@ -56,7 +56,7 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
   private static String inputTopic = "inputTopic";
 
   @BeforeClass
-  public static void startKafkaCluster() throws Exception {
+  public static void startKafkaCluster() {
     CLUSTER.createTopic(inputTopic);
   }
 
@@ -139,11 +139,6 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
         IntegrationTestUtils.waitUntilStoreIsQueryable(maxStore, QueryableStoreTypes.keyValueStore(), streams);
     ReadOnlyWindowStore<String, Long> windowStore =
         IntegrationTestUtils.waitUntilStoreIsQueryable(maxWindowStore, QueryableStoreTypes.windowStore(), streams);
-
-    // Wait a bit so that the input data can be fully processed to ensure that the stores can
-    // actually be populated with data.  Running the build on (slow) Travis CI in particular
-    // requires a few seconds to run this test reliably.
-    Thread.sleep(3000);
 
     IntegrationTestUtils.assertThatKeyValueStoreContains(keyValueStore, expectedMaxClicksPerUser);
     IntegrationTestUtils.assertThatOldestWindowContains(windowStore, expectedMaxClicksPerUser);
