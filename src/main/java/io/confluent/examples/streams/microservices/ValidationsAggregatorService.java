@@ -56,8 +56,8 @@ public class ValidationsAggregatorService implements Service {
   private KafkaStreams streams;
 
   @Override
-  public void start(String bootstrapServers) {
-    streams = aggregateOrderValidations(bootstrapServers, "/tmp/kafka-streams");
+  public void start(String bootstrapServers, String stateDir) {
+    streams = aggregateOrderValidations(bootstrapServers, stateDir);
     streams.cleanUp(); //don't do this in prod as it clears your state stores
     streams.start();
     log.info("Started Service " + getClass().getSimpleName());
@@ -122,7 +122,7 @@ public class ValidationsAggregatorService implements Service {
 
   public static void main(String[] args) throws Exception {
     ValidationsAggregatorService service = new ValidationsAggregatorService();
-    service.start(parseArgsAndConfigure(args));
+    service.start(parseArgsAndConfigure(args), "/tmp/kafka-streams");
     addShutdownHookAndBlock(service);
   }
 }

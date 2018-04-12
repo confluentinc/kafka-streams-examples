@@ -15,7 +15,11 @@ import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.OrderValidation;
 import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
+
+import java.util.Collections;
 import java.util.List;
+
+import org.apache.kafka.test.TestUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,7 +53,7 @@ public class OrderDetailsServiceTest extends MicroserviceTestUtils {
     sendOrders(orders);
 
     //When
-    orderValService.start(CLUSTER.bootstrapServers());
+    orderValService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
 
     //Then the second order for Jumpers should have been 'rejected' as it's out of stock
     expected = asList(
@@ -65,12 +69,12 @@ public class OrderDetailsServiceTest extends MicroserviceTestUtils {
 
     //Given 1 initial order
     orderValService = new OrderDetailsService();
-    orderValService.start(CLUSTER.bootstrapServers());
-    sendOrders(asList(new Order(id(0L), 0L, CREATED, UNDERPANTS, 3, 5.00d)));
+    orderValService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
+    sendOrders(Collections.singletonList(new Order(id(0L), 0L, CREATED, UNDERPANTS, 3, 5.00d)));
     MicroserviceTestUtils.read(Topics.ORDER_VALIDATIONS, 1, CLUSTER.bootstrapServers()); //block
 
     //When sending second order
-    sendOrders(asList(new Order(id(1L), 0L, CREATED, UNDERPANTS, 3, 5.00d)));
+    sendOrders(Collections.singletonList(new Order(id(1L), 0L, CREATED, UNDERPANTS, 3, 5.00d)));
 
     //Then two orders should be validated
     assertThat(MicroserviceTestUtils.read(Topics.ORDER_VALIDATIONS, 2, CLUSTER.bootstrapServers()))
@@ -80,7 +84,7 @@ public class OrderDetailsServiceTest extends MicroserviceTestUtils {
         ));
 
     //When sending third order
-    sendOrders(asList(new Order(id(2L), 0L, CREATED, UNDERPANTS, 3, 5.00d)));
+    sendOrders(Collections.singletonList(new Order(id(2L), 0L, CREATED, UNDERPANTS, 3, 5.00d)));
 
     //block until order is processed
     MicroserviceTestUtils.read(Topics.ORDER_VALIDATIONS, 3, CLUSTER.bootstrapServers());
@@ -88,7 +92,7 @@ public class OrderDetailsServiceTest extends MicroserviceTestUtils {
     //And then restarting the order validation service
     orderValService.stop();
     orderValService = new OrderDetailsService();
-    orderValService.start(CLUSTER.bootstrapServers());
+    orderValService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
 
     //Then three orders should now have been validated
     assertThat(MicroserviceTestUtils.read(Topics.ORDER_VALIDATIONS, 3, CLUSTER.bootstrapServers()))

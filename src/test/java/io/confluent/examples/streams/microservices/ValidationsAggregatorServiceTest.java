@@ -19,6 +19,7 @@ import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.test.TestUtils;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -31,7 +32,7 @@ public class ValidationsAggregatorServiceTest extends MicroserviceTestUtils {
 
 
   @BeforeClass
-  public static void startKafkaCluster() throws Exception {
+  public static void startKafkaCluster() {
     CLUSTER.createTopic(Topics.ORDERS.name());
     CLUSTER.createTopic(Topics.ORDER_VALIDATIONS.name());
     Schemas.configureSerdesWithSchemaRegistryUrl(CLUSTER.schemaRegistryUrl());
@@ -61,7 +62,7 @@ public class ValidationsAggregatorServiceTest extends MicroserviceTestUtils {
     sendOrderValuations(ruleResults);
 
     //When
-    ordersService.start(CLUSTER.bootstrapServers());
+    ordersService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
 
     //Then
     List<KeyValue<String, Order>> finalOrders = MicroserviceTestUtils

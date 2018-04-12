@@ -307,7 +307,7 @@ public class OrdersService implements Service {
   }
 
   @Override
-  public void start(String bootstrapServers) {
+  public void start(String bootstrapServers, String stateDir) {
     jettyServer = startJetty(port, this);
     port = jettyServer.getURI().getPort(); // update port, in case port was zero
     producer = startProducer(bootstrapServers, ORDER_VALIDATIONS);
@@ -388,7 +388,7 @@ public class OrdersService implements Service {
 
     Schemas.configureSerdesWithSchemaRegistryUrl(schemaRegistryUrl);
     OrdersService service = new OrdersService(restHostname, restPort == null ? 0 : Integer.valueOf(restPort));
-    service.start(bootstrapServers);
+    service.start(bootstrapServers, "/tmp/kafka-streams");
     addShutdownHookAndBlock(service);
   }
 }

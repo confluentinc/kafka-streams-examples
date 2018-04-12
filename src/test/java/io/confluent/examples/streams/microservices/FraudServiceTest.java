@@ -4,6 +4,8 @@ import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.OrderValidation;
 import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
+
+import org.apache.kafka.test.TestUtils;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -60,7 +62,7 @@ public class FraudServiceTest extends MicroserviceTestUtils {
     sendOrders(orders);
 
     //When
-    fraudService.start(CLUSTER.bootstrapServers());
+    fraudService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
 
     //Then there should be failures for the two orders that push customers over their limit.
     List<OrderValidation> expected = asList(
