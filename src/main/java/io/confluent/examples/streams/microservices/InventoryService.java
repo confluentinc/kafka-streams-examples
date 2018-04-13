@@ -48,7 +48,7 @@ public class InventoryService implements Service {
   private KafkaStreams streams;
 
   @Override
-  public void start(String bootstrapServers, String stateDir) {
+  public void start(final String bootstrapServers, final String stateDir) {
     streams = processStreams(bootstrapServers, stateDir);
     streams.cleanUp(); //don't do this in prod as it clears your state stores
     streams.start();

@@ -43,7 +43,7 @@ public class EmailService implements Service {
   }
 
   @Override
-  public void start(String bootstrapServers, String stateDir) {
+  public void start(final String bootstrapServers, final String stateDir) {
     streams = processStreams(bootstrapServers, stateDir);
     streams.cleanUp(); //don't do this in prod as it clears your state stores
     streams.start();
@@ -52,18 +52,17 @@ public class EmailService implements Service {
 
   private KafkaStreams processStreams(final String bootstrapServers, final String stateDir) {
 
-    StreamsBuilder builder = new StreamsBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
     //Create the streams/tables for the join
-    KStream<String, Order> orders = builder.stream(ORDERS.name(),
+    final KStream<String, Order> orders = builder.stream(ORDERS.name(),
         Consumed.with(ORDERS.keySerde(), ORDERS.valueSerde()));
-    KStream<String, Payment> payments = builder.stream(PAYMENTS.name(),
-        Consumed.with(PAYMENTS.keySerde(), PAYMENTS.valueSerde()));
-    GlobalKTable<Long, Customer> customers = builder.globalTable(CUSTOMERS.name(),
+    final KStream<String, Payment> payments = builder.stream(PAYMENTS.name(),
+        Consumed.with(PAYMENTS.keySerde(), PAYMENTS.valueSerde()))
+        //Rekey payments to be by OrderId for the windowed join
+        .selectKey((s, payment) -> payment.getOrderId());
+    final GlobalKTable<Long, Customer> customers = builder.globalTable(CUSTOMERS.name(),
         Consumed.with(CUSTOMERS.keySerde(), CUSTOMERS.valueSerde()));
-
-    //Rekey payments to be by OrderId for the windowed join
-    payments = payments.selectKey((s, payment) -> payment.getOrderId());
 
     //Join the two streams and the table then send an email for each
     orders.join(payments, EmailTuple::new,

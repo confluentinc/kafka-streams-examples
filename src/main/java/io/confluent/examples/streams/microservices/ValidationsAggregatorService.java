@@ -56,14 +56,16 @@ public class ValidationsAggregatorService implements Service {
   private KafkaStreams streams;
 
   @Override
-  public void start(String bootstrapServers, String stateDir) {
+  public void start(final String bootstrapServers, final String stateDir) {
     streams = aggregateOrderValidations(bootstrapServers, stateDir);
     streams.cleanUp(); //don't do this in prod as it clears your state stores
     streams.start();
     log.info("Started Service " + getClass().getSimpleName());
   }
 
-  private KafkaStreams aggregateOrderValidations(String bootstrapServers, String stateDir) {
+  private KafkaStreams aggregateOrderValidations(
+      final String bootstrapServers,
+      final String stateDir) {
     final int numberOfRules = 3; //TODO put into a KTable to make dynamically configurable
 
     StreamsBuilder builder = new StreamsBuilder();

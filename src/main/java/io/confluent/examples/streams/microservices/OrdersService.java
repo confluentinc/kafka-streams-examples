@@ -306,8 +306,9 @@ public class OrdersService implements Service {
         callback(response, bean.getId()));
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  public void start(String bootstrapServers, String stateDir) {
+  public void start(final String bootstrapServers, final String stateDir) {
     jettyServer = startJetty(port, this);
     port = jettyServer.getURI().getPort(); // update port, in case port was zero
     producer = startProducer(bootstrapServers, ORDER_VALIDATIONS);

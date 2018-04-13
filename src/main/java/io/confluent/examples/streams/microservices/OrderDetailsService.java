@@ -53,7 +53,7 @@ public class OrderDetailsService implements Service {
   private volatile boolean running;
 
   @Override
-  public void start(String bootstrapServers, String stateDir) {
+  public void start(final String bootstrapServers, final String stateDir) {
     executorService.execute(() -> startService(bootstrapServers));
     running = true;
     log.info("Started Service " + getClass().getSimpleName());
