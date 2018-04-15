@@ -24,6 +24,7 @@ import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.processor.internals.ProcessorStateManager;
+import org.apache.kafka.test.TestUtils;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -37,7 +38,7 @@ public class InventoryServiceTest extends MicroserviceTestUtils {
 
 
   @BeforeClass
-  public static void startKafkaCluster() throws Exception {
+  public static void startKafkaCluster() {
     CLUSTER.createTopic(Topics.ORDERS.name());
     CLUSTER.createTopic(Topics.ORDER_VALIDATIONS.name());
     Schemas.configureSerdesWithSchemaRegistryUrl(CLUSTER.schemaRegistryUrl());
@@ -64,7 +65,7 @@ public class InventoryServiceTest extends MicroserviceTestUtils {
     sendOrders(orders);
 
     //When
-    inventoryService.start(CLUSTER.bootstrapServers());
+    inventoryService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
 
     //Then the final order for Jumpers should have been 'rejected' as it's out of stock
     expected = asList(

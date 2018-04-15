@@ -8,6 +8,8 @@ import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
 import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
 import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
 import io.confluent.examples.streams.microservices.util.Paths;
+
+import org.apache.kafka.test.TestUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -66,7 +68,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //Given a rest service
     rest = new OrdersService("localhost");
-    rest.start(CLUSTER.bootstrapServers());
+    rest.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
     Paths paths = new Paths("localhost", rest.port());
 
     //When we POST an order
@@ -108,7 +110,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //Given a rest service
     rest = new OrdersService("localhost");
-    rest.start(CLUSTER.bootstrapServers());
+    rest.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
     Paths paths = new Paths("localhost", rest.port());
 
     //When we post an order
@@ -139,7 +141,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //Start the rest interface
     rest = new OrdersService("localhost");
-    rest.start(CLUSTER.bootstrapServers());
+    rest.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
     Paths paths = new Paths("localhost", rest.port());
 
     //Then GET order should timeout
@@ -162,10 +164,10 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //Given two rest servers on different ports
     rest = new OrdersService("localhost");
-    rest.start(CLUSTER.bootstrapServers());
+    rest.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
     Paths paths1 = new Paths("localhost", rest.port());
     rest2 = new OrdersService("localhost");
-    rest2.start(CLUSTER.bootstrapServers());
+    rest2.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
     Paths paths2 = new Paths("localhost", rest2.port());
 
     //And one order
