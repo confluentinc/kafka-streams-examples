@@ -53,7 +53,7 @@ public class OrderDetailsService implements Service {
   private volatile boolean running;
 
   @Override
-  public void start(String bootstrapServers) {
+  public void start(final String bootstrapServers, final String stateDir) {
     executorService.execute(() -> startService(bootstrapServers));
     running = true;
     log.info("Started Service " + getClass().getSimpleName());
@@ -165,7 +165,7 @@ public class OrderDetailsService implements Service {
 
   public static void main(String[] args) throws Exception {
     OrderDetailsService service = new OrderDetailsService();
-    service.start(MicroserviceUtils.parseArgsAndConfigure(args));
+    service.start(MicroserviceUtils.parseArgsAndConfigure(args), "/tmp/kafka-streams");
     addShutdownHookAndBlock(service);
   }
 }
