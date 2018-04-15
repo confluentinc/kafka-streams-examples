@@ -48,8 +48,8 @@ public class InventoryService implements Service {
   private KafkaStreams streams;
 
   @Override
-  public void start(String bootstrapServers) {
-    streams = processStreams(bootstrapServers, "/tmp/kafka-streams");
+  public void start(final String bootstrapServers, final String stateDir) {
+    streams = processStreams(bootstrapServers, stateDir);
     streams.cleanUp(); //don't do this in prod as it clears your state stores
     streams.start();
     log.info("Started Service " + getClass().getSimpleName());
@@ -149,7 +149,7 @@ public class InventoryService implements Service {
 
   public static void main(String[] args) throws Exception {
     InventoryService service = new InventoryService();
-    service.start(parseArgsAndConfigure(args));
+    service.start(parseArgsAndConfigure(args), "/tmp/kafka-streams");
     addShutdownHookAndBlock(service);
   }
 }

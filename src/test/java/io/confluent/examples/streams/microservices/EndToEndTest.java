@@ -8,6 +8,7 @@ import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
 import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
 import io.confluent.examples.streams.microservices.util.Paths;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.test.TestUtils;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.junit.After;
@@ -43,7 +44,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
   private Client client;
 
   @Test
-  public void shouldCreateNewOrderAndGetBackValidatedOrder() throws Exception {
+  public void shouldCreateNewOrderAndGetBackValidatedOrder() {
     OrderBean inputOrder = new OrderBean(id(1L), 2L, OrderState.CREATED, Product.JUMPERS, 1, 1d);
     client = getClient();
 
@@ -64,7 +65,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
   }
 
   @Test
-  public void shouldProcessManyValidOrdersEndToEnd() throws Exception {
+  public void shouldProcessManyValidOrdersEndToEnd() {
     client = getClient();
 
     //Add inventory required by the inventory service
@@ -99,7 +100,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
   }
 
   @Test
-  public void shouldProcessManyInvalidOrdersEndToEnd() throws Exception {
+  public void shouldProcessManyInvalidOrdersEndToEnd() {
     client = getClient();
 
     //Add inventory required by the inventory service
@@ -163,16 +164,16 @@ public class EndToEndTest extends MicroserviceTestUtils {
     services.add(new ValidationsAggregatorService());
 
     tailAllTopicsToConsole(CLUSTER.bootstrapServers());
-    services.forEach(s -> s.start(CLUSTER.bootstrapServers()));
+    services.forEach(s -> s.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath()));
 
     final OrdersService ordersService = new OrdersService(HOST, restPort);
-    ordersService.start(CLUSTER.bootstrapServers());
+    ordersService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
     path = new Paths("localhost", ordersService.port());
     services.add(ordersService);
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     services.forEach(Service::stop);
     stopTailers();
     CLUSTER.stop();
