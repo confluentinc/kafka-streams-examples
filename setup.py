@@ -1,10 +1,4 @@
-#!/usr/bin/env python
-
-from pip.req import parse_requirements
 import setuptools
-
-# Filters out relative/local requirements (i.e. ../lib/utils)
-remote_requirements = '\n'.join(str(r.req) for r in parse_requirements("requirements.txt", session='dummy') if r.req)
 
 setuptools.setup(
     name='kafka-streams-examples-tests',
@@ -17,7 +11,7 @@ setuptools.setup(
 
     url="https://github.com/confluentinc/kafka-streams-examples",
 
-    install_requires=remote_requirements,
+    dependency_links=open("requirements.txt").read().split("\n"),
 
     packages=['test'],
 
