@@ -1,1 +1,1 @@
-git+https://github.com/confluentinc/confluent-docker-utils@v0.0.20
+git+https://github.com/confluentinc/confluent-docker-utils@v0.0.25
