@@ -16,21 +16,20 @@
 package io.confluent.examples.streams
 
 import java.util.Properties
+import java.util.concurrent.TimeUnit
 
-import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams._
-import org.apache.kafka.streams.kstream.{KStream, Produced}
+import org.apache.kafka.streams.scala.StreamsBuilder
+import org.apache.kafka.streams.scala.kstream._
+import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
 
 /**
   * Demonstrates how to perform simple, state-less transformations via map functions.
-  * Same as [[MapFunctionLambdaExample]] but in Scala.
+  * Similar to [[MapFunctionLambdaExample]] but in Scala.
   *
   * Use cases include e.g. basic data sanitization, data anonymization by obfuscating sensitive data
   * fields (such as personally identifiable information aka PII).  This specific example reads
   * incoming text lines and converts each text line to all-uppercase.
   *
-  * Requires a version of Scala that supports Java 8 and SAM / Java lambda (e.g. Scala 2.11 with
-  * `-Xexperimental` compiler flag, or 2.12).
   *
   * HOW TO RUN THIS EXAMPLE
   *
@@ -55,7 +54,7 @@ import org.apache.kafka.streams.kstream.{KStream, Produced}
   * Once packaged you can then run:
   *
   * {{{
-  * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.MapFunctionScalaExample
+  * $ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.MapFunctionScalaExample
   * }}}
   *
   * 4) Write some input data to the source topics (e.g. via `kafka-console-producer`.  The already
@@ -77,7 +76,6 @@ import org.apache.kafka.streams.kstream.{KStream, Produced}
   *
   * {{{
   * $ bin/kafka-console-consumer --new-consumer --bootstrap-server localhost:9092 --topic UppercasedTextLinesTopic --from-beginning
-  * $ bin/kafka-console-consumer --new-consumer --bootstrap-server localhost:9092 --topic OriginalAndUppercasedTopic --from-beginning  --property print.key=true
   * }}}
   *
   * You should see output data similar to:
@@ -86,68 +84,50 @@ import org.apache.kafka.streams.kstream.{KStream, Produced}
   * ALL STREAMS LEAD TO KAFKA
   * }}}
   *
+  * {{{
+  * $ bin/kafka-console-consumer --new-consumer --bootstrap-server localhost:9092 --topic OriginalAndUppercasedTopic --from-beginning --property print.key=true
+  * }}}
+  *
+  * You should see output data similar to:
+  * {{{
+  * hello kafka streams	HELLO KAFKA STREAMS
+  * all streams lead to kafka	ALL STREAMS LEAD TO KAFKA
+  * }}}
+  *
   * 6) Once you're done with your experiments, you can stop this example via `Ctrl-C`.  If needed,
   * also stop the Kafka broker (`Ctrl-C`), and only then stop the ZooKeeper instance (`Ctrl-C`).
   */
-object MapFunctionScalaExample {
+object MapFunctionScalaExample extends App {
 
-  def main(args: Array[String]) {
+  import org.apache.kafka.streams.scala.DefaultSerdes._
+  import org.apache.kafka.streams.scala.ImplicitConversions._
+
+  val config: Properties = {
+    val p = new Properties()
+    p.put(StreamsConfig.APPLICATION_ID_CONFIG, "map-function-scala-example")
     val bootstrapServers = if (args.length > 0) args(0) else "localhost:9092"
-    val builder = new StreamsBuilder
+    p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
+    p
+  }
 
-    val streamingConfig = {
-      val settings = new Properties
-      settings.put(StreamsConfig.APPLICATION_ID_CONFIG, "map-function-scala-example")
-      settings.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
-      // Specify default (de)serializers for record keys and for record values.
-      settings.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray.getClass.getName)
-      settings.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
-      settings
-    }
+  val builder = new StreamsBuilder
+  val textLines: KStream[Array[Byte], String] = builder.stream[Array[Byte], String]("TextLinesTopic")
 
-    val stringSerde: Serde[String] = Serdes.String()
+  // Variant 1: using `mapValues`
+  val uppercasedWithMapValues: KStream[Array[Byte], String] = textLines.mapValues(_.toUpperCase())
+  uppercasedWithMapValues.to("UppercasedTextLinesTopic")
 
-    // Read the input Kafka topic into a KStream instance.
-    val textLines: KStream[Array[Byte], String] = builder.stream("TextLinesTopic")
+  // Variant 2: using `map`, modify both key and value
+  val originalAndUppercased: KStream[String, String] = textLines.map((_, value) => (value, value.toUpperCase()))
 
-    // Variant 1: using `mapValues`
-    val uppercasedWithMapValues: KStream[Array[Byte], String] = textLines.mapValues(_.toUpperCase())
+  // Write the results to a new Kafka topic "OriginalAndUppercasedTopic".
+  originalAndUppercased.to("OriginalAndUppercasedTopic")
 
-    // Write (i.e. persist) the results to a new Kafka topic called "UppercasedTextLinesTopic".
-    //
-    // In this case we can rely on the default serializers for keys and values because their data
-    // types did not change, i.e. we only need to provide the name of the output topic.
-    uppercasedWithMapValues.to("UppercasedTextLinesTopic")
+  val streams: KafkaStreams = new KafkaStreams(builder.build(), config)
+  streams.start()
 
-    // We are using implicit conversions to convert Scala's `Tuple2` into Kafka Streams' `KeyValue`.
-    // This allows us to write streams transformations as, for example:
-    //
-    //    map((key, value) => (key, value.toUpperCase())
-    //
-    // instead of the more verbose
-    //
-    //    map((key, value) => new KeyValue(key, value.toUpperCase())
-    //
-    import KeyValueImplicits._
-
-    // Variant 2: using `map`, modify value only (equivalent to variant 1)
-    val uppercasedWithMap: KStream[Array[Byte], String] = textLines.map((key, value) => (key, value.toUpperCase()))
-
-    // Variant 3: using `map`, modify both key and value
-    //
-    // Note: Whether, in general, you should follow this artificial example and store the original
-    //       value in the key field is debatable and depends on your use case.  If in doubt, don't
-    //       do it.
-    val originalAndUppercased: KStream[String, String] = textLines.map((key, value) => (value, value.toUpperCase()))
-
-    // Write the results to a new Kafka topic "OriginalAndUppercasedTopic".
-    //
-    // In this case we must explicitly set the correct serializers because the default serializers
-    // (cf. streaming configuration) do not match the type of this particular KStream instance.
-    originalAndUppercased.to("OriginalAndUppercasedTopic", Produced.`with`(stringSerde, stringSerde))
-
-    val stream: KafkaStreams = new KafkaStreams(builder.build(), streamingConfig)
-    stream.start()
+  sys.ShutdownHookThread {
+    streams.close(10, TimeUnit.SECONDS)
   }
 
 }
