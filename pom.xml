@@ -45,7 +45,7 @@
     </pluginRepositories>
 
     <properties>
-        <algebird.version>0.13.0</algebird.version>
+        <algebird.version>0.13.4</algebird.version>
         <avro.version>1.8.2</avro.version>
         <chill.version>0.9.2</chill.version>
         <docker.skip-build>false</docker.skip-build>
