@@ -44,6 +44,9 @@
         </pluginRepository>
     </pluginRepositories>
 
+    <!-- Other properties such as kafka.version are derived from parent project(s) such as
+         https://github.com/confluentinc/common (see common's pom.xml for kafka.version).
+    -->
     <properties>
         <algebird.version>0.13.4</algebird.version>
         <avro.version>1.8.2</avro.version>
