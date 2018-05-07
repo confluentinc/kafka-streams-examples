@@ -69,39 +69,39 @@ public class InventoryService implements Service {
     //Latch onto instances of the orders and inventory topics
     StreamsBuilder builder = new StreamsBuilder();
     KStream<String, Order> orders = builder
-        .stream(Topics.ORDERS.name(),
-            Consumed.with(Topics.ORDERS.keySerde(), Topics.ORDERS.valueSerde()));
+      .stream(Topics.ORDERS.name(),
+        Consumed.with(Topics.ORDERS.keySerde(), Topics.ORDERS.valueSerde()));
     KTable<Product, Integer> warehouseInventory = builder
-        .table(Topics.WAREHOUSE_INVENTORY.name(), Consumed
-            .with(Topics.WAREHOUSE_INVENTORY.keySerde(), Topics.WAREHOUSE_INVENTORY.valueSerde()));
+      .table(Topics.WAREHOUSE_INVENTORY.name(), Consumed
+        .with(Topics.WAREHOUSE_INVENTORY.keySerde(), Topics.WAREHOUSE_INVENTORY.valueSerde()));
 
     //Create a store to reserve inventory whilst the order is processed.
     //This will be prepopulated from Kafka before the service starts processing
     StoreBuilder reservedStock = Stores
-        .keyValueStoreBuilder(Stores.persistentKeyValueStore(RESERVED_STOCK_STORE_NAME),
-            Topics.WAREHOUSE_INVENTORY.keySerde(), Serdes.Long())
-        .withLoggingEnabled(new HashMap<>());
+      .keyValueStoreBuilder(Stores.persistentKeyValueStore(RESERVED_STOCK_STORE_NAME),
+        Topics.WAREHOUSE_INVENTORY.keySerde(), Serdes.Long())
+      .withLoggingEnabled(new HashMap<>());
     builder.addStateStore(reservedStock);
 
     //First change orders stream to be keyed by Product (so we can join with warehouse inventory)
     orders.selectKey((id, order) -> order.getProduct())
-        //Limit to newly created orders
-        .filter((id, order) -> OrderState.CREATED.equals(order.getState()))
-        //Join Orders to Inventory so we can compare each order to its corresponding stock value
-        .join(warehouseInventory, KeyValue::new, Joined.with(Topics.WAREHOUSE_INVENTORY.keySerde(),
-            Topics.ORDERS.valueSerde(), Serdes.Integer()))
-        //Validate the order based on how much stock we have both in the warehouse and locally 'reserved' stock
-        .transform(InventoryValidator::new, RESERVED_STOCK_STORE_NAME)
-        //Push the result into the Order Validations topic
-        .to(Topics.ORDER_VALIDATIONS.name(), Produced.with(Topics.ORDER_VALIDATIONS.keySerde(),
-            Topics.ORDER_VALIDATIONS.valueSerde()));
+      //Limit to newly created orders
+      .filter((id, order) -> OrderState.CREATED.equals(order.getState()))
+      //Join Orders to Inventory so we can compare each order to its corresponding stock value
+      .join(warehouseInventory, KeyValue::new, Joined.with(Topics.WAREHOUSE_INVENTORY.keySerde(),
+        Topics.ORDERS.valueSerde(), Serdes.Integer()))
+      //Validate the order based on how much stock we have both in the warehouse and locally 'reserved' stock
+      .transform(InventoryValidator::new, RESERVED_STOCK_STORE_NAME)
+      //Push the result into the Order Validations topic
+      .to(Topics.ORDER_VALIDATIONS.name(), Produced.with(Topics.ORDER_VALIDATIONS.keySerde(),
+        Topics.ORDER_VALIDATIONS.valueSerde()));
 
     return new KafkaStreams(builder.build(),
-        MicroserviceUtils.baseStreamsConfig(bootstrapServers, stateDir, INVENTORY_SERVICE_APP_ID));
+      MicroserviceUtils.baseStreamsConfig(bootstrapServers, stateDir, INVENTORY_SERVICE_APP_ID));
   }
 
   private static class InventoryValidator implements
-      Transformer<Product, KeyValue<Order, Integer>, KeyValue<String, OrderValidation>> {
+    Transformer<Product, KeyValue<Order, Integer>, KeyValue<String, OrderValidation>> {
 
     private KeyValueStore<Product, Long> reservedStocksStore;
 
@@ -109,12 +109,12 @@ public class InventoryService implements Service {
     @SuppressWarnings("unchecked")
     public void init(ProcessorContext context) {
       reservedStocksStore = (KeyValueStore<Product, Long>) context
-          .getStateStore(RESERVED_STOCK_STORE_NAME);
+        .getStateStore(RESERVED_STOCK_STORE_NAME);
     }
 
     @Override
     public KeyValue<String, OrderValidation> transform(final Product productId,
-        final KeyValue<Order, Integer> orderAndStock) {
+                                                       final KeyValue<Order, Integer> orderAndStock) {
       //Process each order/inventory pair one at a time
       OrderValidation validated;
       Order order = orderAndStock.key;
@@ -140,7 +140,8 @@ public class InventoryService implements Service {
     }
 
     @Override
-    public void close() {}
+    public void close() {
+    }
   }
 
   public static void main(String[] args) throws Exception {
