@@ -23,8 +23,9 @@ import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.kstream.{KStream, Produced, TransformerSupplier}
-import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsBuilder, StreamsConfig}
+import org.apache.kafka.streams.scala.StreamsBuilder
+import org.apache.kafka.streams.scala.kstream.KStream
+import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
 import org.apache.kafka.test.TestUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.junit._
@@ -37,6 +38,9 @@ import org.scalatest.junit.AssertionsForJUnit
   * Count-Min Sketch data structure.  The algorithm is WordCount.
   */
 class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
+
+  import org.apache.kafka.streams.scala.DefaultSerdes._
+  import org.apache.kafka.streams.scala.ImplicitConversions._
 
   private val privateCluster: EmbeddedSingleNodeKafkaCluster = new EmbeddedSingleNodeKafkaCluster
 
@@ -53,8 +57,6 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
 
   @Test
   def shouldProbabilisticallyCountWords() {
-    // To convert between Scala's `Tuple2` and Streams' `KeyValue`.
-    import KeyValueImplicits._
 
     val inputTextLines: Seq[String] = Seq(
       "Hello Kafka Streams",
@@ -83,8 +85,6 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
       val p = new Properties()
       p.put(StreamsConfig.APPLICATION_ID_CONFIG, "probabilistic-counting-scala-integration-test")
       p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
-      p.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray.getClass.getName)
-      p.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
       // The commit interval for flushing records to state stores and downstream must be lower than
       // this integration test's timeout (30 secs) to ensure we observe the expected processing results.
       p.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, "10000")
@@ -94,29 +94,19 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
       p
     }
 
-    val builder: StreamsBuilder = new StreamsBuilder()
+    val builder = new StreamsBuilder
     val cmsStoreName = "cms-store"
     builder.addStateStore(createCMSStoreBuilder(cmsStoreName))
 
     // Read the input from Kafka.
-    val textLines: KStream[Array[Byte], String] = builder.stream(inputTopic)
-
-    // Scala-Java interoperability: to convert `scala.collection.Iterable` to  `java.util.Iterable`
-    // in `flatMapValues()` below.
-    import collection.JavaConverters.asJavaIterableConverter
+    val textLines: KStream[Array[Byte], String] = builder.stream[Array[Byte], String](inputTopic)
 
     val approximateWordCounts: KStream[String, Long] = textLines
-        .flatMapValues(textLine => textLine.toLowerCase.split("\\W+").toIterable.asJava)
-        .transform(
-          new TransformerSupplier[Array[Byte], String, KeyValue[String, Long]] {
-            override def get() = new ProbabilisticCounter(cmsStoreName)
-          },
-          cmsStoreName)
+      .flatMapValues(textLine => textLine.toLowerCase.split("\\W+"))
+      .transform(new ProbabilisticCounter(cmsStoreName), cmsStoreName)
 
-    // Trick to re-use Kafka's serde for java.lang.Long for scala.Long.
-    val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
     // Write the results back to Kafka.
-    approximateWordCounts.to(outputTopic, Produced.`with`(Serdes.String(), longSerde))
+    approximateWordCounts.to(outputTopic)
 
     val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
     streams.start()
@@ -168,7 +158,7 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
       cfg
     }
     new CMSStoreBuilder[String](cmsStoreName, Serdes.String())
-        .withLoggingEnabled(changelogConfig)
+      .withLoggingEnabled(changelogConfig)
   }
 
 }
