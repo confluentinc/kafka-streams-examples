@@ -21,13 +21,11 @@ import io.confluent.examples.streams.avro.WikiFeed
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
 import io.confluent.kafka.serializers.{AbstractKafkaAvroSerDeConfig, KafkaAvroDeserializer, KafkaAvroDeserializerConfig, KafkaAvroSerializer}
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde
-import org.apache.avro.specific.SpecificRecord
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
 import org.apache.kafka.streams.scala.StreamsBuilder
-import org.apache.kafka.streams.scala.kstream.KStream
+import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
 import org.assertj.core.api.Assertions.assertThat
 import org.junit._
 import org.scalatest.junit.AssertionsForJUnit
@@ -63,7 +61,7 @@ class SpecificAvroScalaIntegrationTest extends AssertionsForJUnit {
     //
     // Step 1: Configure and start the processor topology.
     //
-    val builder: StreamsBuilder = new StreamsBuilder()
+    val builder = new StreamsBuilder
 
     val streamsConfiguration: Properties = {
       val p = new Properties()

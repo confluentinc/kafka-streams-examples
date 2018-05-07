@@ -25,7 +25,6 @@ import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.scala.kstream.KStream
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
 import org.assertj.core.api.Assertions.assertThat
@@ -70,7 +69,7 @@ class GenericAvroScalaIntegrationTest extends AssertionsForJUnit {
     //
     // Step 1: Configure and start the processor topology.
     //
-    val builder: StreamsBuilder = new StreamsBuilder()
+    val builder = new StreamsBuilder
 
     val streamsConfiguration: Properties = {
       val p = new Properties()

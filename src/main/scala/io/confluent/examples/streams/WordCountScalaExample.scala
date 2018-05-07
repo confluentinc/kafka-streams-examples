@@ -102,7 +102,7 @@ object WordCountScalaExample extends App {
     p
   }
 
-  val builder: StreamsBuilder = new StreamsBuilder()
+  val builder = new StreamsBuilder()
   val textLines: KStream[String, String] = builder.stream[String, String]("streams-plaintext-input")
   val wordCounts: KTable[String, Long] = textLines
     .flatMapValues(textLine => textLine.toLowerCase.split("\\W+"))

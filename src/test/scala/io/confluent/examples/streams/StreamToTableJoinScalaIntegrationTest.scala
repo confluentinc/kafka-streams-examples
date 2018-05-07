@@ -108,7 +108,7 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
       p
     }
 
-    val builder = new StreamsBuilder()
+    val builder = new StreamsBuilder
 
     // This KStream contains information such as "alice" -> 13L.
     //

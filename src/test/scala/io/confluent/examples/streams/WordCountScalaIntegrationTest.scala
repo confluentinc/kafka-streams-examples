@@ -95,7 +95,7 @@ class WordCountScalaIntegrationTest extends AssertionsForJUnit {
       p
     }
 
-    val builder: StreamsBuilder = new StreamsBuilder()
+    val builder = new StreamsBuilder
 
     val textLines: KStream[Array[Byte], String] = builder.stream[Array[Byte], String](inputTopic)
 
