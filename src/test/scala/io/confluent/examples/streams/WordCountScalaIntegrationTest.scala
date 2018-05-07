@@ -15,15 +15,15 @@
  */
 package io.confluent.examples.streams
 
-import java.lang.{Long => JLong}
 import java.util.Properties
 
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.kstream.{KStream, KTable, Produced}
-import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsBuilder, StreamsConfig}
+import org.apache.kafka.streams.scala.StreamsBuilder
+import org.apache.kafka.streams.scala.kstream.{KStream, KTable}
+import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
 import org.apache.kafka.test.TestUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.junit._
@@ -44,6 +44,9 @@ import org.scalatest.junit.AssertionsForJUnit
   */
 class WordCountScalaIntegrationTest extends AssertionsForJUnit {
 
+  import org.apache.kafka.streams.scala.DefaultSerdes._
+  import org.apache.kafka.streams.scala.ImplicitConversions._
+
   private val privateCluster: EmbeddedSingleNodeKafkaCluster = new EmbeddedSingleNodeKafkaCluster
 
   @Rule def cluster: EmbeddedSingleNodeKafkaCluster = privateCluster
@@ -59,9 +62,6 @@ class WordCountScalaIntegrationTest extends AssertionsForJUnit {
 
   @Test
   def shouldCountWords() {
-    // To convert between Scala's `Tuple2` and Streams' `KeyValue`.
-    import KeyValueImplicits._
-
     val inputTextLines: Seq[String] = Seq(
       "Hello Kafka Streams",
       "All streams lead to Kafka",
@@ -86,8 +86,6 @@ class WordCountScalaIntegrationTest extends AssertionsForJUnit {
       val p = new Properties()
       p.put(StreamsConfig.APPLICATION_ID_CONFIG, "wordcount-scala-integration-test")
       p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
-      p.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
-      p.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
       // The commit interval for flushing records to state stores and downstream must be lower than
       // this integration test's timeout (30 secs) to ensure we observe the expected processing results.
       p.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, "10000")
@@ -97,26 +95,16 @@ class WordCountScalaIntegrationTest extends AssertionsForJUnit {
       p
     }
 
-    val stringSerde: Serde[String] = Serdes.String()
-    val longSerde: Serde[JLong] = Serdes.Long()
-
     val builder: StreamsBuilder = new StreamsBuilder()
 
-    // Construct a `KStream` from the input topic, where message values represent lines of text (for
-    // the sake of this example, we ignore whatever may be stored in the message keys).
-    val textLines: KStream[String, String] = builder.stream(inputTopic)
+    val textLines: KStream[Array[Byte], String] = builder.stream[Array[Byte], String](inputTopic)
 
-    // Scala-Java interoperability: to convert `scala.collection.Iterable` to  `java.util.Iterable`
-    // in `flatMapValues()` below.
-    import collection.JavaConverters.asJavaIterableConverter
+    val wordCounts: KTable[String, Long] = textLines
+      .flatMapValues(value => value.toLowerCase.split("\\W+"))
+      .groupBy((_, word) => word)
+      .count()
 
-    val wordCounts: KTable[String, JLong] = textLines
-        .flatMapValues(value => value.toLowerCase.split("\\W+").toIterable.asJava)
-        // no need to specify explicit serdes because the resulting key and value types match our default serde settings
-        .groupBy((_, word) => word)
-        .count()
-
-    wordCounts.toStream.to(outputTopic, Produced.`with`(stringSerde, longSerde))
+    wordCounts.toStream.to(outputTopic)
 
     val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
     streams.start()
@@ -129,7 +117,7 @@ class WordCountScalaIntegrationTest extends AssertionsForJUnit {
       p.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
       p.put(ProducerConfig.ACKS_CONFIG, "all")
       p.put(ProducerConfig.RETRIES_CONFIG, "0")
-      p.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
+      p.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[ByteArraySerializer])
       p.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
       p
     }

@@ -25,8 +25,9 @@ import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.kstream.{KStream, Produced}
-import org.apache.kafka.streams.{KafkaStreams, StreamsBuilder, StreamsConfig}
+import org.apache.kafka.streams.scala.kstream.KStream
+import org.apache.kafka.streams.scala.StreamsBuilder
+import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
 import org.assertj.core.api.Assertions.assertThat
 import org.junit._
 import org.scalatest.junit.AssertionsForJUnit
@@ -37,6 +38,9 @@ import org.scalatest.junit.AssertionsForJUnit
   * See [[SpecificAvroScalaIntegrationTest]] for the equivalent Specific Avro integration test.
   */
 class GenericAvroScalaIntegrationTest extends AssertionsForJUnit {
+
+  import org.apache.kafka.streams.scala.DefaultSerdes._
+  import org.apache.kafka.streams.scala.ImplicitConversions._
 
   private val privateCluster: EmbeddedSingleNodeKafkaCluster = new EmbeddedSingleNodeKafkaCluster
 
@@ -72,36 +76,22 @@ class GenericAvroScalaIntegrationTest extends AssertionsForJUnit {
       val p = new Properties()
       p.put(StreamsConfig.APPLICATION_ID_CONFIG, "generic-avro-scala-integration-test")
       p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
-      p.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray.getClass.getName)
-      p.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, classOf[GenericAvroSerde])
       p.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, cluster.schemaRegistryUrl)
       p.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
       p
     }
 
-    // Write the input data as-is to the output topic.
-    //
-    // Normally, because a) we have already configured the correct default serdes for keys and
-    // values and b) the types for keys and values are the same for both the input topic and the
-    // output topic, we would only need to define:
-    //
-    //   builder.stream(inputTopic).to(outputTopic);
-    //
-    // However, in the code below we intentionally override the default serdes in `to()` to
-    // demonstrate how you can construct and configure a generic Avro serde manually.
-    val stringSerde: Serde[String] = Serdes.String
-    val genericAvroSerde: Serde[GenericRecord] = {
+    // Make an implicit serde available for GenericRecord, which is required for operations such as `to()` below.
+    implicit val genericAvroSerde: Serde[GenericRecord] = {
       val gas = new GenericAvroSerde
-      // Note how we must manually call `configure()` on this serde to configure the schema registry
-      // url.  This is different from the case of setting default serdes (see `streamsConfiguration`
-      // above), which will be auto-configured based on the `StreamsConfiguration` instance.
       val isKeySerde: Boolean = false
       gas.configure(Collections.singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, cluster.schemaRegistryUrl), isKeySerde)
       gas
     }
 
-    val stream: KStream[String, GenericRecord] = builder.stream(inputTopic)
-    stream.to(outputTopic, Produced.`with`(stringSerde, genericAvroSerde))
+    // Write the input data as-is to the output topic.
+    builder.stream[String, GenericRecord](inputTopic).to(outputTopic)
+
     val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
     streams.start()
 
