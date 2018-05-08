@@ -1,18 +1,5 @@
 package io.confluent.examples.streams.microservices;
 
-import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.FAIL;
-import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.PASS;
-import static io.confluent.examples.streams.avro.microservices.OrderValidationType.INVENTORY_CHECK;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.parseArgsAndConfigure;
-
-import io.confluent.examples.streams.avro.microservices.Order;
-import io.confluent.examples.streams.avro.microservices.OrderState;
-import io.confluent.examples.streams.avro.microservices.OrderValidation;
-import io.confluent.examples.streams.avro.microservices.Product;
-import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
-import io.confluent.examples.streams.microservices.util.MicroserviceUtils;
-import java.util.HashMap;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
@@ -29,6 +16,21 @@ import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+
+import io.confluent.examples.streams.avro.microservices.Order;
+import io.confluent.examples.streams.avro.microservices.OrderState;
+import io.confluent.examples.streams.avro.microservices.OrderValidation;
+import io.confluent.examples.streams.avro.microservices.Product;
+import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
+import io.confluent.examples.streams.microservices.util.MicroserviceUtils;
+
+import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.FAIL;
+import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.PASS;
+import static io.confluent.examples.streams.avro.microservices.OrderValidationType.INVENTORY_CHECK;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.parseArgsAndConfigure;
 
 /**
  * This service validates incoming orders to ensure there is sufficient stock to
@@ -138,13 +140,7 @@ public class InventoryService implements Service {
     }
 
     @Override
-    public KeyValue<String, OrderValidation> punctuate(long timestamp) {
-      return null;
-    }
-
-    @Override
-    public void close() {
-    }
+    public void close() {}
   }
 
   public static void main(String[] args) throws Exception {

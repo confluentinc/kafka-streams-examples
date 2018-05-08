@@ -15,7 +15,6 @@
  */
 package io.confluent.examples.streams;
 
-import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -44,6 +43,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+
+import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -104,12 +105,6 @@ public class StateStoresInTheDSLIntegrationTest {
           Long incrementedCount = count.orElse(0L) + 1;
           stateStore.put(value, incrementedCount);
           return KeyValue.pair(value, incrementedCount);
-        }
-
-        @Override
-        public KeyValue<String, Long> punctuate(long timestamp) {
-          // Not needed
-          return null;
         }
 
         @Override

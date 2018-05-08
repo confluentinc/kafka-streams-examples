@@ -15,7 +15,6 @@
  */
 package io.confluent.examples.streams;
 
-import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
@@ -45,6 +44,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -172,12 +173,6 @@ public class EventDeduplicationLambdaIntegrationTest {
 
     private void rememberNewEvent(final E eventId, long timestamp) {
       eventIdStore.put(eventId, timestamp, timestamp);
-    }
-
-    @Override
-    public KeyValue<K, V> punctuate(final long timestamp) {
-      // our windowStore segments are closed automatically
-      return null;
     }
 
     @Override
