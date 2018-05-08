@@ -96,7 +96,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-streams-scala</artifactId>
+            <artifactId>kafka-streams-scala_${kafka.scala.version}</artifactId>
             <version>${kafka.version}</version>
         </dependency>
         <dependency>
