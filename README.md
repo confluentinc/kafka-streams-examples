@@ -54,8 +54,8 @@ There are two kinds of examples:
 
 | Name | Concepts used | Java 8+ | Java 7+ | Scala |
 | --- | --- | --- | --- | --- |
-| WordCount | DSL | [Java 8+ example](src/main/java/io/confluent/examples/streams/WordCountLambdaExample.java)
-| MapFunction | DSL, stateless transformations, map() | [Java 8+ example](src/main/java/io/confluent/examples/streams/MapFunctionLambdaExample.java) | |   [Scala Example](src/main/scala/io/confluent/examples/streams/MapFunctionScalaExample.scala) |
+| WordCount | DSL | [Java 8+ example](src/main/java/io/confluent/examples/streams/WordCountLambdaExample.java) | | [Scala Example](src/main/scala/io/confluent/examples/streams/WordCountScalaExample.scala) |
+| MapFunction | DSL, stateless transformations, map() | [Java 8+ example](src/main/java/io/confluent/examples/streams/MapFunctionLambdaExample.java) | | [Scala Example](src/main/scala/io/confluent/examples/streams/MapFunctionScalaExample.scala) |
 | SessionWindows | Sessionization of user events, user behavior analysis  | | [Java 7+ example](src/main/java/io/confluent/examples/streams/SessionWindowsExample.java)
 | Sum | DSL, stateful transformations, `reduce` | [Java 8+ example](src/main/java/io/confluent/examples/streams/SumLambdaExample.java)
 | PageViewRegion | `join` between `KStream` and `KTable` | [Java 8+ example](src/main/java/io/confluent/examples/streams/PageViewRegionLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/PageViewRegionExample.java) | |
