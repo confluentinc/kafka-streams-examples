@@ -28,7 +28,5 @@ class ProbabilisticCounter(val cmsStoreName: String)
     KeyValue.pair[String, Long](value, cmsState.get(value))
   }
 
-  override def punctuate(l: Long): KeyValue[String, Long] = null
-
   override def close(): Unit = {}
 }

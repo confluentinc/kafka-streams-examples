@@ -15,7 +15,6 @@
  */
 package io.confluent.examples.streams;
 
-import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
@@ -40,6 +39,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Pattern;
+
+import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -109,12 +110,6 @@ public class MixAndMatchLambdaIntegrationTest {
      */
     private String anonymizeIpAddress(String ipAddress) {
       return ipv4AddressPattern.matcher(ipAddress).replaceAll("${keep}XXX");
-    }
-
-    @Override
-    public KeyValue<byte[], String> punctuate(long timestamp) {
-      // We don't need any periodic actions in this transformer.  Returning null achieves that.
-      return null;
     }
 
     @Override

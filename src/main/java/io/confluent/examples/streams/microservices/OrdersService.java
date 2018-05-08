@@ -1,21 +1,17 @@
 package io.confluent.examples.streams.microservices;
 
-import io.confluent.examples.streams.avro.microservices.Order;
-import io.confluent.examples.streams.avro.microservices.OrderState;
-import io.confluent.examples.streams.interactivequeries.HostStoreInfo;
-import io.confluent.examples.streams.interactivequeries.MetadataService;
-import io.confluent.examples.streams.microservices.domain.Schemas;
-import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
-import io.confluent.examples.streams.microservices.util.Paths;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.errors.InvalidStateStoreException;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
+import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Predicate;
+import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.eclipse.jetty.server.Server;
@@ -23,6 +19,12 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ManagedAsync;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -39,11 +41,14 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
+
+import io.confluent.examples.streams.avro.microservices.Order;
+import io.confluent.examples.streams.avro.microservices.OrderState;
+import io.confluent.examples.streams.interactivequeries.HostStoreInfo;
+import io.confluent.examples.streams.interactivequeries.MetadataService;
+import io.confluent.examples.streams.microservices.domain.Schemas;
+import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
+import io.confluent.examples.streams.microservices.util.Paths;
 
 import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS;
 import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDER_VALIDATIONS;
@@ -125,11 +130,11 @@ public class OrdersService implements Service {
    * we check to see if there is an outstanding HTTP GET request waiting to be
    * fulfilled.
    */
-  private KStreamBuilder createOrdersMaterializedView() {
-    KStreamBuilder builder = new KStreamBuilder();
-    builder.stream(ORDERS.keySerde(), ORDERS.valueSerde(), ORDERS.name())
-        .groupByKey(ORDERS.keySerde(), ORDERS.valueSerde())
-        .reduce((agg, newVal) -> newVal, ORDERS_STORE_NAME)
+  private StreamsBuilder createOrdersMaterializedView() {
+    StreamsBuilder builder = new StreamsBuilder();
+    builder.stream(ORDERS.name(), Consumed.with(ORDERS.keySerde(), ORDERS.valueSerde()))
+        .groupByKey(Serialized.with(ORDERS.keySerde(), ORDERS.valueSerde()))
+        .reduce((agg, newVal) -> newVal, Materialized.as(ORDERS_STORE_NAME))
         .toStream().foreach(this::maybeCompleteLongPollGet);
     return builder;
   }
@@ -317,7 +322,8 @@ public class OrdersService implements Service {
   }
 
   private KafkaStreams startKStreams(String bootstrapServers) {
-    KafkaStreams streams = new KafkaStreams(createOrdersMaterializedView(),
+    KafkaStreams streams = new KafkaStreams(
+        createOrdersMaterializedView().build(),
         config(bootstrapServers));
     metadataService = new MetadataService(streams);
     streams.cleanUp(); //don't do this in prod as it clears your state stores

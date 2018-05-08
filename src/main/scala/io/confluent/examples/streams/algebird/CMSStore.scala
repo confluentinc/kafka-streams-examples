@@ -195,7 +195,7 @@ class CMSStore[T: CMSHasher](override val name: String,
     // Note: We must manually guard with `loggingEnabled` here because `context.register()` ignores
     // that parameter.
     if (root != null && loggingEnabled) {
-      context.register(root, loggingEnabled, (_, value) => {
+      context.register(root, (_, value) => {
         if (value == null) {
           cms = cmsMonoid.zero
         }
