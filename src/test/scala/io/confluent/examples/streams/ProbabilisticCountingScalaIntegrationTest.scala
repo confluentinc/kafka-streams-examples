@@ -39,7 +39,7 @@ import org.scalatest.junit.AssertionsForJUnit
   */
 class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
 
-  import org.apache.kafka.streams.scala.DefaultSerdes._
+  import org.apache.kafka.streams.scala.Serdes._
   import org.apache.kafka.streams.scala.ImplicitConversions._
 
   private val privateCluster: EmbeddedSingleNodeKafkaCluster = new EmbeddedSingleNodeKafkaCluster
