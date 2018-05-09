@@ -132,9 +132,7 @@ public class OrdersService implements Service {
    */
   private StreamsBuilder createOrdersMaterializedView() {
     StreamsBuilder builder = new StreamsBuilder();
-    builder.stream(ORDERS.name(), Consumed.with(ORDERS.keySerde(), ORDERS.valueSerde()))
-        .groupByKey(Serialized.with(ORDERS.keySerde(), ORDERS.valueSerde()))
-        .reduce((agg, newVal) -> newVal, Materialized.as(ORDERS_STORE_NAME))
+    builder.table(ORDERS.name(), Consumed.with(ORDERS.keySerde(), ORDERS.valueSerde()), Materialized.as(ORDERS_STORE_NAME))
         .toStream().foreach(this::maybeCompleteLongPollGet);
     return builder;
   }
