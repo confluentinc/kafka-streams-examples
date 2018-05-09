@@ -11,7 +11,6 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.errors.InvalidStateStoreException;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Predicate;
-import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.eclipse.jetty.server.Server;
@@ -213,7 +212,7 @@ public class OrdersService implements Service {
   }
 
   private ReadOnlyKeyValueStore<String, Order> ordersStore() {
-    return streams.store(ORDERS_STORE_NAME, QueryableStoreTypes.<String, Order>keyValueStore());
+    return streams.store(ORDERS_STORE_NAME, QueryableStoreTypes.keyValueStore());
   }
 
   /**
