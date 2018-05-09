@@ -11,7 +11,6 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.errors.InvalidStateStoreException;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Predicate;
-import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.eclipse.jetty.server.Server;
@@ -132,9 +131,7 @@ public class OrdersService implements Service {
    */
   private StreamsBuilder createOrdersMaterializedView() {
     StreamsBuilder builder = new StreamsBuilder();
-    builder.stream(ORDERS.name(), Consumed.with(ORDERS.keySerde(), ORDERS.valueSerde()))
-        .groupByKey(Serialized.with(ORDERS.keySerde(), ORDERS.valueSerde()))
-        .reduce((agg, newVal) -> newVal, Materialized.as(ORDERS_STORE_NAME))
+    builder.table(ORDERS.name(), Consumed.with(ORDERS.keySerde(), ORDERS.valueSerde()), Materialized.as(ORDERS_STORE_NAME))
         .toStream().foreach(this::maybeCompleteLongPollGet);
     return builder;
   }
@@ -215,7 +212,7 @@ public class OrdersService implements Service {
   }
 
   private ReadOnlyKeyValueStore<String, Order> ordersStore() {
-    return streams.store(ORDERS_STORE_NAME, QueryableStoreTypes.<String, Order>keyValueStore());
+    return streams.store(ORDERS_STORE_NAME, QueryableStoreTypes.keyValueStore());
   }
 
   /**

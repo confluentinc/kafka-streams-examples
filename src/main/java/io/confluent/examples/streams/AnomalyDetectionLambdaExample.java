@@ -58,7 +58,7 @@ import java.util.concurrent.TimeUnit;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.AnomalyDetectionLambdaExample
+ * $ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.AnomalyDetectionLambdaExample
  * }</pre>
  * <p>
  * 4) Write some input data to the source topic (e.g. via {@code kafka-console-producer}. The already

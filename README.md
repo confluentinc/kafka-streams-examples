@@ -54,8 +54,8 @@ There are two kinds of examples:
 
 | Name | Concepts used | Java 8+ | Java 7+ | Scala |
 | --- | --- | --- | --- | --- |
-| WordCount | DSL | [Java 8+ example](src/main/java/io/confluent/examples/streams/WordCountLambdaExample.java)
-| MapFunction | DSL, stateless transformations, map() | [Java 8+ example](src/main/java/io/confluent/examples/streams/MapFunctionLambdaExample.java) | |   [Scala Example](src/main/scala/io/confluent/examples/streams/MapFunctionScalaExample.scala) |
+| WordCount | DSL | [Java 8+ example](src/main/java/io/confluent/examples/streams/WordCountLambdaExample.java) | | [Scala Example](src/main/scala/io/confluent/examples/streams/WordCountScalaExample.scala) |
+| MapFunction | DSL, stateless transformations, map() | [Java 8+ example](src/main/java/io/confluent/examples/streams/MapFunctionLambdaExample.java) | | [Scala Example](src/main/scala/io/confluent/examples/streams/MapFunctionScalaExample.scala) |
 | SessionWindows | Sessionization of user events, user behavior analysis  | | [Java 7+ example](src/main/java/io/confluent/examples/streams/SessionWindowsExample.java)
 | Sum | DSL, stateful transformations, `reduce` | [Java 8+ example](src/main/java/io/confluent/examples/streams/SumLambdaExample.java)
 | PageViewRegion | `join` between `KStream` and `KTable` | [Java 8+ example](src/main/java/io/confluent/examples/streams/PageViewRegionLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/PageViewRegionExample.java) | |
@@ -258,7 +258,7 @@ Kafka Streams examples via:
 #
 $ mvn clean package
 
-# >>> Creates target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar
+# >>> Creates target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar
 
 ```
 
@@ -267,7 +267,7 @@ You can now run the example applications as follows:
 ```shell
 # Run an example application from the standalone jar.
 # Here: `WordCountLambdaExample`
-$ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar \
+$ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
 
@@ -283,7 +283,7 @@ If you want to turn on log4j while running your example application, you can edi
 ```shell
 # Run an example application from the standalone jar.
 # Here: `WordCountLambdaExample`
-$ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar \
+$ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar \
   -Dlog4j.configuration=file:src/main/resources/log4j.properties \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
