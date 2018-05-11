@@ -11,10 +11,14 @@ import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.errors.InvalidStateStoreException;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
+import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Predicate;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
@@ -125,13 +129,13 @@ public class OrdersService implements Service {
    * we check to see if there is an outstanding HTTP GET request waiting to be
    * fulfilled.
    */
-  private KStreamBuilder createOrdersMaterializedView() {
-    KStreamBuilder builder = new KStreamBuilder();
-    builder.stream(ORDERS.keySerde(), ORDERS.valueSerde(), ORDERS.name())
-        .groupByKey(ORDERS.keySerde(), ORDERS.valueSerde())
-        .reduce((agg, newVal) -> newVal, ORDERS_STORE_NAME)
+  private Topology createOrdersMaterializedView() {
+    StreamsBuilder builder = new StreamsBuilder();
+    builder.table(ORDERS.name(),
+        Consumed.with(ORDERS.keySerde(), ORDERS.valueSerde()),
+        Materialized.as(ORDERS_STORE_NAME))
         .toStream().foreach(this::maybeCompleteLongPollGet);
-    return builder;
+    return builder.build();
   }
 
   private void maybeCompleteLongPollGet(String id, Order order) {
