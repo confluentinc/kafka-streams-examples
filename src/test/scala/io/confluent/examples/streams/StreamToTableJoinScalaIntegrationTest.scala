@@ -141,7 +141,7 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
       // fallback region "UNKNOWN").  In this specific example this is not really needed because
       // we know, based on the test setup, that all users have appropriate region entries at the
       // time we perform the join.
-      .leftJoin(userRegionsTable, (clicks: Long, region: String) => (if (region == null) "UNKNOWN" else region, clicks))
+      .leftJoin(userRegionsTable)((clicks, region) => (if (region == null) "UNKNOWN" else region, clicks))
 
     val clicksByRegion: KStream[String, Long] = userClicksJoinRegion
       .map { case (_, (region, clicks)) => (region, clicks) }
