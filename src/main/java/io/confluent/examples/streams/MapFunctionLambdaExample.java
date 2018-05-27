@@ -120,7 +120,8 @@ public class MapFunctionLambdaExample {
     final KStream<byte[], String> textLines = builder.stream("TextLinesTopic", Consumed.with(byteArraySerde, stringSerde));
 
     // Variant 1: using `mapValues`
-    final KStream<byte[], String> uppercasedWithMapValues = textLines.mapValues(v -> v.toLowerCase());
+    final KStream<byte[], String> uppercasedWithMapValues = textLines.mapValues(value -> value.toUpperCase());
+    //or use method reference: textLines.mapValues((ValueMapper<String, String>) String::toLowerCase);
 
     // Write (i.e. persist) the results to a new Kafka topic called "UppercasedTextLinesTopic".
     //
