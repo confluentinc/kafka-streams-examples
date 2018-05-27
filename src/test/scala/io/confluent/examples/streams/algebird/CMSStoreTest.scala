@@ -19,6 +19,7 @@ import java.lang.Long
 
 import com.twitter.algebird.TopCMS
 import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.common.header.Headers
 import org.apache.kafka.common.metrics.Metrics
 import org.apache.kafka.common.serialization.{Serdes, Serializer}
 import org.apache.kafka.common.utils.LogContext
@@ -166,6 +167,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
         override def send[K, V](topic: String,
                                 key: K,
                                 value: V,
+                                headers: Headers,
                                 partition: Integer,
                                 timestamp: Long,
                                 keySerializer: Serializer[K],
