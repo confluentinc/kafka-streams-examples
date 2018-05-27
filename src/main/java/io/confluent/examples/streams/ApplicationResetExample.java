@@ -43,6 +43,7 @@ import java.util.Properties;
  * 2) Create the input, intermediate, and output topics used by this example.
  * <pre>
  * {@code
+ *
  * $ bin/kafka-topics --create --topic my-input-topic \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * $ bin/kafka-topics --create --topic rekeyed-topic \
@@ -58,13 +59,15 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.ApplicationResetExample
+ * $ java -cp target/kafka-streams-examples-4.1.0-standalone.jar \
+ *      io.confluent.examples.streams.ApplicationResetExample
  * }
  * </pre>
  * 4) Write some input data to the source topic (e.g. via {@code kafka-console-producer}).
  * The already running example application (step 3) will automatically process this input data and write the results to the output topics.
  * <pre>
  * {@code
+ *
  * # Start the console producer. You can then enter input data by writing some line of text, followed by ENTER:
  * #
  * #    hello world<ENTER>

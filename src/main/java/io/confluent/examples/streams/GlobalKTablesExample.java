@@ -44,7 +44,7 @@ import java.util.Properties;
  * <p>
  * In this example, we join a stream of orders that reads from a topic named
  * "order" with a customers table that reads from a topic named "customer", and a products
- * table that reads fro a topic "product". The join produces an EnrichedOrder object.
+ * table that reads from a topic "product". The join produces an EnrichedOrder object.
  * <p>
  * <br>
  * HOW TO RUN THIS EXAMPLE
@@ -54,6 +54,7 @@ import java.util.Properties;
  * 2) Create the input/intermediate/output topics used by this example.
  * <pre>
  * {@code
+ *
  * $ bin/kafka-topics --create --topic order \
  *                    --zookeeper localhost:2181 --partitions 4 --replication-factor 1
  * $ bin/kafka-topics --create --topic customer \
@@ -72,7 +73,7 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.GlobalKTablesExample
+ * $ java -cp target/kafka-streams-examples-4.1.0-standalone io.confluent.examples.streams.GlobalKTablesExample
  * }
  * </pre>
  * 4) Write some input data to the source topics (e.g. via {@link GlobalKTablesExampleDriver}). The
@@ -80,9 +81,10 @@ import java.util.Properties;
  * the results to the output topic.
  * <pre>
  * {@code
+ *
  * # Here: Write input data using the example driver. The driver will exit once it has received
  * # all EnrichedOrders
- * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.GlobalKTablesExampleDriver
+ * $ java -cp target/kafka-streams-examples-4.1.0-standalone io.confluent.examples.streams.GlobalKTablesExampleDriver
  * }
  * </pre>
  * <p>

@@ -82,8 +82,8 @@ import java.util.Properties;
  *
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar \
- *      io.confluent.examples.streams.interactivequeries.InteractiveQueriesExample 7070
+ * $ java -cp target/kafka-streams-examples-4.1.0-standalone.jar \
+ *      io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExample 7070
  * }
  * </pre>
  *
@@ -93,8 +93,8 @@ import java.util.Properties;
  *
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar \
- *      io.confluent.examples.streams.interactivequeries.InteractiveQueriesExample 7071
+ * $ java -cp target/kafka-streams-examples-4.1.0-standalone.jar \
+ *      io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExample 7071
  * }
  * </pre>
  *
@@ -112,6 +112,7 @@ import java.util.Properties;
  *
  * <pre>
  * {@code
+ *
  * # List all running instances of this application
  * http://localhost:7070/state/instances
  *
@@ -135,8 +136,11 @@ import java.util.Properties;
  * uses the Interactive Queries API of Kafka Streams behind the scenes to expose the state stores of
  * this application via REST.
  *
+ * </pre>
+ *
  * 6) Once you're done with your experiments, you can stop this example via `Ctrl-C`.  If needed,
  * also stop the Kafka broker (`Ctrl-C`), and only then stop the ZooKeeper instance (`Ctrl-C`).
+ *
  *
  * If you like you can run multiple instances of this example by passing in a different port. You
  * can then experiment with seeing how keys map to different instances etc.

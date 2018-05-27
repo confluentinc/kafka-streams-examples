@@ -50,7 +50,7 @@ import java.util.concurrent.TimeUnit;
  *
  * In this example, we count the TopN articles from a stream of page views (aka clickstreams) that
  * reads from a topic named "PageViews". We filter the PageViews stream so that we only consider
- * pages of type article, and then map the recored key to effectively nullify the user, such that
+ * pages of type article, and then map the recorded key to effectively nullify the user, such that
  * the we can count page views by (page, industry). The counts per (page, industry) are then
  * grouped by industry and aggregated into a PriorityQueue with descending order. Finally we
  * perform a mapValues to fetch the top 100 articles per industry.
@@ -68,6 +68,7 @@ import java.util.concurrent.TimeUnit;
  * 2) Create the input/intermediate/output topics used by this example.
  * <pre>
  * {@code
+ *
  * $ bin/kafka-topics --create --topic PageViews \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * $ bin/kafka-topics --create --topic TopNewsPerIndustry \
@@ -81,7 +82,7 @@ import java.util.concurrent.TimeUnit;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.TopArticlesLambdaExample
+ * $ java -cp target/kafka-streams-examples-4.1.0-standalone io.confluent.examples.streams.TopArticlesLambdaExample
  * }
  * </pre>
  * 4) Write some input data to the source topics (e.g. via {@link TopArticlesExampleDriver}).
@@ -90,9 +91,10 @@ import java.util.concurrent.TimeUnit;
  * results from the output topic
  * <pre>
  * {@code
+ *
  * # Here: Write input data using the example driver.  Once the driver has stopped generating data,
  * # you can terminate it via Ctrl-C.
- * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.TopArticlesExampleDriver
+ * $ java -cp target/kafka-streams-examples-4.1.0-standalone.jar io.confluent.examples.streams.TopArticlesExampleDriver
  * }
  * </pre>
  */

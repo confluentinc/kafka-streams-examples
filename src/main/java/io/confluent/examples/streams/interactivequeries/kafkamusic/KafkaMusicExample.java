@@ -87,6 +87,7 @@ import java.util.TreeSet;
  *
  * <pre>
  * {@code
+ *
  * $ bin/kafka-topics --create --topic play-events \
  *                    --zookeeper localhost:2181 --partitions 4 --replication-factor 1
  * $ bin/kafka-topics --create --topic song-feed \
@@ -108,8 +109,8 @@ import java.util.TreeSet;
  *
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar \
- *      io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExample 7070
+ * $ java -cp target/kafka-streams-examples-4.1.0-standalone.jar \
+ *    io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExample 7070
  * }
  * </pre>
  *
@@ -119,8 +120,8 @@ import java.util.TreeSet;
  *
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar \
- *      io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExample 7071
+ * $ java -cp target/kafka-streams-examples-4.1.0-standalone.jar \
+ *    io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExample 7071
  * }
  * </pre>
  *
@@ -138,6 +139,7 @@ import java.util.TreeSet;
  *
  * <pre>
  * {@code
+ *
  * # List all running instances of this application
  * http://localhost:7070/kafka-music/instances
  *
