@@ -20,7 +20,6 @@ import java.lang.Long
 import com.twitter.algebird.TopCMS
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.header.Headers
-import org.apache.kafka.common.header.internals.RecordHeader
 import org.apache.kafka.common.metrics.Metrics
 import org.apache.kafka.common.serialization.{Serdes, Serializer}
 import org.apache.kafka.common.utils.LogContext
