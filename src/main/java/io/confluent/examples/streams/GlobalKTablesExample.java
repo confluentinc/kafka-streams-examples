@@ -54,7 +54,6 @@ import java.util.Properties;
  * 2) Create the input/intermediate/output topics used by this example.
  * <pre>
  * {@code
- *
  * $ bin/kafka-topics --create --topic order \
  *                    --zookeeper localhost:2181 --partitions 4 --replication-factor 1
  * $ bin/kafka-topics --create --topic customer \
