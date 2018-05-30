@@ -50,7 +50,7 @@ import java.util.concurrent.TimeUnit;
  *
  * In this example, we count the TopN articles from a stream of page views (aka clickstreams) that
  * reads from a topic named "PageViews". We filter the PageViews stream so that we only consider
- * pages of type article, and then map the recorded key to effectively nullify the user, such that
+ * pages of type article, and then map the record key to effectively nullify the user, such that
  * the we can count page views by (page, industry). The counts per (page, industry) are then
  * grouped by industry and aggregated into a PriorityQueue with descending order. Finally we
  * perform a mapValues to fetch the top 100 articles per industry.
