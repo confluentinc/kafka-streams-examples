@@ -43,7 +43,6 @@ import java.util.Properties;
  * 2) Create the input, intermediate, and output topics used by this example.
  * <pre>
  * {@code
- *
  * $ bin/kafka-topics --create --topic my-input-topic \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * $ bin/kafka-topics --create --topic rekeyed-topic \
