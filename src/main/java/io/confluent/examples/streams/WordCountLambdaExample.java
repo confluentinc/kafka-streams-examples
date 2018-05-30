@@ -70,7 +70,6 @@ import java.util.regex.Pattern;
  * results to the output topic "streams-wordcount-output".
  * <pre>
  * {@code
- *
  * # Start the console producer. You can then enter input data by writing some line of text, followed by ENTER:
  * #
  * #   hello kafka streams<ENTER>
