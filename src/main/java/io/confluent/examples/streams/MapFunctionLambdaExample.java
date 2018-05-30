@@ -121,7 +121,7 @@ public class MapFunctionLambdaExample {
 
     // Variant 1: using `mapValues`
     final KStream<byte[], String> uppercasedWithMapValues = textLines.mapValues(value -> value.toUpperCase());
-    //or use method reference: textLines.mapValues((ValueMapper<String, String>) String::toLowerCase);
+    //or use method reference: textLines.mapValues((ValueMapper<String, String>) String::toUpperCase);
 
     // Write (i.e. persist) the results to a new Kafka topic called "UppercasedTextLinesTopic".
     //
