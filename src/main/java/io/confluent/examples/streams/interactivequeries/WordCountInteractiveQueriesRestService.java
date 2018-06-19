@@ -25,11 +25,14 @@ import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.ReadOnlyWindowStore;
 import org.apache.kafka.streams.state.WindowStoreIterator;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -57,6 +60,7 @@ public class WordCountInteractiveQueriesRestService {
   private Server jettyServer;
   private HostInfo hostInfo;
   private final Client client = ClientBuilder.newBuilder().register(JacksonFeature.class).build();
+  private static final Logger log = LoggerFactory.getLogger(WordCountInteractiveQueriesRestService.class);
 
   WordCountInteractiveQueriesRestService(final KafkaStreams streams,
                                          final HostInfo hostInfo) {
@@ -250,7 +254,7 @@ public class WordCountInteractiveQueriesRestService {
     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
     context.setContextPath("/");
 
-    jettyServer = new Server(port);
+    jettyServer = new Server();
     jettyServer.setHandler(context);
 
     ResourceConfig rc = new ResourceConfig();
@@ -260,8 +264,20 @@ public class WordCountInteractiveQueriesRestService {
     ServletContainer sc = new ServletContainer(rc);
     ServletHolder holder = new ServletHolder(sc);
     context.addServlet(holder, "/*");
-
-    jettyServer.start();
+    
+    ServerConnector connector = new ServerConnector(jettyServer);
+    connector.setHost(hostInfo.host());
+    connector.setPort(port);
+    jettyServer.addConnector(connector);
+  
+    context.start();
+    
+    try {
+      jettyServer.start();
+    } catch (java.net.SocketException exception) {
+      log.error("Unavailable: " + hostInfo.host() + ":" + hostInfo.port());
+      throw new Exception(exception.getMessage());
+    }
   }
 
   /**
