@@ -276,7 +276,7 @@ public class WordCountInteractiveQueriesRestService {
       jettyServer.start();
     } catch (java.net.SocketException exception) {
       log.error("Unavailable: " + hostInfo.host() + ":" + hostInfo.port());
-      throw new Exception(exception.getMessage());
+      throw new Exception(exception.toString());
     }
   }
 

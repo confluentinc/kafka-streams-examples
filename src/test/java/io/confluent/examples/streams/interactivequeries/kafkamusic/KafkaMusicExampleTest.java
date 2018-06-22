@@ -35,12 +35,18 @@ import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -51,6 +57,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExampleTest.randomFreeLocalPort;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -66,71 +73,11 @@ public class KafkaMusicExampleTest {
   private KafkaStreams streams;
   private MusicPlaysRestService restProxy;
   private int appServerPort;
-  private static final List<Song> songs = Arrays.asList(new Song(1L,
-                                                                 "Fresh Fruit For Rotting Vegetables",
-                                                                 "Dead Kennedys",
-                                                                 "Chemical Warfare",
-                                                                 "Punk"),
-                                                        new Song(2L,
-                                                                 "We Are the League",
-                                                                 "Anti-Nowhere League",
-                                                                 "Animal",
-                                                                 "Punk"),
-                                                        new Song(3L,
-                                                                 "Live In A Dive",
-                                                                 "Subhumans",
-                                                                 "All Gone Dead",
-                                                                 "Punk"),
-                                                        new Song(4L,
-                                                                 "PSI",
-                                                                 "Wheres The Pope?",
-                                                                 "Fear Of God",
-                                                                 "Punk"),
-                                                        new Song(5L,
-                                                                 "Totally Exploited",
-                                                                 "The Exploited",
-                                                                 "Punks Not Dead",
-                                                                 "Punk"),
-                                                        new Song(6L,
-                                                                 "The Audacity Of Hype",
-                                                                 "Jello Biafra And The Guantanamo School Of "
-                                                                         + "Medicine",
-                                                                 "Three Strikes",
-                                                                 "Punk"),
-                                                        new Song(7L,
-                                                                 "Licensed to Ill",
-                                                                 "The Beastie Boys",
-                                                                 "Fight For Your Right",
-                                                                 "Hip Hop"),
-                                                        new Song(8L,
-                                                                 "De La Soul Is Dead",
-                                                                 "De La Soul",
-                                                                 "Oodles Of O's",
-                                                                 "Hip Hop"),
-                                                        new Song(9L,
-                                                                 "Straight Outta Compton",
-                                                                 "N.W.A",
-                                                                 "Gangsta Gangsta",
-                                                                 "Hip Hop"),
-                                                        new Song(10L,
-                                                                 "Fear Of A Black Planet",
-                                                                 "Public Enemy",
-                                                                 "911 Is A Joke",
-                                                                 "Hip Hop"),
-                                                        new Song(11L,
-                                                                 "Curtain Call - The Hits",
-                                                                 "Eminem",
-                                                                 "Fack",
-                                                                 "Hip Hop"),
-                                                        new Song(12L,
-                                                                 "The Calling",
-                                                                 "Hilltop Hoods",
-                                                                 "The Calling",
-                                                                 "Hip Hop")
-                                                        );
-
+  private static final List<Song> songs = new ArrayList<>();
+  private static final Logger log = LoggerFactory.getLogger(KafkaMusicExampleTest.class);
+  
   @BeforeClass
-  public static void createTopicsAndProduceDataToInputTopics() {
+  public static void createTopicsAndProduceDataToInputTopics() throws Exception {
     CLUSTER.createTopic(KafkaMusicExample.PLAY_EVENTS);
     CLUSTER.createTopic(KafkaMusicExample.SONG_FEED);
     // these topics initialized just to avoid some rebalances.
@@ -143,6 +90,19 @@ public class KafkaMusicExampleTest {
     CLUSTER.createTopic("kafka-music-charts-top-five-songs-repartition");
     CLUSTER.createTopic("kafka-music-charts-KSTREAM-MAP-0000000004-repartition");
   
+    // Read comma-delimited file of songs into Array
+    final String SONGFILENAME= "song_source.csv";
+    final InputStream inputStream = KafkaMusicExample.class.getClassLoader().getResourceAsStream(SONGFILENAME);
+    final InputStreamReader streamReader = new InputStreamReader(inputStream, UTF_8);
+    try (final BufferedReader br = new BufferedReader(streamReader)) {
+      String line = null;
+      while ((line = br.readLine()) != null) {
+        final String[] values = line.split(",");
+        final Song newSong = new Song(Long.parseLong(values[0]), values[1], values[2], values[3], values[4]);
+        songs.add(newSong);
+      }
+    }
+    
     // Produce sample data to the input topic before the tests starts.
     final Properties props = new Properties();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
@@ -198,12 +158,26 @@ public class KafkaMusicExampleTest {
                                               appServerPort,
                                               TestUtils.tempDirectory().getPath(),
                                               host);
-    restProxy = KafkaMusicExample.startRestProxy(streams, new HostInfo(host, appServerPort));
+    int count = 0;
+    int maxTries = 3;
+    while (count <= maxTries) {
+      try {
+        // Starts the Rest Service on the provided host:port
+        restProxy = KafkaMusicExample.startRestProxy(streams, new HostInfo(host, appServerPort));
+      } catch (Exception ex) {
+        log.error(ex.toString());
+      }
+      count++;
+    }
   }
 
   @After
   public void shutdown() throws Exception {
-    restProxy.stop();
+    try {
+      restProxy.stop();
+    } catch (Exception e) {
+      log.error(String.format("Error while stopping restproxy: %s",e.getMessage()));
+    }
     streams.close();
   }
 
@@ -213,6 +187,7 @@ public class KafkaMusicExampleTest {
     createStreams(host);
     streams.start();
 
+  if (restProxy != null) {
     // wait until the StreamsMetadata is available as this indicates that
     // KafkaStreams initialization has occurred
     TestUtils.waitForCondition(() -> !StreamsMetadata.NOT_AVAILABLE.equals(streams.allMetadataForStore(KafkaMusicExample.TOP_FIVE_SONGS_STORE)),
@@ -258,6 +233,7 @@ public class KafkaMusicExampleTest {
                               )
                 );
 
+    }
   }
 
   @Test
@@ -266,6 +242,7 @@ public class KafkaMusicExampleTest {
   createStreams(host);
   streams.start();
 
+  if (restProxy != null) {
     // wait until the StreamsMetadata is available as this indicates that
     // KafkaStreams initialization has occurred
     TestUtils.waitForCondition(() -> !StreamsMetadata.NOT_AVAILABLE.equals(streams.allMetadataForStore(KafkaMusicExample.TOP_FIVE_SONGS_STORE)),
@@ -312,6 +289,7 @@ public class KafkaMusicExampleTest {
                               )
                 );
 
+    }
   }
 
   private SongPlayCountBean songCountPlayBean(final Song song, final long plays) {
