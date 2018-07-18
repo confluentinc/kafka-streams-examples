@@ -33,6 +33,9 @@ import static io.confluent.examples.streams.microservices.util.MicroserviceUtils
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 
+import javax.ws.rs.core.Response;
+
+
 /*
  * confluent start
  * mvn compile
@@ -98,12 +101,13 @@ public class PostOrderRequests {
 
       // POST order to OrdersService
       System.out.printf("Posting order to: %s   .... ", path.urlPost());
-      client.target(path.urlPost())
+      Response response = client.target(path.urlPost())
           .request(APPLICATION_JSON_TYPE)
           .post(Entity.json(inputOrder));
-      System.out.printf("success!\n");
+      System.out.printf("Response: %s \n", response.getStatus());
 
       // GET the bean back explicitly
+      System.out.printf("Getting order from: %s   .... ", path.urlGet(i));
       returnedOrder = client.target(path.urlGet(i))
           .queryParam("timeout", MIN / 2)
           .request(APPLICATION_JSON_TYPE)
