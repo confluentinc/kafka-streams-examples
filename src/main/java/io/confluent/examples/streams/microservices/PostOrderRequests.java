@@ -97,22 +97,22 @@ public class PostOrderRequests {
       sendInventory(inventory, Topics.WAREHOUSE_INVENTORY);
 
       // POST order to OrdersService
+      System.out.printf("Posting order to: %s   .... ", path.urlPost());
       client.target(path.urlPost())
           .request(APPLICATION_JSON_TYPE)
           .post(Entity.json(inputOrder));
-      //System.out.printf("Posted order request: %s\n", inputOrder.toString());
+      System.out.printf("success!\n");
 
       // GET the bean back explicitly
       returnedOrder = client.target(path.urlGet(i))
           .queryParam("timeout", MIN / 2)
           .request(APPLICATION_JSON_TYPE)
           .get(newBean());
-      //System.out.printf("Posted order retrieved: %s\n", returnedOrder.toString());
 
       if (!inputOrder.equals(returnedOrder)) {
         System.out.printf("Posted order %d does not equal returned order: %s\n", i, returnedOrder.toString());
       } else {
-        System.out.printf("Posted order %d equals returned order: %s\n", returnedOrder.toString());
+        System.out.printf("Posted order %d equals returned order: %s\n", i, returnedOrder.toString());
       }
   
       // GET order, assert that it is Validated
