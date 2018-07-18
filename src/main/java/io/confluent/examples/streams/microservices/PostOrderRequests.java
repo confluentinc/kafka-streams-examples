@@ -45,9 +45,7 @@ public class PostOrderRequests {
 
     final int restPort = args.length > 0 ? Integer.valueOf(args[0]) : 5432;
 
-    final String HOST = "localhost";
-    List<Service> services = new ArrayList<>();
-    OrderBean returnedBean;
+    OrderBean returnedOrder;
     Paths path = new Paths("localhost", restPort == 0 ? 5432 : restPort);
 
     final ClientConfig clientConfig = new ClientConfig();
@@ -57,16 +55,32 @@ public class PostOrderRequests {
 
     // send 2000 orders, one every 1000 milliseconds
     for (int i = 0; i < 2000; i++) {
+
       OrderBean inputOrder = new OrderBean(id(i), 2L, OrderState.CREATED, Product.JUMPERS, 1, 1d);
 
       // POST order
-      client.target(path.urlPost()).request(APPLICATION_JSON_TYPE).post(Entity.json(inputOrder));
-      System.out.printf("Posted order request: %d\n", i);
+      client.target(path.urlPost())
+          .request(APPLICATION_JSON_TYPE)
+          .post(Entity.json(inputOrder));
+      //System.out.printf("Posted order request: %s\n", inputOrder.toString());
 
+      // GET the bean back explicitly
+      returnedOrder = client.target(path.urlGet(i))
+          .queryParam("timeout", MIN / 2)
+          .request(APPLICATION_JSON_TYPE)
+          .get(newBean());
+      //System.out.printf("Posted order retrieved: %s\n", returnedOrder.toString());
+
+      if (!inputOrder.equals(returnedOrder)) {
+        System.out.printf("Posted order %d does not equal returned order\n", i);
+      } else {
+        System.out.printf("Posted order: %s\n", returnedOrder.toString());
+      }
+  
       // GET order, assert that it is Validated
-      //returnedBean = client.target(path.urlGetValidated(i)).queryParam("timeout", MIN)
+      //returnedOrder = client.target(path.urlGetValidated(i)).queryParam("timeout", MIN)
       //  .request(APPLICATION_JSON_TYPE).get(newBean());
-      //assertThat(returnedBean).isEqualTo(new OrderBean(
+      //assertThat(returnedOrder).isEqualTo(new OrderBean(
       //    inputOrder.getId(),
       //    inputOrder.getCustomerId(),
       //    OrderState.VALIDATED,
