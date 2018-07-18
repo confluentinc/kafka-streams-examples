@@ -312,7 +312,6 @@ public class OrdersService implements Service {
   public void start(final String bootstrapServers, final String stateDir) {
     jettyServer = startJetty(port, this);
     port = jettyServer.getURI().getPort(); // update port, in case port was zero
-    System.out.printf("port = %d\n", port);
     producer = startProducer(bootstrapServers, ORDERS);
     streams = startKStreams(bootstrapServers);
     log.info("Started Service " + getClass().getSimpleName());

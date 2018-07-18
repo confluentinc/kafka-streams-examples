@@ -6,7 +6,12 @@ import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
 import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
 import io.confluent.examples.streams.microservices.util.Paths;
+
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.slf4j.Logger;
@@ -18,6 +23,8 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 
 import static io.confluent.examples.streams.avro.microservices.Product.JUMPERS;
 import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
@@ -41,9 +48,32 @@ public class PostOrderRequests {
     };
   }
 
+  private static void sendInventory(List<KeyValue<Product, Integer>> inventory,
+      Schemas.Topic<Product, Integer> topic) {
+
+    Properties producerConfig = new Properties();
+    producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
+    producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
+
+    try (KafkaProducer<Product, Integer> stockProducer = new KafkaProducer<>(
+        producerConfig,
+        topic.keySerde().serializer(),
+        Schemas.Topics.WAREHOUSE_INVENTORY.valueSerde().serializer()))
+    {
+      for (KeyValue<Product, Integer> kv : inventory) {
+        stockProducer.send(new ProducerRecord<>(Topics.WAREHOUSE_INVENTORY.name(), kv.key, kv.value))
+            .get();
+      }
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
+    }
+  }
+
   public static void main(String [] args) throws Exception {
 
     final int restPort = args.length > 0 ? Integer.valueOf(args[0]) : 5432;
+    System.out.printf("restPort: %d\n", restPort);
 
     OrderBean returnedOrder;
     Paths path = new Paths("localhost", restPort == 0 ? 5432 : restPort);
@@ -58,7 +88,15 @@ public class PostOrderRequests {
 
       OrderBean inputOrder = new OrderBean(id(i), 2L, OrderState.CREATED, Product.JUMPERS, 1, 1d);
 
-      // POST order
+      // Send Inventory
+      List<KeyValue<Product, Integer>> inventory = asList(
+          new KeyValue<>(UNDERPANTS, 75),
+          new KeyValue<>(JUMPERS, 10)
+      );
+      System.out.printf("Send inventory to %s\n", Topics.WAREHOUSE_INVENTORY);
+      sendInventory(inventory, Topics.WAREHOUSE_INVENTORY);
+
+      // POST order to OrdersService
       client.target(path.urlPost())
           .request(APPLICATION_JSON_TYPE)
           .post(Entity.json(inputOrder));
@@ -72,9 +110,9 @@ public class PostOrderRequests {
       //System.out.printf("Posted order retrieved: %s\n", returnedOrder.toString());
 
       if (!inputOrder.equals(returnedOrder)) {
-        System.out.printf("Posted order %d does not equal returned order\n", i);
+        System.out.printf("Posted order %d does not equal returned order: %s\n", i, returnedOrder.toString());
       } else {
-        System.out.printf("Posted order: %s\n", returnedOrder.toString());
+        System.out.printf("Posted order %d equals returned order: %s\n", returnedOrder.toString());
       }
   
       // GET order, assert that it is Validated
