@@ -124,7 +124,7 @@ import java.util.Properties;
  * <pre>
  * {@code
  * $ kafka-console-consumer --topic secure-output --from-beginning \
- *                          --new-consumer --bootstrap-server localhost:9093 \
+ *                          --bootstrap-server localhost:9093 \
  *                          --consumer.config /etc/kafka/consumer_ssl.properties
  * }
  * </pre>

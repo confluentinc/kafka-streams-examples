@@ -85,7 +85,7 @@ import java.util.Properties;
  * <pre>
  * {@code
  * $ bin/kafka-console-consumer --topic LargeRegions --from-beginning \
- *                              --new-consumer --bootstrap-server localhost:9092 \
+ *                              --bootstrap-server localhost:9092 \
  *                              --property print.key=true \
  *                              --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
  * }</pre>
