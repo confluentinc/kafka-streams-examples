@@ -75,7 +75,7 @@ import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
   * 5) Inspect the resulting data in the output topics, e.g. via `kafka-console-consumer`.
   *
   * {{{
-  * $ bin/kafka-console-consumer --new-consumer --bootstrap-server localhost:9092 --topic UppercasedTextLinesTopic --from-beginning
+  * $ bin/kafka-console-consumer --bootstrap-server localhost:9092 --topic UppercasedTextLinesTopic --from-beginning
   * }}}
   *
   * You should see output data similar to:
@@ -85,7 +85,7 @@ import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
   * }}}
   *
   * {{{
-  * $ bin/kafka-console-consumer --new-consumer --bootstrap-server localhost:9092 --topic OriginalAndUppercasedTopic --from-beginning --property print.key=true
+  * $ bin/kafka-console-consumer --bootstrap-server localhost:9092 --topic OriginalAndUppercasedTopic --from-beginning --property print.key=true
   * }}}
   *
   * You should see output data similar to:
