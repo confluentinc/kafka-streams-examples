@@ -62,7 +62,7 @@ import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
   * 5) Inspect the resulting data in the output topic, e.g. via `kafka-console-consumer`.
   * {{{
   * $ bin/kafka-console-consumer --topic streams-wordcount-output --from-beginning \
-  *                              --new-consumer --bootstrap-server localhost:9092 \
+  *                              --bootstrap-server localhost:9092 \
   *                              --property print.key=true \
   *                              --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
   * }}}
