@@ -12,6 +12,8 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
+import org.apache.kafka.common.serialization.Serdes;
+
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.slf4j.Logger;
@@ -30,6 +32,7 @@ import static io.confluent.examples.streams.avro.microservices.Product.JUMPERS;
 import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
 import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.MIN;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.ProductTypeSerde;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 
@@ -59,13 +62,15 @@ public class PostOrderRequests {
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
 
+    ProductTypeSerde productSerde = new ProductTypeSerde();
+
     try (KafkaProducer<Product, Integer> stockProducer = new KafkaProducer<>(
         producerConfig,
-        topic.keySerde().serializer(),
-        Schemas.Topics.WAREHOUSE_INVENTORY.valueSerde().serializer()))
+        productSerde.serializer(),
+        Serdes.Integer().serializer()))
     {
       for (KeyValue<Product, Integer> kv : inventory) {
-        stockProducer.send(new ProducerRecord<>(Topics.WAREHOUSE_INVENTORY.name(), kv.key, kv.value))
+        stockProducer.send(new ProducerRecord<>("warehouse-inventory", kv.key, kv.value))
             .get();
       }
     } catch (InterruptedException | ExecutionException e) {
@@ -74,6 +79,14 @@ public class PostOrderRequests {
   }
 
   public static void main(String [] args) throws Exception {
+
+    // Send Inventory
+    List<KeyValue<Product, Integer>> inventory = asList(
+        new KeyValue<>(UNDERPANTS, 75),
+        new KeyValue<>(JUMPERS, 20)
+    );
+    System.out.printf("Send inventory to %s\n", Topics.WAREHOUSE_INVENTORY);
+    sendInventory(inventory, Topics.WAREHOUSE_INVENTORY);
 
     final int restPort = args.length > 0 ? Integer.valueOf(args[0]) : 5432;
     System.out.printf("restPort: %d\n", restPort);
@@ -90,14 +103,6 @@ public class PostOrderRequests {
     for (int i = 0; i < 2000; i++) {
 
       OrderBean inputOrder = new OrderBean(id(i), 2L, OrderState.CREATED, Product.JUMPERS, 1, 1d);
-
-      // Send Inventory
-      List<KeyValue<Product, Integer>> inventory = asList(
-          new KeyValue<>(UNDERPANTS, 75),
-          new KeyValue<>(JUMPERS, 10)
-      );
-      System.out.printf("Send inventory to %s\n", Topics.WAREHOUSE_INVENTORY);
-      sendInventory(inventory, Topics.WAREHOUSE_INVENTORY);
 
       // POST order to OrdersService
       System.out.printf("Posting order to: %s   .... ", path.urlPost());
