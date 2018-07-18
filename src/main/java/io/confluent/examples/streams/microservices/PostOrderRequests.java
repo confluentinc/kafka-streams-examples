@@ -26,6 +26,12 @@ import static io.confluent.examples.streams.microservices.util.MicroserviceUtils
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 
+/*
+ * mvn compile
+ * mvn exec:java -Dexec.mainClass=io.confluent.examples.streams.microservices.OrdersService -Dexec.args="localhost:9092 http://localhost:8081 localhost 5432"
+ * mvn exec:java -Dexec.mainClass=io.confluent.examples.streams.microservices.PostOrderRequests
+ */
+
 public class PostOrderRequests {
 
   private static GenericType<OrderBean> newBean() {
@@ -52,6 +58,7 @@ public class PostOrderRequests {
 
       // POST order
       client.target(path.urlPost()).request(APPLICATION_JSON_TYPE).post(Entity.json(inputOrder));
+      System.out.printf("Posted order request: %d\n", i);
 
       // GET order, assert that it is Validated
       returnedBean = client.target(path.urlGetValidated(i)).queryParam("timeout", MIN)
