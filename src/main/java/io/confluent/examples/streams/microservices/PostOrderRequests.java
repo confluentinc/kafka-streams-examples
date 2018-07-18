@@ -27,9 +27,11 @@ import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 
 /*
+ * confluent start
  * mvn compile
  * mvn exec:java -Dexec.mainClass=io.confluent.examples.streams.microservices.OrdersService -Dexec.args="localhost:9092 http://localhost:8081 localhost 5432"
- * mvn exec:java -Dexec.mainClass=io.confluent.examples.streams.microservices.PostOrderRequests
+ * mvn exec:java -Dexec.mainClass=io.confluent.examples.streams.microservices.PostOrderRequests -Dexec.args="5432"
+ * confluent consume orders --value-format avro
  */
 
 public class PostOrderRequests {
@@ -41,11 +43,12 @@ public class PostOrderRequests {
 
   public static void main(String [] args) throws Exception {
 
+    final int restPort = args.length > 0 ? Integer.valueOf(args[0]) : 5432;
+
     final String HOST = "localhost";
     List<Service> services = new ArrayList<>();
-    int restPort;
     OrderBean returnedBean;
-    Paths path = new Paths("localhost", 5432);
+    Paths path = new Paths("localhost", restPort == 0 ? 5432 : restPort);
 
     final ClientConfig clientConfig = new ClientConfig();
     clientConfig.property(ClientProperties.CONNECT_TIMEOUT, 60000)
@@ -61,8 +64,8 @@ public class PostOrderRequests {
       System.out.printf("Posted order request: %d\n", i);
 
       // GET order, assert that it is Validated
-      returnedBean = client.target(path.urlGetValidated(i)).queryParam("timeout", MIN)
-          .request(APPLICATION_JSON_TYPE).get(newBean());
+      //returnedBean = client.target(path.urlGetValidated(i)).queryParam("timeout", MIN)
+      //  .request(APPLICATION_JSON_TYPE).get(newBean());
       //assertThat(returnedBean).isEqualTo(new OrderBean(
       //    inputOrder.getId(),
       //    inputOrder.getCustomerId(),
