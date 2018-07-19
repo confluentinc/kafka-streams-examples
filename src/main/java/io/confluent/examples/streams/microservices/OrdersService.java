@@ -117,8 +117,6 @@ public class OrdersService implements Service {
   public OrdersService(String host, int port) {
     this.host = host;
     this.port = port;
-
-    System.out.printf("restPort: %d\n", port);
   }
 
   public OrdersService(String host) {
