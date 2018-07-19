@@ -7,13 +7,6 @@ import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
 import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
 import io.confluent.examples.streams.microservices.util.Paths;
 
-import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-
-import org.apache.kafka.common.serialization.Serdes;
-
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.slf4j.Logger;
@@ -54,39 +47,7 @@ public class PostOrderRequests {
     };
   }
 
-  private static void sendInventory(List<KeyValue<Product, Integer>> inventory,
-      Schemas.Topic<Product, Integer> topic) {
-
-    Properties producerConfig = new Properties();
-    producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-    producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-    producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
-
-    ProductTypeSerde productSerde = new ProductTypeSerde();
-
-    try (KafkaProducer<Product, Integer> stockProducer = new KafkaProducer<>(
-        producerConfig,
-        productSerde.serializer(),
-        Serdes.Integer().serializer()))
-    {
-      for (KeyValue<Product, Integer> kv : inventory) {
-        stockProducer.send(new ProducerRecord<>("warehouse-inventory", kv.key, kv.value))
-            .get();
-      }
-    } catch (InterruptedException | ExecutionException e) {
-      e.printStackTrace();
-    }
-  }
-
   public static void main(String [] args) throws Exception {
-
-    // Send Inventory
-    List<KeyValue<Product, Integer>> inventory = asList(
-        new KeyValue<>(UNDERPANTS, 75),
-        new KeyValue<>(JUMPERS, 20)
-    );
-    System.out.printf("Send inventory to %s\n", Topics.WAREHOUSE_INVENTORY);
-    sendInventory(inventory, Topics.WAREHOUSE_INVENTORY);
 
     final int restPort = args.length > 0 ? Integer.valueOf(args[0]) : 5432;
     System.out.printf("restPort: %d\n", restPort);
