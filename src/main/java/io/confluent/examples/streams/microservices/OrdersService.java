@@ -50,7 +50,6 @@ import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
 import io.confluent.examples.streams.microservices.util.Paths;
 
 import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS;
-import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDER_VALIDATIONS;
 import static io.confluent.examples.streams.microservices.domain.beans.OrderBean.fromBean;
 import static io.confluent.examples.streams.microservices.domain.beans.OrderBean.toBean;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
@@ -313,7 +312,7 @@ public class OrdersService implements Service {
   public void start(final String bootstrapServers, final String stateDir) {
     jettyServer = startJetty(port, this);
     port = jettyServer.getURI().getPort(); // update port, in case port was zero
-    producer = startProducer(bootstrapServers, ORDER_VALIDATIONS);
+    producer = startProducer(bootstrapServers, ORDERS);
     streams = startKStreams(bootstrapServers);
     log.info("Started Service " + getClass().getSimpleName());
   }
@@ -385,10 +384,10 @@ public class OrdersService implements Service {
 
   public static void main(String[] args) throws Exception {
 
-    final String bootstrapServers = args.length > 1 ? args[1] : "localhost:9092";
-    final String schemaRegistryUrl = args.length > 2 ? args[2] : "http://localhost:8081";
-    final String restHostname = args.length > 3 ? args[3] : "localhost";
-    final String restPort = args.length > 4 ? args[4] : null;
+    final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
+    final String schemaRegistryUrl = args.length > 1 ? args[1] : "http://localhost:8081";
+    final String restHostname = args.length > 2 ? args[2] : "localhost";
+    final String restPort = args.length > 3 ? args[3] : null;
 
     Schemas.configureSerdesWithSchemaRegistryUrl(schemaRegistryUrl);
     OrdersService service = new OrdersService(restHostname, restPort == null ? 0 : Integer.valueOf(restPort));
