@@ -16,6 +16,7 @@
 package io.confluent.examples.streams;
 
 import io.confluent.examples.streams.avro.WikiFeed;
+import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -128,6 +129,8 @@ public class WikipediaFeedAvroExample {
     // Records should be flushed every 10 seconds. This is less than the default
     // in order to keep this example interactive.
     streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 10 * 1000);
+
+    MonitoringInterceptorUtils.maybeConfigureInterceptors(streamsConfiguration);
 
     final Serde<String> stringSerde = Serdes.String();
     final Serde<Long> longSerde = Serdes.Long();
