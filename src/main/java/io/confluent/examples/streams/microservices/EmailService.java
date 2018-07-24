@@ -32,8 +32,6 @@ public class EmailService implements Service {
 
   private static final Logger log = LoggerFactory.getLogger(EmailService.class);
   private static final String APP_ID = "email-service";
-  public static final Joined<String, Order, Payment> serdes = Joined
-      .with(ORDERS.keySerde(), ORDERS.valueSerde(), PAYMENTS.valueSerde());
 
   private KafkaStreams streams;
   private Emailer emailer;
@@ -51,6 +49,8 @@ public class EmailService implements Service {
   }
 
   private KafkaStreams processStreams(final String bootstrapServers, final String stateDir) {
+    Joined<String, Order, Payment> serdes = Joined
+        .with(ORDERS.keySerde(), ORDERS.valueSerde(), PAYMENTS.valueSerde());
 
     final StreamsBuilder builder = new StreamsBuilder();
 
