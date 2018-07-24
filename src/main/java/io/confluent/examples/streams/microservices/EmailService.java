@@ -32,8 +32,6 @@ public class EmailService implements Service {
 
   private static final Logger log = LoggerFactory.getLogger(EmailService.class);
   private static final String APP_ID = "email-service";
-  public static final Joined<String, Order, Payment> serdes = Joined
-      .with(ORDERS.keySerde(), ORDERS.valueSerde(), PAYMENTS.valueSerde());
 
   private KafkaStreams streams;
   private Emailer emailer;
@@ -63,6 +61,21 @@ public class EmailService implements Service {
         .selectKey((s, payment) -> payment.getOrderId());
     final GlobalKTable<Long, Customer> customers = builder.globalTable(CUSTOMERS.name(),
         Consumed.with(CUSTOMERS.keySerde(), CUSTOMERS.valueSerde()));
+
+    Joined<String, Order, Payment> serdes = Joined
+        .with(ORDERS.keySerde(), ORDERS.valueSerde(), PAYMENTS.valueSerde());
+
+    System.out.printf("orders info %s, %s, %s\n", ORDERS.name(), ORDERS.keySerde(), ORDERS.valueSerde());
+    System.out.printf("payments info %s, %s, %s\n", PAYMENTS.name(), PAYMENTS.keySerde(), PAYMENTS.valueSerde());
+    System.out.printf("customers info %s, %s, %s\n", CUSTOMERS.name(), CUSTOMERS.keySerde(), CUSTOMERS.valueSerde());
+
+    System.out.printf("serdes joined key: %s\n", serdes.keySerde());
+    System.out.printf("serdes joined value: %s\n", serdes.valueSerde());
+    System.out.printf("serdes joined other value: %s\n", serdes.otherValueSerde());
+
+    System.out.printf("serdes joined key-reset: %s\n", serdes.keySerde());
+    System.out.printf("serdes joined value-reset: %s\n", serdes.valueSerde());
+    System.out.printf("serdes joined other value-reset: %s\n", serdes.otherValueSerde());
 
     //Join the two streams and the table then send an email for each
     orders.join(payments, EmailTuple::new,
