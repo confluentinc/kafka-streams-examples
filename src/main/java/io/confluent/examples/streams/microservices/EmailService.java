@@ -65,18 +65,6 @@ public class EmailService implements Service {
     Joined<String, Order, Payment> serdes = Joined
         .with(ORDERS.keySerde(), ORDERS.valueSerde(), PAYMENTS.valueSerde());
 
-    System.out.printf("orders info %s, %s, %s\n", ORDERS.name(), ORDERS.keySerde(), ORDERS.valueSerde());
-    System.out.printf("payments info %s, %s, %s\n", PAYMENTS.name(), PAYMENTS.keySerde(), PAYMENTS.valueSerde());
-    System.out.printf("customers info %s, %s, %s\n", CUSTOMERS.name(), CUSTOMERS.keySerde(), CUSTOMERS.valueSerde());
-
-    System.out.printf("serdes joined key: %s\n", serdes.keySerde());
-    System.out.printf("serdes joined value: %s\n", serdes.valueSerde());
-    System.out.printf("serdes joined other value: %s\n", serdes.otherValueSerde());
-
-    System.out.printf("serdes joined key-reset: %s\n", serdes.keySerde());
-    System.out.printf("serdes joined value-reset: %s\n", serdes.valueSerde());
-    System.out.printf("serdes joined other value-reset: %s\n", serdes.otherValueSerde());
-
     //Join the two streams and the table then send an email for each
     orders.join(payments, EmailTuple::new,
         //Join Orders and Payments streams
