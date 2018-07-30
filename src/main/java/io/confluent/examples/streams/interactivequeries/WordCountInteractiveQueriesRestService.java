@@ -265,7 +265,7 @@ public class WordCountInteractiveQueriesRestService {
     ServletHolder holder = new ServletHolder(sc);
     context.addServlet(holder, "/*");
     
-    ServerConnector connector = new ServerConnector(jettyServer);
+    final ServerConnector connector = new ServerConnector(jettyServer);
     connector.setHost(hostInfo.host());
     connector.setPort(port);
     jettyServer.addConnector(connector);
@@ -274,7 +274,7 @@ public class WordCountInteractiveQueriesRestService {
     
     try {
       jettyServer.start();
-    } catch (java.net.SocketException exception) {
+    } catch (final java.net.SocketException exception) {
       log.error("Unavailable: " + hostInfo.host() + ":" + hostInfo.port());
       throw new Exception(exception.toString());
     }

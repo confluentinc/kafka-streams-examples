@@ -52,6 +52,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static junit.framework.TestCase.assertTrue;
+import static junit.framework.TestCase.fail;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -101,7 +102,7 @@ public class WordCountInteractiveQueriesExampleTest {
     CLUSTER.createTopic(WINDOWED_WORD_COUNT, 2, 1);
   
     // Produce sample data to the input topic before the tests starts.
-    Properties producerConfig = new Properties();
+    final Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
@@ -244,6 +245,8 @@ public class WordCountInteractiveQueriesExampleTest {
       final KeyValueBean keyValueBean = windowedResult.get(0);
       assertTrue(keyValueBean.getKey().startsWith("streams"));
       assertThat(keyValueBean.getValue(), equalTo(3L));
+    } else {
+        fail("Should fail demonstrating InteractiveQueries as the Rest Service failed to start.");
     }
   }
   
@@ -255,7 +258,7 @@ public class WordCountInteractiveQueriesExampleTest {
         // Starts the Rest Service on the provided host:port
         proxy = WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, port, host);
       } catch (Exception ex) {
-        log.error(ex.toString());
+        log.error("Could not start Rest Service due to: " + ex.toString());
       }
       count++;
     }
@@ -377,6 +380,8 @@ public class WordCountInteractiveQueriesExampleTest {
       final KeyValueBean keyValueBean = windowedResult.get(0);
       assertTrue(keyValueBean.getKey().startsWith("streams"));
       assertThat(keyValueBean.getValue(), equalTo(3L));
+    } else {
+        fail("Should fail demonstrating InteractiveQueries on any valid host as the Rest Service failed to start.");
     }
   }
   
@@ -401,9 +406,6 @@ public class WordCountInteractiveQueriesExampleTest {
   
   @Test
   public void shouldThrowBindExceptionForUnavailablePort() throws Exception {
-    expectedEx.expect(Exception.class);
-    expectedEx.expectMessage("java.net.BindException: Address already in use");
-    
     final int port = randomFreeLocalPort();
     final String host = "localhost";
     
@@ -419,6 +421,8 @@ public class WordCountInteractiveQueriesExampleTest {
     
     kafkaStreams.start();
     proxy = WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, port, host);
+    expectedEx.expect(Exception.class);
+    expectedEx.expectMessage("java.net.BindException: Address already in use");
     // Binding to same port again will raise BindException.
     WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, port, host);
   }

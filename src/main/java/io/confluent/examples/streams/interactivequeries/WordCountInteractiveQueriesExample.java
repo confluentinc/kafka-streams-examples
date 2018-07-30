@@ -202,9 +202,9 @@ public class WordCountInteractiveQueriesExample {
   }
 
 
-  static WordCountInteractiveQueriesRestService startRestProxy(final KafkaStreams streams, final int port, final
-                                                               String host)
-      throws Exception {
+  static WordCountInteractiveQueriesRestService startRestProxy(final KafkaStreams streams,
+                                                               final int port,
+                                                               final String host) throws Exception {
     final HostInfo hostInfo = new HostInfo(host, port);
     final WordCountInteractiveQueriesRestService
         wordCountInteractiveQueriesRestService = new WordCountInteractiveQueriesRestService(streams, hostInfo);
