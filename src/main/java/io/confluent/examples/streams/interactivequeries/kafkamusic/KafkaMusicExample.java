@@ -476,6 +476,11 @@ public class KafkaMusicExample {
       return o1.getSongId().compareTo(o2.getSongId());
     });
 
+    @Override
+    public String toString() {
+      return currentSongs.toString();
+    }
+
     public void add(final SongPlayCount songPlayCount) {
       if(currentSongs.containsKey(songPlayCount.getSongId())) {
         topFive.remove(currentSongs.remove(songPlayCount.getSongId()));
