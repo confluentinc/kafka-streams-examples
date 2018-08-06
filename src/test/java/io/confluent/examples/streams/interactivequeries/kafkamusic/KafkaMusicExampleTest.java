@@ -226,13 +226,11 @@ public class KafkaMusicExampleTest {
 
     // Wait until the all-songs state store has some data in it
     TestUtils.waitForCondition(() -> {
-      final ReadOnlyKeyValueStore<String, KafkaMusicExample.TopFiveSongs> topFiveStore;
-      final ReadOnlyKeyValueStore<String, KafkaMusicExample.TopFiveSongs> topFiveByGenreStore;
       try {
-        topFiveStore = streams.store(
+        final ReadOnlyKeyValueStore<String, KafkaMusicExample.TopFiveSongs> topFiveStore = streams.store(
             KafkaMusicExample.TOP_FIVE_SONGS_STORE,
             QueryableStoreTypes.keyValueStore());
-        topFiveByGenreStore = streams.store(
+        final ReadOnlyKeyValueStore<String, KafkaMusicExample.TopFiveSongs> topFiveByGenreStore = streams.store(
             KafkaMusicExample.TOP_FIVE_SONGS_BY_GENRE_STORE,
             QueryableStoreTypes.keyValueStore());
 
