@@ -47,6 +47,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -225,12 +226,42 @@ public class KafkaMusicExampleTest {
 
     // Wait until the all-songs state store has some data in it
     TestUtils.waitForCondition(() -> {
-      final ReadOnlyKeyValueStore<Long, Song>
-          songsStore;
       try {
-        songsStore =
-            streams.store(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.<Long, Song>keyValueStore());
-        return songsStore.all().hasNext();
+        final ReadOnlyKeyValueStore<String, KafkaMusicExample.TopFiveSongs> topFiveStore = streams.store(
+            KafkaMusicExample.TOP_FIVE_SONGS_STORE,
+            QueryableStoreTypes.keyValueStore());
+        final ReadOnlyKeyValueStore<String, KafkaMusicExample.TopFiveSongs> topFiveByGenreStore = streams.store(
+            KafkaMusicExample.TOP_FIVE_SONGS_BY_GENRE_STORE,
+            QueryableStoreTypes.keyValueStore());
+
+        final AtomicBoolean found = new AtomicBoolean(false);
+        topFiveStore.get("all").iterator().forEachRemaining(
+            (kv) -> {
+              if (!found.get()) {
+                 found.set(kv.getSongId() == 8 && kv.getPlays() == 5);
+              }
+            }
+        );
+
+        final AtomicBoolean foundByGenre1 = new AtomicBoolean(false);
+        topFiveByGenreStore.get("punk").iterator().forEachRemaining(
+            (kv) -> {
+              if (!foundByGenre1.get()) {
+                foundByGenre1.set(kv.getSongId() == 5 && kv.getPlays() == 2);
+              }
+            }
+        );
+
+        final AtomicBoolean foundByGenre2 = new AtomicBoolean(false);
+        topFiveByGenreStore.get("hip hop").iterator().forEachRemaining(
+            (kv) -> {
+              if (!foundByGenre2.get()) {
+                foundByGenre2.set(kv.getSongId() == 11 && kv.getPlays() == 2);
+              }
+            }
+        );
+
+        return found.get() && foundByGenre1.get() && foundByGenre2.get();
       } catch (Exception e) {
         return false;
       }
