@@ -246,7 +246,7 @@ public class WordCountInteractiveQueriesExampleTest {
       assertTrue(keyValueBean.getKey().startsWith("streams"));
       assertThat(keyValueBean.getValue(), equalTo(3L));
     } else {
-        fail("Should fail demonstrating InteractiveQueries as the Rest Service failed to start.");
+      fail("Should fail demonstrating InteractiveQueries as the Rest Service failed to start.");
     }
   }
   
@@ -381,7 +381,7 @@ public class WordCountInteractiveQueriesExampleTest {
       assertTrue(keyValueBean.getKey().startsWith("streams"));
       assertThat(keyValueBean.getValue(), equalTo(3L));
     } else {
-        fail("Should fail demonstrating InteractiveQueries on any valid host as the Rest Service failed to start.");
+      fail("Should fail demonstrating InteractiveQueries on any valid host as the Rest Service failed to start.");
     }
   }
   

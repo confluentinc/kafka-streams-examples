@@ -154,10 +154,10 @@ public class KafkaMusicExampleTest {
   private void createStreams(final String host) throws Exception {
     appServerPort = randomFreeLocalPort();
     streams = KafkaMusicExample.createChartsStreams(CLUSTER.bootstrapServers(),
-                                              CLUSTER.schemaRegistryUrl(),
-                                              appServerPort,
-                                              TestUtils.tempDirectory().getPath(),
-                                              host);
+                                                    CLUSTER.schemaRegistryUrl(),
+                                                    appServerPort,
+                                                    TestUtils.tempDirectory().getPath(),
+                                                    host);
     int count = 0;
     final int maxTries = 3;
     while (count <= maxTries) {
