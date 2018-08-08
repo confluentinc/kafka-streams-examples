@@ -32,27 +32,33 @@ import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.StreamsMetadata;
 import org.apache.kafka.test.TestUtils;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExampleTest.randomFreeLocalPort;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static junit.framework.TestCase.fail;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -68,9 +74,11 @@ public class KafkaMusicExampleTest {
   private KafkaStreams streams;
   private MusicPlaysRestService restProxy;
   private int appServerPort;
-
+  private static final List<Song> songs = new ArrayList<>();
+  private static final Logger log = LoggerFactory.getLogger(KafkaMusicExampleTest.class);
+  
   @BeforeClass
-  public static void createTopics() {
+  public static void createTopicsAndProduceDataToInputTopics() throws Exception {
     CLUSTER.createTopic(KafkaMusicExample.PLAY_EVENTS);
     CLUSTER.createTopic(KafkaMusicExample.SONG_FEED);
     // these topics initialized just to avoid some rebalances.
@@ -82,27 +90,21 @@ public class KafkaMusicExampleTest {
     CLUSTER.createTopic("kafka-music-charts-top-five-songs-changelog");
     CLUSTER.createTopic("kafka-music-charts-top-five-songs-repartition");
     CLUSTER.createTopic("kafka-music-charts-KSTREAM-MAP-0000000004-repartition");
-  }
 
-  @Before
-  public void createStreams() throws Exception {
-    appServerPort = randomFreeLocalPort();
-    streams =
-        KafkaMusicExample.createChartsStreams(CLUSTER.bootstrapServers(),
-                                              CLUSTER.schemaRegistryUrl(),
-                                              appServerPort,
-                                              TestUtils.tempDirectory().getPath());
-    restProxy = KafkaMusicExample.startRestProxy(streams, new HostInfo("localhost", appServerPort));
-  }
+    // Read comma-delimited file of songs into Array
+    final String SONGFILENAME = "song_source.csv";
+    final InputStream inputStream = KafkaMusicExample.class.getClassLoader().getResourceAsStream(SONGFILENAME);
+    final InputStreamReader streamReader = new InputStreamReader(inputStream, UTF_8);
+    try (final BufferedReader br = new BufferedReader(streamReader)) {
+      String line;
+      while ((line = br.readLine()) != null) {
+        final String[] values = line.split(",");
+        final Song newSong = new Song(Long.parseLong(values[0]), values[1], values[2], values[3], values[4]);
+        songs.add(newSong);
+      }
+    }
 
-  @After
-  public void shutdown() throws Exception {
-    restProxy.stop();
-    streams.close();
-  }
-
-  @Test
-  public void shouldCreateChartsAndAccessThemViaInteractiveQueries() throws Exception {
+    // Produce sample data to the input topic before the tests starts.
     final Properties props = new Properties();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
 
@@ -116,81 +118,17 @@ public class KafkaMusicExampleTest {
     songSerializer.configure(serdeConfig, false);
 
     final KafkaProducer<String, PlayEvent> playEventProducer = new KafkaProducer<>(props,
-                                                                                   Serdes.String() .serializer(),
-                                                                                   playEventSerializer);
+        Serdes.String().serializer(),
+        playEventSerializer);
 
     final KafkaProducer<Long, Song> songProducer = new KafkaProducer<>(props,
-                                                                       new LongSerializer(),
-                                                                       songSerializer);
-
-    final List<Song> songs = Arrays.asList(new Song(1L,
-                                                    "Fresh Fruit For Rotting Vegetables",
-                                                    "Dead Kennedys",
-                                                    "Chemical Warfare",
-                                                    "Punk"),
-                                           new Song(2L,
-                                                    "We Are the League",
-                                                    "Anti-Nowhere League",
-                                                    "Animal",
-                                                    "Punk"),
-                                           new Song(3L,
-                                                    "Live In A Dive",
-                                                    "Subhumans",
-                                                    "All Gone Dead",
-                                                    "Punk"),
-                                           new Song(4L,
-                                                    "PSI",
-                                                    "Wheres The Pope?",
-                                                    "Fear Of God",
-                                                    "Punk"),
-                                           new Song(5L,
-                                                    "Totally Exploited",
-                                                    "The Exploited",
-                                                    "Punks Not Dead",
-                                                    "Punk"),
-                                           new Song(6L,
-                                                    "The Audacity Of Hype",
-                                                    "Jello Biafra And The Guantanamo School Of "
-                                                    + "Medicine",
-                                                    "Three Strikes",
-                                                    "Punk"),
-                                           new Song(7L,
-                                                    "Licensed to Ill",
-                                                    "The Beastie Boys",
-                                                    "Fight For Your Right",
-                                                    "Hip Hop"),
-                                           new Song(8L,
-                                                    "De La Soul Is Dead",
-                                                    "De La Soul",
-                                                    "Oodles Of O's",
-                                                    "Hip Hop"),
-                                           new Song(9L,
-                                                    "Straight Outta Compton",
-                                                    "N.W.A",
-                                                    "Gangsta Gangsta",
-                                                    "Hip Hop"),
-                                           new Song(10L,
-                                                    "Fear Of A Black Planet",
-                                                    "Public Enemy",
-                                                    "911 Is A Joke",
-                                                    "Hip Hop"),
-                                           new Song(11L,
-                                                    "Curtain Call - The Hits",
-                                                    "Eminem",
-                                                    "Fack",
-                                                    "Hip Hop"),
-                                           new Song(12L,
-                                                    "The Calling",
-                                                    "Hilltop Hoods",
-                                                    "The Calling",
-                                                    "Hip Hop")
-
-                                           );
+        new LongSerializer(),
+        songSerializer);
 
     songs.forEach(song -> songProducer.send(
         new ProducerRecord<Long, Song>(KafkaMusicExample.SONG_FEED,
-                                       song.getId(),
-                                       song)));
+            song.getId(),
+            song)));
 
     songProducer.flush();
     songProducer.close();
@@ -211,86 +149,152 @@ public class KafkaMusicExampleTest {
     sendPlayEvents(1, songs.get(11), playEventProducer);
 
     playEventProducer.close();
+  }
 
 
+  private void createStreams(final String host) throws Exception {
+    appServerPort = randomFreeLocalPort();
+    streams = KafkaMusicExample.createChartsStreams(CLUSTER.bootstrapServers(),
+        CLUSTER.schemaRegistryUrl(),
+        appServerPort,
+        TestUtils.tempDirectory().getPath(),
+        host);
+    int count = 0;
+    final int maxTries = 3;
+    while (count <= maxTries) {
+      try {
+        // Starts the Rest Service on the provided host:port
+        restProxy = KafkaMusicExample.startRestProxy(streams, new HostInfo(host, appServerPort));
+      } catch (final Exception ex) {
+        log.error("Could not start Rest Service due to: " + ex.toString());
+      }
+      count++;
+    }
+  }
+
+  @After
+  public void shutdown() {
+    try {
+      restProxy.stop();
+    } catch (final Exception e) {
+      log.error(String.format("Error while stopping restproxy: %s",e.getMessage()));
+    }
+    streams.close();
+  }
+
+  @Test
+  public void shouldCreateChartsAndAccessThemViaInteractiveQueries() throws Exception {
+    final String host = "localhost";
+    createStreams(host);
     streams.start();
 
-    // wait until the StreamsMetadata is available as this indicates that
-    // KafkaStreams initialization has occurred
-    TestUtils.waitForCondition(() -> !StreamsMetadata.NOT_AVAILABLE.equals(streams.allMetadataForStore(KafkaMusicExample.TOP_FIVE_SONGS_STORE)),
-                               MAX_WAIT_MS,
-                               "StreamsMetadata should be available");
+    if (restProxy != null) {
+      // wait until the StreamsMetadata is available as this indicates that
+      // KafkaStreams initialization has occurred
+      TestUtils.waitForCondition(() -> !StreamsMetadata.NOT_AVAILABLE.equals(streams.allMetadataForStore(KafkaMusicExample.TOP_FIVE_SONGS_STORE)),
+                                 MAX_WAIT_MS,
+                                 "StreamsMetadata should be available");
+      final String baseUrl = "http://" + host + ":" + appServerPort + "/kafka-music";
+      final Client client = ClientBuilder.newClient();
+  
+      // Wait until the all-songs state store has some data in it
+      TestUtils.waitForCondition(() -> {
+        final ReadOnlyKeyValueStore<Long, Song>
+            songsStore;
+        try {
+          songsStore =
+              streams.store(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.keyValueStore());
+          return songsStore.all().hasNext();
+        } catch (Exception e) {
+          return false;
+        }
+      }, MAX_WAIT_MS, KafkaMusicExample.ALL_SONGS + " should be non-empty");
+  
+      final IntFunction<SongPlayCountBean> intFunction = index -> {
+        final Song song = songs.get(index);
+        return songCountPlayBean(song, 6L - (index % 6));
+      };
+  
+      // Verify that the charts are as expected
+      verifyChart(baseUrl + "/charts/genre/punk",
+                  client,
+                  IntStream.range(0, 5).mapToObj(intFunction).collect(Collectors.toList()));
+  
+      verifyChart(baseUrl + "/charts/genre/hip hop",
+                  client,
+                  IntStream.range(6, 11).mapToObj(intFunction).collect(Collectors.toList()));
+  
+      verifyChart(baseUrl + "/charts/top-five",
+                  client,
+                  Arrays.asList(songCountPlayBean(songs.get(0), 6L),
+                                songCountPlayBean(songs.get(6), 6L),
+                                songCountPlayBean(songs.get(1), 5L),
+                                songCountPlayBean(songs.get(7), 5L),
+                                songCountPlayBean(songs.get(2), 4L)
+                                )
+                  );
+  
+    } else {
+      fail("Should fail demonstrating InteractiveQueries as the Rest Service failed to start.");
+    }
+  }
 
-    final String baseUrl = "http://localhost:" + appServerPort + "/kafka-music";
-    final Client client = ClientBuilder.newClient();
-
-    // Wait until the all-songs state store has some data in it
-    TestUtils.waitForCondition(() -> {
-      try {
-        final ReadOnlyKeyValueStore<String, KafkaMusicExample.TopFiveSongs> topFiveStore = streams.store(
-            KafkaMusicExample.TOP_FIVE_SONGS_STORE,
-            QueryableStoreTypes.keyValueStore());
-        final ReadOnlyKeyValueStore<String, KafkaMusicExample.TopFiveSongs> topFiveByGenreStore = streams.store(
-            KafkaMusicExample.TOP_FIVE_SONGS_BY_GENRE_STORE,
-            QueryableStoreTypes.keyValueStore());
-
-        final AtomicBoolean found = new AtomicBoolean(false);
-        topFiveStore.get("all").iterator().forEachRemaining(
-            (kv) -> {
-              if (!found.get()) {
-                 found.set(kv.getSongId() == 8 && kv.getPlays() == 5);
-              }
-            }
-        );
-
-        final AtomicBoolean foundByGenre1 = new AtomicBoolean(false);
-        topFiveByGenreStore.get("punk").iterator().forEachRemaining(
-            (kv) -> {
-              if (!foundByGenre1.get()) {
-                foundByGenre1.set(kv.getSongId() == 5 && kv.getPlays() == 2);
-              }
-            }
-        );
-
-        final AtomicBoolean foundByGenre2 = new AtomicBoolean(false);
-        topFiveByGenreStore.get("hip hop").iterator().forEachRemaining(
-            (kv) -> {
-              if (!foundByGenre2.get()) {
-                foundByGenre2.set(kv.getSongId() == 11 && kv.getPlays() == 2);
-              }
-            }
-        );
-
-        return found.get() && foundByGenre1.get() && foundByGenre2.get();
-      } catch (Exception e) {
-        return false;
-      }
-    }, MAX_WAIT_MS, KafkaMusicExample.ALL_SONGS + " should be non-empty");
-
-    final IntFunction<SongPlayCountBean> intFunction = index -> {
-      final Song song = songs.get(index);
-      return songCountPlayBean(song, 6L - (index % 6));
-    };
-
-    // Verify that the charts are as expected
-    verifyChart(baseUrl + "/charts/genre/punk",
-                client,
-                IntStream.range(0, 5).mapToObj(intFunction).collect(Collectors.toList()));
-
-    verifyChart(baseUrl + "/charts/genre/hip hop",
-                client,
-                IntStream.range(6, 11).mapToObj(intFunction).collect(Collectors.toList()));
-
-    verifyChart(baseUrl + "/charts/top-five",
-                client,
-                Arrays.asList(songCountPlayBean(songs.get(0), 6L),
-                              songCountPlayBean(songs.get(6), 6L),
-                              songCountPlayBean(songs.get(1), 5L),
-                              songCountPlayBean(songs.get(7), 5L),
-                              songCountPlayBean(songs.get(2), 4L)
-                              )
-                );
-
+  @Test
+  public void shouldDemonstrateInteractiveQueriesOnAnyValidHost() throws Exception {
+    final String host = "127.10.10.10";
+    createStreams(host);
+    streams.start();
+  
+    if (restProxy != null) {
+      // wait until the StreamsMetadata is available as this indicates that
+      // KafkaStreams initialization has occurred
+      TestUtils.waitForCondition(() -> !StreamsMetadata.NOT_AVAILABLE.equals(streams.allMetadataForStore(KafkaMusicExample.TOP_FIVE_SONGS_STORE)),
+                                 MAX_WAIT_MS,
+                                 "StreamsMetadata should be available");
+  
+      final String baseUrl = "http://" + host + ":" + appServerPort + "/kafka-music";
+      final Client client = ClientBuilder.newClient();
+  
+      // Wait until the all-songs state store has some data in it
+      TestUtils.waitForCondition(() -> {
+        final ReadOnlyKeyValueStore<Long, Song>
+            songsStore;
+        try {
+          songsStore =
+              streams.store(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.keyValueStore());
+          return songsStore.all().hasNext();
+        } catch (Exception e) {
+          return false;
+        }
+      }, MAX_WAIT_MS, KafkaMusicExample.ALL_SONGS + " should be non-empty");
+  
+      final IntFunction<SongPlayCountBean> intFunction = index -> {
+        final Song song = songs.get(index);
+        return songCountPlayBean(song, 6L - (index % 6));
+      };
+  
+      // Verify that the charts are as expected
+      verifyChart(baseUrl + "/charts/genre/punk",
+                  client,
+                  IntStream.range(0, 5).mapToObj(intFunction).collect(Collectors.toList()));
+  
+      verifyChart(baseUrl + "/charts/genre/hip hop",
+                  client,
+                  IntStream.range(6, 11).mapToObj(intFunction).collect(Collectors.toList()));
+  
+      verifyChart(baseUrl + "/charts/top-five",
+                  client,
+                  Arrays.asList(songCountPlayBean(songs.get(0), 6L),
+                                songCountPlayBean(songs.get(6), 6L),
+                                songCountPlayBean(songs.get(1), 5L),
+                                songCountPlayBean(songs.get(7), 5L),
+                                songCountPlayBean(songs.get(2), 4L)
+                                )
+                  );
+  
+    } else {
+      fail("Should fail demonstrating InteractiveQueries on any valid host as the Rest Service failed to start.");
+    }
   }
 
   private SongPlayCountBean songCountPlayBean(final Song song, final long plays) {
@@ -330,8 +334,9 @@ public class KafkaMusicExampleTest {
     assertThat(chart, is(expectedChart));
   }
 
-  private void sendPlayEvents(final int count, final Song song,
-                              final KafkaProducer<String, PlayEvent> producer) {
+  private static void sendPlayEvents(final int count,
+                                     final Song song,
+                                     final KafkaProducer<String, PlayEvent> producer) {
     for (int i = 0; i < count; i++) {
       producer.send(new ProducerRecord<>(
           KafkaMusicExample.PLAY_EVENTS,
