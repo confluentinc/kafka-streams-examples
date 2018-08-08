@@ -200,7 +200,8 @@ public class KafkaMusicExample {
     final KafkaStreams streams = createChartsStreams(bootstrapServers,
                                                      schemaRegistryUrl,
                                                      restEndpointPort,
-                                                     "/tmp/kafka-streams");
+                                                     "/tmp/kafka-streams",
+                                                     restEndpointHostname);
 
     // Always (and unconditionally) clean local state prior to starting the processing topology.
     // We opt for this unconditional call here because this will make it easier for you to play around with the example
@@ -244,7 +245,8 @@ public class KafkaMusicExample {
   static KafkaStreams createChartsStreams(final String bootstrapServers,
                                           final String schemaRegistryUrl,
                                           final int applicationServerPort,
-                                          final String stateDir) {
+                                          final String stateDir,
+                                          final String host) {
     final Properties streamsConfiguration = new Properties();
     // Give the Streams application a unique name.  The name must be unique in the Kafka cluster
     // against which the application is run.
@@ -253,7 +255,7 @@ public class KafkaMusicExample {
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     // Provide the details of our embedded http service that we'll use to connect to this streams
     // instance and discover locations of stores.
-    streamsConfiguration.put(StreamsConfig.APPLICATION_SERVER_CONFIG, "localhost:" + applicationServerPort);
+    streamsConfiguration.put(StreamsConfig.APPLICATION_SERVER_CONFIG, host + ":" + applicationServerPort);
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, stateDir);
     // Set to earliest so we don't miss any data that arrived in the topics before the process
     // started
