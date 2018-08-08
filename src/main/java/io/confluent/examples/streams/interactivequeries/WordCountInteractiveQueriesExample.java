@@ -83,7 +83,7 @@ import java.util.Properties;
  * <pre>
  * {@code
  * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar \
- *      io.confluent.examples.streams.interactivequeries.InteractiveQueriesExample 7070
+ *      io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExample 7070
  * }
  * </pre>
  *
@@ -94,7 +94,7 @@ import java.util.Properties;
  * <pre>
  * {@code
  * $ java -cp target/kafka-streams-examples-4.0.0-SNAPSHOT-standalone.jar \
- *      io.confluent.examples.streams.interactivequeries.InteractiveQueriesExample 7071
+ *      io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExample 7071
  * }
  * </pre>
  *
@@ -166,7 +166,7 @@ public class WordCountInteractiveQueriesExample {
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
     // Provide the details of our embedded http service that we'll use to connect to this streams
     // instance and discover locations of stores.
-    streamsConfiguration.put(StreamsConfig.APPLICATION_SERVER_CONFIG, "localhost:" + port);
+    streamsConfiguration.put(StreamsConfig.APPLICATION_SERVER_CONFIG, DEFAULT_HOST + ":" + port);
     final File example = Files.createTempDirectory(new File("/tmp").toPath(), "example").toFile();
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, example.getPath());
 
@@ -188,7 +188,7 @@ public class WordCountInteractiveQueriesExample {
     streams.start();
 
     // Start the Restful proxy for servicing remote access to state stores
-    final WordCountInteractiveQueriesRestService restService = startRestProxy(streams, port);
+    final WordCountInteractiveQueriesRestService restService = startRestProxy(streams, port, DEFAULT_HOST);
 
     // Add shutdown hook to respond to SIGTERM and gracefully close Kafka Streams
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -202,9 +202,10 @@ public class WordCountInteractiveQueriesExample {
   }
 
 
-  static WordCountInteractiveQueriesRestService startRestProxy(final KafkaStreams streams, final int port)
-      throws Exception {
-    final HostInfo hostInfo = new HostInfo(DEFAULT_HOST, port);
+  static WordCountInteractiveQueriesRestService startRestProxy(final KafkaStreams streams,
+                                                               final int port,
+                                                               final String host) throws Exception {
+    final HostInfo hostInfo = new HostInfo(host, port);
     final WordCountInteractiveQueriesRestService
         wordCountInteractiveQueriesRestService = new WordCountInteractiveQueriesRestService(streams, hostInfo);
     wordCountInteractiveQueriesRestService.start(port);
