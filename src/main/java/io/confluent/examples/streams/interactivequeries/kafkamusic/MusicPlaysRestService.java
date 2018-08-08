@@ -25,11 +25,14 @@ import org.apache.kafka.streams.state.HostInfo;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -57,6 +60,7 @@ public class MusicPlaysRestService {
   private final Client client = ClientBuilder.newBuilder().register(JacksonFeature.class).build();
   private Server jettyServer;
   private LongSerializer serializer = new LongSerializer();
+  private static final Logger log = LoggerFactory.getLogger(MusicPlaysRestService.class);
 
 
   MusicPlaysRestService(final KafkaStreams streams, final HostInfo hostInfo) {
@@ -210,7 +214,7 @@ public class MusicPlaysRestService {
     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
     context.setContextPath("/");
 
-    jettyServer = new Server(hostInfo.port());
+    jettyServer = new Server();
     jettyServer.setHandler(context);
 
     ResourceConfig rc = new ResourceConfig();
@@ -220,8 +224,20 @@ public class MusicPlaysRestService {
     ServletContainer sc = new ServletContainer(rc);
     ServletHolder holder = new ServletHolder(sc);
     context.addServlet(holder, "/*");
-
-    jettyServer.start();
+  
+    final ServerConnector connector = new ServerConnector(jettyServer);
+    connector.setHost(hostInfo.host());
+    connector.setPort(hostInfo.port());
+    jettyServer.addConnector(connector);
+  
+    context.start();
+  
+    try {
+      jettyServer.start();
+    } catch (final java.net.SocketException exception) {
+      log.error("Unavailable: " + hostInfo.host() + ":" + hostInfo.port());
+      throw new Exception(exception.toString());
+    }
   }
 
   /**
