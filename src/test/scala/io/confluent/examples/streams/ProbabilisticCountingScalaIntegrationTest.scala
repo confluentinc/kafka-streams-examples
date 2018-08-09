@@ -23,6 +23,7 @@ import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
+import org.apache.kafka.streams.kstream.Transformer
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream.KStream
 import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
@@ -101,9 +102,10 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
     // Read the input from Kafka.
     val textLines: KStream[Array[Byte], String] = builder.stream[Array[Byte], String](inputTopic)
 
+    // previously:   def transform[K1, V1](transformer: Transformer[K, V, (K1, V1)],
     val approximateWordCounts: KStream[String, Long] = textLines
       .flatMapValues(textLine => textLine.toLowerCase.split("\\W+"))
-      .transform(new ProbabilisticCounter(cmsStoreName), cmsStoreName)
+      .transform(() => new ProbabilisticCounter(cmsStoreName), cmsStoreName)
 
     // Write the results back to Kafka.
     approximateWordCounts.to(outputTopic)
