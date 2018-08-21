@@ -52,6 +52,8 @@ class CMSStoreBuilder[T: CMSHasher](val name: String,
 
   override def withCachingEnabled() = throw new UnsupportedOperationException("caching not supported")
 
+  override def withCachingDisabled() = throw new UnsupportedOperationException("caching not supported")
+
   /**
     * To enable fault-tolerance for the [[CMSStore]].
     */
