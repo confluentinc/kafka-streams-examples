@@ -126,7 +126,7 @@ public class WordCountInteractiveQueriesExampleTest {
 
   @Test
   public void shouldDemonstrateInteractiveQueries() throws Exception {
-    final String host = "127.10.10.10";//ExampleTestUtils.randomHost();
+    final String host = ExampleTestUtils.randomHost();
     final int port = ExampleTestUtils.randomFreeLocalPort();
     final String baseUrl = "http://" + host + ":" + port + "/state";
 
