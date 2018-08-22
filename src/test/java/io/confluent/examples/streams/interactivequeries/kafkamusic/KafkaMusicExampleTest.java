@@ -181,7 +181,7 @@ public class KafkaMusicExampleTest {
 
   @Test
   public void shouldCreateChartsAndAccessThemViaInteractiveQueries() throws Exception {
-    final String host = ExampleTestUtils.randomHost();
+    final String host = ExampleTestUtils.randomValidHost();
     createStreams(host);
     streams.start();
 

@@ -13,8 +13,8 @@ public class ExampleTestUtils {
         return port;
     }
 
-    public static String randomHost() {
+    public static String randomValidHost() {
         Random r = new Random();
-        return r.nextInt(256) + "." + r.nextInt(256) + "." + r.nextInt(256) + "." + r.nextInt(256);
+        return "127." + r.nextInt(10) + "." + r.nextInt(10) + "." + r.nextInt(256);
     }
 }
