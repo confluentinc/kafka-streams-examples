@@ -156,7 +156,7 @@ public class WordCountInteractiveQueriesExampleTest {
       final List<HostStoreInfo> hostStoreInfo = fetchHostInfo(allInstancesRequest);
     
       assertThat(hostStoreInfo, hasItem(
-              new HostStoreInfo("localhost", port, Sets.newHashSet("word-count", "windowed-word-count"))
+              new HostStoreInfo(host, port, Sets.newHashSet("word-count", "windowed-word-count"))
       ));
     
       // Create a request to fetch all instances with word-count
@@ -166,7 +166,7 @@ public class WordCountInteractiveQueriesExampleTest {
               wordCountInstances = fetchHostInfo(wordCountInstancesRequest);
     
       assertThat(wordCountInstances, hasItem(
-              new HostStoreInfo("localhost", port, Sets.newHashSet("word-count", "windowed-word-count"))
+              new HostStoreInfo(host, port, Sets.newHashSet("word-count", "windowed-word-count"))
       ));
     
       Properties consumerConfig = new Properties();
