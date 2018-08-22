@@ -325,8 +325,7 @@ public class WordCountInteractiveQueriesExampleTest {
   }
 
   private List<KeyValueBean> fetchRangeOfValues(final Invocation.Builder request,
-                                                final List<KeyValueBean>
-                                                    expectedResults) {
+                                                final List<KeyValueBean> expectedResults) {
     List<KeyValueBean> results = new ArrayList<>();
     final long timeout = System.currentTimeMillis() + 10000L;
     while (!results.containsAll(expectedResults) && System.currentTimeMillis() < timeout) {

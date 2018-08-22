@@ -250,7 +250,6 @@ public class KafkaMusicExampleTest {
     final Invocation.Builder genreChartRequest = client.target(url)
         .request(MediaType.APPLICATION_JSON_TYPE);
 
-    // Wait until we have 5 items available in the chart
     TestUtils.waitForCondition(() -> {
       try {
         final List<SongPlayCountBean> chart =
@@ -260,7 +259,7 @@ public class KafkaMusicExampleTest {
         return false;
       }
 
-    }, MAX_WAIT_MS, "chart should have 5 items");
+    }, MAX_WAIT_MS, "Returned chart should equal to the expected items");
   }
 
   private static void sendPlayEvents(final int count,
