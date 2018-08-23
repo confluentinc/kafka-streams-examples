@@ -34,7 +34,7 @@ public class MicroserviceUtils {
   private static final String DEFAULT_SCHEMA_REGISTRY_URL = "http://localhost:8081";
   public static final long MIN = 60 * 1000L;
 
-  public static String parseArgsAndConfigure(String[] args) {
+  public static String parseArgsAndConfigure(final String[] args) {
     if (args.length > 2) {
       throw new IllegalArgumentException("usage: ... " +
           "[<bootstrap.servers> (optional, default: " + DEFAULT_BOOTSTRAP_SERVERS + ")] " +
@@ -49,9 +49,9 @@ public class MicroserviceUtils {
     return bootstrapServers;
   }
 
-  public static Properties baseStreamsConfig(String bootstrapServers, String stateDir,
-      String appId) {
-    Properties config = new Properties();
+  public static Properties baseStreamsConfig(final String bootstrapServers, final String stateDir,
+                                             final String appId) {
+    final Properties config = new Properties();
     // Workaround for a known issue with RocksDB in environments where you have only 1 cpu core.
     config.put(StreamsConfig.ROCKSDB_CONFIG_SETTER_CLASS_CONFIG, CustomRocksDBConfig.class);
     config.put(StreamsConfig.APPLICATION_ID_CONFIG, appId);
@@ -71,7 +71,7 @@ public class MicroserviceUtils {
       // Workaround: We must ensure that the parallelism is set to >= 2.  There seems to be a known
       // issue with RocksDB where explicitly setting the parallelism to 1 causes issues (even though
       // 1 seems to be RocksDB's default for this configuration).
-      int compactionParallelism = Math.max(Runtime.getRuntime().availableProcessors(), 2);
+      final int compactionParallelism = Math.max(Runtime.getRuntime().availableProcessors(), 2);
       // Set number of compaction threads (but not flush threads).
       options.setIncreaseParallelism(compactionParallelism);
     }
@@ -81,7 +81,7 @@ public class MicroserviceUtils {
   public static final class ProductTypeSerde implements Serde<Product> {
 
     @Override
-    public void configure(Map<String, ?> map, boolean b) {
+    public void configure(final Map<String, ?> map, final boolean b) {
     }
 
     @Override
@@ -92,11 +92,11 @@ public class MicroserviceUtils {
     public Serializer<Product> serializer() {
       return new Serializer<Product>() {
         @Override
-        public void configure(Map<String, ?> map, boolean b) {
+        public void configure(final Map<String, ?> map, final boolean b) {
         }
 
         @Override
-        public byte[] serialize(String topic, Product pt) {
+        public byte[] serialize(final String topic, final Product pt) {
           return pt.toString().getBytes();
         }
 
@@ -110,11 +110,11 @@ public class MicroserviceUtils {
     public Deserializer<Product> deserializer() {
       return new Deserializer<Product>() {
         @Override
-        public void configure(Map<String, ?> map, boolean b) {
+        public void configure(final Map<String, ?> map, final boolean b) {
         }
 
         @Override
-        public Product deserialize(String topic, byte[] bytes) {
+        public Product deserialize(final String topic, final byte[] bytes) {
           return Product.valueOf(new String(bytes));
         }
 
@@ -125,7 +125,7 @@ public class MicroserviceUtils {
     }
   }
 
-  public static void setTimeout(long timeout, AsyncResponse asyncResponse) {
+  public static void setTimeout(final long timeout, final AsyncResponse asyncResponse) {
     asyncResponse.setTimeout(timeout, TimeUnit.MILLISECONDS);
     asyncResponse.setTimeoutHandler(resp -> resp.resume(
         Response.status(Response.Status.GATEWAY_TIMEOUT)
@@ -133,33 +133,33 @@ public class MicroserviceUtils {
             .build()));
   }
 
-  public static Server startJetty(int port, Object binding) {
-    ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+  public static Server startJetty(final int port, final Object binding) {
+    final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
     context.setContextPath("/");
 
-    Server jettyServer = new Server(port);
+    final Server jettyServer = new Server(port);
     jettyServer.setHandler(context);
 
-    ResourceConfig rc = new ResourceConfig();
+    final ResourceConfig rc = new ResourceConfig();
     rc.register(binding);
     rc.register(JacksonFeature.class);
 
-    ServletContainer sc = new ServletContainer(rc);
-    ServletHolder holder = new ServletHolder(sc);
+    final ServletContainer sc = new ServletContainer(rc);
+    final ServletHolder holder = new ServletHolder(sc);
     context.addServlet(holder, "/*");
 
     try {
       jettyServer.start();
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new RuntimeException(e);
     }
     log.info("Listening on " + jettyServer.getURI());
     return jettyServer;
   }
 
-  public static <T> KafkaProducer startProducer(String bootstrapServers,
-      Schemas.Topic<String, T> topic) {
-    Properties producerConfig = new Properties();
+  public static <T> KafkaProducer startProducer(final String bootstrapServers,
+                                                final Schemas.Topic<String, T> topic) {
+    final Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     producerConfig.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, String.valueOf(Integer.MAX_VALUE));
@@ -170,12 +170,12 @@ public class MicroserviceUtils {
         topic.valueSerde().serializer());
   }
 
-  public static void addShutdownHookAndBlock(Service service) throws InterruptedException {
+  public static void addShutdownHookAndBlock(final Service service) throws InterruptedException {
     Thread.currentThread().setUncaughtExceptionHandler((t, e) -> service.stop());
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {
         service.stop();
-      } catch (Exception ignored) {
+      } catch (final Exception ignored) {
       }
     }));
     Thread.currentThread().join();

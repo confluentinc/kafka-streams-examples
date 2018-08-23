@@ -62,19 +62,19 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
   @Test
   public void shouldPostOrderAndGetItBack() {
-    OrderBean bean = new OrderBean(id(1L), 2L, OrderState.CREATED, Product.JUMPERS, 10, 100d);
+    final OrderBean bean = new OrderBean(id(1L), 2L, OrderState.CREATED, Product.JUMPERS, 10, 100d);
 
     final Client client = ClientBuilder.newClient();
 
     //Given a rest service
     rest = new OrdersService("localhost");
     rest.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
-    Paths paths = new Paths("localhost", rest.port());
+    final Paths paths = new Paths("localhost", rest.port());
 
     //When we POST an order
-    Response response = client.target(paths.urlPost())
-        .request(APPLICATION_JSON_TYPE)
-        .post(Entity.json(bean));
+    final Response response = client.target(paths.urlPost())
+                                    .request(APPLICATION_JSON_TYPE)
+                                    .post(Entity.json(bean));
 
     //Then
     assertThat(response.getStatus()).isEqualTo(HttpURLConnection.HTTP_CREATED);
@@ -103,15 +103,15 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
   @Test
   public void shouldGetValidatedOrderOnRequest() {
-    Order orderV1 = new Order(id(1L), 3L, OrderState.CREATED, Product.JUMPERS, 10, 100d);
-    OrderBean beanV1 = OrderBean.toBean(orderV1);
+    final Order orderV1 = new Order(id(1L), 3L, OrderState.CREATED, Product.JUMPERS, 10, 100d);
+    final OrderBean beanV1 = OrderBean.toBean(orderV1);
 
     final Client client = ClientBuilder.newClient();
 
     //Given a rest service
     rest = new OrdersService("localhost");
     rest.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
-    Paths paths = new Paths("localhost", rest.port());
+    final Paths paths = new Paths("localhost", rest.port());
 
     //When we post an order
     client.target(paths.urlPost())
@@ -125,10 +125,10 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
             .build()));
 
     //When we GET the order from the returned location
-    OrderBean returnedBean = client.target(paths.urlGetValidated(beanV1.getId()))
-        .queryParam("timeout", MIN / 2)
-        .request(APPLICATION_JSON_TYPE)
-        .get(new GenericType<OrderBean>() {
+    final OrderBean returnedBean = client.target(paths.urlGetValidated(beanV1.getId()))
+                                         .queryParam("timeout", MIN / 2)
+                                         .request(APPLICATION_JSON_TYPE)
+                                         .get(new GenericType<OrderBean>() {
         });
 
     //Then status should be Validated
@@ -142,7 +142,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
     //Start the rest interface
     rest = new OrdersService("localhost");
     rest.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
-    Paths paths = new Paths("localhost", rest.port());
+    final Paths paths = new Paths("localhost", rest.port());
 
     //Then GET order should timeout
     try {
@@ -152,23 +152,23 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
           .get(new GenericType<OrderBean>() {
           });
       fail("Request should have failed as materialized view has not been updated");
-    } catch (ServerErrorException e) {
+    } catch (final ServerErrorException e) {
       assertThat(e.getMessage()).isEqualTo("HTTP 504 Gateway Timeout");
     }
   }
 
   @Test
   public void shouldGetOrderByIdWhenOnDifferentHost() {
-    OrderBean order = new OrderBean(id(1L), 4L, OrderState.VALIDATED, Product.JUMPERS, 10, 100d);
+    final OrderBean order = new OrderBean(id(1L), 4L, OrderState.VALIDATED, Product.JUMPERS, 10, 100d);
     final Client client = ClientBuilder.newClient();
 
     //Given two rest servers on different ports
     rest = new OrdersService("localhost");
     rest.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
-    Paths paths1 = new Paths("localhost", rest.port());
+    final Paths paths1 = new Paths("localhost", rest.port());
     rest2 = new OrdersService("localhost");
     rest2.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
-    Paths paths2 = new Paths("localhost", rest2.port());
+    final Paths paths2 = new Paths("localhost", rest2.port());
 
     //And one order
     client.target(paths1.urlPost())

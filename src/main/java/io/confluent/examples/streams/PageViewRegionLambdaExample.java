@@ -171,7 +171,7 @@ public class PageViewRegionLambdaExample {
 
     final KTable<Windowed<String>, Long> viewsByRegion = viewsByUser
       .leftJoin(userRegions, (view, region) -> {
-        GenericRecord viewRegion = new GenericData.Record(schema);
+        final GenericRecord viewRegion = new GenericData.Record(schema);
         viewRegion.put("user", view.get("user"));
         viewRegion.put("page", view.get("page"));
         viewRegion.put("region", region);
