@@ -18,6 +18,7 @@ package io.confluent.examples.streams.interactivequeries.kafkamusic;
 import io.confluent.examples.streams.avro.PlayEvent;
 import io.confluent.examples.streams.avro.Song;
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
+import io.confluent.examples.streams.ExampleTestUtils;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -56,11 +57,8 @@ import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExampleTest.randomFreeLocalPort;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static junit.framework.TestCase.fail;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * End-to-end integration test for {@link KafkaMusicExample}. Demonstrates
@@ -76,7 +74,7 @@ public class KafkaMusicExampleTest {
   private int appServerPort;
   private static final List<Song> songs = new ArrayList<>();
   private static final Logger log = LoggerFactory.getLogger(KafkaMusicExampleTest.class);
-  
+
   @BeforeClass
   public static void createTopicsAndProduceDataToInputTopics() throws Exception {
     CLUSTER.createTopic(KafkaMusicExample.PLAY_EVENTS);
@@ -151,9 +149,8 @@ public class KafkaMusicExampleTest {
     playEventProducer.close();
   }
 
-
   private void createStreams(final String host) throws Exception {
-    appServerPort = randomFreeLocalPort();
+    appServerPort = ExampleTestUtils.randomFreeLocalPort();
     streams = KafkaMusicExample.createChartsStreams(CLUSTER.bootstrapServers(),
         CLUSTER.schemaRegistryUrl(),
         appServerPort,
@@ -184,7 +181,7 @@ public class KafkaMusicExampleTest {
 
   @Test
   public void shouldCreateChartsAndAccessThemViaInteractiveQueries() throws Exception {
-    final String host = "localhost";
+    final String host = ExampleTestUtils.randomValidHost();
     createStreams(host);
     streams.start();
 
@@ -239,64 +236,6 @@ public class KafkaMusicExampleTest {
     }
   }
 
-  @Test
-  public void shouldDemonstrateInteractiveQueriesOnAnyValidHost() throws Exception {
-    final String host = "127.10.10.10";
-    createStreams(host);
-    streams.start();
-  
-    if (restProxy != null) {
-      // wait until the StreamsMetadata is available as this indicates that
-      // KafkaStreams initialization has occurred
-      TestUtils.waitForCondition(() -> !StreamsMetadata.NOT_AVAILABLE.equals(streams.allMetadataForStore(KafkaMusicExample.TOP_FIVE_SONGS_STORE)),
-                                 MAX_WAIT_MS,
-                                 "StreamsMetadata should be available");
-  
-      final String baseUrl = "http://" + host + ":" + appServerPort + "/kafka-music";
-      final Client client = ClientBuilder.newClient();
-  
-      // Wait until the all-songs state store has some data in it
-      TestUtils.waitForCondition(() -> {
-        final ReadOnlyKeyValueStore<Long, Song>
-            songsStore;
-        try {
-          songsStore =
-              streams.store(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.keyValueStore());
-          return songsStore.all().hasNext();
-        } catch (Exception e) {
-          return false;
-        }
-      }, MAX_WAIT_MS, KafkaMusicExample.ALL_SONGS + " should be non-empty");
-  
-      final IntFunction<SongPlayCountBean> intFunction = index -> {
-        final Song song = songs.get(index);
-        return songCountPlayBean(song, 6L - (index % 6));
-      };
-  
-      // Verify that the charts are as expected
-      verifyChart(baseUrl + "/charts/genre/punk",
-                  client,
-                  IntStream.range(0, 5).mapToObj(intFunction).collect(Collectors.toList()));
-  
-      verifyChart(baseUrl + "/charts/genre/hip hop",
-                  client,
-                  IntStream.range(6, 11).mapToObj(intFunction).collect(Collectors.toList()));
-  
-      verifyChart(baseUrl + "/charts/top-five",
-                  client,
-                  Arrays.asList(songCountPlayBean(songs.get(0), 6L),
-                                songCountPlayBean(songs.get(6), 6L),
-                                songCountPlayBean(songs.get(1), 5L),
-                                songCountPlayBean(songs.get(7), 5L),
-                                songCountPlayBean(songs.get(2), 4L)
-                                )
-                  );
-  
-    } else {
-      fail("Should fail demonstrating InteractiveQueries on any valid host as the Rest Service failed to start.");
-    }
-  }
-
   private SongPlayCountBean songCountPlayBean(final Song song, final long plays) {
     return new SongPlayCountBean(song.getArtist(),
                                  song.getAlbum(),
@@ -311,27 +250,16 @@ public class KafkaMusicExampleTest {
     final Invocation.Builder genreChartRequest = client.target(url)
         .request(MediaType.APPLICATION_JSON_TYPE);
 
-    // Wait until we have 5 items available in the chart
     TestUtils.waitForCondition(() -> {
       try {
-        final List<SongPlayCountBean>
-            chart =
-            genreChartRequest.get(new GenericType<List<SongPlayCountBean>>() {
-            });
-        return chart.size() == 5;
+        final List<SongPlayCountBean> chart =
+            genreChartRequest.get(new GenericType<List<SongPlayCountBean>>() {});
+        return chart.equals(expectedChart);
       } catch (Exception e) {
         return false;
       }
 
-    }, MAX_WAIT_MS, "chart should have 5 items");
-
-
-    final List<SongPlayCountBean>
-        chart =
-        genreChartRequest.get(new GenericType<List<SongPlayCountBean>>() {
-        });
-
-    assertThat(chart, is(expectedChart));
+    }, MAX_WAIT_MS, "Returned chart should equal to the expected items");
   }
 
   private static void sendPlayEvents(final int count,
