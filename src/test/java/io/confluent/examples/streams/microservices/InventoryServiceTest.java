@@ -79,14 +79,14 @@ public class InventoryServiceTest extends MicroserviceTestUtils {
         .isEqualTo(expected);
 
     //And the reservations should have been incremented twice, once for each validated order
-    List<KeyValue<Product, Long>> inventoryChangelog = readInventoryStateStore(2);
+    final List<KeyValue<Product, Long>> inventoryChangelog = readInventoryStateStore(2);
     assertThat(inventoryChangelog).isEqualTo(asList(
         new KeyValue<>(UNDERPANTS.toString(), 3L),
         new KeyValue<>(JUMPERS.toString(), 1L)
     ));
   }
 
-  private List<KeyValue<Product, Long>> readInventoryStateStore(int numberOfRecordsToWaitFor)
+  private List<KeyValue<Product, Long>> readInventoryStateStore(final int numberOfRecordsToWaitFor)
       throws InterruptedException {
     return IntegrationTestUtils
         .waitUntilMinKeyValueRecordsReceived(inventoryConsumerProperties(CLUSTER),
@@ -94,8 +94,8 @@ public class InventoryServiceTest extends MicroserviceTestUtils {
                 InventoryService.RESERVED_STOCK_STORE_NAME), numberOfRecordsToWaitFor);
   }
 
-  private static Properties inventoryConsumerProperties(EmbeddedSingleNodeKafkaCluster cluster) {
-    Properties consumerConfig = new Properties();
+  private static Properties inventoryConsumerProperties(final EmbeddedSingleNodeKafkaCluster cluster) {
+    final Properties consumerConfig = new Properties();
     consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers());
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "inventory-test-reader");
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");

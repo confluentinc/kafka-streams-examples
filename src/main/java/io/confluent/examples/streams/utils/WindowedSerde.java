@@ -29,7 +29,7 @@ public class WindowedSerde<T> implements Serde<Windowed<T>> {
 
   private final Serde<Windowed<T>> inner;
 
-  public WindowedSerde(Serde<T> serde) {
+  public WindowedSerde(final Serde<T> serde) {
     inner = Serdes.serdeFrom(
         new WindowedSerializer<>(serde.serializer()),
         new WindowedDeserializer<>(serde.deserializer()));
@@ -46,7 +46,7 @@ public class WindowedSerde<T> implements Serde<Windowed<T>> {
   }
 
   @Override
-  public void configure(Map<String, ?> configs, boolean isKey) {
+  public void configure(final Map<String, ?> configs, final boolean isKey) {
     inner.serializer().configure(configs, isKey);
     inner.deserializer().configure(configs, isKey);
   }
