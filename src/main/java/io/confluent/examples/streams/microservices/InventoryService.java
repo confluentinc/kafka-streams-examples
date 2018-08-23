@@ -44,7 +44,7 @@ public class InventoryService implements Service {
   private KafkaStreams streams;
 
   @Override
-  public void start(String bootstrapServers) {
+  public void start(final String bootstrapServers) {
     streams = processStreams(bootstrapServers, "/tmp/kafka-streams");
     streams.cleanUp(); //don't do this in prod as it clears your state stores
     streams.start();
@@ -61,13 +61,13 @@ public class InventoryService implements Service {
   private KafkaStreams processStreams(final String bootstrapServers, final String stateDir) {
 
     //Latch onto instances of the orders and inventory topics
-    KStreamBuilder builder = new KStreamBuilder();
-    KStream<String, Order> orders = builder.stream(Topics.ORDERS.keySerde(), Topics.ORDERS.valueSerde(), Topics.ORDERS.name());
-    KTable<Product, Integer> warehouseInventory = builder.table(Topics.WAREHOUSE_INVENTORY.keySerde(), Topics.WAREHOUSE_INVENTORY.valueSerde(), Topics.WAREHOUSE_INVENTORY.name());
+    final KStreamBuilder builder = new KStreamBuilder();
+    final KStream<String, Order> orders = builder.stream(Topics.ORDERS.keySerde(), Topics.ORDERS.valueSerde(), Topics.ORDERS.name());
+    final KTable<Product, Integer> warehouseInventory = builder.table(Topics.WAREHOUSE_INVENTORY.keySerde(), Topics.WAREHOUSE_INVENTORY.valueSerde(), Topics.WAREHOUSE_INVENTORY.name());
 
     //Create a store to reserve inventory whilst the order is processed.
     //This will be prepopulated from Kafka before the service starts processing
-    StateStoreSupplier reservedStock = Stores.create(RESERVED_STOCK_STORE_NAME)
+    final StateStoreSupplier reservedStock = Stores.create(RESERVED_STOCK_STORE_NAME)
         .withKeys(Topics.WAREHOUSE_INVENTORY.keySerde()).withValues(Serdes.Long())
         .persistent().build();
     builder.addStateStore(reservedStock);
@@ -94,7 +94,7 @@ public class InventoryService implements Service {
 
     @Override
     @SuppressWarnings("unchecked")
-    public void init(ProcessorContext context) {
+    public void init(final ProcessorContext context) {
       reservedStocksStore = (KeyValueStore<Product, Long>) context
           .getStateStore(RESERVED_STOCK_STORE_NAME);
     }
@@ -103,9 +103,9 @@ public class InventoryService implements Service {
     public KeyValue<String, OrderValidation> transform(final Product productId,
         final KeyValue<Order, Integer> orderAndStock) {
       //Process each order/inventory pair one at a time
-      OrderValidation validated;
-      Order order = orderAndStock.key;
-      Integer warehouseStockCount = orderAndStock.value;
+      final OrderValidation validated;
+      final Order order = orderAndStock.key;
+      final Integer warehouseStockCount = orderAndStock.value;
 
       //Look up locally 'reserved' stock from our state store
       Long reserved = reservedStocksStore.get(order.getProduct());
@@ -127,7 +127,7 @@ public class InventoryService implements Service {
     }
 
     @Override
-    public KeyValue<String, OrderValidation> punctuate(long timestamp) {
+    public KeyValue<String, OrderValidation> punctuate(final long timestamp) {
       return null;
     }
 
@@ -136,8 +136,8 @@ public class InventoryService implements Service {
     }
   }
 
-  public static void main(String[] args) throws Exception {
-    InventoryService service = new InventoryService();
+  public static void main(final String[] args) throws Exception {
+    final InventoryService service = new InventoryService();
     service.start(parseArgsAndConfigure(args));
     addShutdownHookAndBlock(service);
   }

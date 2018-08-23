@@ -120,7 +120,8 @@ public class EventDeduplicationLambdaIntegrationTest {
      *                    records; if it returns null, the record will not be considered for
      *                    de-duping but forwarded as-is.
      */
-    DeduplicationTransformer(long maintainDurationPerEventInMs, KeyValueMapper<K, V, E> idExtractor) {
+    DeduplicationTransformer(final long maintainDurationPerEventInMs,
+                             final KeyValueMapper<K, V, E> idExtractor) {
       if (maintainDurationPerEventInMs < 1) {
         throw new IllegalArgumentException("maintain duration per event must be >= 1");
       }
@@ -137,11 +138,11 @@ public class EventDeduplicationLambdaIntegrationTest {
     }
 
     public KeyValue<K, V> transform(final K key, final V value) {
-      E eventId = idExtractor.apply(key, value);
+      final E eventId = idExtractor.apply(key, value);
       if (eventId == null) {
         return KeyValue.pair(key, value);
       } else {
-        KeyValue<K, V> output;
+        final KeyValue<K, V> output;
         if (isDuplicate(eventId)) {
           output = null;
           updateTimestampOfExistingEventToPreventExpiry(eventId, context.timestamp());
@@ -154,21 +155,21 @@ public class EventDeduplicationLambdaIntegrationTest {
     }
 
     private boolean isDuplicate(final E eventId) {
-      long eventTime = context.timestamp();
-      WindowStoreIterator<Long> timeIterator = eventIdStore.fetch(
+      final long eventTime = context.timestamp();
+      final WindowStoreIterator<Long> timeIterator = eventIdStore.fetch(
           eventId,
           eventTime - leftDurationMs,
           eventTime + rightDurationMs);
-      boolean isDuplicate = timeIterator.hasNext();
+      final boolean isDuplicate = timeIterator.hasNext();
       timeIterator.close();
       return isDuplicate;
     }
 
-    private void updateTimestampOfExistingEventToPreventExpiry(final E eventId, long newTimestamp) {
+    private void updateTimestampOfExistingEventToPreventExpiry(final E eventId, final long newTimestamp) {
       eventIdStore.put(eventId, newTimestamp, newTimestamp);
     }
 
-    private void rememberNewEvent(final E eventId, long timestamp) {
+    private void rememberNewEvent(final E eventId, final long timestamp) {
       eventIdStore.put(eventId, timestamp, timestamp);
     }
 
@@ -188,19 +189,19 @@ public class EventDeduplicationLambdaIntegrationTest {
 
   @Test
   public void shouldRemoveDuplicatesFromTheInput() throws Exception {
-    String firstId = UUID.randomUUID().toString(); // e.g. "4ff3cb44-abcb-46e3-8f9a-afb7cc74fbb8"
-    String secondId = UUID.randomUUID().toString();
-    String thirdId = UUID.randomUUID().toString();
-    List<String> inputValues = Arrays.asList(firstId, secondId, firstId, firstId, secondId, thirdId,
+    final String firstId = UUID.randomUUID().toString(); // e.g. "4ff3cb44-abcb-46e3-8f9a-afb7cc74fbb8"
+    final String secondId = UUID.randomUUID().toString();
+    final String thirdId = UUID.randomUUID().toString();
+    final List<String> inputValues = Arrays.asList(firstId, secondId, firstId, firstId, secondId, thirdId,
         thirdId, firstId, secondId);
-    List<String> expectedValues = Arrays.asList(firstId, secondId, thirdId);
+    final List<String> expectedValues = Arrays.asList(firstId, secondId, thirdId);
 
     //
     // Step 1: Configure and start the processor topology.
     //
-    KStreamBuilder builder = new KStreamBuilder();
+    final KStreamBuilder builder = new KStreamBuilder();
 
-    Properties streamsConfiguration = new Properties();
+    final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "deduplication-lambda-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray().getClass().getName());
@@ -218,9 +219,9 @@ public class EventDeduplicationLambdaIntegrationTest {
     // The actual value depends on your use case.  To reduce memory and disk usage, you could
     // decrease the size to purge old windows more frequently at the cost of potentially missing out
     // on de-duplicating late-arriving records.
-    long maintainDurationPerEventInMs = TimeUnit.MINUTES.toMillis(10);
+    final long maintainDurationPerEventInMs = TimeUnit.MINUTES.toMillis(10);
 
-    StateStoreSupplier deduplicationStoreSupplier = Stores.create("eventId-store")
+    final StateStoreSupplier deduplicationStoreSupplier = Stores.create("eventId-store")
         .withKeys(Serdes.String()) // must match the return type of the Transformer's id extractor
         .withValues(Serdes.Long())
         .persistent()
@@ -229,8 +230,8 @@ public class EventDeduplicationLambdaIntegrationTest {
 
     builder.addStateStore(deduplicationStoreSupplier);
 
-    KStream<byte[], String> input = builder.stream(inputTopic);
-    KStream<byte[], String> deduplicated = input.transform(
+    final KStream<byte[], String> input = builder.stream(inputTopic);
+    final KStream<byte[], String> deduplicated = input.transform(
         // In this example, we assume that the record value as-is represents a unique event ID by
         // which we can perform de-duplication.  If your records are different, adapt the extractor
         // function as needed.
@@ -238,13 +239,13 @@ public class EventDeduplicationLambdaIntegrationTest {
         "eventId-store");
     deduplicated.to(outputTopic);
 
-    KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
     streams.start();
 
     //
     // Step 2: Produce some input data to the input topic.
     //
-    Properties producerConfig = new Properties();
+    final Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
@@ -255,14 +256,14 @@ public class EventDeduplicationLambdaIntegrationTest {
     //
     // Step 3: Verify the application's output data.
     //
-    Properties consumerConfig = new Properties();
+    final Properties consumerConfig = new Properties();
     consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "deduplication-integration-test-standard-consumer");
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
     consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    List<String> actualValues = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfig,
-        outputTopic, expectedValues.size());
+    final List<String> actualValues =
+      IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfig, outputTopic, expectedValues.size());
     streams.close();
     assertThat(actualValues).containsExactlyElementsOf(expectedValues);
   }

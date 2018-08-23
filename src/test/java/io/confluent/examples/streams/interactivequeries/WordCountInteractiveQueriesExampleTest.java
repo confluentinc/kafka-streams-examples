@@ -90,8 +90,8 @@ public class WordCountInteractiveQueriesExampleTest {
   }
 
   public static int randomFreeLocalPort() throws IOException {
-    ServerSocket s = new ServerSocket(0);
-    int port = s.getLocalPort();
+    final ServerSocket s = new ServerSocket(0);
+    final int port = s.getLocalPort();
     s.close();
     return port;
   }
@@ -107,7 +107,7 @@ public class WordCountInteractiveQueriesExampleTest {
       "streams",
       "kafka streams");
 
-    Properties producerConfig = new Properties();
+    final Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
@@ -215,7 +215,7 @@ public class WordCountInteractiveQueriesExampleTest {
    * directly after KafkaStreams.start(), so it can take some time
    * for the group to stabilize and all stores/instances to be available
    */
-  private List<HostStoreInfo> fetchHostInfo(Invocation.Builder request) throws InterruptedException {
+  private List<HostStoreInfo> fetchHostInfo(final Invocation.Builder request) throws InterruptedException {
     List<HostStoreInfo> hostStoreInfo = MicroserviceTestUtils.getWithRetries(request, new GenericType<List<HostStoreInfo>>(){}, 5);
     final long until = System.currentTimeMillis() + 60000L;
     while (hostStoreInfo.isEmpty() ||
@@ -233,7 +233,7 @@ public class WordCountInteractiveQueriesExampleTest {
     while (!results.containsAll(expectedResults) && System.currentTimeMillis() < timeout) {
       try {
         results = MicroserviceTestUtils.getWithRetries(request, new GenericType<List<KeyValueBean>>() {}, 5);
-      } catch (NotFoundException e) {
+      } catch (final NotFoundException e) {
         //
       }
     }
@@ -241,8 +241,8 @@ public class WordCountInteractiveQueriesExampleTest {
     return results;
   }
 
-  private Properties createStreamConfig(final String bootStrap, final int port, String stateDir) throws IOException {
-    Properties streamsConfiguration = new Properties();
+  private Properties createStreamConfig(final String bootStrap, final int port, final String stateDir) throws IOException {
+    final Properties streamsConfiguration = new Properties();
     // Give the Streams application a unique name.  The name must be unique in the Kafka cluster
     // against which the application is run.
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG,

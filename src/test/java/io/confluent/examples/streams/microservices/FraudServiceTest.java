@@ -74,7 +74,7 @@ public class FraudServiceTest extends MicroserviceTestUtils {
         new OrderValidation(id(6L), FRAUD_CHECK, FAIL),
         new OrderValidation(id(7L), FRAUD_CHECK, FAIL)
     );
-    List<OrderValidation> read = read(Topics.ORDER_VALIDATIONS, 8, CLUSTER.bootstrapServers());
+    final List<OrderValidation> read = read(Topics.ORDER_VALIDATIONS, 8, CLUSTER.bootstrapServers());
     assertThat(read).isEqualTo(expected);
   }
 }

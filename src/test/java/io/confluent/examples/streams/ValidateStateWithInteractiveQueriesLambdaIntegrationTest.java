@@ -62,7 +62,7 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
   @Test
   public void shouldComputeMaxValuePerKey() throws Exception {
     // A user may be listed multiple times.
-    List<KeyValue<String, Long>> inputUserClicks = Arrays.asList(
+    final List<KeyValue<String, Long>> inputUserClicks = Arrays.asList(
         new KeyValue<>("alice", 13L),
         new KeyValue<>("bob", 4L),
         new KeyValue<>("chao", 25L),
@@ -73,7 +73,7 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
         new KeyValue<>("bob", 3L)
     );
 
-    Map<String, Long> expectedMaxClicksPerUser = new HashMap<String, Long>() {
+    final Map<String, Long> expectedMaxClicksPerUser = new HashMap<String, Long>() {
       {
         put("alice", 78L);
         put("bob", 19L);
@@ -84,9 +84,9 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
     //
     // Step 1: Configure and start the processor topology.
     //
-    KStreamBuilder builder = new KStreamBuilder();
+    final KStreamBuilder builder = new KStreamBuilder();
 
-    Properties streamsConfiguration = new Properties();
+    final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "validating-with-interactive-queries-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
@@ -98,7 +98,7 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
-    KStream<String, Long> input = builder.stream(inputTopic);
+    final KStream<String, Long> input = builder.stream(inputTopic);
 
     // rolling MAX() aggregation
     input.groupByKey().aggregate(
@@ -117,13 +117,13 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
         "max-window-store"
     );
 
-    KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
     streams.start();
 
     //
     // Step 2: Produce some input data to the input topic.
     //
-    Properties producerConfig = new Properties();
+    final Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
@@ -134,9 +134,9 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
     //
     // Step 3: Validate the application's state by interactively querying its state stores.
     //
-    ReadOnlyKeyValueStore<String, Long> keyValueStore =
+    final ReadOnlyKeyValueStore<String, Long> keyValueStore =
         IntegrationTestUtils.waitUntilStoreIsQueryable("max-store", QueryableStoreTypes.keyValueStore(), streams);
-    ReadOnlyWindowStore<String, Long> windowStore =
+    final ReadOnlyWindowStore<String, Long> windowStore =
         IntegrationTestUtils.waitUntilStoreIsQueryable("max-window-store", QueryableStoreTypes.windowStore(), streams);
 
     // Wait a bit so that the input data can be fully processed to ensure that the stores can
