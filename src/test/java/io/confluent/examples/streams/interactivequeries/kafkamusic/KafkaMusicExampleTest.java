@@ -202,7 +202,7 @@ public class KafkaMusicExampleTest {
           songsStore =
               streams.store(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.keyValueStore());
           return songsStore.all().hasNext();
-        } catch (Exception e) {
+        } catch (final Exception e) {
           return false;
         }
       }, MAX_WAIT_MS, KafkaMusicExample.ALL_SONGS + " should be non-empty");
@@ -248,14 +248,15 @@ public class KafkaMusicExampleTest {
                            final List<SongPlayCountBean> expectedChart)
       throws InterruptedException {
     final Invocation.Builder genreChartRequest = client.target(url)
-        .request(MediaType.APPLICATION_JSON_TYPE);
+                                                       .request(MediaType.APPLICATION_JSON_TYPE);
 
     TestUtils.waitForCondition(() -> {
       try {
         final List<SongPlayCountBean> chart =
             genreChartRequest.get(new GenericType<List<SongPlayCountBean>>() {});
         return chart.equals(expectedChart);
-      } catch (Exception e) {
+      } catch (final Exception e) {
+
         return false;
       }
 

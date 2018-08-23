@@ -53,8 +53,8 @@ public class SpecificAvroIntegrationTest {
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
 
-  private static String inputTopic = "inputTopic";
-  private static String outputTopic = "outputTopic";
+  private static final String inputTopic = "inputTopic";
+  private static final String outputTopic = "outputTopic";
 
   @BeforeClass
   public static void startKafkaCluster() throws Exception {
@@ -64,16 +64,16 @@ public class SpecificAvroIntegrationTest {
 
   @Test
   public void shouldRoundTripSpecificAvroDataThroughKafka() throws Exception {
-    List<WikiFeed> inputValues = Collections.singletonList(
+    final List<WikiFeed> inputValues = Collections.singletonList(
         WikiFeed.newBuilder().setUser("alice").setIsNew(true).setContent("lorem ipsum").build()
     );
 
     //
     // Step 1: Configure and start the processor topology.
     //
-    StreamsBuilder builder = new StreamsBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
-    Properties streamsConfiguration = new Properties();
+    final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "specific-avro-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray().getClass().getName());
@@ -100,16 +100,16 @@ public class SpecificAvroIntegrationTest {
     specificAvroSerde.configure(
         Collections.singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl()),
         isKeySerde);
-    KStream<String, WikiFeed> stream = builder.stream(inputTopic);
+    final KStream<String, WikiFeed> stream = builder.stream(inputTopic);
     stream.to(outputTopic, Produced.with(stringSerde, specificAvroSerde));
 
-    KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();
 
     //
     // Step 2: Produce some input data to the input topic.
     //
-    Properties producerConfig = new Properties();
+    final Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
@@ -121,7 +121,7 @@ public class SpecificAvroIntegrationTest {
     //
     // Step 3: Verify the application's output data.
     //
-    Properties consumerConfig = new Properties();
+    final Properties consumerConfig = new Properties();
     consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "specific-avro-integration-test-standard-consumer");
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -129,8 +129,11 @@ public class SpecificAvroIntegrationTest {
     consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
     consumerConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl());
     consumerConfig.put(KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG, true);
-    List<WikiFeed> actualValues = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfig,
-        outputTopic, inputValues.size());
+    final List<WikiFeed> actualValues = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(
+        consumerConfig,
+        outputTopic,
+        inputValues.size()
+    );
     streams.close();
     assertEquals(inputValues, actualValues);
   }

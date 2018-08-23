@@ -16,6 +16,7 @@
 package io.confluent.examples.streams.interactivequeries.kafkamusic;
 
 import io.confluent.examples.streams.avro.Song;
+import io.confluent.examples.streams.avro.SongPlayCount;
 import io.confluent.examples.streams.interactivequeries.HostStoreInfo;
 import io.confluent.examples.streams.interactivequeries.MetadataService;
 import org.apache.kafka.common.serialization.LongSerializer;
@@ -59,7 +60,7 @@ public class MusicPlaysRestService {
   private final HostInfo hostInfo;
   private final Client client = ClientBuilder.newBuilder().register(JacksonFeature.class).build();
   private Server jettyServer;
-  private LongSerializer serializer = new LongSerializer();
+  private final LongSerializer serializer = new LongSerializer();
   private static final Logger log = LoggerFactory.getLogger(MusicPlaysRestService.class);
 
 
@@ -129,14 +130,14 @@ public class MusicPlaysRestService {
                                                final String storeName) {
 
     final ReadOnlyKeyValueStore<String, KafkaMusicExample.TopFiveSongs> topFiveStore =
-        streams.store(storeName, QueryableStoreTypes.<String, KafkaMusicExample.TopFiveSongs>keyValueStore());
+        streams.store(storeName, QueryableStoreTypes.keyValueStore());
     // Get the value from the store
     final KafkaMusicExample.TopFiveSongs value = topFiveStore.get(key);
     if (value == null) {
       throw new NotFoundException(String.format("Unable to find value in %s for key %s", storeName, key));
     }
     final List<SongPlayCountBean> results = new ArrayList<>();
-    value.forEach(songPlayCount -> {
+    for (final SongPlayCount songPlayCount : value) {
       final HostStoreInfo
           host =
           metadataService.streamsMetadataForStoreAndKey(KafkaMusicExample.ALL_SONGS, songPlayCount
@@ -150,30 +151,28 @@ public class MusicPlaysRestService {
                                         host.getHost(),
                                         host.getPort(),
                                         songPlayCount.getSongId()))
-                .request(MediaType.APPLICATION_JSON_TYPE)
-                .get(SongBean.class);
-        results.add(new SongPlayCountBean(song.getArtist(),song.getAlbum(), song.getName(),
+                  .request(MediaType.APPLICATION_JSON_TYPE)
+                  .get(SongBean.class);
+        results.add(new SongPlayCountBean(song.getArtist(), song.getAlbum(), song.getName(),
                                           songPlayCount.getPlays()));
       } else {
         // look in the local store
         final ReadOnlyKeyValueStore<Long, Song> songStore = streams.store(KafkaMusicExample.ALL_SONGS,
-                                                                          QueryableStoreTypes.<Long, Song>keyValueStore());
+                                                                          QueryableStoreTypes.keyValueStore());
         final Song song = songStore.get(songPlayCount.getSongId());
-        results.add(new SongPlayCountBean(song.getArtist(),song.getAlbum(), song.getName(),
+        results.add(new SongPlayCountBean(song.getArtist(), song.getAlbum(), song.getName(),
                                           songPlayCount.getPlays()));
       }
-
-
-    });
+    }
     return results;
   }
 
   @GET()
   @Path("/song/{id}")
   @Produces(MediaType.APPLICATION_JSON)
-  public SongBean song(@PathParam("id") Long songId) {
+  public SongBean song(@PathParam("id") final Long songId) {
     final ReadOnlyKeyValueStore<Long, Song> songStore = streams.store(KafkaMusicExample.ALL_SONGS,
-                                                                      QueryableStoreTypes.<Long, Song>keyValueStore());
+                                                                      QueryableStoreTypes.keyValueStore());
     final Song song = songStore.get(songId);
     if (song == null) {
       throw new NotFoundException(String.format("Song with id [%d] was not found", songId));
@@ -202,27 +201,27 @@ public class MusicPlaysRestService {
   @GET()
   @Path("/instances/{storeName}")
   @Produces(MediaType.APPLICATION_JSON)
-  public List<HostStoreInfo> streamsMetadataForStore(@PathParam("storeName") String store) {
+  public List<HostStoreInfo> streamsMetadataForStore(@PathParam("storeName") final String store) {
     return metadataService.streamsMetadataForStore(store);
   }
 
   /**
    * Start an embedded Jetty Server
-   * @throws Exception
+   * @throws Exception from jetty
    */
   void start() throws Exception {
-    ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+    final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
     context.setContextPath("/");
 
     jettyServer = new Server();
     jettyServer.setHandler(context);
 
-    ResourceConfig rc = new ResourceConfig();
+    final ResourceConfig rc = new ResourceConfig();
     rc.register(this);
     rc.register(JacksonFeature.class);
 
-    ServletContainer sc = new ServletContainer(rc);
-    ServletHolder holder = new ServletHolder(sc);
+    final ServletContainer sc = new ServletContainer(rc);
+    final ServletHolder holder = new ServletHolder(sc);
     context.addServlet(holder, "/*");
   
     final ServerConnector connector = new ServerConnector(jettyServer);
@@ -242,7 +241,7 @@ public class MusicPlaysRestService {
 
   /**
    * Stop the Jetty Server
-   * @throws Exception
+   * @throws Exception from jetty
    */
   void stop() throws Exception {
     if (jettyServer != null) {

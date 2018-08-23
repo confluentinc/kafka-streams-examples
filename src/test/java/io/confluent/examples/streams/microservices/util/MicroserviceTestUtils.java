@@ -39,7 +39,7 @@ import static java.util.Collections.singletonList;
 public class MicroserviceTestUtils {
 
   private static final Logger log = LoggerFactory.getLogger(MicroserviceTestUtils.class);
-  private static List<TopicTailer> tailers = new ArrayList<>();
+  private static final List<TopicTailer> tailers = new ArrayList<>();
   private static int consumerCounter;
 
   @ClassRule
@@ -63,49 +63,52 @@ public class MicroserviceTestUtils {
     }
   }
 
-  protected static Properties producerConfig(EmbeddedSingleNodeKafkaCluster cluster) {
-    Properties producerConfig = new Properties();
+  protected static Properties producerConfig(final EmbeddedSingleNodeKafkaCluster cluster) {
+    final Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers());
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
     return producerConfig;
   }
 
-  public static <K, V> List<V> read(Schemas.Topic<K, V> topic, int numberToRead,
-      String bootstrapServers) throws InterruptedException {
+  public static <K, V> List<V> read(final Schemas.Topic<K, V> topic, final int numberToRead,
+                                    final String bootstrapServers) throws InterruptedException {
     return readKeyValues(topic, numberToRead, bootstrapServers).stream().map(kv -> kv.value)
         .collect(Collectors.toList());
   }
 
-  public static <K, V> List<K> readKeys(Schemas.Topic<K, V> topic, int numberToRead,
-      String bootstrapServers) throws InterruptedException {
+  public static <K, V> List<K> readKeys(final Schemas.Topic<K, V> topic, final int numberToRead,
+                                        final String bootstrapServers) throws InterruptedException {
     return readKeyValues(topic, numberToRead, bootstrapServers).stream().map(kv -> kv.key)
         .collect(Collectors.toList());
   }
 
-  public static <K, V> List<KeyValue<K, V>> readKeyValues(Schemas.Topic<K, V> topic,
-      int numberToRead, String bootstrapServers) throws InterruptedException {
-    Deserializer<K> keyDes = topic.keySerde().deserializer();
-    Deserializer<V> valDes = topic.valueSerde().deserializer();
-    String topicName = topic.name();
+  public static <K, V> List<KeyValue<K, V>> readKeyValues(final Schemas.Topic<K, V> topic,
+                                                          final int numberToRead,
+                                                          final String bootstrapServers) throws InterruptedException {
+    final Deserializer<K> keyDes = topic.keySerde().deserializer();
+    final Deserializer<V> valDes = topic.valueSerde().deserializer();
+    final String topicName = topic.name();
     return readKeysAndValues(numberToRead, bootstrapServers, keyDes, valDes, topicName);
   }
 
-  private static <K, V> List<KeyValue<K, V>> readKeysAndValues(int numberToRead,
-      String bootstrapServers, Deserializer<K> keyDes, Deserializer<V> valDes, String topicName)
-      throws InterruptedException {
-    Properties consumerConfig = new Properties();
+  private static <K, V> List<KeyValue<K, V>> readKeysAndValues(final int numberToRead,
+                                                               final String bootstrapServers,
+                                                               final Deserializer<K> keyDes,
+                                                               final Deserializer<V> valDes,
+                                                               final String topicName) throws InterruptedException {
+    final Properties consumerConfig = new Properties();
     consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "Test-Reader-" + consumerCounter++);
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-    KafkaConsumer<K, V> consumer = new KafkaConsumer<>(consumerConfig, keyDes, valDes);
+    final KafkaConsumer<K, V> consumer = new KafkaConsumer<>(consumerConfig, keyDes, valDes);
     consumer.subscribe(singletonList(topicName));
 
-    List<KeyValue<K, V>> actualValues = new ArrayList<>();
+    final List<KeyValue<K, V>> actualValues = new ArrayList<>();
     TestUtils.waitForCondition(() -> {
-      ConsumerRecords<K, V> records = consumer.poll(100);
-      for (ConsumerRecord<K, V> record : records) {
+      final ConsumerRecords<K, V> records = consumer.poll(100);
+      for (final ConsumerRecord<K, V> record : records) {
         actualValues.add(KeyValue.pair(record.key(), record.value()));
       }
       return actualValues.size() == numberToRead;
@@ -114,9 +117,9 @@ public class MicroserviceTestUtils {
     return actualValues;
   }
 
-  private static <K, V> void tailAllTopicsToConsole(Schemas.Topic<K, V> topic,
-      String bootstrapServers) {
-    TopicTailer task = new TopicTailer<>(topic, bootstrapServers);
+  private static <K, V> void tailAllTopicsToConsole(final Schemas.Topic<K, V> topic,
+                                                    final String bootstrapServers) {
+    final TopicTailer task = new TopicTailer<>(topic, bootstrapServers);
     tailers.add(task);
     Executors.newSingleThreadExecutor().execute(task);
   }
@@ -125,21 +128,21 @@ public class MicroserviceTestUtils {
     tailers.forEach(TopicTailer::stop);
   }
 
-  public static void tailAllTopicsToConsole(String bootstrapServers) {
-    for (Topic t : Topics.ALL.values()) {
+  public static void tailAllTopicsToConsole(final String bootstrapServers) {
+    for (final Topic t : Topics.ALL.values()) {
       tailAllTopicsToConsole(t, bootstrapServers);
     }
   }
 
   static class TopicTailer<K, V> implements Runnable {
 
-    private SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss.SSS");
+    private final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss.SSS");
     private boolean running = true;
     private boolean closed = false;
-    private Topic<K, V> topic;
-    private String bootstrapServers;
+    private final Topic<K, V> topic;
+    private final String bootstrapServers;
 
-    public TopicTailer(Schemas.Topic<K, V> topic, String bootstrapServers) {
+    public TopicTailer(final Schemas.Topic<K, V> topic, final String bootstrapServers) {
       this.topic = topic;
       this.bootstrapServers = bootstrapServers;
     }
@@ -147,18 +150,21 @@ public class MicroserviceTestUtils {
     @Override
     public void run() {
       try {
-        Properties consumerConfig = new Properties();
+        final Properties consumerConfig = new Properties();
         consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "Test-Reader-" + consumerCounter++);
         consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-        KafkaConsumer<K, V> consumer = new KafkaConsumer<>(consumerConfig,
-            topic.keySerde().deserializer(), topic.valueSerde().deserializer());
+        final KafkaConsumer<K, V> consumer = new KafkaConsumer<>(
+            consumerConfig,
+            topic.keySerde().deserializer(),
+            topic.valueSerde().deserializer()
+        );
         consumer.subscribe(singletonList(topic.name()));
 
         while (running) {
-          ConsumerRecords<K, V> records = consumer.poll(100);
-          for (ConsumerRecord<K, V> record : records) {
+          final ConsumerRecords<K, V> records = consumer.poll(100);
+          for (final ConsumerRecord<K, V> record : records) {
             log.info("Tailer[" + topic.name() + "-Offset:" + record.offset() + "]: " + record.key()
                 + "->" + record.value());
           }
@@ -175,55 +181,59 @@ public class MicroserviceTestUtils {
         try {
           Thread.sleep(200);
           log.info("Closing tailer...");
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
           e.printStackTrace();
         }
       }
     }
   }
 
-  public static <K, V> void send(Topic<K, V> topic, KeyValue<K, V> record) {
+  public static <K, V> void send(final Topic<K, V> topic, final KeyValue<K, V> record) {
     send(topic, Collections.singletonList(record));
   }
 
-  public static <K, V> void send(Topic<K, V> topic, Collection<KeyValue<K, V>> stuff) {
-    try (KafkaProducer<K, V> producer = new KafkaProducer<>(
+  public static <K, V> void send(final Topic<K, V> topic, final Collection<KeyValue<K, V>> stuff) {
+    try (final KafkaProducer<K, V> producer = new KafkaProducer<>(
         producerConfig(CLUSTER),
         topic.keySerde().serializer(),
         topic.valueSerde().serializer()))
     {
-      for (KeyValue<K, V> order : stuff) {
+      for (final KeyValue<K, V> order : stuff) {
         producer.send(new ProducerRecord<>(topic.name(), order.key, order.value)).get();
       }
-    } catch (InterruptedException | ExecutionException e) {
+    } catch (final InterruptedException | ExecutionException e) {
       e.printStackTrace();
     }
   }
 
-  public static void sendOrders(List<Order> orders) {
-    List<KeyValue<String, Order>> collect = orders.stream().map(o -> new KeyValue<>(o.getId(), o))
+  public static void sendOrders(final List<Order> orders) {
+    final List<KeyValue<String, Order>> collect = orders
+        .stream()
+        .map(o -> new KeyValue<>(o.getId(), o))
         .collect(Collectors.toList());
     send(Topics.ORDERS, collect);
   }
 
-  public static void sendOrderValuations(List<OrderValidation> orderValidations) {
-    List<KeyValue<String, OrderValidation>> collect = orderValidations.stream().map(o -> new KeyValue<>(o.getOrderId(), o))
+  public static void sendOrderValuations(final List<OrderValidation> orderValidations) {
+    final List<KeyValue<String, OrderValidation>> collect = orderValidations
+        .stream()
+        .map(o -> new KeyValue<>(o.getOrderId(), o))
         .collect(Collectors.toList());
     send(Topics.ORDER_VALIDATIONS, collect);
   }
 
-  public static void sendInventory(List<KeyValue<Product, Integer>> inventory,
-      Schemas.Topic<Product, Integer> topic) {
-    try (KafkaProducer<Product, Integer> stockProducer = new KafkaProducer<>(
+  public static void sendInventory(final List<KeyValue<Product, Integer>> inventory,
+                                   final Schemas.Topic<Product, Integer> topic) {
+    try (final KafkaProducer<Product, Integer> stockProducer = new KafkaProducer<>(
         producerConfig(CLUSTER),
         topic.keySerde().serializer(),
         Schemas.Topics.WAREHOUSE_INVENTORY.valueSerde().serializer()))
     {
-      for (KeyValue<Product, Integer> kv : inventory) {
+      for (final KeyValue<Product, Integer> kv : inventory) {
         stockProducer.send(new ProducerRecord<>(Topics.WAREHOUSE_INVENTORY.name(), kv.key, kv.value))
             .get();
       }
-    } catch (InterruptedException | ExecutionException e) {
+    } catch (final InterruptedException | ExecutionException e) {
       e.printStackTrace();
     }
   }

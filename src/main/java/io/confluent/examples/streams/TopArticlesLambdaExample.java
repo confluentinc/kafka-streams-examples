@@ -201,11 +201,11 @@ public class TopArticlesLambdaExample {
         // the selector
         (windowedArticle, count) -> {
           // project on the industry field for key
-          Windowed<String> windowedIndustry =
+          final Windowed<String> windowedIndustry =
             new Windowed<>(windowedArticle.key().get("industry").toString(),
               windowedArticle.window());
           // add the page into the value
-          GenericRecord viewStats = new GenericData.Record(schema);
+          final GenericRecord viewStats = new GenericData.Record(schema);
           viewStats.put("page", windowedArticle.key().get("page"));
           viewStats.put("user", "user");
           viewStats.put("industry", windowedArticle.key().get("industry"));
