@@ -7,14 +7,14 @@ import java.util.Random;
 public class ExampleTestUtils {
 
     public static int randomFreeLocalPort() throws IOException {
-        ServerSocket s = new ServerSocket(0);
-        int port = s.getLocalPort();
+        final ServerSocket s = new ServerSocket(0);
+        final int port = s.getLocalPort();
         s.close();
         return port;
     }
 
     public static String randomValidHost() {
-        Random r = new Random();
+        final Random r = new Random();
 
         if (r.nextFloat() < 0.1) {
             return "localhost";

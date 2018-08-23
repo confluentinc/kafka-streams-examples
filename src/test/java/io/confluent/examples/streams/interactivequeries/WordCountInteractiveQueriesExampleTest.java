@@ -141,8 +141,6 @@ public class WordCountInteractiveQueriesExampleTest {
     });
     kafkaStreams.start();
 
-    System.out.println("Streams application service starts at " + baseUrl);
-
     assertTrue("streams failed to start within timeout", startupLatch.await(30, TimeUnit.SECONDS));
 
     bindHostAndStartRestProxy(port, host);
