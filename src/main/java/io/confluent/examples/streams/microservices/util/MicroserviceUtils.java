@@ -60,10 +60,6 @@ public class MicroserviceUtils {
     config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     config.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, "exactly_once");
     config.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 1); //commit as fast as possible
-    config.put(StreamsConfig.PRODUCER_PREFIX + ProducerConfig.INTERCEPTOR_CLASSES_CONFIG,
-        "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor");
-    config.put(StreamsConfig.CONSUMER_PREFIX + ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG,
-        "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor");
 
     return config;
   }
@@ -169,7 +165,6 @@ public class MicroserviceUtils {
     producerConfig.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, String.valueOf(Integer.MAX_VALUE));
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-    producerConfig.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor");
 
     return new KafkaProducer<>(producerConfig,
         topic.keySerde().serializer(),

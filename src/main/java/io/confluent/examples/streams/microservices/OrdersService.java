@@ -333,10 +333,6 @@ public class OrdersService implements Service {
   private Properties config(String bootstrapServers) {
     Properties props = baseStreamsConfig(bootstrapServers, "/tmp/kafka-streams", SERVICE_APP_ID);
     props.put(StreamsConfig.APPLICATION_SERVER_CONFIG, host + ":" + port);
-    props.put(StreamsConfig.PRODUCER_PREFIX + ProducerConfig.INTERCEPTOR_CLASSES_CONFIG,
-        "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor");
-    props.put(StreamsConfig.CONSUMER_PREFIX + ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG,
-        "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor");
     return props;
   }
 

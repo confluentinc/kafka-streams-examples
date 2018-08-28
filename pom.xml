@@ -210,11 +210,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.confluent</groupId>
-            <artifactId>monitoring-interceptors</artifactId>
-            <version>5.0.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-streams</artifactId>
             <version>${kafka.version}</version>

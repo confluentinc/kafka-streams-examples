@@ -112,7 +112,6 @@ public class OrderDetailsService implements Service {
     producerConfig.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, String.valueOf(Integer.MAX_VALUE));
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-    producerConfig.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor");
 
     producer = new KafkaProducer<>(producerConfig,
         Topics.ORDER_VALIDATIONS.keySerde().serializer(),
@@ -125,7 +124,6 @@ public class OrderDetailsService implements Service {
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, CONSUMER_GROUP_ID);
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     consumerConfig.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
-    consumerConfig.put(ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG, "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor");
 
     consumer = new KafkaConsumer<>(consumerConfig,
         Topics.ORDERS.keySerde().deserializer(),
