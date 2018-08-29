@@ -146,19 +146,9 @@ public class WikipediaFeedAvroExample {
     // aggregate the new feed counts of by user
     final KTable<String, Long> aggregated = feeds
         // filter out old feeds
-        .filter(new Predicate<String, WikiFeed>() {
-          @Override
-          public boolean test(final String dummy, final WikiFeed value) {
-            return value.getIsNew();
-          }
-        })
+        .filter((dummy, value) -> value.getIsNew())
         // map the user id as key
-        .map(new KeyValueMapper<String, WikiFeed, KeyValue<String, WikiFeed>>() {
-          @Override
-          public KeyValue<String, WikiFeed> apply(final String key, final WikiFeed value) {
-            return new KeyValue<>(value.getUser(), value);
-          }
-        })
+        .map((KeyValueMapper<String, WikiFeed, KeyValue<String, WikiFeed>>) (key, value) -> new KeyValue<>(value.getUser(), value))
         // no need to specify explicit serdes because the resulting key and value types match our default serde settings
         .groupByKey()
         .count();
