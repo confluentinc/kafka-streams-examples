@@ -49,8 +49,6 @@ public class EmailService implements Service {
   }
 
   private KafkaStreams processStreams(final String bootstrapServers, final String stateDir) {
-    Joined<String, Order, Payment> serdes = Joined
-        .with(ORDERS.keySerde(), ORDERS.valueSerde(), PAYMENTS.valueSerde());
 
     final StreamsBuilder builder = new StreamsBuilder();
 
