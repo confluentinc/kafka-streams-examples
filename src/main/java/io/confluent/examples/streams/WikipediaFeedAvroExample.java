@@ -130,6 +130,9 @@ public class WikipediaFeedAvroExample {
     // in order to keep this example interactive.
     streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 10 * 1000);
 
+    // if Confluent monitoring interceptors are found on the classpath
+    // then the producer and consumer interceptors are added to the
+    // streams application if not then no action is taken
     MonitoringInterceptorUtils.maybeConfigureInterceptors(streamsConfiguration);
 
     final Serde<String> stringSerde = Serdes.String();
