@@ -60,6 +60,7 @@ public class MicroserviceUtils {
     config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     config.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, "exactly_once");
     config.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 1); //commit as fast as possible
+
     return config;
   }
 

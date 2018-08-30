@@ -49,8 +49,6 @@ public class EmailService implements Service {
   }
 
   private KafkaStreams processStreams(final String bootstrapServers, final String stateDir) {
-    final Joined<String, Order, Payment> serdes = Joined
-        .with(ORDERS.keySerde(), ORDERS.valueSerde(), PAYMENTS.valueSerde());
 
     final StreamsBuilder builder = new StreamsBuilder();
 
@@ -63,6 +61,9 @@ public class EmailService implements Service {
         .selectKey((s, payment) -> payment.getOrderId());
     final GlobalKTable<Long, Customer> customers = builder.globalTable(CUSTOMERS.name(),
         Consumed.with(CUSTOMERS.keySerde(), CUSTOMERS.valueSerde()));
+
+    Joined<String, Order, Payment> serdes = Joined
+        .with(ORDERS.keySerde(), ORDERS.valueSerde(), PAYMENTS.valueSerde());
 
     //Join the two streams and the table then send an email for each
     orders.join(payments, EmailTuple::new,
