@@ -62,7 +62,7 @@ public class EmailService implements Service {
     final GlobalKTable<Long, Customer> customers = builder.globalTable(CUSTOMERS.name(),
         Consumed.with(CUSTOMERS.keySerde(), CUSTOMERS.valueSerde()));
 
-    Joined<String, Order, Payment> serdes = Joined
+    final Joined<String, Order, Payment> serdes = Joined
         .with(ORDERS.keySerde(), ORDERS.valueSerde(), PAYMENTS.valueSerde());
 
     //Join the two streams and the table then send an email for each
