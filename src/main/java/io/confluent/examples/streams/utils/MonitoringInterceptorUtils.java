@@ -7,9 +7,12 @@ import org.apache.kafka.streams.StreamsConfig;
 import java.util.Properties;
 
 /**
- * Utility helper class that will enable MonitoringInterceptors when a Kafka Streams application is deployed in Confluent Enterprise.
+ * Utility helper class that will enable Monitoring Interceptors when
+ * found on the classpath of a Kafka Streams application.
  *
- * Note that this requires you to run Confluent Control Center
+ * For more information on Confluent Monitoring Interceptors go to
+ * https://docs.confluent.io/current/control-center/docs/installation/clients.html#installing-interceptors
+ *
  */
 public class MonitoringInterceptorUtils {
 
@@ -24,14 +27,14 @@ public class MonitoringInterceptorUtils {
         try {
             Class.forName(PRODUCER_INTERCEPTOR);
         } catch (final ClassNotFoundException e) {
-            System.out.println("Producer interceptor not found, skipping");
+            System.out.println("Monitoring Producer Interceptors not found, skipping");
             return;
         }
 
         try {
             Class.forName(CONSUMER_INTERCEPTOR);
         } catch (final ClassNotFoundException e) {
-            System.out.println("Consumer interceptor not found, skipping");
+            System.out.println("Monitoring Consumer Interceptors not found, skipping");
             return;
         }
         streamsConfig.put(StreamsConfig.PRODUCER_PREFIX + ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, PRODUCER_INTERCEPTOR);
