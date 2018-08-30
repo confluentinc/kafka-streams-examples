@@ -10,7 +10,7 @@ import java.util.Properties;
  * Utility helper class that will enable Monitoring Interceptors when
  * found on the classpath of a Kafka Streams application.
  *
- * For more information on Confluent Monitoring Interceptors go to
+ * More information on Confluent Monitoring Interceptors can be found here:
  * https://docs.confluent.io/current/control-center/docs/installation/clients.html#installing-interceptors
  *
  */
