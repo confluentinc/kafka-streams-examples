@@ -38,6 +38,20 @@ public class ValidationsAggregatorService implements Service {
 
   private static final Logger log = LoggerFactory.getLogger(ValidationsAggregatorService.class);
   private static final String ORDERS_SERVICE_APP_ID = "orders-service";
+  private final Consumed<String, OrderValidation> serdes1 = Consumed
+      .with(ORDER_VALIDATIONS.keySerde(), ORDER_VALIDATIONS.valueSerde());
+  private final Consumed<String, Order> serdes2 = Consumed.with(ORDERS.keySerde(),
+      ORDERS.valueSerde());
+  private final Serialized<String, OrderValidation> serdes3 = Serialized
+      .with(ORDER_VALIDATIONS.keySerde(), ORDER_VALIDATIONS.valueSerde());
+  private final Joined<String, Long, Order> serdes4 = Joined
+      .with(ORDERS.keySerde(), Serdes.Long(), ORDERS.valueSerde());
+  private final Produced<String, Order> serdes5 = Produced
+      .with(ORDERS.keySerde(), ORDERS.valueSerde());
+  private final Serialized<String, Order> serdes6 = Serialized
+      .with(ORDERS.keySerde(), ORDERS.valueSerde());
+  private final Joined<String, OrderValidation, Order> serdes7 = Joined
+      .with(ORDERS.keySerde(), ORDER_VALIDATIONS.valueSerde(), ORDERS.valueSerde());
 
   private KafkaStreams streams;
 
@@ -53,21 +67,6 @@ public class ValidationsAggregatorService implements Service {
       final String bootstrapServers,
       final String stateDir) {
     final int numberOfRules = 3; //TODO put into a KTable to make dynamically configurable
-
-    Consumed<String, OrderValidation> serdes1 = Consumed
-      .with(ORDER_VALIDATIONS.keySerde(), ORDER_VALIDATIONS.valueSerde());
-    Consumed<String, Order> serdes2 = Consumed.with(ORDERS.keySerde(),
-      ORDERS.valueSerde());
-    Serialized<String, OrderValidation> serdes3 = Serialized
-      .with(ORDER_VALIDATIONS.keySerde(), ORDER_VALIDATIONS.valueSerde());
-    Joined<String, Long, Order> serdes4 = Joined
-      .with(ORDERS.keySerde(), Serdes.Long(), ORDERS.valueSerde());
-    Produced<String, Order> serdes5 = Produced
-      .with(ORDERS.keySerde(), ORDERS.valueSerde());
-    Serialized<String, Order> serdes6 = Serialized
-      .with(ORDERS.keySerde(), ORDERS.valueSerde());
-    Joined<String, OrderValidation, Order> serdes7 = Joined
-      .with(ORDERS.keySerde(), ORDER_VALIDATIONS.valueSerde(), ORDERS.valueSerde());
 
     StreamsBuilder builder = new StreamsBuilder();
     KStream<String, OrderValidation> validations = builder
@@ -124,8 +123,9 @@ public class ValidationsAggregatorService implements Service {
   }
 
   public static void main(String[] args) throws Exception {
+    final String bootstrapServers = parseArgsAndConfigure(args);
     ValidationsAggregatorService service = new ValidationsAggregatorService();
-    service.start(parseArgsAndConfigure(args), "/tmp/kafka-streams");
+    service.start(bootstrapServers, "/tmp/kafka-streams");
     addShutdownHookAndBlock(service);
   }
 }
