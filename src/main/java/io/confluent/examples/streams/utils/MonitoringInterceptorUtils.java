@@ -37,8 +37,8 @@ public class MonitoringInterceptorUtils {
             System.out.println("Monitoring Consumer Interceptors not found, skipping");
             return;
         }
-        streamsConfig.put(StreamsConfig.PRODUCER_PREFIX + ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, PRODUCER_INTERCEPTOR);
-        streamsConfig.put(StreamsConfig.CONSUMER_PREFIX + ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG, CONSUMER_INTERCEPTOR);
+        streamsConfig.put(StreamsConfig.producerPrefix(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG), PRODUCER_INTERCEPTOR);
+        streamsConfig.put(StreamsConfig.consumerPrefix(ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG), CONSUMER_INTERCEPTOR);
     }
 
 }

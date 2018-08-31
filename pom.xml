@@ -151,7 +151,12 @@
             <artifactId>jackson-annotations</artifactId>
             <version>${jackson.version}</version>
         </dependency>
-
+        <!--
+            This dependency is included to demonstrate the use of
+            Confluent Monitoring Interceptors in conjunction with
+            Kafka Streams but isn't a required
+            dependency for running Kafka Streams.
+        -->
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>monitoring-interceptors</artifactId>
