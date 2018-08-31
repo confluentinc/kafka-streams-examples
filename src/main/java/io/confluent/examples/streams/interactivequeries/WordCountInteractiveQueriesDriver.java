@@ -68,8 +68,6 @@ public class WordCountInteractiveQueriesDriver {
     producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 
-    MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(producerConfig);
-
     final KafkaProducer<String, String>
         producer =
         new KafkaProducer<>(producerConfig, new StringSerializer(), new StringSerializer());
