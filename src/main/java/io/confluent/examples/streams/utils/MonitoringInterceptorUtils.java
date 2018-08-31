@@ -23,22 +23,45 @@ public class MonitoringInterceptorUtils {
     private MonitoringInterceptorUtils() {
     }
 
-    public static void maybeConfigureInterceptors(final Properties streamsConfig) {
-        try {
-            Class.forName(PRODUCER_INTERCEPTOR);
-        } catch (final ClassNotFoundException e) {
-            System.out.println("Monitoring Producer Interceptors not found, skipping");
-            return;
+    public static void maybeConfigureInterceptorsStreams(final Properties streamsConfig) {
+        if (hasMonitoringConsumerInterceptor() && hasMonitoringProducerInterceptor()) {
+            streamsConfig.put(StreamsConfig.producerPrefix(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG), PRODUCER_INTERCEPTOR);
+            streamsConfig.put(StreamsConfig.consumerPrefix(ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG), CONSUMER_INTERCEPTOR);
         }
+    }
 
-        try {
-            Class.forName(CONSUMER_INTERCEPTOR);
-        } catch (final ClassNotFoundException e) {
-            System.out.println("Monitoring Consumer Interceptors not found, skipping");
-            return;
+    public static void maybeConfigureInterceptorsProducer(final Properties producerConfig) {
+        if (hasMonitoringProducerInterceptor()) {
+            producerConfig.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, PRODUCER_INTERCEPTOR);
         }
-        streamsConfig.put(StreamsConfig.producerPrefix(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG), PRODUCER_INTERCEPTOR);
-        streamsConfig.put(StreamsConfig.consumerPrefix(ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG), CONSUMER_INTERCEPTOR);
+    }
+
+    public static void maybeConfigureInterceptorsConsumer(final Properties consumerConfig) {
+         if(hasMonitoringConsumerInterceptor()) {
+             consumerConfig.put(ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG, CONSUMER_INTERCEPTOR);
+         }
+    }
+
+
+
+    private static boolean hasMonitoringProducerInterceptor() {
+        return hasMonitoringInterceptor(PRODUCER_INTERCEPTOR);
+    }
+
+    private static boolean hasMonitoringConsumerInterceptor() {
+        return hasMonitoringInterceptor(CONSUMER_INTERCEPTOR);
+    }
+
+    private static boolean hasMonitoringInterceptor(final String className) {
+        boolean hasInterceptor = true;
+        try {
+            Class.forName(className);
+        } catch (final ClassNotFoundException e) {
+            final String interceptorTypeShortName = className.substring(className.lastIndexOf('.'));
+            System.out.println(String.format("%s not found, skipping", interceptorTypeShortName));
+            hasInterceptor = false;
+        }
+        return hasInterceptor;
     }
 
 }

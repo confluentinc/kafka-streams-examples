@@ -15,6 +15,7 @@
  */
 package io.confluent.examples.streams.interactivequeries;
 
+import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -66,6 +67,8 @@ public class WordCountInteractiveQueriesDriver {
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
     producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+
+    MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(producerConfig);
 
     final KafkaProducer<String, String>
         producer =
