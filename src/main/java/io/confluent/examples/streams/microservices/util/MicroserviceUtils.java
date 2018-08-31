@@ -3,6 +3,8 @@ package io.confluent.examples.streams.microservices.util;
 import io.confluent.examples.streams.avro.microservices.Product;
 import io.confluent.examples.streams.microservices.Service;
 import io.confluent.examples.streams.microservices.domain.Schemas;
+import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
+
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -60,6 +62,7 @@ public class MicroserviceUtils {
     config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     config.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, "exactly_once");
     config.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 1); //commit as fast as possible
+    MonitoringInterceptorUtils.maybeConfigureInterceptors(config);
 
     return config;
   }

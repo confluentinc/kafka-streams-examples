@@ -13,6 +13,7 @@ import org.apache.kafka.streams.kstream.Predicate;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.StreamsConfig;
+
 import org.eclipse.jetty.server.Server;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ManagedAsync;
@@ -57,6 +58,7 @@ import static io.confluent.examples.streams.microservices.util.MicroserviceUtils
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.setTimeout;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.startJetty;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.startProducer;
+import static io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 import static org.apache.kafka.streams.state.StreamsMetadata.NOT_AVAILABLE;
 
 /**
@@ -330,6 +332,7 @@ public class OrdersService implements Service {
   private Properties config(String bootstrapServers) {
     Properties props = baseStreamsConfig(bootstrapServers, "/tmp/kafka-streams", SERVICE_APP_ID);
     props.put(StreamsConfig.APPLICATION_SERVER_CONFIG, host + ":" + port);
+    MonitoringInterceptorUtils.maybeConfigureInterceptors(props);
     return props;
   }
 
