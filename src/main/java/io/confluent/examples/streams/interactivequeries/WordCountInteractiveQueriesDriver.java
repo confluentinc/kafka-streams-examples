@@ -15,16 +15,14 @@
  */
 package io.confluent.examples.streams.interactivequeries;
 
-import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.StringSerializer;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.StringSerializer;
 
 
 /**
