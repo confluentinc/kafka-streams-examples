@@ -16,6 +16,7 @@
 package io.confluent.examples.streams;
 
 import io.confluent.examples.streams.avro.WikiFeed;
+import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -129,6 +130,11 @@ public class WikipediaFeedAvroExample {
     // in order to keep this example interactive.
     streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 10 * 1000);
 
+    // If Confluent monitoring interceptors are on the classpath,
+    // then the producer and consumer interceptors are added to the
+    // streams application.
+    MonitoringInterceptorUtils.maybeConfigureInterceptors(streamsConfiguration);
+
     final Serde<String> stringSerde = Serdes.String();
     final Serde<Long> longSerde = Serdes.Long();
 
@@ -140,19 +146,9 @@ public class WikipediaFeedAvroExample {
     // aggregate the new feed counts of by user
     final KTable<String, Long> aggregated = feeds
         // filter out old feeds
-        .filter(new Predicate<String, WikiFeed>() {
-          @Override
-          public boolean test(final String dummy, final WikiFeed value) {
-            return value.getIsNew();
-          }
-        })
+        .filter((dummy, value) -> value.getIsNew())
         // map the user id as key
-        .map(new KeyValueMapper<String, WikiFeed, KeyValue<String, WikiFeed>>() {
-          @Override
-          public KeyValue<String, WikiFeed> apply(final String key, final WikiFeed value) {
-            return new KeyValue<>(value.getUser(), value);
-          }
-        })
+        .map((KeyValueMapper<String, WikiFeed, KeyValue<String, WikiFeed>>) (key, value) -> new KeyValue<>(value.getUser(), value))
         // no need to specify explicit serdes because the resulting key and value types match our default serde settings
         .groupByKey()
         .count();
