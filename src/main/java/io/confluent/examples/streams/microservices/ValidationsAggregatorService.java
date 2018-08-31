@@ -122,9 +122,10 @@ public class ValidationsAggregatorService implements Service {
     }
   }
 
-  public static void main(final String[] args) throws Exception {
-    final ValidationsAggregatorService service = new ValidationsAggregatorService();
-    service.start(parseArgsAndConfigure(args), "/tmp/kafka-streams");
+  public static void main(String[] args) throws Exception {
+    final String bootstrapServers = parseArgsAndConfigure(args);
+    ValidationsAggregatorService service = new ValidationsAggregatorService();
+    service.start(bootstrapServers, "/tmp/kafka-streams");
     addShutdownHookAndBlock(service);
   }
 }
