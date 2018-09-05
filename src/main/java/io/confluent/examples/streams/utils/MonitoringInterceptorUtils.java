@@ -5,6 +5,8 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.streams.StreamsConfig;
 
 import java.util.Properties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility helper class that will enable Monitoring Interceptors when
@@ -18,7 +20,7 @@ public class MonitoringInterceptorUtils {
 
     private static final String CONSUMER_INTERCEPTOR = "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor";
     private static final String PRODUCER_INTERCEPTOR = "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor";
-
+    private static final Logger LOG = LoggerFactory.getLogger(MonitoringInterceptorUtils.class);
 
     private MonitoringInterceptorUtils() {
     }
@@ -58,7 +60,7 @@ public class MonitoringInterceptorUtils {
             Class.forName(className);
         } catch (final ClassNotFoundException e) {
             final String interceptorTypeShortName = className.substring(className.lastIndexOf('.'));
-            System.out.println(String.format("%s not found, skipping", interceptorTypeShortName));
+            LOG.info("{} not found, skipping", interceptorTypeShortName);
             hasInterceptor = false;
         }
         return hasInterceptor;
