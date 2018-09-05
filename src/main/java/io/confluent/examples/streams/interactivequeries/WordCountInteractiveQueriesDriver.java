@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 
-
 /**
  * This is a sample driver for the {@link WordCountInteractiveQueriesExample}.
  * To run this driver please first refer to the instructions in {@link WordCountInteractiveQueriesExample}.
