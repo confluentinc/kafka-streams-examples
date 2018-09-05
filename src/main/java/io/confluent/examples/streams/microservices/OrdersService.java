@@ -58,7 +58,7 @@ import static io.confluent.examples.streams.microservices.util.MicroserviceUtils
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.setTimeout;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.startJetty;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.startProducer;
-import static io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
+import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 import static org.apache.kafka.streams.state.StreamsMetadata.NOT_AVAILABLE;
 
 /**
@@ -332,7 +332,7 @@ public class OrdersService implements Service {
   private Properties config(String bootstrapServers) {
     Properties props = baseStreamsConfig(bootstrapServers, "/tmp/kafka-streams", SERVICE_APP_ID);
     props.put(StreamsConfig.APPLICATION_SERVER_CONFIG, host + ":" + port);
-    MonitoringInterceptorUtils.maybeConfigureInterceptors(props);
+    MonitoringInterceptorUtils.maybeConfigureInterceptorsStreams(props);
     return props;
   }
 
