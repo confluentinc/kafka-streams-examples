@@ -29,7 +29,6 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
-import org.apache.kafka.streams.kstream.Predicate;
 import org.apache.kafka.streams.kstream.Produced;
 
 import java.util.Properties;
@@ -133,7 +132,7 @@ public class WikipediaFeedAvroExample {
     // If Confluent monitoring interceptors are on the classpath,
     // then the producer and consumer interceptors are added to the
     // streams application.
-    MonitoringInterceptorUtils.maybeConfigureInterceptors(streamsConfiguration);
+    MonitoringInterceptorUtils.maybeConfigureInterceptorsStreams(streamsConfiguration);
 
     final Serde<String> stringSerde = Serdes.String();
     final Serde<Long> longSerde = Serdes.Long();

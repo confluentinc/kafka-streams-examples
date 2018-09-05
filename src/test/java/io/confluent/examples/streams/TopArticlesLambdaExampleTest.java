@@ -16,6 +16,7 @@
 package io.confluent.examples.streams;
 
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
+import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
@@ -87,6 +88,9 @@ public class TopArticlesLambdaExampleTest {
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
               io.confluent.kafka.serializers.KafkaAvroSerializer.class);
     props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl());
+
+    MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(props);
+
     final KafkaProducer<String, GenericRecord> producer = new KafkaProducer<>(props);
 
     final GenericRecordBuilder pageViewBuilder =
@@ -115,6 +119,9 @@ public class TopArticlesLambdaExampleTest {
     consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, "top-articles-consumer");
     consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     final Deserializer<Windowed<String>> windowedDeserializer = WindowedSerdes.timeWindowedSerdeFrom(String.class).deserializer();
+
+    MonitoringInterceptorUtils.maybeConfigureInterceptorsConsumer(consumerProperties);
+
     final KafkaConsumer<Windowed<String>, String> consumer = new KafkaConsumer<>(consumerProperties,
                                                                                  windowedDeserializer,
                                                                                  Serdes.String().deserializer());
