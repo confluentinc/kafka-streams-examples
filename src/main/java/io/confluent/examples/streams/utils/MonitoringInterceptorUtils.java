@@ -3,10 +3,10 @@ package io.confluent.examples.streams.utils;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.streams.StreamsConfig;
-
-import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Properties;
 
 /**
  * Utility helper class that will enable Monitoring Interceptors when
@@ -28,7 +28,7 @@ public class MonitoringInterceptorUtils {
     public static void maybeConfigureInterceptorsStreams(final Properties streamsConfig) {
         if (hasMonitoringConsumerInterceptor() && hasMonitoringProducerInterceptor()) {
             streamsConfig.put(StreamsConfig.producerPrefix(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG), PRODUCER_INTERCEPTOR);
-            streamsConfig.put(StreamsConfig.consumerPrefix(ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG), CONSUMER_INTERCEPTOR);
+            streamsConfig.put(StreamsConfig.mainConsumerPrefix(ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG), CONSUMER_INTERCEPTOR);
         }
     }
 
