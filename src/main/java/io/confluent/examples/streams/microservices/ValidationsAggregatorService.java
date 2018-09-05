@@ -69,16 +69,14 @@ public class ValidationsAggregatorService implements Service {
     final int numberOfRules = 3; //TODO put into a KTable to make dynamically configurable
 
     StreamsBuilder builder = new StreamsBuilder();
-    KStream<String, OrderValidation> validationsPass = builder
-        .stream(ORDER_VALIDATIONS.name(), serdes1);
-    KStream<String, OrderValidation> validationsFail = builder
+    KStream<String, OrderValidation> validations = builder
         .stream(ORDER_VALIDATIONS.name(), serdes1);
     KStream<String, Order> orders = builder
         .stream(ORDERS.name(), serdes2)
         .filter((id, order) -> OrderState.CREATED.equals(order.getState()));
 
     //If all rules pass then validate the order
-    validationsPass
+    validations
         .groupByKey(serdes3)
         .windowedBy(SessionWindows.with(5 * MIN))
         .aggregate(
@@ -102,7 +100,7 @@ public class ValidationsAggregatorService implements Service {
         .to(ORDERS.name(), serdes5);
 
     //If any rule fails then fail the order
-    validationsFail.filter((id, rule) -> FAIL.equals(rule.getValidationResult()))
+    validations.filter((id, rule) -> FAIL.equals(rule.getValidationResult()))
         .join(orders, (id, order) ->
                 //Set the order to Failed and bump the version on it's ID
                 newBuilder(order).setState(OrderState.FAILED).build(),
@@ -112,7 +110,6 @@ public class ValidationsAggregatorService implements Service {
         .reduce((order, v1) -> order)
         //Push the validated order into the orders topic
         .toStream().to(ORDERS.name(), Produced.with(ORDERS.keySerde(), ORDERS.valueSerde()));
-
 
     return new KafkaStreams(builder.build(),
         baseStreamsConfig(bootstrapServers, stateDir, ORDERS_SERVICE_APP_ID));
