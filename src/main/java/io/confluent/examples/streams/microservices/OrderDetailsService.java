@@ -47,7 +47,7 @@ public class OrderDetailsService implements Service {
 
   private static final Logger log = LoggerFactory.getLogger(OrderDetailsService.class);
 
-  private static final String CONSUMER_GROUP_ID = "OrderValidationService";
+  private static final String CONSUMER_GROUP_ID = "OrderDetailsService-consumer-group";
   private KafkaConsumer<String, Order> consumer;
   private KafkaProducer<String, OrderValidation> producer;
   private ExecutorService executorService = Executors.newSingleThreadExecutor();
