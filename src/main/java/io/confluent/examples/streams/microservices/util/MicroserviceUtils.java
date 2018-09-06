@@ -60,8 +60,8 @@ public class MicroserviceUtils {
     config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     config.put(StreamsConfig.STATE_DIR_CONFIG, stateDir);
     config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    // Commenting out support for exactly once because
-    // currently Confluent Monitoring Interceptors do not work with EOS
+    // Commenting out configuration for Exactly Once Semantics (EOS)
+    // because currently EOS is not supported with Confluent Monitoring Interceptors
     //config.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, "exactly_once");
     config.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 1); //commit as fast as possible
     MonitoringInterceptorUtils.maybeConfigureInterceptorsStreams(config);

@@ -67,23 +67,31 @@ public class OrderDetailsService implements Service {
     try {
       Map<TopicPartition, OffsetAndMetadata> consumedOffsets = new HashMap<>();
       consumer.subscribe(singletonList(Topics.ORDERS.name()));
-      producer.initTransactions();
+      // Commenting out configuration for Exactly Once Semantics (EOS)
+      // because currently EOS is not supported with Confluent Monitoring Interceptors 
+      //producer.initTransactions();
 
       while (running) {
         ConsumerRecords<String, Order> records = consumer.poll(100);
         if (records.count() > 0) {
-          producer.beginTransaction();
+          // Commenting out configuration for Exactly Once Semantics (EOS)
+          // because currently EOS is not supported with Confluent Monitoring Interceptors 
+          //producer.beginTransaction();
           for (ConsumerRecord<String, Order> record : records) {
             Order order = record.value();
             if (OrderState.CREATED.equals(order.getState())) {
               //Validate the order then send the result (but note we are in a transaction so
               //nothing will be "seen" downstream until we commit the transaction below)
               producer.send(result(order, isValid(order) ? PASS : FAIL));
-              recordOffset(consumedOffsets, record);
+              // Commenting out configuration for Exactly Once Semantics (EOS)
+              // because currently EOS is not supported with Confluent Monitoring Interceptors 
+              //recordOffset(consumedOffsets, record);
             }
           }
-          producer.sendOffsetsToTransaction(consumedOffsets, CONSUMER_GROUP_ID);
-          producer.commitTransaction();
+          // Commenting out configuration for Exactly Once Semantics (EOS)
+          // because currently EOS is not supported with Confluent Monitoring Interceptors 
+          //producer.sendOffsetsToTransaction(consumedOffsets, CONSUMER_GROUP_ID);
+          //producer.commitTransaction();
         }
       }
     } finally {
@@ -109,7 +117,7 @@ public class OrderDetailsService implements Service {
   private void startProducer(String bootstrapServers) {
     Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-    producerConfig.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "OrderDetailsServiceInstance1");
+    //producerConfig.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "OrderDetailsServiceInstance1");
     producerConfig.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, String.valueOf(Integer.MAX_VALUE));
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
