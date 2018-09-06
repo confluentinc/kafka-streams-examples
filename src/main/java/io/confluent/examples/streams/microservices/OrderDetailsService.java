@@ -12,6 +12,7 @@ import io.confluent.examples.streams.avro.microservices.OrderState;
 import io.confluent.examples.streams.avro.microservices.OrderValidation;
 import io.confluent.examples.streams.avro.microservices.OrderValidationResult;
 import io.confluent.examples.streams.microservices.util.MicroserviceUtils;
+import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -46,7 +47,7 @@ public class OrderDetailsService implements Service {
 
   private static final Logger log = LoggerFactory.getLogger(OrderDetailsService.class);
 
-  private static final String CONSUMER_GROUP_ID = "OrderValidationService";
+  private final String CONSUMER_GROUP_ID = getClass().getSimpleName();
   private KafkaConsumer<String, Order> consumer;
   private KafkaProducer<String, OrderValidation> producer;
   private ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -112,6 +113,8 @@ public class OrderDetailsService implements Service {
     producerConfig.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, String.valueOf(Integer.MAX_VALUE));
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
+    producerConfig.put(ProducerConfig.CLIENT_ID_CONFIG, "order-details-service-producer");
+    MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(producerConfig);
 
     producer = new KafkaProducer<>(producerConfig,
         Topics.ORDER_VALIDATIONS.keySerde().serializer(),
@@ -124,6 +127,8 @@ public class OrderDetailsService implements Service {
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, CONSUMER_GROUP_ID);
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     consumerConfig.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+    consumerConfig.put(ConsumerConfig.CLIENT_ID_CONFIG, "order-details-service-consumer");
+    MonitoringInterceptorUtils.maybeConfigureInterceptorsConsumer(consumerConfig);
 
     consumer = new KafkaConsumer<>(consumerConfig,
         Topics.ORDERS.keySerde().deserializer(),

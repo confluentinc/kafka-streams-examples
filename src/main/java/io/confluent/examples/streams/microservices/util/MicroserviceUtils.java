@@ -3,6 +3,8 @@ package io.confluent.examples.streams.microservices.util;
 import io.confluent.examples.streams.avro.microservices.Product;
 import io.confluent.examples.streams.microservices.Service;
 import io.confluent.examples.streams.microservices.domain.Schemas;
+import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
+
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -58,8 +60,11 @@ public class MicroserviceUtils {
     config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     config.put(StreamsConfig.STATE_DIR_CONFIG, stateDir);
     config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    config.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, "exactly_once");
+    // Commenting out support for exactly once because
+    // currently Confluent Monitoring Interceptors do not work with EOS
+    //config.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, "exactly_once");
     config.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 1); //commit as fast as possible
+    MonitoringInterceptorUtils.maybeConfigureInterceptorsStreams(config);
 
     return config;
   }
@@ -165,6 +170,8 @@ public class MicroserviceUtils {
     producerConfig.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, String.valueOf(Integer.MAX_VALUE));
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
+    producerConfig.put(ProducerConfig.CLIENT_ID_CONFIG, "order-sender");
+    MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(producerConfig);
 
     return new KafkaProducer<>(producerConfig,
         topic.keySerde().serializer(),
