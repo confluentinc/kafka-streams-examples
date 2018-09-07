@@ -53,8 +53,8 @@ public class OrderDetailsService implements Service {
   private ExecutorService executorService = Executors.newSingleThreadExecutor();
   private volatile boolean running;
 
-  // Disabling Exactly Once Semantics to enable Confluent Monitoring Interceptors
-  public static boolean eosEnabled = false;
+  // Disable Exactly Once Semantics to enable Confluent Monitoring Interceptors
+  private boolean eosEnabled = false;
 
   @Override
   public void start(final String bootstrapServers, final String stateDir) {
@@ -180,6 +180,10 @@ public class OrderDetailsService implements Service {
       return false;
     }
     return order.getProduct() != null;
+  }
+
+  public void setEosEnabled(boolean value) {
+    this.eosEnabled = value;
   }
 
   public static void main(String[] args) throws Exception {

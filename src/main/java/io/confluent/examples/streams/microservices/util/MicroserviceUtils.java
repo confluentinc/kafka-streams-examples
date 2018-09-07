@@ -51,20 +51,24 @@ public class MicroserviceUtils {
     return bootstrapServers;
   }
 
-  public static Properties baseStreamsConfig(String bootstrapServers, String stateDir,
-      String appId) {
+  public static Properties baseStreamsConfig(final String bootstrapServers,
+                                             final String stateDir,
+                                             final String appId) {
     final boolean enableEOS = false;
     return baseStreamsConfig(bootstrapServers, stateDir, appId, enableEOS);
   }
 
-  public static Properties baseStreamsConfigEOS(String bootstrapServers, String stateDir,
-      String appId) {
+  public static Properties baseStreamsConfigEOS(final String bootstrapServers,
+                                                final String stateDir,
+                                                final String appId) {
     final boolean enableEOS = true;
     return baseStreamsConfig(bootstrapServers, stateDir, appId, enableEOS);
   }
 
-  public static Properties baseStreamsConfig(String bootstrapServers, String stateDir,
-      String appId, final boolean enableEOS) {
+  public static Properties baseStreamsConfig(final String bootstrapServers,
+                                             final String stateDir,
+                                             final String appId,
+                                             final boolean enableEOS) {
     Properties config = new Properties();
     // Workaround for a known issue with RocksDB in environments where you have only 1 cpu core.
     config.put(StreamsConfig.ROCKSDB_CONFIG_SETTER_CLASS_CONFIG, CustomRocksDBConfig.class);
