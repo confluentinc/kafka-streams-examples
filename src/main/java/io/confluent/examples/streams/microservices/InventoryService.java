@@ -45,7 +45,7 @@ import static io.confluent.examples.streams.microservices.util.MicroserviceUtils
 public class InventoryService implements Service {
 
   private static final Logger log = LoggerFactory.getLogger(InventoryService.class);
-  public static final String SERVICE_APP_ID = getClass().getSimpleName();
+  public static final String SERVICE_APP_ID = "InventoryService";
   public static final String RESERVED_STOCK_STORE_NAME = "store-of-reserved-stock";
   private KafkaStreams streams;
 
