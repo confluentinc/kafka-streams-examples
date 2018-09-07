@@ -53,6 +53,18 @@ public class MicroserviceUtils {
 
   public static Properties baseStreamsConfig(String bootstrapServers, String stateDir,
       String appId) {
+    final boolean enableEOS = false;
+    return baseStreamsConfig(bootstrapServers, stateDir, appId, enableEOS);
+  }
+
+  public static Properties baseStreamsConfigEOS(String bootstrapServers, String stateDir,
+      String appId) {
+    final boolean enableEOS = true;
+    return baseStreamsConfig(bootstrapServers, stateDir, appId, enableEOS);
+  }
+
+  public static Properties baseStreamsConfig(String bootstrapServers, String stateDir,
+      String appId, final boolean enableEOS) {
     Properties config = new Properties();
     // Workaround for a known issue with RocksDB in environments where you have only 1 cpu core.
     config.put(StreamsConfig.ROCKSDB_CONFIG_SETTER_CLASS_CONFIG, CustomRocksDBConfig.class);
@@ -60,9 +72,8 @@ public class MicroserviceUtils {
     config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     config.put(StreamsConfig.STATE_DIR_CONFIG, stateDir);
     config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    // Commenting out configuration for Exactly Once Semantics (EOS)
-    // because currently EOS is not supported with Confluent Monitoring Interceptors
-    //config.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, "exactly_once");
+    final String eosConfig = enableEOS ? "exactly_once" : "at_least_once";
+    config.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, eosConfig);
     config.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 1); //commit as fast as possible
     MonitoringInterceptorUtils.maybeConfigureInterceptorsStreams(config);
 

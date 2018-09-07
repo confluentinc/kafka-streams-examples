@@ -53,6 +53,9 @@ public class OrderDetailsService implements Service {
   private ExecutorService executorService = Executors.newSingleThreadExecutor();
   private volatile boolean running;
 
+  // Disabling Exactly Once Semantics to enable Confluent Monitoring Interceptors
+  public static boolean eosEnabled = false;
+
   @Override
   public void start(final String bootstrapServers, final String stateDir) {
     executorService.execute(() -> startService(bootstrapServers));
@@ -67,31 +70,31 @@ public class OrderDetailsService implements Service {
     try {
       Map<TopicPartition, OffsetAndMetadata> consumedOffsets = new HashMap<>();
       consumer.subscribe(singletonList(Topics.ORDERS.name()));
-      // Commenting out configuration for Exactly Once Semantics (EOS)
-      // because currently EOS is not supported with Confluent Monitoring Interceptors 
-      //producer.initTransactions();
+      if (eosEnabled) {
+        producer.initTransactions();
+      }
 
       while (running) {
         ConsumerRecords<String, Order> records = consumer.poll(100);
         if (records.count() > 0) {
-          // Commenting out configuration for Exactly Once Semantics (EOS)
-          // because currently EOS is not supported with Confluent Monitoring Interceptors 
-          //producer.beginTransaction();
+          if (eosEnabled) {
+            producer.beginTransaction();
+          }
           for (ConsumerRecord<String, Order> record : records) {
             Order order = record.value();
             if (OrderState.CREATED.equals(order.getState())) {
               //Validate the order then send the result (but note we are in a transaction so
               //nothing will be "seen" downstream until we commit the transaction below)
               producer.send(result(order, isValid(order) ? PASS : FAIL));
-              // Commenting out configuration for Exactly Once Semantics (EOS)
-              // because currently EOS is not supported with Confluent Monitoring Interceptors 
-              //recordOffset(consumedOffsets, record);
+              if (eosEnabled) {
+                recordOffset(consumedOffsets, record);
+              }
             }
           }
-          // Commenting out configuration for Exactly Once Semantics (EOS)
-          // because currently EOS is not supported with Confluent Monitoring Interceptors 
-          //producer.sendOffsetsToTransaction(consumedOffsets, CONSUMER_GROUP_ID);
-          //producer.commitTransaction();
+          if (eosEnabled) {
+            producer.sendOffsetsToTransaction(consumedOffsets, CONSUMER_GROUP_ID);
+            producer.commitTransaction();
+          }
         }
       }
     } finally {
@@ -134,7 +137,8 @@ public class OrderDetailsService implements Service {
     consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, CONSUMER_GROUP_ID);
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    consumerConfig.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+    final String autoCommitEnabled = eosEnabled ? "false" : "true";
+    consumerConfig.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, autoCommitEnabled);
     consumerConfig.put(ConsumerConfig.CLIENT_ID_CONFIG, "order-details-service-consumer");
     MonitoringInterceptorUtils.maybeConfigureInterceptorsConsumer(consumerConfig);
 
