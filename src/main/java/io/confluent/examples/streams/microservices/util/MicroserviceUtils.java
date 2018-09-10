@@ -54,15 +54,13 @@ public class MicroserviceUtils {
   public static Properties baseStreamsConfig(final String bootstrapServers,
                                              final String stateDir,
                                              final String appId) {
-    final boolean enableEOS = false;
-    return baseStreamsConfig(bootstrapServers, stateDir, appId, enableEOS);
+    return baseStreamsConfig(bootstrapServers, stateDir, appId, false);
   }
 
   public static Properties baseStreamsConfigEOS(final String bootstrapServers,
                                                 final String stateDir,
                                                 final String appId) {
-    final boolean enableEOS = true;
-    return baseStreamsConfig(bootstrapServers, stateDir, appId, enableEOS);
+    return baseStreamsConfig(bootstrapServers, stateDir, appId, true);
   }
 
   public static Properties baseStreamsConfig(final String bootstrapServers,
