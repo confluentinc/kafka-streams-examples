@@ -80,8 +80,8 @@ public class OrderDetailsService implements Service {
           if (eosEnabled) {
             producer.beginTransaction();
           }
-          for (ConsumerRecord<String, Order> record : records) {
-            Order order = record.value();
+          for (final ConsumerRecord<String, Order> record : records) {
+            final Order order = record.value();
             if (OrderState.CREATED.equals(order.getState())) {
               //Validate the order then send the result (but note we are in a transaction so
               //nothing will be "seen" downstream until we commit the transaction below)
@@ -181,12 +181,12 @@ public class OrderDetailsService implements Service {
     return order.getProduct() != null;
   }
 
-  public void setEosEnabled(boolean value) {
+  public void setEosEnabled(final boolean value) {
     this.eosEnabled = value;
   }
 
-  public static void main(String[] args) throws Exception {
-    OrderDetailsService service = new OrderDetailsService();
+  public static void main(final String[] args) throws Exception {
+    final OrderDetailsService service = new OrderDetailsService();
     service.start(MicroserviceUtils.parseArgsAndConfigure(args), "/tmp/kafka-streams");
     addShutdownHookAndBlock(service);
   }
