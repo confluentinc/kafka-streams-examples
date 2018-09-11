@@ -3,6 +3,8 @@ package io.confluent.examples.streams.microservices.util;
 import io.confluent.examples.streams.avro.microservices.Product;
 import io.confluent.examples.streams.microservices.Service;
 import io.confluent.examples.streams.microservices.domain.Schemas;
+import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
+
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -49,17 +51,33 @@ public class MicroserviceUtils {
     return bootstrapServers;
   }
 
-  public static Properties baseStreamsConfig(final String bootstrapServers, final String stateDir,
+  public static Properties baseStreamsConfig(final String bootstrapServers,
+                                             final String stateDir,
                                              final String appId) {
-    final Properties config = new Properties();
+    return baseStreamsConfig(bootstrapServers, stateDir, appId, false);
+  }
+
+  public static Properties baseStreamsConfigEOS(final String bootstrapServers,
+                                                final String stateDir,
+                                                final String appId) {
+    return baseStreamsConfig(bootstrapServers, stateDir, appId, true);
+  }
+
+  public static Properties baseStreamsConfig(final String bootstrapServers,
+                                             final String stateDir,
+                                             final String appId,
+                                             final boolean enableEOS) {
+    Properties config = new Properties();
     // Workaround for a known issue with RocksDB in environments where you have only 1 cpu core.
     config.put(StreamsConfig.ROCKSDB_CONFIG_SETTER_CLASS_CONFIG, CustomRocksDBConfig.class);
     config.put(StreamsConfig.APPLICATION_ID_CONFIG, appId);
     config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     config.put(StreamsConfig.STATE_DIR_CONFIG, stateDir);
     config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    config.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, "exactly_once");
+    final String processingGuaranteeConfig = enableEOS ? "exactly_once" : "at_least_once";
+    config.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, processingGuaranteeConfig);
     config.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 1); //commit as fast as possible
+    MonitoringInterceptorUtils.maybeConfigureInterceptorsStreams(config);
 
     return config;
   }
@@ -165,6 +183,8 @@ public class MicroserviceUtils {
     producerConfig.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, String.valueOf(Integer.MAX_VALUE));
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
+    producerConfig.put(ProducerConfig.CLIENT_ID_CONFIG, "order-sender");
+    MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(producerConfig);
 
     return new KafkaProducer<>(producerConfig,
         topic.keySerde().serializer(),

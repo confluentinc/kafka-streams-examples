@@ -91,7 +91,7 @@ public class InventoryServiceTest extends MicroserviceTestUtils {
       throws InterruptedException {
     return IntegrationTestUtils
         .waitUntilMinKeyValueRecordsReceived(inventoryConsumerProperties(CLUSTER),
-            ProcessorStateManager.storeChangelogTopic(InventoryService.INVENTORY_SERVICE_APP_ID,
+            ProcessorStateManager.storeChangelogTopic(InventoryService.SERVICE_APP_ID,
                 InventoryService.RESERVED_STOCK_STORE_NAME), numberOfRecordsToWaitFor);
   }
 

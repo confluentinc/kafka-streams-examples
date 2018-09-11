@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 public class ValidationsAggregatorService implements Service {
 
   private static final Logger log = LoggerFactory.getLogger(ValidationsAggregatorService.class);
-  private static final String ORDERS_SERVICE_APP_ID = "orders-service";
+  private final String SERVICE_APP_ID = getClass().getSimpleName();
   private final Consumed<String, OrderValidation> serdes1 = Consumed
       .with(ORDER_VALIDATIONS.keySerde(), ORDER_VALIDATIONS.valueSerde());
   private final Consumed<String, Order> serdes2 = Consumed.with(ORDERS.keySerde(),
@@ -112,7 +112,7 @@ public class ValidationsAggregatorService implements Service {
         .toStream().to(ORDERS.name(), Produced.with(ORDERS.keySerde(), ORDERS.valueSerde()));
 
     return new KafkaStreams(builder.build(),
-        baseStreamsConfig(bootstrapServers, stateDir, ORDERS_SERVICE_APP_ID));
+        baseStreamsConfig(bootstrapServers, stateDir, SERVICE_APP_ID));
   }
 
   @Override

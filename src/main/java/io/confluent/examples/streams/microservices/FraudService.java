@@ -41,7 +41,8 @@ import static io.confluent.examples.streams.microservices.util.MicroserviceUtils
 public class FraudService implements Service {
 
   private static final Logger log = LoggerFactory.getLogger(FraudService.class);
-  private static final String FRAUD_SERVICE_APP_ID = "fraud-service";
+  private final String SERVICE_APP_ID = getClass().getSimpleName();
+
   private static final int FRAUD_LIMIT = 2000;
   private static final long MIN = 60 * 1000L;
   private KafkaStreams streams;
@@ -99,7 +100,7 @@ public class FraudService implements Service {
     //as caching in Kafka Streams will conflate subsequent updates for the same key. Disabling caching ensures
     //we get a complete "changelog" from the aggregate(...) step above (i.e. every input event will have a
     //corresponding output event.
-    final Properties props = baseStreamsConfig(bootstrapServers, stateDir, FRAUD_SERVICE_APP_ID);
+    Properties props = baseStreamsConfig(bootstrapServers, stateDir, SERVICE_APP_ID);
     props.setProperty(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, "0");
 
     return new KafkaStreams(builder.build(), props);

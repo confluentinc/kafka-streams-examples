@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 public class EmailService implements Service {
 
   private static final Logger log = LoggerFactory.getLogger(EmailService.class);
-  private static final String APP_ID = "email-service";
+  private final String SERVICE_APP_ID = getClass().getSimpleName();
 
   private KafkaStreams streams;
   private final Emailer emailer;
@@ -45,7 +45,7 @@ public class EmailService implements Service {
     streams = processStreams(bootstrapServers, stateDir);
     streams.cleanUp(); //don't do this in prod as it clears your state stores
     streams.start();
-    log.info("Started Service " + APP_ID);
+    log.info("Started Service " + SERVICE_APP_ID);
   }
 
   private KafkaStreams processStreams(final String bootstrapServers, final String stateDir) {
@@ -79,7 +79,7 @@ public class EmailService implements Service {
             -> emailer.sendEmail(emailTuple)
         );
 
-    return new KafkaStreams(builder.build(), baseStreamsConfig(bootstrapServers, stateDir, APP_ID));
+    return new KafkaStreams(builder.build(), baseStreamsConfig(bootstrapServers, stateDir, SERVICE_APP_ID));
   }
 
   public static void main(final String[] args) throws Exception {
