@@ -12,6 +12,7 @@ import io.confluent.examples.streams.avro.microservices.OrderState;
 import io.confluent.examples.streams.avro.microservices.OrderValidation;
 import io.confluent.examples.streams.avro.microservices.OrderValidationResult;
 import io.confluent.examples.streams.microservices.util.MicroserviceUtils;
+import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -46,11 +47,14 @@ public class OrderDetailsService implements Service {
 
   private static final Logger log = LoggerFactory.getLogger(OrderDetailsService.class);
 
-  private static final String CONSUMER_GROUP_ID = "OrderValidationService";
+  private final String CONSUMER_GROUP_ID = getClass().getSimpleName();
   private KafkaConsumer<String, Order> consumer;
   private KafkaProducer<String, OrderValidation> producer;
   private ExecutorService executorService = Executors.newSingleThreadExecutor();
   private volatile boolean running;
+
+  // Disable Exactly Once Semantics to enable Confluent Monitoring Interceptors
+  private boolean eosEnabled = false;
 
   @Override
   public void start(final String bootstrapServers, final String stateDir) {
@@ -66,23 +70,31 @@ public class OrderDetailsService implements Service {
     try {
       Map<TopicPartition, OffsetAndMetadata> consumedOffsets = new HashMap<>();
       consumer.subscribe(singletonList(Topics.ORDERS.name()));
-      producer.initTransactions();
+      if (eosEnabled) {
+        producer.initTransactions();
+      }
 
       while (running) {
         ConsumerRecords<String, Order> records = consumer.poll(100);
         if (records.count() > 0) {
-          producer.beginTransaction();
+          if (eosEnabled) {
+            producer.beginTransaction();
+          }
           for (ConsumerRecord<String, Order> record : records) {
             Order order = record.value();
             if (OrderState.CREATED.equals(order.getState())) {
               //Validate the order then send the result (but note we are in a transaction so
               //nothing will be "seen" downstream until we commit the transaction below)
               producer.send(result(order, isValid(order) ? PASS : FAIL));
-              recordOffset(consumedOffsets, record);
+              if (eosEnabled) {
+                recordOffset(consumedOffsets, record);
+              }
             }
           }
-          producer.sendOffsetsToTransaction(consumedOffsets, CONSUMER_GROUP_ID);
-          producer.commitTransaction();
+          if (eosEnabled) {
+            producer.sendOffsetsToTransaction(consumedOffsets, CONSUMER_GROUP_ID);
+            producer.commitTransaction();
+          }
         }
       }
     } finally {
@@ -108,10 +120,14 @@ public class OrderDetailsService implements Service {
   private void startProducer(String bootstrapServers) {
     Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-    producerConfig.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "OrderDetailsServiceInstance1");
+    if (eosEnabled) {
+      producerConfig.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "OrderDetailsServiceInstance1");
+    }
     producerConfig.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, String.valueOf(Integer.MAX_VALUE));
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
+    producerConfig.put(ProducerConfig.CLIENT_ID_CONFIG, "order-details-service-producer");
+    MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(producerConfig);
 
     producer = new KafkaProducer<>(producerConfig,
         Topics.ORDER_VALIDATIONS.keySerde().serializer(),
@@ -123,7 +139,9 @@ public class OrderDetailsService implements Service {
     consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, CONSUMER_GROUP_ID);
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    consumerConfig.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+    consumerConfig.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, !eosEnabled);
+    consumerConfig.put(ConsumerConfig.CLIENT_ID_CONFIG, "order-details-service-consumer");
+    MonitoringInterceptorUtils.maybeConfigureInterceptorsConsumer(consumerConfig);
 
     consumer = new KafkaConsumer<>(consumerConfig,
         Topics.ORDERS.keySerde().deserializer(),
@@ -161,6 +179,10 @@ public class OrderDetailsService implements Service {
       return false;
     }
     return order.getProduct() != null;
+  }
+
+  public void setEosEnabled(boolean value) {
+    this.eosEnabled = value;
   }
 
   public static void main(String[] args) throws Exception {
