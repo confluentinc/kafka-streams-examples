@@ -21,7 +21,7 @@ NB - this is demo code, not a production system and certain elements are left fo
 To play with the ecosystem code, or fork your own project, the simplest way is to run the tests and fiddle from inside your IDE. Each test boots a self-contained Kafka cluster so it's easy to play with different queries and configurations. 
 The best place to start is [EndToEndTest.java](https://github.com/confluentinc/kafka-streams-examples/blob/3.3.1-post/src/test/java/io/confluent/examples/streams/microservices/EndToEndTest.java)
 
-If you prefer to run the services individually [try the quickstart](https://github.com/confluentinc/quickstart-demos/blob/5.0.0-post/microservices-orders/README.md)  which runs them all in docker with the Confluent Kafka run from the CLI
+If you prefer to run the services individually [try the quickstart](https://github.com/confluentinc/quickstart-demos/blob/5.0.0-post/microservices-orders/README.md)  which runs all the services for you with the Confluent Kafka run from the CLI. Control Centre and Elasticsearch are in there too. 
 
 # Running the Examples:
 * Requires Java 1.8
