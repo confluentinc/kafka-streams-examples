@@ -1,4 +1,4 @@
-package io.confluent.examples.streams.microservices.util;
+package io.confluent.examples.streams.microservices;
 
 import java.util.Arrays;
 import java.util.Properties;
@@ -22,7 +22,7 @@ import io.confluent.examples.streams.avro.microservices.Customer;
 
 public class ProduceCustomers {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(final String[] args) throws Exception {
 
         final SpecificAvroSerializer<Customer> mySerializer = new SpecificAvroSerializer<>();
         final boolean isKeySerde = false;
@@ -35,13 +35,13 @@ public class ProduceCustomers {
         props.put(ProducerConfig.ACKS_CONFIG, "all");
         props.put(ProducerConfig.RETRIES_CONFIG, 0);
         MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(props);
-        KafkaProducer<Long, Customer> producer = new KafkaProducer<Long, Customer>(props, new LongSerializer(), mySerializer);
+        final KafkaProducer<Long, Customer> producer = new KafkaProducer<Long, Customer>(props, new LongSerializer(), mySerializer);
 
         int i = 1;
         while (true) {
-           String orderId = id(0L);
-           Customer customer = new Customer(15L, "Franz", "Kafka", "frans@thedarkside.net", "oppression street, prague, cze");
-           ProducerRecord<Long, Customer> record = new ProducerRecord<Long, Customer>("customers", customer.getId(), customer);
+           final String orderId = id(0L);
+           final Customer customer = new Customer(15L, "Franz", "Kafka", "frans@thedarkside.net", "oppression street, prague, cze");
+           final ProducerRecord<Long, Customer> record = new ProducerRecord<Long, Customer>("customers", customer.getId(), customer);
            producer.send(record);
            Thread.sleep(1000L);
            i++;

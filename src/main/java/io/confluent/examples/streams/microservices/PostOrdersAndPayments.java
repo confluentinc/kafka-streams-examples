@@ -55,8 +55,8 @@ public class PostOrdersAndPayments {
     };
   }
 
-  private static void sendPayment(String id, Payment payment,
-      Schemas.Topic<String, Payment> topic) {
+  private static void sendPayment(final String id, final Payment payment,
+      final Schemas.Topic<String, Payment> topic) {
 
     //System.out.printf("-----> id: %s, payment: %s\n", id, payment);
 
@@ -73,14 +73,14 @@ public class PostOrdersAndPayments {
     producerConfig.put(ProducerConfig.CLIENT_ID_CONFIG, "payment-generator");
     MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(producerConfig);
 
-    KafkaProducer<String, Payment> paymentProducer = new KafkaProducer<String, Payment>(producerConfig, new StringSerializer(), paymentSerializer);
+    final KafkaProducer<String, Payment> paymentProducer = new KafkaProducer<String, Payment>(producerConfig, new StringSerializer(), paymentSerializer);
 
-    ProducerRecord<String, Payment> record = new ProducerRecord<String, Payment>("payments", id, payment);
+    final ProducerRecord<String, Payment> record = new ProducerRecord<String, Payment>("payments", id, payment);
     paymentProducer.send(record);
     paymentProducer.close();
   }
 
-  public static void main(String [] args) throws Exception {
+  public static void main(final String [] args) throws Exception {
 
     final int NUM_CUSTOMERS = 6;
     final List<Product> productTypeList = Arrays.asList(Product.JUMPERS, Product.UNDERPANTS, Product.STOCKINGS);
@@ -90,26 +90,26 @@ public class PostOrdersAndPayments {
     System.out.printf("restPort: %d\n", restPort);
 
     OrderBean returnedOrder;
-    Paths path = new Paths("localhost", restPort == 0 ? 5432 : restPort);
+    final Paths path = new Paths("localhost", restPort == 0 ? 5432 : restPort);
 
     final ClientConfig clientConfig = new ClientConfig();
     clientConfig.property(ClientProperties.CONNECT_TIMEOUT, 60000)
         .property(ClientProperties.READ_TIMEOUT, 60000);
-    Client client = ClientBuilder.newClient(clientConfig);
+    final Client client = ClientBuilder.newClient(clientConfig);
 
     // send one order every 1 second
     int i = 1;
     while (true) {
 
-      int randomCustomerId = randomGenerator.nextInt(NUM_CUSTOMERS);
-      Product randomProduct = productTypeList.get(randomGenerator.nextInt(productTypeList.size()));
+      final int randomCustomerId = randomGenerator.nextInt(NUM_CUSTOMERS);
+      final Product randomProduct = productTypeList.get(randomGenerator.nextInt(productTypeList.size()));
 
-      //OrderBean inputOrder = new OrderBean(id(i), Long.valueOf(randomCustomerId), OrderState.CREATED, Product.JUMPERS, 1, 1d);
-      OrderBean inputOrder = new OrderBean(id(i), Long.valueOf(randomCustomerId), OrderState.CREATED, randomProduct, 1, 1d);
+      //final OrderBean inputOrder = new OrderBean(id(i), Long.valueOf(randomCustomerId), OrderState.CREATED, Product.JUMPERS, 1, 1d);
+      final OrderBean inputOrder = new OrderBean(id(i), Long.valueOf(randomCustomerId), OrderState.CREATED, randomProduct, 1, 1d);
 
       // POST order to OrdersService
       System.out.printf("Posting order to: %s   .... ", path.urlPost());
-      Response response = client.target(path.urlPost())
+      final Response response = client.target(path.urlPost())
           .request(APPLICATION_JSON_TYPE)
           .post(Entity.json(inputOrder));
       System.out.printf("Response: %s \n", response.getStatus());
@@ -128,7 +128,7 @@ public class PostOrdersAndPayments {
       }
 
       // Send payment
-      Payment payment = new Payment("Payment:1234", id(i), "CZK", 1000.00d);
+      final Payment payment = new Payment("Payment:1234", id(i), "CZK", 1000.00d);
       sendPayment(payment.getId(), payment, Topics.PAYMENTS);
   
       // GET order, assert that it is Validated

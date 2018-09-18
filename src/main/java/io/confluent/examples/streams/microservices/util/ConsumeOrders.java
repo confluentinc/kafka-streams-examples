@@ -1,4 +1,4 @@
-package io.confluent.examples.streams.microservices.util;
+package io.confluent.examples.streams.microservices;
 
 import java.util.Arrays;
 import java.util.Properties;
@@ -16,7 +16,7 @@ import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
 
 public class ConsumeOrders {
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         final Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "test-orders");
@@ -32,8 +32,8 @@ public class ConsumeOrders {
             consumer.subscribe(Arrays.asList("orders"));
 
             while (true) {
-                ConsumerRecords<String, String> records = consumer.poll(100);
-                for (ConsumerRecord<String, String> record : records)
+                final ConsumerRecords<String, String> records = consumer.poll(100);
+                for (final ConsumerRecord<String, String> record : records)
                     System.out.printf("offset = %d, key = %s, value = %s\n", record.offset(), record.key(), record.value());
             }
         }

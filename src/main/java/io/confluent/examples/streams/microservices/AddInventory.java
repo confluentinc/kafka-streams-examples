@@ -43,38 +43,38 @@ import javax.ws.rs.core.Response;
 
 public class AddInventory {
 
-  private static void sendInventory(List<KeyValue<Product, Integer>> inventory,
-      Schemas.Topic<Product, Integer> topic) {
+  private static void sendInventory(final List<KeyValue<Product, Integer>> inventory,
+      final Schemas.Topic<Product, Integer> topic) {
 
-    Properties producerConfig = new Properties();
+    final Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
     producerConfig.put(ProducerConfig.CLIENT_ID_CONFIG, "inventory-generator");
     MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(producerConfig);
-    ProductTypeSerde productSerde = new ProductTypeSerde();
+    final ProductTypeSerde productSerde = new ProductTypeSerde();
 
     try (KafkaProducer<Product, Integer> stockProducer = new KafkaProducer<>(
         producerConfig,
         productSerde.serializer(),
         Serdes.Integer().serializer()))
     {
-      for (KeyValue<Product, Integer> kv : inventory) {
+      for (final KeyValue<Product, Integer> kv : inventory) {
         stockProducer.send(new ProducerRecord<>("warehouse-inventory", kv.key, kv.value))
             .get();
       }
-    } catch (InterruptedException | ExecutionException e) {
+    } catch (final InterruptedException | ExecutionException e) {
       e.printStackTrace();
     }
   }
 
-  public static void main(String [] args) throws Exception {
+  public static void main(final String [] args) throws Exception {
 
     final int quantityUnderpants = args.length > 0 ? Integer.valueOf(args[0]) : 20;
     final int quantityJumpers = args.length > 1 ? Integer.valueOf(args[1]) : 10;
 
     // Send Inventory
-    List<KeyValue<Product, Integer>> inventory = asList(
+    final List<KeyValue<Product, Integer>> inventory = asList(
         new KeyValue<>(UNDERPANTS, quantityUnderpants),
         new KeyValue<>(JUMPERS, quantityJumpers)
     );

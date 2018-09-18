@@ -1,4 +1,4 @@
-package io.confluent.examples.streams.microservices.util;
+package io.confluent.examples.streams.microservices;
 
 import java.util.Arrays;
 import java.util.Properties;
@@ -21,7 +21,7 @@ import io.confluent.examples.streams.avro.microservices.Order;
 
 public class ProduceOrders {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(final String[] args) throws Exception {
 
         final SpecificAvroSerializer<Order> mySerializer = new SpecificAvroSerializer<>();
         final boolean isKeySerde = false;
@@ -34,13 +34,13 @@ public class ProduceOrders {
         props.put(ProducerConfig.ACKS_CONFIG, "all");
         props.put(ProducerConfig.RETRIES_CONFIG, 0);
         MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(props);
-        KafkaProducer<String, Order> producer = new KafkaProducer<String, Order>(props, new StringSerializer(), mySerializer);
+        final KafkaProducer<String, Order> producer = new KafkaProducer<String, Order>(props, new StringSerializer(), mySerializer);
 
         int i = 1;
         while (true) {
-           String orderId = id(0L);
-           Order order = new Order(orderId, 15L, CREATED, UNDERPANTS, 3, 5.00d);
-           ProducerRecord<String, Order> record = new ProducerRecord<String, Order>("orders", order.getId(), order);
+           final String orderId = id(0L);
+           final Order order = new Order(orderId, 15L, CREATED, UNDERPANTS, 3, 5.00d);
+           final ProducerRecord<String, Order> record = new ProducerRecord<String, Order>("orders", order.getId(), order);
            producer.send(record);
            Thread.sleep(1000L);
            i++;
