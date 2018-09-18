@@ -1,6 +1,6 @@
 # Kafka Streams Microservice Examples
 
-**For the best experience with this example [try the quickstart](https://github.com/confluentinc/quickstart-demos/blob/5.0.0-post/microservices-orders/README.md) which runs the ecosystem in Docker, including Kafka Connect, Elasticsearch, KSQL and Control Centre (where you can query the evolving workflow interactively with KSQL)**
+**Try [the quickstart](https://github.com/confluentinc/quickstart-demos/blob/5.0.0-post/microservices-orders/README.md) which runs the ecosystem in Docker, including Kafka Connect, Elasticsearch, KSQL and Control Centre**
 ---
 
 Here is a small microservice ecosystem built with Kafka Streams. There is a related [blog post](https://www.confluent.io/blog/building-a-microservices-ecosystem-with-kafka-streams-and-ksql/) that outlines the approach used.  
