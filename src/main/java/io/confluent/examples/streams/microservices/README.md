@@ -1,5 +1,8 @@
 # Kafka Streams Microservice Examples
 
+**Try [the quickstart](https://github.com/confluentinc/quickstart-demos/blob/5.0.0-post/microservices-orders/README.md) which runs the ecosystem for you including Kafka Connect, Elasticsearch, KSQL and Control Centre**
+---
+
 Here is a small microservice ecosystem built with Kafka Streams. There is a related [blog post](https://www.confluent.io/blog/building-a-microservices-ecosystem-with-kafka-streams-and-ksql/) that outlines the approach used.  
 
 The example centers around an Orders Service which provides a REST interface to POST and GET Orders. Posting an Order creates an event in Kafka. This is picked up by three different validation engines (Fraud Service, Inventory Service, Order Details Service) which validate the order in parallel, emitting a PASS or FAIL based on whether each validation succeeds. The result of each validation is pushed through a separate topic, Order Validations, so that we retain the ‘single writer’ status of the Orders Service —> Orders Topic. The results of the various validation checks are aggregated back in the Order Service (Validation Aggregator) which then moves the order to a Validated or Failed state, based on the combined result. 
@@ -15,8 +18,10 @@ NB - this is demo code, not a production system and certain elements are left fo
 ![alt text](https://www.confluent.io/wp-content/uploads/Screenshot-2017-11-09-12.34.26.png "System Diagram")
 
 # Getting Started:
-To play with this ecosystem the simplest way is to run the tests and fiddle with the code (stand alone execution is only supported in branch 5.0.0+ so go there if you want stand alone or docker support). Each test boots a self-contained Kafka cluster so it's easy to play with different queries and configurations. 
+To play with the ecosystem code, or fork your own project, the simplest way is to run the tests and fiddle from inside your IDE. Each test boots a self-contained Kafka cluster so it's easy to play with different queries and configurations. 
 The best place to start is [EndToEndTest.java](https://github.com/confluentinc/kafka-streams-examples/blob/3.3.1-post/src/test/java/io/confluent/examples/streams/microservices/EndToEndTest.java)
+
+If you prefer to run the services individually [try the quickstart](https://github.com/confluentinc/quickstart-demos/blob/5.0.0-post/microservices-orders/README.md)  which runs all the services for you with the Confluent Kafka run from the CLI. Control Centre and Elasticsearch are in there too. 
 
 # Running the Examples:
 * Requires Java 1.8
