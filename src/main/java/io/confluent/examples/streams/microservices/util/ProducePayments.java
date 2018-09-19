@@ -35,18 +35,22 @@ public class ProducePayments {
         props.put(ProducerConfig.ACKS_CONFIG, "all");
         props.put(ProducerConfig.RETRIES_CONFIG, 0);
         MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(props);
-        final KafkaProducer<String, Payment> producer = new KafkaProducer<String, Payment>(props, new StringSerializer(), mySerializer);
 
-        int i = 1;
-        while (true) {
-           final String orderId = id(0L);
-           final Order order = new Order(orderId, 15L, CREATED, UNDERPANTS, 3, 5.00d);
-           final Payment payment = new Payment("Payment:1234", orderId, "CZK", 1000.00d);
-           final ProducerRecord<String, Payment> record = new ProducerRecord<String, Payment>("payments", payment.getId(), payment);
-           producer.send(record);
-           Thread.sleep(1000L);
-           i++;
+        try (final KafkaProducer<String, Payment> producer = new KafkaProducer<String, Payment>(props, new StringSerializer(), mySerializer)) {
+          int i = 1;
+          while (true) {
+             final String orderId = id(0L);
+             final Order order = new Order(orderId, 15L, CREATED, UNDERPANTS, 3, 5.00d);
+             final Payment payment = new Payment("Payment:1234", orderId, "CZK", 1000.00d);
+             final ProducerRecord<String, Payment> record = new ProducerRecord<String, Payment>("payments", payment.getId(), payment);
+             producer.send(record);
+             Thread.sleep(1000L);
+             i++;
+          }
+        } catch (final InterruptedException e) {
+          e.printStackTrace();
         }
+
    }
 
 }

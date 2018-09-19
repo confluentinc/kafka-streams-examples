@@ -35,16 +35,19 @@ public class ProduceCustomers {
         props.put(ProducerConfig.ACKS_CONFIG, "all");
         props.put(ProducerConfig.RETRIES_CONFIG, 0);
         MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(props);
-        final KafkaProducer<Long, Customer> producer = new KafkaProducer<Long, Customer>(props, new LongSerializer(), mySerializer);
 
-        int i = 1;
-        while (true) {
-           final String orderId = id(0L);
-           final Customer customer = new Customer(15L, "Franz", "Kafka", "frans@thedarkside.net", "oppression street, prague, cze");
-           final ProducerRecord<Long, Customer> record = new ProducerRecord<Long, Customer>("customers", customer.getId(), customer);
-           producer.send(record);
-           Thread.sleep(1000L);
-           i++;
+        try (final KafkaProducer<Long, Customer> producer = new KafkaProducer<Long, Customer>(props, new LongSerializer(), mySerializer)) {
+          int i = 1;
+          while (true) {
+             final String orderId = id(0L);
+             final Customer customer = new Customer(15L, "Franz", "Kafka", "frans@thedarkside.net", "oppression street, prague, cze");
+             final ProducerRecord<Long, Customer> record = new ProducerRecord<Long, Customer>("customers", customer.getId(), customer);
+             producer.send(record);
+             Thread.sleep(1000L);
+             i++;
+          }
+        } catch (final InterruptedException e) {
+          e.printStackTrace();
         }
    }
 

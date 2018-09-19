@@ -54,13 +54,13 @@ public class AddInventory {
     MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(producerConfig);
     final ProductTypeSerde productSerde = new ProductTypeSerde();
 
-    try (KafkaProducer<Product, Integer> stockProducer = new KafkaProducer<>(
+    try (final KafkaProducer<Product, Integer> stockProducer = new KafkaProducer<>(
         producerConfig,
         productSerde.serializer(),
         Serdes.Integer().serializer()))
     {
       for (final KeyValue<Product, Integer> kv : inventory) {
-        stockProducer.send(new ProducerRecord<>("warehouse-inventory", kv.key, kv.value))
+        stockProducer.send(new ProducerRecord<>(topic.name(), kv.key, kv.value))
             .get();
       }
     } catch (final InterruptedException | ExecutionException e) {
@@ -78,7 +78,7 @@ public class AddInventory {
         new KeyValue<>(UNDERPANTS, quantityUnderpants),
         new KeyValue<>(JUMPERS, quantityJumpers)
     );
-    System.out.printf("Send inventory to %s\n", Topics.WAREHOUSE_INVENTORY);
+    System.out.printf("Send inventory to %s%n", Topics.WAREHOUSE_INVENTORY);
     sendInventory(inventory, Topics.WAREHOUSE_INVENTORY);
 
   }

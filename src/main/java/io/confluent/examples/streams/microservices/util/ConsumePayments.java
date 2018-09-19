@@ -28,13 +28,13 @@ public class ConsumePayments {
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, Topics.PAYMENTS.valueSerde().deserializer().getClass());
         MonitoringInterceptorUtils.maybeConfigureInterceptorsConsumer(props);
 
-        try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props)) {
+        try (final KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props)) {
             consumer.subscribe(Arrays.asList("payments"));
 
             while (true) {
                 final ConsumerRecords<String, String> records = consumer.poll(100);
                 for (final ConsumerRecord<String, String> record : records)
-                    System.out.printf("offset = %d, key = %s, value = %s\n", record.offset(), record.key(), record.value());
+                    System.out.printf("offset = %d, key = %s, value = %s%n", record.offset(), record.key(), record.value());
             }
         }
     }

@@ -58,7 +58,7 @@ public class PostOrdersAndPayments {
   private static void sendPayment(final String id, final Payment payment,
       final Schemas.Topic<String, Payment> topic) {
 
-    //System.out.printf("-----> id: %s, payment: %s\n", id, payment);
+    //System.out.printf("-----> id: %s, payment: %s%n", id, payment);
 
     final SpecificAvroSerializer<Payment> paymentSerializer = new SpecificAvroSerializer<>();
     final boolean isKeySerde = false;
@@ -87,7 +87,7 @@ public class PostOrdersAndPayments {
     final Random randomGenerator = new Random();
 
     final int restPort = args.length > 0 ? Integer.valueOf(args[0]) : 5432;
-    System.out.printf("restPort: %d\n", restPort);
+    System.out.printf("restPort: %d%n", restPort);
 
     OrderBean returnedOrder;
     final Paths path = new Paths("localhost", restPort == 0 ? 5432 : restPort);
@@ -104,7 +104,6 @@ public class PostOrdersAndPayments {
       final int randomCustomerId = randomGenerator.nextInt(NUM_CUSTOMERS);
       final Product randomProduct = productTypeList.get(randomGenerator.nextInt(productTypeList.size()));
 
-      //final OrderBean inputOrder = new OrderBean(id(i), Long.valueOf(randomCustomerId), OrderState.CREATED, Product.JUMPERS, 1, 1d);
       final OrderBean inputOrder = new OrderBean(id(i), Long.valueOf(randomCustomerId), OrderState.CREATED, randomProduct, 1, 1d);
 
       // POST order to OrdersService
@@ -112,7 +111,7 @@ public class PostOrdersAndPayments {
       final Response response = client.target(path.urlPost())
           .request(APPLICATION_JSON_TYPE)
           .post(Entity.json(inputOrder));
-      System.out.printf("Response: %s \n", response.getStatus());
+      System.out.printf("Response: %s %n", response.getStatus());
 
       // GET the bean back explicitly
       System.out.printf("Getting order from: %s   .... ", path.urlGet(i));
@@ -122,27 +121,15 @@ public class PostOrdersAndPayments {
           .get(newBean());
 
       if (!inputOrder.equals(returnedOrder)) {
-        System.out.printf("Posted order %d does not equal returned order: %s\n", i, returnedOrder.toString());
+        System.out.printf("Posted order %d does not equal returned order: %s%n", i, returnedOrder.toString());
       } else {
-        System.out.printf("Posted order %d equals returned order: %s\n", i, returnedOrder.toString());
+        System.out.printf("Posted order %d equals returned order: %s%n", i, returnedOrder.toString());
       }
 
       // Send payment
       final Payment payment = new Payment("Payment:1234", id(i), "CZK", 1000.00d);
       sendPayment(payment.getId(), payment, Topics.PAYMENTS);
   
-      // GET order, assert that it is Validated
-      //returnedOrder = client.target(path.urlGetValidated(i)).queryParam("timeout", MIN)
-      //  .request(APPLICATION_JSON_TYPE).get(newBean());
-      //assertThat(returnedOrder).isEqualTo(new OrderBean(
-      //    inputOrder.getId(),
-      //    inputOrder.getCustomerId(),
-      //    OrderState.VALIDATED,
-      //    inputOrder.getProduct(),
-      //    inputOrder.getQuantity(),
-      //    inputOrder.getPrice()
-      //));
-
       Thread.sleep(5000L);
       i++;
     }
