@@ -1,24 +1,18 @@
 package io.confluent.examples.streams.microservices;
 
-import java.util.Arrays;
-import java.util.Properties;
-
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.kafka.common.serialization.LongSerializer;
+import io.confluent.examples.streams.avro.microservices.Customer;
+import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
-import java.util.Collections;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.LongSerializer;
 
-import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
-import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
+import java.util.Collections;
+import java.util.Properties;
+
 import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
-import static io.confluent.examples.streams.avro.microservices.OrderState.CREATED;
-import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
-import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.CUSTOMERS;
-import io.confluent.examples.streams.avro.microservices.Customer;
 
 public class ProduceCustomers {
 
@@ -37,19 +31,19 @@ public class ProduceCustomers {
         MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(props);
 
         try (final KafkaProducer<Long, Customer> producer = new KafkaProducer<Long, Customer>(props, new LongSerializer(), mySerializer)) {
-          int i = 1;
-          while (true) {
-             final String orderId = id(0L);
-             final Customer customer = new Customer(15L, "Franz", "Kafka", "frans@thedarkside.net", "oppression street, prague, cze");
-             final ProducerRecord<Long, Customer> record = new ProducerRecord<Long, Customer>("customers", customer.getId(), customer);
-             producer.send(record);
-             Thread.sleep(1000L);
-             i++;
-          }
+            int i = 1;
+            while (true) {
+                final String orderId = id(0L);
+                final Customer customer = new Customer(15L, "Franz", "Kafka", "frans@thedarkside.net", "oppression street, prague, cze");
+                final ProducerRecord<Long, Customer> record = new ProducerRecord<Long, Customer>("customers", customer.getId(), customer);
+                producer.send(record);
+                Thread.sleep(1000L);
+                i++;
+            }
         } catch (final InterruptedException e) {
-          e.printStackTrace();
+            e.printStackTrace();
         }
-   }
+    }
 
 }
 

@@ -1,24 +1,21 @@
 package io.confluent.examples.streams.microservices;
 
-import java.util.Arrays;
-import java.util.Properties;
-
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.StringSerializer;
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
-import java.util.Collections;
-
-import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
-import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
-import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
-import static io.confluent.examples.streams.avro.microservices.OrderState.CREATED;
-import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
-import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.PAYMENTS;
 import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.Payment;
+import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.StringSerializer;
+
+import java.util.Collections;
+import java.util.Properties;
+
+import static io.confluent.examples.streams.avro.microservices.OrderState.CREATED;
+import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
+import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
 
 public class ProducePayments {
 
@@ -37,21 +34,21 @@ public class ProducePayments {
         MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(props);
 
         try (final KafkaProducer<String, Payment> producer = new KafkaProducer<String, Payment>(props, new StringSerializer(), mySerializer)) {
-          int i = 1;
-          while (true) {
-             final String orderId = id(0L);
-             final Order order = new Order(orderId, 15L, CREATED, UNDERPANTS, 3, 5.00d);
-             final Payment payment = new Payment("Payment:1234", orderId, "CZK", 1000.00d);
-             final ProducerRecord<String, Payment> record = new ProducerRecord<String, Payment>("payments", payment.getId(), payment);
-             producer.send(record);
-             Thread.sleep(1000L);
-             i++;
-          }
+            int i = 1;
+            while (true) {
+                final String orderId = id(0L);
+                final Order order = new Order(orderId, 15L, CREATED, UNDERPANTS, 3, 5.00d);
+                final Payment payment = new Payment("Payment:1234", orderId, "CZK", 1000.00d);
+                final ProducerRecord<String, Payment> record = new ProducerRecord<String, Payment>("payments", payment.getId(), payment);
+                producer.send(record);
+                Thread.sleep(1000L);
+                i++;
+            }
         } catch (final InterruptedException e) {
-          e.printStackTrace();
+            e.printStackTrace();
         }
 
-   }
+    }
 
 }
 

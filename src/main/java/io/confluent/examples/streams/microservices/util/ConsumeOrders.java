@@ -1,18 +1,15 @@
 package io.confluent.examples.streams.microservices;
 
-import java.util.Arrays;
-import java.util.Properties;
-
+import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
+import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
-import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 
-import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS;
-import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
+import java.util.Arrays;
+import java.util.Properties;
 
 public class ConsumeOrders {
 
