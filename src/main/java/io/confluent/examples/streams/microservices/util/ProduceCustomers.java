@@ -1,28 +1,21 @@
-package io.confluent.examples.streams.microservices;
+package io.confluent.examples.streams.microservices.util;
 
-import java.util.Arrays;
-import java.util.Properties;
-
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.kafka.common.serialization.LongSerializer;
+import io.confluent.examples.streams.avro.microservices.Customer;
+import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
-import java.util.Collections;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.LongSerializer;
 
-import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
-import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
-import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
-import static io.confluent.examples.streams.avro.microservices.OrderState.CREATED;
-import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
-import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.CUSTOMERS;
-import io.confluent.examples.streams.avro.microservices.Customer;
+import java.util.Collections;
+import java.util.Properties;
 
 public class ProduceCustomers {
 
-    public static void main(final String[] args) throws Exception {
+    @SuppressWarnings("InfiniteLoopStatement")
+    public static void main(final String[] args) {
 
         final SpecificAvroSerializer<Customer> mySerializer = new SpecificAvroSerializer<>();
         final boolean isKeySerde = false;
@@ -36,20 +29,17 @@ public class ProduceCustomers {
         props.put(ProducerConfig.RETRIES_CONFIG, 0);
         MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(props);
 
-        try (final KafkaProducer<Long, Customer> producer = new KafkaProducer<Long, Customer>(props, new LongSerializer(), mySerializer)) {
-          int i = 1;
-          while (true) {
-             final String orderId = id(0L);
-             final Customer customer = new Customer(15L, "Franz", "Kafka", "frans@thedarkside.net", "oppression street, prague, cze");
-             final ProducerRecord<Long, Customer> record = new ProducerRecord<Long, Customer>("customers", customer.getId(), customer);
-             producer.send(record);
-             Thread.sleep(1000L);
-             i++;
-          }
+        try (final KafkaProducer<Long, Customer> producer = new KafkaProducer<>(props, new LongSerializer(), mySerializer)) {
+            while (true) {
+                final Customer customer = new Customer(15L, "Franz", "Kafka", "frans@thedarkside.net", "oppression street, prague, cze");
+                final ProducerRecord<Long, Customer> record = new ProducerRecord<>("customers", customer.getId(), customer);
+                producer.send(record);
+                Thread.sleep(1000L);
+            }
         } catch (final InterruptedException e) {
-          e.printStackTrace();
+            e.printStackTrace();
         }
-   }
+    }
 
 }
 
