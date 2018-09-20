@@ -12,11 +12,10 @@ import org.apache.kafka.common.serialization.LongSerializer;
 import java.util.Collections;
 import java.util.Properties;
 
-import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
-
 public class ProduceCustomers {
 
-    public static void main(final String[] args) throws Exception {
+    @SuppressWarnings("InfiniteLoopStatement")
+    public static void main(final String[] args) {
 
         final SpecificAvroSerializer<Customer> mySerializer = new SpecificAvroSerializer<>();
         final boolean isKeySerde = false;
@@ -30,15 +29,12 @@ public class ProduceCustomers {
         props.put(ProducerConfig.RETRIES_CONFIG, 0);
         MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(props);
 
-        try (final KafkaProducer<Long, Customer> producer = new KafkaProducer<Long, Customer>(props, new LongSerializer(), mySerializer)) {
-            int i = 1;
+        try (final KafkaProducer<Long, Customer> producer = new KafkaProducer<>(props, new LongSerializer(), mySerializer)) {
             while (true) {
-                final String orderId = id(0L);
                 final Customer customer = new Customer(15L, "Franz", "Kafka", "frans@thedarkside.net", "oppression street, prague, cze");
-                final ProducerRecord<Long, Customer> record = new ProducerRecord<Long, Customer>("customers", customer.getId(), customer);
+                final ProducerRecord<Long, Customer> record = new ProducerRecord<>("customers", customer.getId(), customer);
                 producer.send(record);
                 Thread.sleep(1000L);
-                i++;
             }
         } catch (final InterruptedException e) {
             e.printStackTrace();

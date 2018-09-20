@@ -45,7 +45,7 @@ public class AddInventory {
         }
     }
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) {
 
         final int quantityUnderpants = args.length > 0 ? Integer.valueOf(args[0]) : 20;
         final int quantityJumpers = args.length > 1 ? Integer.valueOf(args[1]) : 10;

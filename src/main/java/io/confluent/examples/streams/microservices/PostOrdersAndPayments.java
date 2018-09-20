@@ -3,8 +3,6 @@ package io.confluent.examples.streams.microservices;
 import io.confluent.examples.streams.avro.microservices.OrderState;
 import io.confluent.examples.streams.avro.microservices.Payment;
 import io.confluent.examples.streams.avro.microservices.Product;
-import io.confluent.examples.streams.microservices.domain.Schemas;
-import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
 import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
 import io.confluent.examples.streams.microservices.util.Paths;
 import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
@@ -39,8 +37,7 @@ public class PostOrdersAndPayments {
         };
     }
 
-    private static void sendPayment(final String id, final Payment payment,
-                                    final Schemas.Topic<String, Payment> topic) {
+    private static void sendPayment(final String id, final Payment payment) {
 
         //System.out.printf("-----> id: %s, payment: %s%n", id, payment);
 
@@ -57,13 +54,14 @@ public class PostOrdersAndPayments {
         producerConfig.put(ProducerConfig.CLIENT_ID_CONFIG, "payment-generator");
         MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(producerConfig);
 
-        final KafkaProducer<String, Payment> paymentProducer = new KafkaProducer<String, Payment>(producerConfig, new StringSerializer(), paymentSerializer);
+        final KafkaProducer<String, Payment> paymentProducer = new KafkaProducer<>(producerConfig, new StringSerializer(), paymentSerializer);
 
-        final ProducerRecord<String, Payment> record = new ProducerRecord<String, Payment>("payments", id, payment);
+        final ProducerRecord<String, Payment> record = new ProducerRecord<>("payments", id, payment);
         paymentProducer.send(record);
         paymentProducer.close();
     }
 
+    @SuppressWarnings("InfiniteLoopStatement")
     public static void main(final String[] args) throws Exception {
 
         final int NUM_CUSTOMERS = 6;
@@ -88,7 +86,7 @@ public class PostOrdersAndPayments {
             final int randomCustomerId = randomGenerator.nextInt(NUM_CUSTOMERS);
             final Product randomProduct = productTypeList.get(randomGenerator.nextInt(productTypeList.size()));
 
-            final OrderBean inputOrder = new OrderBean(id(i), Long.valueOf(randomCustomerId), OrderState.CREATED, randomProduct, 1, 1d);
+            final OrderBean inputOrder = new OrderBean(id(i), (long) randomCustomerId, OrderState.CREATED, randomProduct, 1, 1d);
 
             // POST order to OrdersService
             System.out.printf("Posting order to: %s   .... ", path.urlPost());
@@ -112,7 +110,7 @@ public class PostOrdersAndPayments {
 
             // Send payment
             final Payment payment = new Payment("Payment:1234", id(i), "CZK", 1000.00d);
-            sendPayment(payment.getId(), payment, Topics.PAYMENTS);
+            sendPayment(payment.getId(), payment);
 
             Thread.sleep(5000L);
             i++;

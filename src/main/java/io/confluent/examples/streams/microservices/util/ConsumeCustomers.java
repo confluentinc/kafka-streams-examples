@@ -8,11 +8,13 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 
-import java.util.Arrays;
+import java.time.Duration;
+import java.util.Collections;
 import java.util.Properties;
 
 public class ConsumeCustomers {
 
+    @SuppressWarnings("InfiniteLoopStatement")
     public static void main(final String[] args) {
         final Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
@@ -26,10 +28,13 @@ public class ConsumeCustomers {
         MonitoringInterceptorUtils.maybeConfigureInterceptorsConsumer(props);
 
         try (final KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props)) {
-            consumer.subscribe(Arrays.asList("customers"));
+            consumer.subscribe(Collections.singletonList("customers"));
 
             while (true) {
-                final ConsumerRecords<String, String> records = consumer.poll(100);
+                // poll returns right away when there is data available.
+                // the timeout is basically configuring "long poll" behavior, how long to keep checking when there
+                // is no data available, so it's better to poll for a longer period of time
+                final ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(30));
                 for (final ConsumerRecord<String, String> record : records)
                     System.out.printf("offset = %d, key = %s, value = %s%n", record.offset(), record.key(), record.value());
             }

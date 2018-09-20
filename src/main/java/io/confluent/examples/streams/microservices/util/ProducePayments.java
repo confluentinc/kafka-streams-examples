@@ -1,6 +1,5 @@
 package io.confluent.examples.streams.microservices.util;
 
-import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.Payment;
 import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -13,13 +12,12 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import java.util.Collections;
 import java.util.Properties;
 
-import static io.confluent.examples.streams.avro.microservices.OrderState.CREATED;
-import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
 import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
 
 public class ProducePayments {
 
-    public static void main(final String[] args) throws Exception {
+    @SuppressWarnings("InfiniteLoopStatement")
+    public static void main(final String[] args) {
 
         final SpecificAvroSerializer<Payment> mySerializer = new SpecificAvroSerializer<>();
         final boolean isKeySerde = false;
@@ -33,16 +31,13 @@ public class ProducePayments {
         props.put(ProducerConfig.RETRIES_CONFIG, 0);
         MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(props);
 
-        try (final KafkaProducer<String, Payment> producer = new KafkaProducer<String, Payment>(props, new StringSerializer(), mySerializer)) {
-            int i = 1;
+        try (final KafkaProducer<String, Payment> producer = new KafkaProducer<>(props, new StringSerializer(), mySerializer)) {
             while (true) {
                 final String orderId = id(0L);
-                final Order order = new Order(orderId, 15L, CREATED, UNDERPANTS, 3, 5.00d);
                 final Payment payment = new Payment("Payment:1234", orderId, "CZK", 1000.00d);
-                final ProducerRecord<String, Payment> record = new ProducerRecord<String, Payment>("payments", payment.getId(), payment);
+                final ProducerRecord<String, Payment> record = new ProducerRecord<>("payments", payment.getId(), payment);
                 producer.send(record);
                 Thread.sleep(1000L);
-                i++;
             }
         } catch (final InterruptedException e) {
             e.printStackTrace();
