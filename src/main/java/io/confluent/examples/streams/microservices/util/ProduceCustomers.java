@@ -1,4 +1,4 @@
-package io.confluent.examples.streams.microservices;
+package io.confluent.examples.streams.microservices.util;
 
 import io.confluent.examples.streams.avro.microservices.Customer;
 import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
