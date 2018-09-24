@@ -188,9 +188,9 @@ Also, each example states its exact requirements at the very top.
 
 <a name="requirements-java"/>
 
-## Java 8
+## Java 8+
 
-Some code examples require Java 8, primarily because of the usage of
+Some code examples require Java 8+, primarily because of the usage of
 [lambda expressions](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html).
 
 IntelliJ IDEA users:
@@ -210,6 +210,8 @@ IntelliJ IDEA users:
 
 If you want to experiment with the Scala examples in this repository, you need a version of Scala that supports Java 8
 and SAM / Java lambda (e.g. Scala 2.11 with `-Xexperimental` compiler flag, or 2.12).
+
+If you are compiling with Java 9+, you'll need to have Scala version 2.12+ to be compatible with the Jav version.
 
 
 <a name="packaging-and-running"/>
