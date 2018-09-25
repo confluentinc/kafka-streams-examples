@@ -37,18 +37,21 @@ public class PostOrdersAndPayments {
         };
     }
 
-    private static void sendPayment(final String id, final Payment payment) {
+    private static void sendPayment(final String id,
+                                    final Payment payment,
+                                    final String bootstrapServers,
+                                    final String schemaRegistryUrl) {
 
         //System.out.printf("-----> id: %s, payment: %s%n", id, payment);
 
         final SpecificAvroSerializer<Payment> paymentSerializer = new SpecificAvroSerializer<>();
         final boolean isKeySerde = false;
         paymentSerializer.configure(
-            Collections.singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://localhost:8081"),
+            Collections.singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl),
             isKeySerde);
 
         final Properties producerConfig = new Properties();
-        producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
         producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
         producerConfig.put(ProducerConfig.CLIENT_ID_CONFIG, "payment-generator");
@@ -70,6 +73,8 @@ public class PostOrdersAndPayments {
 
         final int restPort = args.length > 0 ? Integer.valueOf(args[0]) : 5432;
         System.out.printf("restPort: %d%n", restPort);
+        final String bootstrapServers = args.length > 1 ? args[1] : "localhost:9092";
+        final String schemaRegistryUrl = args.length > 2 ? args[2] : "http://localhost:8081";
 
         OrderBean returnedOrder;
         final Paths path = new Paths("localhost", restPort == 0 ? 5432 : restPort);
@@ -110,7 +115,7 @@ public class PostOrdersAndPayments {
 
             // Send payment
             final Payment payment = new Payment("Payment:1234", id(i), "CZK", 1000.00d);
-            sendPayment(payment.getId(), payment);
+            sendPayment(payment.getId(), payment, bootstrapServers, schemaRegistryUrl);
 
             Thread.sleep(5000L);
             i++;
