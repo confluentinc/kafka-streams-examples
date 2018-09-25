@@ -211,7 +211,7 @@ IntelliJ IDEA users:
 If you want to experiment with the Scala examples in this repository, you need a version of Scala that supports Java 8
 and SAM / Java lambda (e.g. Scala 2.11 with `-Xexperimental` compiler flag, or 2.12).
 
-If you are compiling with Java 9+, you'll need to have Scala version 2.12+ to be compatible with the Jav version.
+If you are compiling with Java 9+, you'll need to have Scala version 2.12+ to be compatible with the Java version.
 
 
 <a name="packaging-and-running"/>
