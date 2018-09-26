@@ -14,6 +14,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.jackson.JacksonFeature;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -80,6 +81,7 @@ public class PostOrdersAndPayments {
         final Paths path = new Paths("localhost", restPort == 0 ? 5432 : restPort);
 
         final ClientConfig clientConfig = new ClientConfig();
+        clientConfig.register(JacksonFeature.class);
         clientConfig.property(ClientProperties.CONNECT_TIMEOUT, 60000)
                     .property(ClientProperties.READ_TIMEOUT, 60000);
         final Client client = ClientBuilder.newClient(clientConfig);
