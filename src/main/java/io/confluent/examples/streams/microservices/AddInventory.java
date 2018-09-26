@@ -22,10 +22,11 @@ import static java.util.Arrays.asList;
 public class AddInventory {
 
     private static void sendInventory(final List<KeyValue<Product, Integer>> inventory,
-                                      final Schemas.Topic<Product, Integer> topic) {
+                                      final Schemas.Topic<Product, Integer> topic,
+                                      final String bootstrapServers) {
 
         final Properties producerConfig = new Properties();
-        producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
         producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
         producerConfig.put(ProducerConfig.CLIENT_ID_CONFIG, "inventory-generator");
@@ -49,6 +50,7 @@ public class AddInventory {
 
         final int quantityUnderpants = args.length > 0 ? Integer.valueOf(args[0]) : 20;
         final int quantityJumpers = args.length > 1 ? Integer.valueOf(args[1]) : 10;
+        final String bootstrapServers = args.length > 2 ? args[2] : "localhost:9092";
 
         // Send Inventory
         final List<KeyValue<Product, Integer>> inventory = asList(
@@ -56,7 +58,7 @@ public class AddInventory {
             new KeyValue<>(JUMPERS, quantityJumpers)
         );
         System.out.printf("Send inventory to %s%n", Topics.WAREHOUSE_INVENTORY);
-        sendInventory(inventory, Topics.WAREHOUSE_INVENTORY);
+        sendInventory(inventory, Topics.WAREHOUSE_INVENTORY, bootstrapServers);
 
     }
 
