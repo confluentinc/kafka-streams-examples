@@ -49,7 +49,9 @@ class ConfigTest(unittest.TestCase):
         #       we should also validate some REST API responses (see `test_kafka_rest.py`)?
 
     def test_secure_config(self):
-        output = self.cluster.run_command_on_service("secure-config", "bash -c 'while [ ! -f /tmp/config-is-done ]; do echo waiting && sleep 1; done; echo PASS'")
+        output = self.cluster.run_command_on_service(
+            "secure-config",
+            "bash -c 'while [ ! -f /tmp/config-is-done ]; do echo waiting && sleep 1; done; echo PASS'")
         assert "PASS" in output
 
         admin_props = props_to_list(self.cluster.run_command_on_service("secure-config", "cat /etc/kafka-streams-examples/admin.properties"))
