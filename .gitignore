@@ -21,3 +21,5 @@ java/.classpath
 java/.project
 java/.settings/
 .vscode/*
+.eggs
+*.egg-info/
