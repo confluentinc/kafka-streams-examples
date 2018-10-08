@@ -7,7 +7,7 @@ In this tutorial we will run Confluent's
 :cp-examples:`Kafka Music demo application|src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java`
 for the Kafka Streams API.
 
-The Kafka Music application demonstrates how to build of a simple music charts application that continuously computes,
+The Kafka Music application demonstrates how to build a simple music charts application that continuously computes,
 in real-time, the latest charts such as Top 5 songs per music genre.  It exposes its latest processing results -- the
 latest charts -- via Kafka's :ref:`Interactive Queries <streams_developer-guide_interactive-queries>` feature and a REST
 API.  The application's input data is in Avro format and comes from two sources: a stream of play events (think: "song
