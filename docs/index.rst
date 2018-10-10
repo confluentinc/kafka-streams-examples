@@ -6,6 +6,7 @@ Kafka Streams Demo Application
 In this tutorial we will run Confluent's
 :cp-examples:`Kafka Music demo application|src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java`
 for the Kafka Streams API.
+If you are looking for a similar demo application written with KSQL queries, check out the separate page on the `KSQL music demo walk-thru <https://www.confluent.io/blog/building-streaming-application-ksql/>`__
 
 The Kafka Music application demonstrates how to build a simple music charts application that continuously computes,
 in real-time, the latest charts such as Top 5 songs per music genre.  It exposes its latest processing results -- the
