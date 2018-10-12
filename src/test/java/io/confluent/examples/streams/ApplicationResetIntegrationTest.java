@@ -77,7 +77,7 @@ public class ApplicationResetIntegrationTest {
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
-    KafkaStreams streams = ApplicationResetExample.run(new String[0], streamsConfiguration);
+    KafkaStreams streams = ApplicationResetExample.run(false, streamsConfiguration);
 
     //
     // Step 2: Produce some input data to the input topic.
@@ -133,7 +133,7 @@ public class ApplicationResetIntegrationTest {
     //
     // Step 5: Rerun application
     //
-    streams = ApplicationResetExample.run(new String[]{CLUSTER.bootstrapServers(), "--reset"}, streamsConfiguration);
+    streams = ApplicationResetExample.run(true, streamsConfiguration);
 
     //
     // Step 6: Verify the application's output data.
