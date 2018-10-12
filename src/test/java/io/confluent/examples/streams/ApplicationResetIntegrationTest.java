@@ -133,7 +133,7 @@ public class ApplicationResetIntegrationTest {
     //
     // Step 5: Rerun application
     //
-    streams = ApplicationResetExample.run(new String[]{"--reset"}, streamsConfiguration);
+    streams = ApplicationResetExample.run(new String[]{CLUSTER.bootstrapServers(), "--reset"}, streamsConfiguration);
 
     //
     // Step 6: Verify the application's output data.
