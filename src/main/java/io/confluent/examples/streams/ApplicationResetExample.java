@@ -113,7 +113,7 @@ import java.util.Properties;
  * Thus, restart the application via:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.ApplicationResetExample --reset
+ * $ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.ApplicationResetExample localhost:9092 --reset
  * }</pre>
  * 9) If your console consumer (from step 5) is still running, you should see the same output data again.
  * If it was stopped and you restart it, if will print the result "twice".
@@ -161,7 +161,7 @@ public class ApplicationResetExample {
     final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
 
     // Delete the application's local state on reset
-    if (args.length > 0 && args[0].equals("--reset")) {
+    if (args.length > 1 && args[1].equals("--reset")) {
       streams.cleanUp();
     }
 
