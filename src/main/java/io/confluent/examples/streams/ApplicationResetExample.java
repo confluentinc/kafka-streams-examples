@@ -113,7 +113,7 @@ import java.util.Properties;
  * Thus, restart the application via:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.ApplicationResetExample --reset
+ * $ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.ApplicationResetExample localhost:9092 --reset
  * }</pre>
  * 9) If your console consumer (from step 5) is still running, you should see the same output data again.
  * If it was stopped and you restart it, if will print the result "twice".
@@ -142,13 +142,14 @@ public class ApplicationResetExample {
     // so setting this config combined with resetting will cause the application to re-process all the input data in the topic.
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-    final KafkaStreams streams = run(args, streamsConfiguration);
+    boolean doReset = args.length > 1 && args[1].equals("--reset");
+    final KafkaStreams streams = run(doReset, streamsConfiguration);
 
     // Add shutdown hook to respond to SIGTERM and gracefully close Kafka Streams
     Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
   }
 
-  public static KafkaStreams run(final String[] args, final Properties streamsConfiguration) {
+  public static KafkaStreams run(final boolean doReset, final Properties streamsConfiguration) {
     // Define the processing topology
     final StreamsBuilder builder = new StreamsBuilder();
     final KStream<String, String> input = builder.stream("my-input-topic");
@@ -161,7 +162,7 @@ public class ApplicationResetExample {
     final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
 
     // Delete the application's local state on reset
-    if (args.length > 0 && args[0].equals("--reset")) {
+    if (doReset) {
       streams.cleanUp();
     }
 
