@@ -142,7 +142,7 @@ public class ApplicationResetExample {
     // so setting this config combined with resetting will cause the application to re-process all the input data in the topic.
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-    boolean doReset = args.length > 1 && args[1].equals("--reset");
+    final boolean doReset = args.length > 1 && args[1].equals("--reset");
     final KafkaStreams streams = run(doReset, streamsConfiguration);
 
     // Add shutdown hook to respond to SIGTERM and gracefully close Kafka Streams
