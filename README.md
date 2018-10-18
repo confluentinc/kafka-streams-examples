@@ -252,7 +252,8 @@ each example states its exact requirements at the very top.
 
 If you are using an IDE and import the project you might end up with a "missing import / class not found" error.
 Some Avro classes are generated from schema files and the IDE does not generete those classes automatically.
-You need to run `mvn -Dskip.tests=true compile` manually (c.f. the steps above) to resolve the error.
+You can run `mvn -Dskip.tests=true compile` manually (c.f. the steps above) to resolve the error.
+If you are using Eclipse, you can also right-click on `pom.xml` file and choose `Run As` -> `Maven generate-sources`.
 
 
 <a name="requirements-java"/>
