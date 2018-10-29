@@ -57,7 +57,7 @@
         <licenses.version>5.2.0-SNAPSHOT</licenses.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scala.version>${kafka.scala.version}.7</scala.version>
-        <scalatest.version>2.2.6</scalatest.version>
+        <scalatest.version>3.0.5</scalatest.version>
     </properties>
 
     <dependencies>
