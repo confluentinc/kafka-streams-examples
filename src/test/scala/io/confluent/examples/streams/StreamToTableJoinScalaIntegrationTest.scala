@@ -25,7 +25,6 @@ import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream.{KStream, KTable}
 import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
 import org.apache.kafka.test.TestUtils
-import org.assertj.core.api.Assertions.assertThat
 import org.junit._
 import org.scalatest.junit.AssertionsForJUnit
 
@@ -204,7 +203,7 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
     val actualClicksPerRegion: java.util.List[KeyValue[String, Long]] = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig,
       outputTopic, expectedClicksPerRegion.size)
     streams.close()
-    assertThat(actualClicksPerRegion).containsExactlyElementsOf(expectedClicksPerRegion.asJava)
+    assert(actualClicksPerRegion === expectedClicksPerRegion.asJava)
   }
 
 }
