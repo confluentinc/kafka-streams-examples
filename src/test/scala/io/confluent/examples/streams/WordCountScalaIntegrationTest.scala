@@ -25,7 +25,6 @@ import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream.{KStream, KTable}
 import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
 import org.apache.kafka.test.TestUtils
-import org.assertj.core.api.Assertions.assertThat
 import org.junit._
 import org.scalatest.junit.AssertionsForJUnit
 
@@ -139,7 +138,7 @@ class WordCountScalaIntegrationTest extends AssertionsForJUnit {
     val actualWordCounts: java.util.List[KeyValue[String, Long]] =
       IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig, outputTopic, expectedWordCounts.size)
     streams.close()
-    assertThat(actualWordCounts).containsExactlyElementsOf(expectedWordCounts.asJava)
+    assert(actualWordCounts === expectedWordCounts.asJava)
   }
 
 }

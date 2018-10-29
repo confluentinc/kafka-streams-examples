@@ -28,7 +28,6 @@ import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream.KStream
 import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
 import org.apache.kafka.test.TestUtils
-import org.assertj.core.api.Assertions.assertThat
 import org.junit._
 import org.scalatest.junit.AssertionsForJUnit
 
@@ -147,7 +146,7 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
     // Note: This example only processes a small amount of input data, for which the word counts
     // will actually be exact counts.  However, for large amounts of input data we would expect to
     // observe approximate counts (where the approximate counts would be >= true exact counts).
-    assertThat(actualWordCounts).containsExactlyElementsOf(expectedWordCounts.asJava)
+    assert(actualWordCounts === expectedWordCounts.asJava)
   }
 
   private def createCMSStoreBuilder(cmsStoreName: String): CMSStoreBuilder[String] = {
