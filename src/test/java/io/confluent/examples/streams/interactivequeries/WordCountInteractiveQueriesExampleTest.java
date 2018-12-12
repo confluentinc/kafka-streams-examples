@@ -26,6 +26,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
+import org.hamcrest.core.IsInstanceOf;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -296,7 +297,7 @@ public class WordCountInteractiveQueriesExampleTest {
     kafkaStreams.start();
     proxy = WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, port, host);
     expectedEx.expect(Exception.class);
-    expectedEx.expectMessage("java.net.BindException: Address already in use");
+    expectedEx.expectCause(IsInstanceOf.instanceOf(java.net.BindException.class));
     // Binding to same port again will raise BindException.
     WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, port, host);
   }
