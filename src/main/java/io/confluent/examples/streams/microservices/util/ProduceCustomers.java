@@ -31,7 +31,7 @@ public class ProduceCustomers {
 
         try (final KafkaProducer<Long, Customer> producer = new KafkaProducer<>(props, new LongSerializer(), mySerializer)) {
             while (true) {
-                final Customer customer = new Customer(15L, "Franz", "Kafka", "frans@thedarkside.net", "oppression street, prague, cze");
+                final Customer customer = new Customer(15L, "Franz", "Kafka", "frans@thedarkside.net", "oppression street, prague, cze", "gold");
                 final ProducerRecord<Long, Customer> record = new ProducerRecord<>("customers", customer.getId(), customer);
                 producer.send(record);
                 Thread.sleep(1000L);

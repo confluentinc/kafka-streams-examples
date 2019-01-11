@@ -19,6 +19,7 @@ import org.apache.kafka.streams.kstream.GlobalKTable;
 import org.apache.kafka.streams.kstream.JoinWindows;
 import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Produced;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,6 +80,10 @@ public class EmailService implements Service {
             -> emailer.sendEmail(emailTuple)
         );
 
+    //Send the order to a topic whose name is the value of customer level
+    orders.join(customers, (orderId, order) -> order.getCustomerId(), (order, customer) -> customer)
+        .to((customerId, customer, record) -> customer.getLevel(), Produced.with(ORDERS.keySerde(), ORDERS.valueSerde()));
+
     return new KafkaStreams(builder.build(), baseStreamsConfig(bootstrapServers, stateDir, SERVICE_APP_ID));
   }
 
@@ -93,8 +98,7 @@ public class EmailService implements Service {
     @Override
     public void sendEmail(final EmailTuple details) {
       //In a real implementation we would do something a little more useful
-      log.warn("Sending an email to: \nCustomer:%s\nOrder:%s\nPayment%s", details.customer,
-          details.order, details.payment);
+      log.warn("Sending email: \nCustomer:{}\nOrder:{}\nPayment{}", details.customer, details.order, details.payment);
     }
   }
 
