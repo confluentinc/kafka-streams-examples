@@ -2,6 +2,7 @@ package io.confluent.examples.streams.microservices;
 
 import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.CUSTOMERS;
 import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS;
+import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS_ENRICHED;
 import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.PAYMENTS;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.MIN;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
@@ -10,6 +11,7 @@ import static io.confluent.examples.streams.microservices.util.MicroserviceUtils
 
 import io.confluent.examples.streams.avro.microservices.Customer;
 import io.confluent.examples.streams.avro.microservices.Order;
+import io.confluent.examples.streams.avro.microservices.OrderEnriched;
 import io.confluent.examples.streams.avro.microservices.Payment;
 
 import org.apache.kafka.streams.KafkaStreams;
@@ -81,8 +83,11 @@ public class EmailService implements Service {
         );
 
     //Send the order to a topic whose name is the value of customer level
-    orders.join(customers, (orderId, order) -> order.getCustomerId(), (order, customer) -> customer)
-        .to((customerId, customer, record) -> customer.getLevel(), Produced.with(ORDERS.keySerde(), ORDERS.valueSerde()));
+    //orders.join(customers, (orderId, order) -> order.getCustomerId(), (order, customer) -> order)
+        //.to("gold", Produced.with(ORDERS.keySerde(), ORDERS.valueSerde()));
+        //.to((customerId, customer, record) -> customer.getLevel(), Produced.with(ORDERS.keySerde(), ORDERS.valueSerde()));
+    orders.join(customers, (orderId, order) -> order.getCustomerId(), (order, customer) -> new OrderEnriched (order.getId(), order.getCustomerId(), customer.getLevel()))
+        .to((orderId, orderEnriched, record) -> orderEnriched.getCustomerLevel(), Produced.with(ORDERS_ENRICHED.keySerde(), ORDERS_ENRICHED.valueSerde()));
 
     return new KafkaStreams(builder.build(), baseStreamsConfig(bootstrapServers, stateDir, SERVICE_APP_ID));
   }
