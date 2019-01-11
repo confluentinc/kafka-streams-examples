@@ -84,6 +84,7 @@ public class EmailService implements Service {
 
     //Send the order to a topic whose name is the value of customer level
     orders.join(customers, (orderId, order) -> order.getCustomerId(), (order, customer) -> new OrderEnriched (order.getId(), order.getCustomerId(), customer.getLevel()))
+        //TopicNameExtractor to get the topic name (i.e., customerLevel) from the enriched order record being sent
         .to((orderId, orderEnriched, record) -> orderEnriched.getCustomerLevel(), Produced.with(ORDERS_ENRICHED.keySerde(), ORDERS_ENRICHED.valueSerde()));
 
     return new KafkaStreams(builder.build(), baseStreamsConfig(bootstrapServers, stateDir, SERVICE_APP_ID));
