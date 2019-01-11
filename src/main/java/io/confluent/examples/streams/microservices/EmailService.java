@@ -83,9 +83,6 @@ public class EmailService implements Service {
         );
 
     //Send the order to a topic whose name is the value of customer level
-    //orders.join(customers, (orderId, order) -> order.getCustomerId(), (order, customer) -> order)
-        //.to("gold", Produced.with(ORDERS.keySerde(), ORDERS.valueSerde()));
-        //.to((customerId, customer, record) -> customer.getLevel(), Produced.with(ORDERS.keySerde(), ORDERS.valueSerde()));
     orders.join(customers, (orderId, order) -> order.getCustomerId(), (order, customer) -> new OrderEnriched (order.getId(), order.getCustomerId(), customer.getLevel()))
         .to((orderId, orderEnriched, record) -> orderEnriched.getCustomerLevel(), Produced.with(ORDERS_ENRICHED.keySerde(), ORDERS_ENRICHED.valueSerde()));
 
