@@ -4,7 +4,7 @@
 
 This small microservices ecosystem showcases an order management workflow, such as one might find in retail and online shopping.
 It is built using Kafka Streams, whereby business events that describe the order management workflow propagate through this ecosystem.
-The blog post (Building a Microservices Ecosystem with Kafka Streams and KSQL)[https://www.confluent.io/blog/building-a-microservices-ecosystem-with-kafka-streams-and-ksql/] outlines the approach used.
+The blog post [Building a Microservices Ecosystem with Kafka Streams and KSQL](https://www.confluent.io/blog/building-a-microservices-ecosystem-with-kafka-streams-and-ksql/) outlines the approach used.
 
 In this example, the system centers on an Orders Service which exposes a REST interface to POST and GET Orders.
 Posting an Order creates an event in Kafka that is recorded in the topic `orders`.
