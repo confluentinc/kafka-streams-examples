@@ -2,6 +2,7 @@ package io.confluent.examples.streams.microservices;
 
 import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.CUSTOMERS;
 import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS;
+import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS_ENRICHED;
 import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.PAYMENTS;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.MIN;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
@@ -10,6 +11,7 @@ import static io.confluent.examples.streams.microservices.util.MicroserviceUtils
 
 import io.confluent.examples.streams.avro.microservices.Customer;
 import io.confluent.examples.streams.avro.microservices.Order;
+import io.confluent.examples.streams.avro.microservices.OrderEnriched;
 import io.confluent.examples.streams.avro.microservices.Payment;
 
 import org.apache.kafka.streams.KafkaStreams;
@@ -19,6 +21,7 @@ import org.apache.kafka.streams.kstream.GlobalKTable;
 import org.apache.kafka.streams.kstream.JoinWindows;
 import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Produced;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,6 +82,11 @@ public class EmailService implements Service {
             -> emailer.sendEmail(emailTuple)
         );
 
+    //Send the order to a topic whose name is the value of customer level
+    orders.join(customers, (orderId, order) -> order.getCustomerId(), (order, customer) -> new OrderEnriched (order.getId(), order.getCustomerId(), customer.getLevel()))
+        //TopicNameExtractor to get the topic name (i.e., customerLevel) from the enriched order record being sent
+        .to((orderId, orderEnriched, record) -> orderEnriched.getCustomerLevel(), Produced.with(ORDERS_ENRICHED.keySerde(), ORDERS_ENRICHED.valueSerde()));
+
     return new KafkaStreams(builder.build(), baseStreamsConfig(bootstrapServers, stateDir, SERVICE_APP_ID));
   }
 
@@ -93,8 +101,7 @@ public class EmailService implements Service {
     @Override
     public void sendEmail(final EmailTuple details) {
       //In a real implementation we would do something a little more useful
-      log.warn("Sending an email to: \nCustomer:%s\nOrder:%s\nPayment%s", details.customer,
-          details.order, details.payment);
+      log.warn("Sending email: \nCustomer:{}\nOrder:{}\nPayment{}", details.customer, details.order, details.payment);
     }
   }
 

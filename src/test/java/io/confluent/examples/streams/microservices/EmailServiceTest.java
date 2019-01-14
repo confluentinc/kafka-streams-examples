@@ -48,7 +48,7 @@ public class EmailServiceTest extends MicroserviceTestUtils {
     //Given one order, customer and payment
     final String orderId = id(0L);
     final Order order = new Order(orderId, 15L, CREATED, UNDERPANTS, 3, 5.00d);
-    final Customer customer = new Customer(15L, "Franz", "Kafka", "frans@thedarkside.net", "oppression street, prague, cze");
+    final Customer customer = new Customer(15L, "Franz", "Kafka", "frans@thedarkside.net", "oppression street, prague, cze", "gold");
     final Payment payment = new Payment("Payment:1234", orderId, "CZK", 1000.00d);
 
     emailService = new EmailService(details -> {
