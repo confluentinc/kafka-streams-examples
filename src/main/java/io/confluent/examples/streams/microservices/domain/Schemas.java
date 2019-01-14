@@ -5,6 +5,7 @@ import static io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig.SCHEMA
 
 import io.confluent.examples.streams.avro.microservices.Customer;
 import io.confluent.examples.streams.avro.microservices.Order;
+import io.confluent.examples.streams.avro.microservices.OrderEnriched;
 import io.confluent.examples.streams.avro.microservices.OrderValidation;
 import io.confluent.examples.streams.avro.microservices.OrderValue;
 import io.confluent.examples.streams.avro.microservices.Payment;
@@ -59,6 +60,7 @@ public class Schemas {
 
     public static final Map<String, Topic> ALL = new HashMap<>();
     public static Topic<String, Order> ORDERS;
+    public static Topic<String, OrderEnriched> ORDERS_ENRICHED;
     public static Topic<String, Payment> PAYMENTS;
     public static Topic<Long, Customer> CUSTOMERS;
     public static Topic<Product, Integer> WAREHOUSE_INVENTORY;
@@ -70,6 +72,7 @@ public class Schemas {
 
     private static void createTopics() {
       ORDERS = new Topic<>("orders", Serdes.String(), new SpecificAvroSerde<Order>());
+      ORDERS_ENRICHED = new Topic<>("orders-enriched", Serdes.String(), new SpecificAvroSerde<OrderEnriched>());
       PAYMENTS = new Topic<>("payments", Serdes.String(), new SpecificAvroSerde<Payment>());
       CUSTOMERS = new Topic<>("customers", Serdes.Long(), new SpecificAvroSerde<Customer>());
       ORDER_VALIDATIONS = new Topic<>("order-validations", Serdes.String(),
