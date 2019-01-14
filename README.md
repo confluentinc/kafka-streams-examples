@@ -70,7 +70,7 @@ There are two kinds of examples:
 | MixAndMatch DSL+Processor | DSL, Processor API, `KStream#transform()`, `KStream#process()`, custom `Transformer` and `Processor` implementations | [Java 8+ example](src/test/java/io/confluent/examples/streams/MixAndMatchLambdaIntegrationTest.java)
 | ApplicationReset | Application Reset Tool `bin/kafka-streams-application-reset` | [Java 8+ example](src/main/java/io/confluent/examples/streams/ApplicationResetExample.java)
 | GlobalKTable |join between `KStream` and `GlobalKTable`| [Java 8+ example](src/main/java/io/confluent/examples/streams/GlobalKTablesExample.java)
-| Microservice | Microservice ecosystem | [Java 8+ example](src/main/java/io/confluent/examples/streams/microservices)
+| Microservice | Microservice ecosystem, state stores, dynamic routing, joins, filtering, branching, stateful operations | [Java 8+ example](src/main/java/io/confluent/examples/streams/microservices)
 
 ## Additional examples
 
