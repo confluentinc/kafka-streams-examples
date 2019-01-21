@@ -44,7 +44,7 @@ import java.util.Properties;
  * <p>
  * In this example, we join a stream of orders that reads from a topic named
  * "order" with a customers table that reads from a topic named "customer", and a products
- * table that reads fro a topic "product". The join produces an EnrichedOrder object.
+ * table that reads from a topic "product". The join produces an EnrichedOrder object.
  * <p>
  * <br>
  * HOW TO RUN THIS EXAMPLE
