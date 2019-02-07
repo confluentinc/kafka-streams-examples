@@ -64,6 +64,7 @@ There are two kinds of examples:
 | WikipediaFeedSpecificAvro | Specific Avro | [Java 8+ example](src/main/java/io/confluent/examples/streams/WikipediaFeedAvroLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/WikipediaFeedAvroExample.java)
 | SecureKafkaStreams | Secure, encryption, client authentication | | [Java 7+ example](src/main/java/io/confluent/examples/streams/SecureKafkaStreamsExample.java)
 | StatesStoresDSL | State Stores, DSL | [Java 8+ example](src/test/java/io/confluent/examples/streams/StateStoresInTheDSLIntegrationTest.java)
+| CustomJoinWithTableTriggeringStreamTableJoin | Joins, Processor API, DSL, Transformers, Joins | [Java 8+ example](src/test/java/io/confluent/examples/streams/CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest.java)
 | WordCountInteractiveQueries | Interactive Queries, REST, RPC | [Java 8+ example](src/main/java/io/confluent/examples/streams/interactivequeries/WordCountInteractiveQueriesExample.java)
 | KafkaMusic | Interactive Queries, State Stores, REST API | [Java 8+ example](src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java)
 | PoisonPill | Corrupt input records | [Java 8+ example](src/test/java/io/confluent/examples/streams/HandlingCorruptedInputRecordsIntegrationTest.java)

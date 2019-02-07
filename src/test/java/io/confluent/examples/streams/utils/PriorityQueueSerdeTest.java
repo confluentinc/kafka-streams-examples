@@ -28,7 +28,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class PriorityQueueSerdeTest {
 
     @Test
-    public void shouldSerializeDeserialize() throws Exception {
+    public void shouldSerializeDeserialize() {
         final Comparator<Long> comparator = Long::compareTo;
         final PriorityQueue<Long> queue = new PriorityQueue<>(comparator);
         queue.add(2L);
