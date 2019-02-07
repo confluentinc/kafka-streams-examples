@@ -42,6 +42,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import io.confluent.examples.streams.utils.KeyValueWithTimestamp;
+import io.confluent.examples.streams.utils.Pair;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -109,6 +112,28 @@ public class IntegrationTestUtils {
   }
 
   /**
+   * Write a collection of KeyValueWithTimestamp pairs, with explicitly defined timestamps, to Kafka.
+   *
+   * @param topic          Kafka topic to write the data records to
+   * @param records        Data records to write to Kafka
+   * @param producerConfig Kafka producer configuration
+   * @param <K>            Key type of the data records
+   * @param <V>            Value type of the data records
+   */
+  public static <K, V> void produceKeyValuesWithTimestampsSynchronously(
+    final String topic, final Collection<KeyValueWithTimestamp<K, V>> records, final Properties producerConfig)
+    throws ExecutionException, InterruptedException {
+    final Producer<K, V> producer = new KafkaProducer<>(producerConfig);
+    for (final KeyValueWithTimestamp<K, V> record : records) {
+      final Future<RecordMetadata> f = producer.send(
+        new ProducerRecord<>(topic, null, record.timestamp, record.key, record.value));
+      f.get();
+    }
+    producer.flush();
+    producer.close();
+  }
+
+  /**
    * @param topic          Kafka topic to write the data records to
    * @param records        Data records to write to Kafka
    * @param producerConfig Kafka producer configuration
@@ -118,14 +143,10 @@ public class IntegrationTestUtils {
   public static <K, V> void produceKeyValuesSynchronously(
       final String topic, final Collection<KeyValue<K, V>> records, final Properties producerConfig)
       throws ExecutionException, InterruptedException {
-    final Producer<K, V> producer = new KafkaProducer<>(producerConfig);
-    for (final KeyValue<K, V> record : records) {
-      final Future<RecordMetadata> f = producer.send(
-          new ProducerRecord<>(topic, record.key, record.value));
-      f.get();
-    }
-    producer.flush();
-    producer.close();
+    final Collection<KeyValueWithTimestamp<K, V>> keyedRecordsWithTimestamp =
+      records.stream().map(record ->
+        new KeyValueWithTimestamp<>(record.key, record.value, System.currentTimeMillis())).collect(Collectors.toList());
+    produceKeyValuesWithTimestampsSynchronously(topic, keyedRecordsWithTimestamp, producerConfig);
   }
 
   public static <V> void produceValuesSynchronously(
