@@ -346,7 +346,7 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
     // This state store is used to temporarily buffer any records arriving at the stream side of the join, so that
-    // we can wait (if needed) on matching data to arrive at the table side.
+    // we can wait (if needed) for matching data to arrive at the table side.
     final StoreBuilder<KeyValueStore<String, Pair<Double, Instant>>> streamBufferStateStore =
       Stores
         .keyValueStoreBuilder(
