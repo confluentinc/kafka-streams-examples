@@ -191,8 +191,8 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
               if (delta.compareTo(maxWaitTimePerRecordForTableSideData) > 0) {
                 // Final attempt to fetch table-side data; we use that data even if it is null (indicates: missing).
                 final Long tableValue = tableStore.get(record.key);
-                context.forward(record.key, new Pair<>(record.value.x, tableValue));
                 streamBufferStore.delete(record.key);
+                context.forward(record.key, new Pair<>(record.value.x, tableValue));
               }
             }
           }
