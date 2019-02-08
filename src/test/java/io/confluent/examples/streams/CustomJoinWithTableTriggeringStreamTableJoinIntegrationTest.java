@@ -230,10 +230,10 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
 
         @Override
         public Pair<Double, Long> transform(final String key, final Long value) {
-          return sendJoinRecordOrWaitForStreamSide(key, value);
+          return possiblySendFullJoinRecord(key, value);
         }
 
-        private Pair<Double, Long> sendJoinRecordOrWaitForStreamSide(final String key, final Long value) {
+        private Pair<Double, Long> possiblySendFullJoinRecord(final String key, final Long value) {
           if (value != null) {
             final Pair<Double, Instant> streamValue = streamBufferStore.get(key);
             if (streamValue != null) {
