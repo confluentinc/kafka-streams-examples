@@ -137,7 +137,7 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
    * stream and the table side.  The downside is that this behavior will increase the end-to-end processing latency for
    * a stream-side record in the topology.
    */
-  private static final class StreamTableJoinStreamSideTransformerSupplier
+  private static final class StreamTableJoinStreamWaitsForTable
     implements TransformerSupplier<String, Double, KeyValue<String, Pair<Double, Long>>> {
 
     private final Duration maxWaitTimePerRecordForTableSideData;
@@ -145,11 +145,11 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
     private final String streamBufferStoreName;
     private final String tableStoreName;
 
-    StreamTableJoinStreamSideTransformerSupplier(final Duration maxWaitTimePerRecordForTableSideData,
-                                                 final Duration frequencyToCheckForExpiredWaitTimes,
-                                                 final String streamBufferStoreName,
-                                                 final String tableStoreName) {
-      this.maxWaitTimePerRecordForTableSideData = maxWaitTimePerRecordForTableSideData;
+    StreamTableJoinStreamWaitsForTable(final Duration maxWaitTimePerRecordForTableData,
+                                       final Duration frequencyToCheckForExpiredWaitTimes,
+                                       final String streamBufferStoreName,
+                                       final String tableStoreName) {
+      this.maxWaitTimePerRecordForTableSideData = maxWaitTimePerRecordForTableData;
       this.frequencyToCheckForExpiredWaitTimes = frequencyToCheckForExpiredWaitTimes;
       this.streamBufferStoreName = streamBufferStoreName;
       this.tableStoreName = tableStoreName;
@@ -230,12 +230,12 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
    * populated join output message -- which is the desired table-side triggering behavior.  If there is no match, then
    * the transformer will do nothing.
    */
-  private static final class StreamTableJoinTableSideValueTransformerWithKeySupplier
+  private static final class StreamTableJoinTableSideTrigger
     implements ValueTransformerWithKeySupplier<String, Long, Pair<Double, Long>> {
 
     final private String streamBufferStoreName;
 
-    StreamTableJoinTableSideValueTransformerWithKeySupplier(final String streamBufferStoreName) {
+    StreamTableJoinTableSideTrigger(final String streamBufferStoreName) {
       this.streamBufferStoreName = streamBufferStoreName;
     }
 
@@ -295,9 +295,9 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
 
     final List<KeyValue<String, Pair<Double, Long>>> expectedRecords = Arrays.asList(
       // The join output will have 2L (not 1L) for the table side.  That's because, by default, the DSL enables record
-      // caching for tables, which will cause the ValueTransformerWithKey for the KTable to not see the 1L value.
+      // caching for tables, which will cause the ValueTransformerWithKey for the KTable to not observe the 1L value.
       //
-      // If your use case needs to see a join output with value 1L, there are several options available.
+      // If your use case needs to produce a join output with value 1L, there are several options available.
       //
       // 1) Set `StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG` to `0`.  This will disable record caching,
       //    and make the table's ValueTransformerWithKey to see the 1L value.  The downside of this approach is that,
@@ -305,7 +305,7 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
       //    "intermediate" updates.
       // 2) Don't use a KTable and a ValueTransformerWithKeySupplier for managing the table-side triggering for the
       //    join.  Instead, read the table's topic into a KStream, and then use a normal Transformer with code very
-      //    similar to what's implement in StreamTableJoinStreamSideTransformerSupplier.  You must also create a second
+      //    similar to what's implement in StreamTableJoinStreamWaitsForTable.  You must also create a second
       //    state store, managed by this new table-side Transformer, to manage the table-side store manually (because
       //    you use a KStream instead of a KTable for the table's data).  Now you have full control over when and how to
       //    perform table-side join triggering.
@@ -363,23 +363,23 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
       builder.table(inputTopicForTable, Consumed.with(Serdes.String(), Serdes.Long()), Materialized.as(tableStoreName));
 
     // Perform the custom join operation.
-    final Duration maxWaitTimePerRecordForTableSideData = Duration.ofSeconds(5);
+    final Duration maxWaitTimePerRecordForTableData = Duration.ofSeconds(5);
     final Duration frequencyToCheckForExpiredWaitTimes = Duration.ofSeconds(2);
     final KStream<String, Pair<Double, Long>> transformedStream =
       stream.transform(
-        new StreamTableJoinStreamSideTransformerSupplier(
-          maxWaitTimePerRecordForTableSideData,
+        new StreamTableJoinStreamWaitsForTable(
+          maxWaitTimePerRecordForTableData,
           frequencyToCheckForExpiredWaitTimes,
           streamBufferStateStore.name(), tableStoreName),
         streamBufferStateStore.name(), tableStoreName);
     final KTable<String, Pair<Double, Long>> transformedTable =
       table.transformValues(
-        new StreamTableJoinTableSideValueTransformerWithKeySupplier(streamBufferStateStore.name()),
+        new StreamTableJoinTableSideTrigger(streamBufferStateStore.name()),
         streamBufferStateStore.name());
-    final KStream<String, Pair<Double, Long>> mergedStream = transformedStream.merge(transformedTable.toStream());
+    final KStream<String, Pair<Double, Long>> joined = transformedStream.merge(transformedTable.toStream());
 
     // Write the join results back to Kafka.
-    mergedStream.to(outputTopic, Produced.with(Serdes.String(), new PairSerde<>(Serdes.Double(), Serdes.Long())));
+    joined.to(outputTopic, Produced.with(Serdes.String(), new PairSerde<>(Serdes.Double(), Serdes.Long())));
 
     // Start the topology.
     final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
