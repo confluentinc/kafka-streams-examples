@@ -72,6 +72,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * hopefully, see a matching record to arrive eventually.  However, if the per-key wait time has exceeded, then an
  * "incomplete" join output will be sent downstream.
  *
+ * The approach in this example shares state stores between a stream-side and a table-side transformer.  This is safe
+ * because, if shared, Kafka Streams will place the transformers as well as the state stores into the same stream task,
+ * in which all access is exclusive and single-threaded.  The state store on the table side is the normal store of a
+ * KTable (thus avoiding data duplication due to store usage), whereas the state store on the stream side is manually
+ * added and attached to the processing topology.  An alternative, more flexible approach is outlined in the code
+ * comments below.
+ *
  * The default stream-table join behavior of Kafka Streams (below: left join; inner join is similar) only triggers
  * join output when data arrives at the stream side.
  * See https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Streams+Join+Semantics.
