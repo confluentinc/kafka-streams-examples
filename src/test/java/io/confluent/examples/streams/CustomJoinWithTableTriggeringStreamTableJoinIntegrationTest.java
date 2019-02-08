@@ -66,18 +66,19 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * Specifically, this example implements a stream-table join where both the stream side triggers a join output being
  * sent downstream (default behavior of KStreams) but also the table side (not supported yet in Kafka Streams out of the
- * box).  When a new record arrives on either side, a join output will be sent downstream immediately only if there is a
- * matching record on the other side of the join.  If there is no such match, no join output will be sent immediately.
- * Instead, the arriving record will be buffered to give the other side a certain (configurable) amount of time to,
- * hopefully, see a matching record to arrive eventually.  However, if the per-key wait time has exceeded, then an
- * "incomplete" join output will be sent downstream.
+ * box).  The example will delay join output for a configurable amount of time when a record arrives in the stream but
+ * doesn't yet have a matching record in the table.  If data happens to arrive in time on the table side, a "full" join
+ * output will be produced.  If table data does not arrive in time, then (like the default behavior) a join output will
+ * be sent where the table-side data is `null`.
  *
  * The approach in this example shares state stores between a stream-side and a table-side transformer.  This is safe
  * because, if shared, Kafka Streams will place the transformers as well as the state stores into the same stream task,
  * in which all access is exclusive and single-threaded.  The state store on the table side is the normal store of a
  * KTable (thus avoiding data duplication due to store usage), whereas the state store on the stream side is manually
- * added and attached to the processing topology.  An alternative, more flexible approach is outlined in the code
- * comments below.
+ * added and attached to the processing topology.
+ *
+ * An alternative, more flexible approach is outlined in the code comments below, in case you need additional control
+ * over the join behavior, e.g. by including stream-side vs. table-side timestamps in the decision-making logic.
  *
  * The default stream-table join behavior of Kafka Streams (below: left join; inner join is similar) only triggers
  * join output when data arrives at the stream side.
@@ -223,7 +224,7 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
   }
 
   /**
-   * Implements table-side triggering of joint output.
+   * Implements table-side triggering of join output.
    *
    * For every <i>observed </i> record arriving at its upstream table, this transformer will check for a buffered (i.e.,
    * not yet joined) record on the stream side.  If there is a match, then the transformer will produce a fully
