@@ -129,6 +129,14 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
     CLUSTER.createTopic(outputTopic);
   }
 
+  /**
+   * Implements the stream-side join behavior of waiting a configurable amount of time for table-side data to arrive
+   * before sending a join output for a newly received stream-side record.
+   *
+   * This behavior will increase the likelihood of "fully populated" join output messages, i.e. with data from both the
+   * stream and the table side.  The downside is that this behavior will increase the end-to-end processing latency for
+   * a stream-side record in the topology.
+   */
   private static final class StreamTableJoinStreamSideTransformerSupplier
     implements TransformerSupplier<String, Double, KeyValue<String, Pair<Double, Long>>> {
 
@@ -214,6 +222,14 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
 
   }
 
+  /**
+   * Implements table-side triggering of joint output.
+   *
+   * For every <i>observed </i> record arriving at its upstream table, this transformer will check for a buffered (i.e.,
+   * not yet joined) record on the stream side.  If there is a match, then the transformer will produce a fully
+   * populated join output message -- which is the desired table-side triggering behavior.  If there is no match, then
+   * the transformer will do nothing.
+   */
   private static final class StreamTableJoinTableSideValueTransformerWithKeySupplier
     implements ValueTransformerWithKeySupplier<String, Long, Pair<Double, Long>> {
 
