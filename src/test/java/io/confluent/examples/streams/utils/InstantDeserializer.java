@@ -35,8 +35,7 @@ public class InstantDeserializer implements Deserializer<Instant> {
       return null;
     }
     final Instant instant;
-    try {
-      final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
+    try (final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes))) {
       final long secsSinceEpoch = in.readLong();
       final int nanoSecsFromStartOfSecond = in.readInt();
       instant = Instant.ofEpochSecond(secsSinceEpoch, nanoSecsFromStartOfSecond);

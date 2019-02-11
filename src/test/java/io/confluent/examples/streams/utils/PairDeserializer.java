@@ -42,8 +42,7 @@ public class PairDeserializer<X, Y> implements Deserializer<Pair<X, Y>> {
       return null;
     }
     final Pair<X, Y> pair;
-    try {
-      final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
+    try (final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes))) {
       final short magicByte = in.readShort();
       X deserializedX = null;
       Y deserializedY = null;

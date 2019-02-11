@@ -34,18 +34,19 @@ public class InstantSerializer implements Serializer<Instant> {
     if (instant == null) {
       return null;
     }
-    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    try {
-      final DataOutputStream out = new DataOutputStream(baos);
+    try (
+      final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      final DataOutputStream out = new DataOutputStream(baos)
+    ) {
       final long secsSinceEpoch = instant.getEpochSecond();
       final int nanoSecsFromStartOfSecond = instant.getNano();
       out.writeLong(secsSinceEpoch);
       out.writeInt(nanoSecsFromStartOfSecond);
       out.close();
+      return baos.toByteArray();
     } catch (final IOException e) {
       throw new RuntimeException("unable to serialize Instant", e);
     }
-    return baos.toByteArray();
   }
 
   @Override

@@ -41,9 +41,11 @@ public class PairSerializer<X, Y> implements Serializer<Pair<X, Y>> {
     if (pair == null) {
       return null;
     }
-    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    try {
-      final DataOutputStream out = new DataOutputStream(baos);
+
+    try (
+      final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      final DataOutputStream out = new DataOutputStream(baos)
+    ) {
       final byte[] serializedX = serializerX.serialize(topic, pair.x);
       final byte[] serializedY = serializerY.serialize(topic, pair.y);
       short magicByte = 0;
@@ -64,11 +66,10 @@ public class PairSerializer<X, Y> implements Serializer<Pair<X, Y>> {
         writeX(out, serializedX);
         writeY(out, serializedY);
       }
-      out.close();
+      return baos.toByteArray();
     } catch (final IOException e) {
       throw new RuntimeException("unable to serialize Pair", e);
     }
-    return baos.toByteArray();
   }
 
   private void writeX(final DataOutputStream out, final byte[] serializedX) throws IOException {
