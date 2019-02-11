@@ -177,6 +177,121 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
     CLUSTER.createTopic(outputTopic);
   }
 
+  @Test
+  public void shouldTriggerStreamTableJoinFromTable() throws Exception {
+    final Duration approxMaxWaitTimePerRecordForTableData = Duration.ofSeconds(5);
+    final Duration frequencyToCheckForExpiredWaitTimes = Duration.ofSeconds(2);
+
+    final List<KeyValueWithTimestamp<String, Double>> inputStreamRecords = Arrays.asList(
+      new KeyValueWithTimestamp<>("alice", 999.99, 10),
+      new KeyValueWithTimestamp<>("alice", 555.55, 30),
+      new KeyValueWithTimestamp<>("recordUsedOnlyToTriggerAdvancementOfStreamTime", 77777.77,
+        approxMaxWaitTimePerRecordForTableData.plus(Duration.ofSeconds(1)).toMillis())
+    );
+
+    final List<KeyValueWithTimestamp<String, Long>> inputTableRecords = Collections.singletonList(
+      new KeyValueWithTimestamp<>("alice", 1L, 20)
+    );
+
+    final List<KeyValue<String, Pair<Double, Long>>> expectedOutputRecords = Arrays.asList(
+      new KeyValue<>("alice", new Pair<>(999.99, 1L)),
+      new KeyValue<>("alice", new Pair<>(555.55, 1L))
+    );
+
+    //
+    // Step 1: Configure and start the processor topology.
+    //
+    final StreamsBuilder builder = new StreamsBuilder();
+
+    final Properties streamsConfiguration = new Properties();
+    streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "table-trigger-join-integration-test");
+    streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+    streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    // Use a temporary directory for storing state, which will be automatically removed after the test.
+    streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
+
+    // This state store is used to temporarily buffer any records arriving at the stream side of the join, so that
+    // we can wait (if needed) for matching data to arrive at the table side.
+    final StoreBuilder<KeyValueStore<String, Pair<Double, Instant>>> streamBufferStateStore =
+      Stores
+        .keyValueStoreBuilder(
+          Stores.persistentKeyValueStore("stream-buffer-state-store"),
+          Serdes.String(),
+          new PairSerde<>(Serdes.Double(), new InstantSerde())
+        )
+        .withCachingEnabled();
+    builder.addStateStore(streamBufferStateStore);
+
+    // Read the input data.
+    final KStream<String, Double> stream = builder.stream(inputTopicForStream, Consumed.with(Serdes.String(), Serdes.Double()));
+    final KTable<String, Long> table =
+      builder.table(inputTopicForTable, Consumed.with(Serdes.String(), Serdes.Long()), Materialized.as(tableStoreName));
+
+    // Perform the custom join operation.
+    final KStream<String, Pair<Double, Long>> transformedStream =
+      stream.transform(
+        new StreamTableJoinStreamWaitsForTable(
+          approxMaxWaitTimePerRecordForTableData,
+          frequencyToCheckForExpiredWaitTimes,
+          streamBufferStateStore.name(),
+          tableStoreName),
+        streamBufferStateStore.name(),
+        tableStoreName);
+    final KTable<String, Pair<Double, Long>> transformedTable =
+      table.transformValues(
+        new StreamTableJoinTableSideTrigger(streamBufferStateStore.name()),
+        streamBufferStateStore.name());
+    final KStream<String, Pair<Double, Long>> joined = transformedStream.merge(transformedTable.toStream());
+
+    // Write the join results back to Kafka.
+    joined.to(outputTopic, Produced.with(Serdes.String(), new PairSerde<>(Serdes.Double(), Serdes.Long())));
+
+    // Start the topology.
+    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
+    streams.start();
+
+    //
+    // Step 2: Produce some input data to the input topics.
+    //
+
+    // Produce input data for the stream
+    final Properties producerConfigStream = new Properties();
+    producerConfigStream.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+    producerConfigStream.put(ProducerConfig.ACKS_CONFIG, "all");
+    producerConfigStream.put(ProducerConfig.RETRIES_CONFIG, 0);
+    producerConfigStream.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    producerConfigStream.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, DoubleSerializer.class);
+    IntegrationTestUtils.produceKeyValuesWithTimestampsSynchronously(inputTopicForStream, inputStreamRecords,
+      producerConfigStream);
+
+    // Produce input data for the table
+    final Properties producerConfigTable = new Properties();
+    producerConfigTable.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+    producerConfigTable.put(ProducerConfig.ACKS_CONFIG, "all");
+    producerConfigTable.put(ProducerConfig.RETRIES_CONFIG, 0);
+    producerConfigTable.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    producerConfigTable.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
+    IntegrationTestUtils.produceKeyValuesWithTimestampsSynchronously(inputTopicForTable, inputTableRecords,
+      producerConfigTable);
+
+    //
+    // Step 3: Verify the application's output data.
+    //
+    final Properties consumerConfig = new Properties();
+    consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+    consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "table-trigger-join-integration-test-standard-consumer");
+    consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, PairOfDoubleAndLongDeserializer.class);
+    final List<KeyValue<String, Long>> actualRecords = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(
+      consumerConfig,
+      outputTopic,
+      expectedOutputRecords.size()
+    );
+    streams.close();
+    assertThat(actualRecords).isEqualTo(expectedOutputRecords);
+  }
+
   /**
    * Implements the stream-side join behavior of waiting a configurable amount of time for table-side data to arrive
    * before sending a join output for a newly received stream-side record.
@@ -231,7 +346,7 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
 
         private void sendAnyBufferedRecordForKey(final String key) {
           LOG.info("Forwarding any buffered stream record for key {} because new stream record was received for same " +
-              "key", key);
+            "key", key);
           final Pair<Double, Instant> record = streamBufferStore.get(key);
           if (record != null) {
             final Long tableValue = tableStore.get(key);
@@ -360,121 +475,6 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
       };
     }
 
-  }
-
-  @Test
-  public void shouldTriggerStreamTableJoinFromTable() throws Exception {
-    final Duration approxMaxWaitTimePerRecordForTableData = Duration.ofSeconds(5);
-    final Duration frequencyToCheckForExpiredWaitTimes = Duration.ofSeconds(2);
-
-    final List<KeyValueWithTimestamp<String, Double>> inputStreamRecords = Arrays.asList(
-      new KeyValueWithTimestamp<>("alice", 999.99, 10),
-      new KeyValueWithTimestamp<>("alice", 555.55, 30),
-      new KeyValueWithTimestamp<>("recordUsedOnlyToTriggerAdvancementOfStreamTime", 77777.77,
-        approxMaxWaitTimePerRecordForTableData.plus(Duration.ofSeconds(1)).toMillis())
-    );
-
-    final List<KeyValueWithTimestamp<String, Long>> inputTableRecords = Collections.singletonList(
-      new KeyValueWithTimestamp<>("alice", 1L, 20)
-    );
-
-    final List<KeyValue<String, Pair<Double, Long>>> expectedOutputRecords = Arrays.asList(
-      new KeyValue<>("alice", new Pair<>(999.99, 1L)),
-      new KeyValue<>("alice", new Pair<>(555.55, 1L))
-    );
-
-    //
-    // Step 1: Configure and start the processor topology.
-    //
-    final StreamsBuilder builder = new StreamsBuilder();
-
-    final Properties streamsConfiguration = new Properties();
-    streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "table-trigger-join-integration-test");
-    streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    // Use a temporary directory for storing state, which will be automatically removed after the test.
-    streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
-
-    // This state store is used to temporarily buffer any records arriving at the stream side of the join, so that
-    // we can wait (if needed) for matching data to arrive at the table side.
-    final StoreBuilder<KeyValueStore<String, Pair<Double, Instant>>> streamBufferStateStore =
-      Stores
-        .keyValueStoreBuilder(
-          Stores.persistentKeyValueStore("stream-buffer-state-store"),
-          Serdes.String(),
-          new PairSerde<>(Serdes.Double(), new InstantSerde())
-        )
-        .withCachingEnabled();
-    builder.addStateStore(streamBufferStateStore);
-
-    // Read the input data.
-    final KStream<String, Double> stream = builder.stream(inputTopicForStream, Consumed.with(Serdes.String(), Serdes.Double()));
-    final KTable<String, Long> table =
-      builder.table(inputTopicForTable, Consumed.with(Serdes.String(), Serdes.Long()), Materialized.as(tableStoreName));
-
-    // Perform the custom join operation.
-    final KStream<String, Pair<Double, Long>> transformedStream =
-      stream.transform(
-        new StreamTableJoinStreamWaitsForTable(
-          approxMaxWaitTimePerRecordForTableData,
-          frequencyToCheckForExpiredWaitTimes,
-          streamBufferStateStore.name(),
-          tableStoreName),
-        streamBufferStateStore.name(),
-        tableStoreName);
-    final KTable<String, Pair<Double, Long>> transformedTable =
-      table.transformValues(
-        new StreamTableJoinTableSideTrigger(streamBufferStateStore.name()),
-        streamBufferStateStore.name());
-    final KStream<String, Pair<Double, Long>> joined = transformedStream.merge(transformedTable.toStream());
-
-    // Write the join results back to Kafka.
-    joined.to(outputTopic, Produced.with(Serdes.String(), new PairSerde<>(Serdes.Double(), Serdes.Long())));
-
-    // Start the topology.
-    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
-    streams.start();
-
-    //
-    // Step 2: Produce some input data to the input topics.
-    //
-
-    // Produce input data for the stream
-    final Properties producerConfigStream = new Properties();
-    producerConfigStream.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    producerConfigStream.put(ProducerConfig.ACKS_CONFIG, "all");
-    producerConfigStream.put(ProducerConfig.RETRIES_CONFIG, 0);
-    producerConfigStream.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    producerConfigStream.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, DoubleSerializer.class);
-    IntegrationTestUtils.produceKeyValuesWithTimestampsSynchronously(inputTopicForStream, inputStreamRecords,
-      producerConfigStream);
-
-    // Produce input data for the table
-    final Properties producerConfigTable = new Properties();
-    producerConfigTable.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    producerConfigTable.put(ProducerConfig.ACKS_CONFIG, "all");
-    producerConfigTable.put(ProducerConfig.RETRIES_CONFIG, 0);
-    producerConfigTable.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    producerConfigTable.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
-    IntegrationTestUtils.produceKeyValuesWithTimestampsSynchronously(inputTopicForTable, inputTableRecords,
-      producerConfigTable);
-
-    //
-    // Step 3: Verify the application's output data.
-    //
-    final Properties consumerConfig = new Properties();
-    consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "table-trigger-join-integration-test-standard-consumer");
-    consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, PairOfDoubleAndLongDeserializer.class);
-    final List<KeyValue<String, Long>> actualRecords = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(
-      consumerConfig,
-      outputTopic,
-      expectedOutputRecords.size()
-    );
-    streams.close();
-    assertThat(actualRecords).isEqualTo(expectedOutputRecords);
   }
 
 }
