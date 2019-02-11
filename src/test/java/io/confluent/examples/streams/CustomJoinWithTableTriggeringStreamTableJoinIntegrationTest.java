@@ -339,18 +339,18 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
         @Override
         public KeyValue<String, Pair<Double, Long>> transform(final String key, final Double value) {
           LOG.info("Received stream record ({}, {}) with timestamp {}", key, value, context.timestamp());
-          sendAnyBufferedRecordForKey(key);
+          sendAnyWaitingRecordForKey(key);
           return sendFullJoinRecordOrWaitForTableSide(key, value);
         }
 
-        private void sendAnyBufferedRecordForKey(final String key) {
-          LOG.info("Forwarding any buffered stream record for key {} because new stream record was received for same " +
+        private void sendAnyWaitingRecordForKey(final String key) {
+          LOG.info("Forwarding any waiting stream record for key {} because new stream record was received for same " +
             "key", key);
           final Pair<Double, Instant> record = streamBufferStore.get(key);
           if (record != null) {
             final Long tableValue = tableStore.get(key);
             final Pair<Double, Long> joinRecord = new Pair<>(record.x, tableValue);
-            LOG.info("Force-forwarding buffered stream record ({}, {}) because new stream record received for key {}",
+            LOG.info("Force-forwarding waiting stream record ({}, {}) because new stream record received for key {}",
               key, joinRecord, key);
             context.forward(key, joinRecord);
             streamBufferStore.delete(key);
