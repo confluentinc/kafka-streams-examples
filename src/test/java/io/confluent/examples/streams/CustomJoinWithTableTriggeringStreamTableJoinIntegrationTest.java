@@ -84,12 +84,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * KTable (thus avoiding data duplication due to store usage), whereas the state store on the stream side is manually
  * added and attached to the processing topology.
  *
- * An alternative, more flexible approach is outlined in the code comments below, in case you need additional control
- * over the join behavior, e.g. by including stream-side vs. table-side timestamps in the decision-making logic.
+ * An alternative, more flexible approach is outlined further down below, in case you need additional control over the
+ * join behavior, e.g. by including stream-side vs. table-side timestamps in the decision-making logic.
  *
- * The default stream-table join behavior of Kafka Streams (below: left join; inner join is similar) only triggers
- * join output when data arrives at the stream side.
- * See https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Streams+Join+Semantics.
+ * The default stream-table join behavior of Kafka Streams only triggers join output when data arrives at the stream
+ * side.  See https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Streams+Join+Semantics.
  *
  * Kafka Streams INNER stream-table join:
  *
