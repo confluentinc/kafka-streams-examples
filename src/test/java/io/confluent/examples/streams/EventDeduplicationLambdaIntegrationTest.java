@@ -82,7 +82,7 @@ public class EventDeduplicationLambdaIntegrationTest {
   private static final String storeName = "eventId-store";
 
   @BeforeClass
-  public static void startKafkaCluster() throws Exception {
+  public static void startKafkaCluster() {
     CLUSTER.createTopic(inputTopic);
     CLUSTER.createTopic(outputTopic);
   }

@@ -50,7 +50,7 @@ import java.util.stream.IntStream;
  */
 public class SumLambdaExampleDriver {
 
-  public static void main(final String[] args) throws Exception {
+  public static void main(final String[] args) {
     final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
     produceInput(bootstrapServers);
     consumeOutput(bootstrapServers);
