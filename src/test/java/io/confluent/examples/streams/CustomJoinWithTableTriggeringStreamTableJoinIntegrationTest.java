@@ -110,7 +110,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * The code in this example changes the above behavior so that an application will wait a configurable amount of time
  * for data to arrive also at the table before it produces the join output for a given key (here: "alice").  The
  * motivation is that, in this example, we'd prefer to receive fully populated join messages rather than join messages
- * were the table-side information is missing (null).  Depending on your use case, you might prefer this changed
+ * where the table-side information is missing (null).  Depending on your use case, you might prefer this changed
  * behavior, and these changed semantics, over the default join semantics of Kafka Streams.
  *
  * Time | Stream              Table         | Join output
