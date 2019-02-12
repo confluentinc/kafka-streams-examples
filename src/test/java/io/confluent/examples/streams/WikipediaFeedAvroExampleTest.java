@@ -36,6 +36,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,7 +58,7 @@ public class WikipediaFeedAvroExampleTest {
   }
 
   @Before
-  public void createStreams() throws IOException {
+  public void createStreams() {
     streams =
         WikipediaFeedAvroExample.buildWikipediaFeed(CLUSTER.bootstrapServers(),
                                                     CLUSTER.schemaRegistryUrl(),
@@ -70,7 +71,7 @@ public class WikipediaFeedAvroExampleTest {
   }
 
   @Test
-  public void shouldRunTheWikipediaFeedExample() throws Exception {
+  public void shouldRunTheWikipediaFeedExample() {
     final Properties props = new Properties();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
@@ -122,7 +123,7 @@ public class WikipediaFeedAvroExampleTest {
 
     final long timeout = System.currentTimeMillis() + 30000L;
     while(!actual.equals(expected) && System.currentTimeMillis() < timeout) {
-      final ConsumerRecords<String, Long> records = consumer.poll(1000);
+      final ConsumerRecords<String, Long> records = consumer.poll(Duration.ofSeconds(1));
       records.forEach(record -> actual.put(record.key(), record.value()));
     }
 

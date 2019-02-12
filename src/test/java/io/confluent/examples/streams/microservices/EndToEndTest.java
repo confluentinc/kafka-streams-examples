@@ -21,13 +21,14 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
+
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
 import static io.confluent.examples.streams.avro.microservices.Product.JUMPERS;
 import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
 import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.MIN;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -57,7 +58,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
     //When we POST order and immediately GET on the returned location
     client.target(path.urlPost()).request(APPLICATION_JSON_TYPE).post(Entity.json(inputOrder));
-    returnedBean = client.target(path.urlGetValidated(1)).queryParam("timeout", MIN)
+    returnedBean = client.target(path.urlGetValidated(1)).queryParam("timeout", Duration.ofMinutes(1).toMillis())
         .request(APPLICATION_JSON_TYPE).get(newBean());
 
     //Then
@@ -83,7 +84,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
       //POST & GET order
       client.target(path.urlPost()).request(APPLICATION_JSON_TYPE).post(Entity.json(inputOrder));
-      returnedBean = client.target(path.urlGetValidated(i)).queryParam("timeout", MIN)
+      returnedBean = client.target(path.urlGetValidated(i)).queryParam("timeout", Duration.ofMinutes(1).toMillis())
           .request(APPLICATION_JSON_TYPE).get(newBean());
 
       endTimer();
@@ -118,7 +119,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
       //POST & GET order
       client.target(path.urlPost()).request(APPLICATION_JSON_TYPE).post(Entity.json(inputOrder));
-      returnedBean = client.target(path.urlGetValidated(i)).queryParam("timeout", MIN)
+      returnedBean = client.target(path.urlGetValidated(i)).queryParam("timeout", Duration.ofMinutes(1).toMillis())
           .request(APPLICATION_JSON_TYPE).get(newBean());
 
       endTimer();

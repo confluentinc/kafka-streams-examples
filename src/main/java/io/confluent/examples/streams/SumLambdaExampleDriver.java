@@ -25,6 +25,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.apache.kafka.common.serialization.IntegerSerializer;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.stream.IntStream;
@@ -67,7 +68,7 @@ public class SumLambdaExampleDriver {
     consumer.subscribe(Collections.singleton(SumLambdaExample.SUM_OF_ODD_NUMBERS_TOPIC));
     while (true) {
       final ConsumerRecords<Integer, Integer> records =
-              consumer.poll(Long.MAX_VALUE);
+              consumer.poll(Duration.ofMillis(Long.MAX_VALUE));
 
       for (final ConsumerRecord<Integer, Integer> record : records) {
         System.out.println("Current sum of odd numbers is:" + record.value());

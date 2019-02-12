@@ -195,7 +195,7 @@ public class GlobalKTablesExample {
     // write the enriched order to the enriched-order topic
     enrichedOrdersStream.to(ENRICHED_ORDER_TOPIC, Produced.with(Serdes.Long(), enrichedOrdersSerde));
 
-    return new KafkaStreams(builder.build(), new StreamsConfig(streamsConfiguration));
+    return new KafkaStreams(builder.build(), streamsConfiguration);
   }
 
 

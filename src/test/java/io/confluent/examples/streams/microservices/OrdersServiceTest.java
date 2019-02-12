@@ -22,11 +22,11 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.net.HttpURLConnection;
+import java.time.Duration;
 import java.util.Collections;
 
 import static io.confluent.examples.streams.avro.microservices.Order.newBuilder;
 import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.MIN;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.Assert.fail;
@@ -81,7 +81,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //When GET the bean back via it's location
     OrderBean returnedBean = client.target(response.getLocation())
-        .queryParam("timeout", MIN / 2)
+        .queryParam("timeout", Duration.ofMinutes(1).toMillis() / 2)
         .request(APPLICATION_JSON_TYPE)
         .get(new GenericType<OrderBean>() {
         });
@@ -91,7 +91,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //When GET the bean back explicitly
     returnedBean = client.target(paths.urlGet(1))
-        .queryParam("timeout", MIN / 2)
+        .queryParam("timeout", Duration.ofMinutes(1).toMillis() / 2)
         .request(APPLICATION_JSON_TYPE)
         .get(new GenericType<OrderBean>() {
         });
@@ -126,7 +126,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //When we GET the order from the returned location
     final OrderBean returnedBean = client.target(paths.urlGetValidated(beanV1.getId()))
-                                         .queryParam("timeout", MIN / 2)
+                                         .queryParam("timeout", Duration.ofMinutes(1).toMillis() / 2)
                                          .request(APPLICATION_JSON_TYPE)
                                          .get(new GenericType<OrderBean>() {
         });
@@ -177,7 +177,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //When GET to rest1
     OrderBean returnedOrder = client.target(paths1.urlGet(order.getId()))
-        .queryParam("timeout", MIN / 2)
+        .queryParam("timeout", Duration.ofMinutes(1).toMillis() / 2)
         .request(APPLICATION_JSON_TYPE)
         .get(new GenericType<OrderBean>() {
         });
@@ -187,7 +187,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //When GET to rest2
     returnedOrder = client.target(paths2.urlGet(order.getId()))
-        .queryParam("timeout", MIN / 2)
+        .queryParam("timeout", Duration.ofMinutes(1).toMillis() / 2)
         .request(APPLICATION_JSON_TYPE)
         .get(new GenericType<OrderBean>() {
         });

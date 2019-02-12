@@ -40,6 +40,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -214,22 +215,16 @@ public class EventDeduplicationLambdaIntegrationTest {
     // The actual value depends on your use case.  To reduce memory and disk usage, you could
     // decrease the size to purge old windows more frequently at the cost of potentially missing out
     // on de-duplicating late-arriving records.
-    final long maintainDurationPerEventInMs = TimeUnit.MINUTES.toMillis(10);
-
-    // The number of segments has no impact on "correctness".
-    // Using more segments implies larger overhead but allows for more fined grained record expiration
-    // Note: the specified retention time is a _minimum_ time span and no strict upper time bound
-    final int numberOfSegments = 3;
+    final Duration windowSize = Duration.ofMinutes(10);
 
     // retention period must be at least window size -- for this use case, we don't need a longer retention period
     // and thus just use the window size as retention time
-    final long retentionPeriod = maintainDurationPerEventInMs;
+    final Duration retentionPeriod = windowSize;
 
     final StoreBuilder<WindowStore<String, Long>> dedupStoreBuilder = Stores.windowStoreBuilder(
             Stores.persistentWindowStore(storeName,
                                          retentionPeriod,
-                                         numberOfSegments,
-                                         maintainDurationPerEventInMs,
+                                         windowSize,
                                          false
             ),
             Serdes.String(),
@@ -243,7 +238,7 @@ public class EventDeduplicationLambdaIntegrationTest {
         // In this example, we assume that the record value as-is represents a unique event ID by
         // which we can perform de-duplication.  If your records are different, adapt the extractor
         // function as needed.
-        () -> new DeduplicationTransformer<>(maintainDurationPerEventInMs, (key, value) -> value),
+        () -> new DeduplicationTransformer<>(windowSize.toMillis(), (key, value) -> value),
         storeName);
     deduplicated.to(outputTopic);
 
