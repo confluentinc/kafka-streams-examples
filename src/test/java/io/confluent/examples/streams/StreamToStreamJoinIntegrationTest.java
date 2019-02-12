@@ -79,9 +79,9 @@ public class StreamToStreamJoinIntegrationTest {
     );
 
     final List<KeyValue<String, String>> expectedResults = Arrays.asList(
-      new KeyValue<>("car-advertisement", "shown/null"),
-      new KeyValue<>("newspaper-advertisement", "shown/null"),
-      new KeyValue<>("gadget-advertisement", "shown/null"),
+      new KeyValue<>("car-advertisement", "shown/not-clicked-yet"),
+      new KeyValue<>("newspaper-advertisement", "shown/not-clicked-yet"),
+      new KeyValue<>("gadget-advertisement", "shown/not-clicked-yet"),
       new KeyValue<>("newspaper-advertisement", "shown/clicked"),
       new KeyValue<>("gadget-advertisement", "shown/clicked"),
       new KeyValue<>("newspaper-advertisement", "shown/clicked")
@@ -112,7 +112,8 @@ public class StreamToStreamJoinIntegrationTest {
     // the two joined streams during the defined join window.
     final KStream<String, String> impressionsAndClicks = alerts.outerJoin(
       incidents,
-      (impressionValue, clickValue) -> impressionValue + "/" + clickValue,
+      (impressionValue, clickValue) ->
+        (clickValue == null)? impressionValue + "/not-clicked-yet": impressionValue + "/" + clickValue,
       // KStream-KStream joins are always windowed joins, hence we must provide a join window.
       JoinWindows.of(Duration.ofSeconds(5)),
       // In this specific example, we don't need to define join serdes explicitly because the key, left value, and
