@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>common</artifactId>
-        <version>3.3.3-SNAPSHOT</version>
+        <version>3.3.4-SNAPSHOT</version>
     </parent>
 
     <groupId>io.confluent</groupId>
@@ -62,7 +62,7 @@
         <java.version>1.8</java.version>
         <jersey.version>2.25</jersey.version>
         <jetty.version>9.2.12.v20150709</jetty.version>
-        <licenses.version>3.3.3-SNAPSHOT</licenses.version>
+        <licenses.version>3.3.4-SNAPSHOT</licenses.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scala.version>${kafka.scala.version}.8</scala.version>
         <scalatest.version>2.2.6</scalatest.version>
