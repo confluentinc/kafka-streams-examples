@@ -22,6 +22,7 @@ import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -130,11 +131,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * Example of WRONG table-side join triggering:
  *
- *           Time | Stream              Table         | Join output
- *           -----+-----------------------------------+------------------------
- *           10   | ("alice", 999.99)                 |
- *           20   |                     ("alice", 1L) | ("alice", (999.99, 1L))
- *           30   |                     ("alice", 2L) | ("alice", (999.99, 2L))
+ * Time | Stream              Table         | Join output
+ * -----+-----------------------------------+------------------------
+ * 10   | ("alice", 999.99)                 |
+ * 20   |                     ("alice", 1L) | ("alice", (999.99, 1L))
+ * 30   |                     ("alice", 2L) | ("alice", (999.99, 2L))
  *
  * In the wrong example above, only one join output must be produced, not two.  It's up to you to decide which one,
  * however.
@@ -167,7 +168,6 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
   private static final String inputTopicForStream = "inputTopicForStream";
   private static final String inputTopicForTable = "inputTopicForTable";
   private static final String outputTopic = "outputTopic";
-  private static final String tableStoreName = "table-store";
 
   @BeforeClass
   public static void startKafkaCluster() {
@@ -220,11 +220,26 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
         )
         .withCachingEnabled();
     builder.addStateStore(streamBufferStateStore);
+    // This state store is used to temporarily buffer any records arriving at the table side of the join, so that
+    // we can wait (if needed) for matching data to arrive at the stream side.
+    final StoreBuilder<KeyValueStore<String, Pair<Long, Instant>>> tableBufferStateStore =
+      Stores
+        .keyValueStoreBuilder(
+          Stores.persistentKeyValueStore("table-buffer-state-store"),
+          Serdes.String(),
+          new PairSerde<>(Serdes.Long(), new InstantSerde())
+        )
+        .withCachingEnabled();
+    builder.addStateStore(tableBufferStateStore);
 
     // Read the input data.
     final KStream<String, Double> stream = builder.stream(inputTopicForStream, Consumed.with(Serdes.String(), Serdes.Double()));
     final KTable<String, Long> table =
-      builder.table(inputTopicForTable, Consumed.with(Serdes.String(), Serdes.Long()), Materialized.as(tableStoreName));
+      builder.table(inputTopicForTable, Consumed.with(Serdes.String(), Serdes.Long()),
+        // Disabling the state store cache ensures that table-side data is seen more immediately and that reading the
+        // stream-side data doesn't advance the stream-time too quickly (which might result in join output being
+        // triggered by the stream side before the processing topology had the chance to look at the table side).
+        Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("table-store").withCachingDisabled());
 
     // Perform the custom join operation.
     final KStream<String, Pair<Double, Long>> transformedStream =
@@ -233,14 +248,22 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
           approxMaxWaitTimePerRecordForTableData,
           frequencyToCheckForExpiredWaitTimes,
           streamBufferStateStore.name(),
-          tableStoreName),
+          tableBufferStateStore.name()),
         streamBufferStateStore.name(),
-        tableStoreName);
+        tableBufferStateStore.name());
     final KTable<String, Pair<Double, Long>> transformedTable =
       table.transformValues(
-        new StreamTableJoinTableSideTrigger(streamBufferStateStore.name()),
-        streamBufferStateStore.name());
-    final KStream<String, Pair<Double, Long>> joined = transformedStream.merge(transformedTable.toStream());
+        new StreamTableJoinTableSideTrigger(
+          approxMaxWaitTimePerRecordForTableData,
+          streamBufferStateStore.name(),
+          tableBufferStateStore.name()),
+        streamBufferStateStore.name(), tableBufferStateStore.name());
+
+    final KStream<String, Pair<Double, Long>> joined =
+      // We need to discard the table's tombstone records (records with null values) from the stream-table join output.
+      // Such tombstone records are present because we are working with a KTable and a `ValueTransformerWithKey`, and
+      // the latter is not able to discard these itself.
+      transformedStream.merge(transformedTable.toStream().filter((k, v) -> v != null));
 
     // Write the join results back to Kafka.
     joined.to(outputTopic, Produced.with(Serdes.String(), new PairSerde<>(Serdes.Double(), Serdes.Long())));
@@ -307,16 +330,16 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
     private final Duration approxMaxWaitTimePerRecordForTableData;
     private final Duration frequencyToCheckForExpiredWaitTimes;
     private final String streamBufferStoreName;
-    private final String tableStoreName;
+    private final String tableBufferStoreName;
 
     StreamTableJoinStreamWaitsForTable(final Duration maxWaitTimePerRecordForTableData,
                                        final Duration frequencyToCheckForExpiredWaitTimes,
                                        final String streamBufferStoreName,
-                                       final String tableStoreName) {
+                                       final String tableBufferStoreName) {
       this.approxMaxWaitTimePerRecordForTableData = maxWaitTimePerRecordForTableData;
       this.frequencyToCheckForExpiredWaitTimes = frequencyToCheckForExpiredWaitTimes;
       this.streamBufferStoreName = streamBufferStoreName;
-      this.tableStoreName = tableStoreName;
+      this.tableBufferStoreName = tableBufferStoreName;
     }
 
     @Override
@@ -324,14 +347,14 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
       return new Transformer<String, Double, KeyValue<String, Pair<Double, Long>>>() {
 
         private KeyValueStore<String, Pair<Double, Instant>> streamBufferStore;
-        private KeyValueStore<String, Long> tableStore;
+        private KeyValueStore<String, Pair<Long, Instant>> tableBufferStore;
         private ProcessorContext context;
 
         @SuppressWarnings("unchecked")
         @Override
         public void init(final ProcessorContext context) {
           streamBufferStore = (KeyValueStore<String, Pair<Double, Instant>>) context.getStateStore(streamBufferStoreName);
-          tableStore = (KeyValueStore<String, Long>) context.getStateStore(tableStoreName);
+          tableBufferStore = (KeyValueStore<String, Pair<Long, Instant>>) context.getStateStore(tableBufferStoreName);
           this.context = context;
           this.context.schedule(frequencyToCheckForExpiredWaitTimes, PunctuationType.STREAM_TIME, this::punctuate);
         }
@@ -340,60 +363,78 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
         public KeyValue<String, Pair<Double, Long>> transform(final String key, final Double value) {
           LOG.info("Received stream record ({}, {}) with timestamp {}", key, value, context.timestamp());
           sendAnyWaitingRecordForKey(key);
-          return sendFullJoinRecordOrWaitForTableSide(key, value);
+          return sendFullJoinRecordOrWaitForTableSide(key, value, context.timestamp());
         }
 
         private void sendAnyWaitingRecordForKey(final String key) {
-          LOG.info("Forwarding any waiting stream record for key {} because new stream record was received for same " +
-            "key", key);
-          final Pair<Double, Instant> record = streamBufferStore.get(key);
-          if (record != null) {
-            final Long tableValue = tableStore.get(key);
-            final Pair<Double, Long> joinRecord = new Pair<>(record.x, tableValue);
+          LOG.info("Checking whether there is any waiting stream record for key {} to forward because new stream " +
+            "record was received for same key", key);
+          final Pair<Double, Instant> streamValue = streamBufferStore.get(key);
+          if (streamValue != null) {
+            final Pair<Long, Instant> tableValue = tableBufferStore.get(key);
+            final Duration delta = Duration.between(streamValue.y, tableValue.y);
+            final Pair<Double, Long> joinedValue = (delta.compareTo(approxMaxWaitTimePerRecordForTableData) <= 0) ?
+              new Pair<>(streamValue.x, tableValue.x) : new Pair<>(streamValue.x, null);
             LOG.info("Force-forwarding waiting stream record ({}, {}) because new stream record received for key {}",
-              key, joinRecord, key);
-            context.forward(key, joinRecord);
+              key, joinedValue, key);
+            context.forward(key, joinedValue);
             streamBufferStore.delete(key);
           }
         }
 
-        private KeyValue<String, Pair<Double, Long>> sendFullJoinRecordOrWaitForTableSide(final String key, final Double value) {
-          final Long tableValue = tableStore.get(key);
+        private KeyValue<String, Pair<Double, Long>> sendFullJoinRecordOrWaitForTableSide(final String key,
+                                                                                          final Double value,
+                                                                                          final long timestamp) {
+          final Pair<Long, Instant> tableValue = tableBufferStore.get(key);
           if (tableValue != null) {
-            // We have data for both the stream and the table, so we can send a fully populated join message downstream
-            // immediately.
-            final KeyValue<String, Pair<Double, Long>> joinRecord = KeyValue.pair(key, new Pair<>(value, tableValue));
-            LOG.info("Table data available for key {}, sending fully populated join message {}", key, joinRecord);
-            return joinRecord;
+            if (tableValue.y.toEpochMilli() <= timestamp) {
+              final KeyValue<String, Pair<Double, Long>> joinRecord = KeyValue.pair(key, new Pair<>(value, tableValue.x));
+              LOG.info("Table data available for key {}, sending fully populated join message {}", key, joinRecord);
+              return joinRecord;
+            } else {
+              LOG.info("Table data available for key {} but it is too new, buffering stream record ({}, {}) " +
+                "temporarily", key, key, value);
+              streamBufferStore.put(key, new Pair<>(value, Instant.ofEpochMilli(timestamp)));
+              return null;
+            }
           } else {
-            // Don't send a join output just yet because we're still lacking table-side information.  Instead, buffer
-            // the current stream-side record, hoping that the table side will eventually see a matching record within
-            // `approxMaxWaitTimePerRecordForTableData`.
             LOG.info("Table data not available for key {}, buffering stream record ({}, {}) temporarily", key, key,
               value);
-            streamBufferStore.put(key, new Pair<>(value, Instant.ofEpochMilli(context.timestamp())));
+            streamBufferStore.put(key, new Pair<>(value, Instant.ofEpochMilli(timestamp)));
             return null;
           }
         }
 
         private void punctuate(final long timestamp) {
           LOG.info("Punctuating @ timestamp {}", timestamp);
-          sendAndPurgeAnyWaitingRecordsThatHaveExceededWaitTime();
+          sendAndPurgeAnyWaitingRecordsThatHaveExceededWaitTime(timestamp);
         }
 
-        private void sendAndPurgeAnyWaitingRecordsThatHaveExceededWaitTime() {
+        private void sendAndPurgeAnyWaitingRecordsThatHaveExceededWaitTime(final long timestamp) {
           try (KeyValueIterator<String, Pair<Double, Instant>> iterator = streamBufferStore.all()) {
             while (iterator.hasNext()) {
               final KeyValue<String, Pair<Double, Instant>> record = iterator.next();
-              LOG.info("Checking buffered stream record ({}, {}) with timestamp {}", record.key, record.value.x,
+              LOG.info("Checking waiting stream record ({}, {}) with timestamp {}", record.key, record.value.x,
                 record.value.y.toEpochMilli());
-              final Duration delta = Duration.between(record.value.y, Instant.ofEpochMilli(context.timestamp()));
-              if (delta.compareTo(approxMaxWaitTimePerRecordForTableData) > 0) {
-                // Final attempt to fetch table-side data; we use that data even if it is null (indicates: missing).
-                final Long tableValue = tableStore.get(record.key);
+              if (Duration.between(record.value.y, Instant.ofEpochMilli(timestamp)).compareTo(approxMaxWaitTimePerRecordForTableData) > 0) {
+                // Final attempt to fetch table-side data.
+                final Pair<Long, Instant> tableValue = tableBufferStore.get(record.key);
+                final Pair<Double, Long> joinedValue;
+                if (tableValue != null) {
+                  if (Duration.between(record.value.y, tableValue.y).compareTo(approxMaxWaitTimePerRecordForTableData) <= 0) {
+                    LOG.info("Table data available for key {}", record.key);
+                    joinedValue = new Pair<>(record.value.x, tableValue.x);
+                  } else {
+                    LOG.info("Table data available for key {} but not used because it is too new", record.key);
+                    joinedValue = new Pair<>(record.value.x, null);
+                  }
+                } else {
+                  LOG.info("Table data unavailable for key {}", record.key);
+                  joinedValue = new Pair<>(record.value.x, null);
+                }
                 LOG.info("Wait time for stream record ({}, {}) has expired, force-forwarding now as join message " +
-                  "({}, ({}, {}))", record.key, record.value.x, record.key, record.value.x, tableValue);
-                context.forward(record.key, new Pair<>(record.value.x, tableValue));
+                  "({}, ({}, {}))", record.key, record.value.x, record.key, joinedValue.x, joinedValue.y);
+                context.forward(record.key, joinedValue);
                 streamBufferStore.delete(record.key);
               }
             }
@@ -422,10 +463,16 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(StreamTableJoinTableSideTrigger.class);
 
+    private final Duration approxMaxWaitTimePerRecordForTableData;
     private final String streamBufferStoreName;
+    private final String tableBufferStoreName;
 
-    StreamTableJoinTableSideTrigger(final String streamBufferStoreName) {
+    StreamTableJoinTableSideTrigger(final Duration approxMaxWaitTimePerRecordForTableData,
+                                    final String streamBufferStoreName,
+                                    final String tableBufferStoreName) {
+      this.approxMaxWaitTimePerRecordForTableData = approxMaxWaitTimePerRecordForTableData;
       this.streamBufferStoreName = streamBufferStoreName;
+      this.tableBufferStoreName = tableBufferStoreName;
     }
 
     @Override
@@ -433,36 +480,62 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
       return new ValueTransformerWithKey<String, Long, Pair<Double, Long>>() {
 
         private KeyValueStore<String, Pair<Double, Instant>> streamBufferStore;
+        private KeyValueStore<String, Pair<Long, Instant>> tableBufferStore;
         private ProcessorContext context;
 
         @SuppressWarnings("unchecked")
         @Override
         public void init(final ProcessorContext context) {
           streamBufferStore = (KeyValueStore<String, Pair<Double, Instant>>) context.getStateStore(streamBufferStoreName);
+          tableBufferStore = (KeyValueStore<String, Pair<Long, Instant>>) context.getStateStore(tableBufferStoreName);
           this.context = context;
         }
 
+        /**
+         * A return value of `null` for this method represents a table tombstone record.  We need to discard such
+         * tombstone records in the downstream processing topology because, in the context of this example of a custom
+         * stream-table join, they must not appear join output (note: we can't discard them in the
+         * ValueTransformerWithKey).
+         */
         @Override
         public Pair<Double, Long> transform(final String key, final Long value) {
           LOG.info("Received table record ({}, {}) with timestamp {}", key, value, context.timestamp());
-          return possiblySendFullJoinRecord(key, value);
+          updateBufferStore(key, value);
+          return possiblySendFullJoinRecord(key, value, context.timestamp());
         }
 
-        private Pair<Double, Long> possiblySendFullJoinRecord(final String key, final Long value) {
+        private void updateBufferStore(final String key, final Long value) {
+          Pair<Long, Instant> newTableValue = new Pair<>(value, Instant.ofEpochMilli(context.timestamp()));
+          Pair<Long, Instant> oldTableValue = tableBufferStore.get(key);
+          if (oldTableValue != null) {
+            LOG.info("Updating value of key {} from {} @ timestamp {} to {} @ timestamp {}",
+              key, oldTableValue.x, oldTableValue.y, newTableValue.x, newTableValue.y);
+          } else {
+            LOG.info("Setting value of key {} to {} @ timestamp {}", key, newTableValue.x, newTableValue.y);
+          }
+          tableBufferStore.put(key, newTableValue);
+        }
+
+        private Pair<Double, Long> possiblySendFullJoinRecord(final String key, final Long value, final long timestamp) {
           if (value != null) {
             final Pair<Double, Instant> streamValue = streamBufferStore.get(key);
             if (streamValue != null) {
-              // We have data from both stream and table, so we can send a fully populated join message downstream.
-              LOG.info("Stream data available for key {}, sending fully populated join message ({}, ({}, {}))", key,
-                key, streamValue.x, value);
-              streamBufferStore.delete(key);
-              return new Pair<>(streamValue.x, value);
+              final Duration delta = Duration.between(streamValue.y, Instant.ofEpochMilli(timestamp));
+              if (delta.compareTo(approxMaxWaitTimePerRecordForTableData) <= 0) {
+                LOG.info("Stream data available for key {}, sending fully populated join message ({}, ({}, {}))", key,
+                  key, streamValue.x, value);
+                streamBufferStore.delete(key);
+                return new Pair<>(streamValue.x, value);
+              } else {
+                LOG.info("Stream data available for key {} but not used because it is too old; sending tombstone", key);
+                return null;
+              }
             } else {
-              LOG.info("Stream data not available for key {}, doing nothing", key);
+              LOG.info("Stream data not available for key {}; sending tombstone", key);
               return null;
             }
           } else {
-            LOG.info("Table value for key {} is null (tombstone), doing nothing", key);
+            LOG.info("Table value for key {} is null (tombstone); sending tombstone", key);
             return null;
           }
         }
