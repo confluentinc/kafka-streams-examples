@@ -183,18 +183,25 @@ public class CustomJoinWithTableTriggeringStreamTableJoinIntegrationTest {
 
     final List<KeyValueWithTimestamp<String, Double>> inputStreamRecords = Arrays.asList(
       new KeyValueWithTimestamp<>("alice", 999.99, 10),
+      new KeyValueWithTimestamp<>("bobby", 222.22, 15),
       new KeyValueWithTimestamp<>("alice", 555.55, 30),
+      new KeyValueWithTimestamp<>("alice", 666.66, 40),
       new KeyValueWithTimestamp<>("recordUsedOnlyToTriggerAdvancementOfStreamTime", 77777.77,
         approxMaxWaitTimePerRecordForTableData.plus(Duration.ofSeconds(1)).toMillis())
     );
 
-    final List<KeyValueWithTimestamp<String, Long>> inputTableRecords = Collections.singletonList(
-      new KeyValueWithTimestamp<>("alice", 1L, 20)
+    final List<KeyValueWithTimestamp<String, Long>> inputTableRecords = Arrays.asList(
+      new KeyValueWithTimestamp<>("alice", 1L, 20),
+      new KeyValueWithTimestamp<>("alice", 2L, 39),
+      new KeyValueWithTimestamp<>("bobby", 8L,
+        approxMaxWaitTimePerRecordForTableData.plus(Duration.ofSeconds(1)).toMillis())
     );
 
     final List<KeyValue<String, Pair<Double, Long>>> expectedOutputRecords = Arrays.asList(
       new KeyValue<>("alice", new Pair<>(999.99, 1L)),
-      new KeyValue<>("alice", new Pair<>(555.55, 1L))
+      new KeyValue<>("alice", new Pair<>(555.55, 1L)),
+      new KeyValue<>("alice", new Pair<>(666.66, 2L)),
+      new KeyValue<>("bobby", new Pair<>(222.22, null))
     );
 
     //
