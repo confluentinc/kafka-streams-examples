@@ -10,16 +10,17 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.Consumed;
+import org.apache.kafka.streams.kstream.Grouped;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.kstream.SessionWindows;
 import org.apache.kafka.streams.kstream.Windowed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.Properties;
 
 import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.FAIL;
@@ -44,7 +45,6 @@ public class FraudService implements Service {
   private final String SERVICE_APP_ID = getClass().getSimpleName();
 
   private static final int FRAUD_LIMIT = 2000;
-  private static final long MIN = 60 * 1000L;
   private KafkaStreams streams;
 
   @Override
@@ -66,8 +66,8 @@ public class FraudService implements Service {
     //Create an aggregate of the total value by customer and hold it with the order. We use session windows to
     // detect periods of activity.
     final KTable<Windowed<Long>, OrderValue> aggregate = orders
-        .groupBy((id, order) -> order.getCustomerId(), Serialized.with(Serdes.Long(), ORDERS.valueSerde()))
-        .windowedBy(SessionWindows.with(60 * MIN))
+        .groupBy((id, order) -> order.getCustomerId(), Grouped.with(Serdes.Long(), ORDERS.valueSerde()))
+        .windowedBy(SessionWindows.with(Duration.ofHours(1)))
         .aggregate(OrderValue::new,
             //Calculate running total for each customer within this window
             (custId, order, total) -> new OrderValue(order,

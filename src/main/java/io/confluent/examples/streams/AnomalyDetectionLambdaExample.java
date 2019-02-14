@@ -27,8 +27,8 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.kstream.Windowed;
 
+import java.time.Duration;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Demonstrates how to count things over time, using time windows. In this specific example we
@@ -102,7 +102,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class AnomalyDetectionLambdaExample {
 
-  public static void main(final String[] args) throws Exception {
+  public static void main(final String[] args) {
     final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
     final Properties streamsConfiguration = new Properties();
     // Give the Streams application a unique name.  The name must be unique in the Kafka cluster
@@ -134,7 +134,7 @@ public class AnomalyDetectionLambdaExample {
       // count users, using one-minute tumbling windows;
       // no need to specify explicit serdes because the resulting key and value types match our default serde settings
       .groupByKey()
-      .windowedBy(TimeWindows.of(TimeUnit.MINUTES.toMillis(1)))
+      .windowedBy(TimeWindows.of(Duration.ofMinutes(1)))
       .count()
       // get users whose one-minute count is >= 3
       .filter((windowedUserId, count) -> count >= 3);

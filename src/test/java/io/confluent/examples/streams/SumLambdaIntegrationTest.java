@@ -53,7 +53,7 @@ public class SumLambdaIntegrationTest {
   private static final String outputTopic = "outputTopic";
 
   @BeforeClass
-  public static void startKafkaCluster() throws Exception {
+  public static void startKafkaCluster() {
     CLUSTER.createTopic(inputTopic);
     CLUSTER.createTopic(outputTopic);
   }

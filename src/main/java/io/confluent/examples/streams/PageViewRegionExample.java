@@ -37,6 +37,7 @@ import org.apache.kafka.streams.kstream.ValueMapper;
 import org.apache.kafka.streams.kstream.Windowed;
 
 import java.io.InputStream;
+import java.time.Duration;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -198,7 +199,7 @@ public class PageViewRegionExample {
       })
       // count views by user, using hopping windows of size 5 minutes that advance every 1 minute
       .groupByKey() // no need to specify explicit serdes because the resulting key and value types match our default serde settings
-      .windowedBy(TimeWindows.of(TimeUnit.MINUTES.toMillis(5)).advanceBy(TimeUnit.MINUTES.toMillis(1)))
+      .windowedBy(TimeWindows.of(Duration.ofMinutes(5)).advanceBy(Duration.ofMinutes(1)))
       .count();
 
     // Note: The following operations would NOT be needed for the actual pageview-by-region

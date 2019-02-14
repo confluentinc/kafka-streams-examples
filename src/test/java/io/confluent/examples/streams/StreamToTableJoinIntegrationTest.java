@@ -29,10 +29,10 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.Consumed;
+import org.apache.kafka.streams.kstream.Grouped;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.test.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -62,7 +62,7 @@ public class StreamToTableJoinIntegrationTest {
   private static final String outputTopic = "output-topic";
 
   @BeforeClass
-  public static void startKafkaCluster() throws Exception {
+  public static void startKafkaCluster() {
     CLUSTER.createTopic(userClicksTopic);
     CLUSTER.createTopic(userRegionsTopic);
     CLUSTER.createTopic(outputTopic);
@@ -187,7 +187,7 @@ public class StreamToTableJoinIntegrationTest {
         // Change the stream from <user> -> <region, clicks> to <region> -> <clicks>
         .map((user, regionWithClicks) -> new KeyValue<>(regionWithClicks.getRegion(), regionWithClicks.getClicks()))
         // Compute the total per region by summing the individual click counts per region.
-        .groupByKey(Serialized.with(stringSerde, longSerde))
+        .groupByKey(Grouped.with(stringSerde, longSerde))
         .reduce((firstClicks, secondClicks) -> firstClicks + secondClicks);
 
     // Write the (continuously updating) results to the output topic.

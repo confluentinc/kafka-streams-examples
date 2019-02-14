@@ -26,9 +26,9 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.Consumed;
+import org.apache.kafka.streams.kstream.Grouped;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.kstream.SessionWindows;
 import org.apache.kafka.streams.state.SessionStore;
 
@@ -160,7 +160,7 @@ public class SessionWindowsExample {
     final StreamsBuilder builder = new StreamsBuilder();
     builder.stream(PLAY_EVENTS, Consumed.with(Serdes.String(), playEventSerde))
         // group by key so we can count by session windows
-        .groupByKey(Serialized.with(Serdes.String(), playEventSerde))
+        .groupByKey(Grouped.with(Serdes.String(), playEventSerde))
         // window by session
         .windowedBy(SessionWindows.with(INACTIVITY_GAP))
         // count play events per session
@@ -174,7 +174,7 @@ public class SessionWindowsExample {
         // write to play-events-per-session topic
         .to(PLAY_EVENTS_PER_SESSION, Produced.with(Serdes.String(), Serdes.Long()));
 
-    return new KafkaStreams(builder.build(), new StreamsConfig(config));
+    return new KafkaStreams(builder.build(), config);
   }
 
 }

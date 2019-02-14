@@ -62,7 +62,7 @@ public class TableToTableJoinIntegrationTest {
   private static final String outputTopic = "output-topic";
 
   @BeforeClass
-  public static void startKafkaCluster() throws Exception {
+  public static void startKafkaCluster() {
     CLUSTER.createTopic(userRegionTopic);
     CLUSTER.createTopic(userLastLoginTopic);
     CLUSTER.createTopic(outputTopic);
