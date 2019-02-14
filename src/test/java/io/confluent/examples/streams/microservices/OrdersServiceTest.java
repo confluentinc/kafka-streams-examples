@@ -81,7 +81,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //When GET the bean back via it's location
     OrderBean returnedBean = client.target(response.getLocation())
-        .queryParam("timeout", Duration.ofMinutes(1).toMillis() / 2)
+        .queryParam("timeout", Duration.ofSeconds(30).toMillis())
         .request(APPLICATION_JSON_TYPE)
         .get(new GenericType<OrderBean>() {
         });
@@ -91,7 +91,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //When GET the bean back explicitly
     returnedBean = client.target(paths.urlGet(1))
-        .queryParam("timeout", Duration.ofMinutes(1).toMillis() / 2)
+        .queryParam("timeout", Duration.ofSeconds(30).toMillis())
         .request(APPLICATION_JSON_TYPE)
         .get(new GenericType<OrderBean>() {
         });
@@ -126,7 +126,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //When we GET the order from the returned location
     final OrderBean returnedBean = client.target(paths.urlGetValidated(beanV1.getId()))
-                                         .queryParam("timeout", Duration.ofMinutes(1).toMillis() / 2)
+                                         .queryParam("timeout", Duration.ofSeconds(30).toMillis())
                                          .request(APPLICATION_JSON_TYPE)
                                          .get(new GenericType<OrderBean>() {
         });
@@ -177,7 +177,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //When GET to rest1
     OrderBean returnedOrder = client.target(paths1.urlGet(order.getId()))
-        .queryParam("timeout", Duration.ofMinutes(1).toMillis() / 2)
+        .queryParam("timeout", Duration.ofSeconds(30).toMillis())
         .request(APPLICATION_JSON_TYPE)
         .get(new GenericType<OrderBean>() {
         });
@@ -187,7 +187,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //When GET to rest2
     returnedOrder = client.target(paths2.urlGet(order.getId()))
-        .queryParam("timeout", Duration.ofMinutes(1).toMillis() / 2)
+        .queryParam("timeout", Duration.ofSeconds(30).toMillis())
         .request(APPLICATION_JSON_TYPE)
         .get(new GenericType<OrderBean>() {
         });
