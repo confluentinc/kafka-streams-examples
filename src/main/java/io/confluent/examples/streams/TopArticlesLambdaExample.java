@@ -28,23 +28,23 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.kstream.Grouped;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.kstream.Windowed;
 import org.apache.kafka.streams.kstream.WindowedSerdes;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -189,8 +189,8 @@ public class TopArticlesLambdaExample {
 
     final KTable<Windowed<GenericRecord>, Long> viewCounts = articleViews
       // count the clicks per hour, using tumbling windows with a size of one hour
-      .groupByKey(Serialized.with(keyAvroSerde, valueAvroSerde))
-      .windowedBy(TimeWindows.of(TimeUnit.MINUTES.toMillis(60)))
+      .groupByKey(Grouped.with(keyAvroSerde, valueAvroSerde))
+      .windowedBy(TimeWindows.of(Duration.ofHours(1)))
       .count();
 
     final Comparator<GenericRecord> comparator =
@@ -212,7 +212,7 @@ public class TopArticlesLambdaExample {
           viewStats.put("count", count);
           return new KeyValue<>(windowedIndustry, viewStats);
         },
-        Serialized.with(windowedStringSerde, valueAvroSerde)
+        Grouped.with(windowedStringSerde, valueAvroSerde)
       ).aggregate(
         // the initializer
         () -> new PriorityQueue<>(comparator),

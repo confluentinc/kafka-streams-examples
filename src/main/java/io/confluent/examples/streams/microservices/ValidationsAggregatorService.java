@@ -6,7 +6,6 @@ import static io.confluent.examples.streams.avro.microservices.OrderValidationRe
 import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.PASS;
 import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS;
 import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDER_VALIDATIONS;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.MIN;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.baseStreamsConfig;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.parseArgsAndConfigure;
@@ -18,15 +17,17 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
+import org.apache.kafka.streams.kstream.Grouped;
 import org.apache.kafka.streams.kstream.JoinWindows;
 import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.kstream.SessionWindows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
 
 
 /**
@@ -42,13 +43,13 @@ public class ValidationsAggregatorService implements Service {
       .with(ORDER_VALIDATIONS.keySerde(), ORDER_VALIDATIONS.valueSerde());
   private final Consumed<String, Order> serdes2 = Consumed.with(ORDERS.keySerde(),
       ORDERS.valueSerde());
-  private final Serialized<String, OrderValidation> serdes3 = Serialized
+  private final Grouped<String, OrderValidation> serdes3 = Grouped
       .with(ORDER_VALIDATIONS.keySerde(), ORDER_VALIDATIONS.valueSerde());
   private final Joined<String, Long, Order> serdes4 = Joined
       .with(ORDERS.keySerde(), Serdes.Long(), ORDERS.valueSerde());
   private final Produced<String, Order> serdes5 = Produced
       .with(ORDERS.keySerde(), ORDERS.valueSerde());
-  private final Serialized<String, Order> serdes6 = Serialized
+  private final Grouped<String, Order> serdes6 = Grouped
       .with(ORDERS.keySerde(), ORDERS.valueSerde());
   private final Joined<String, OrderValidation, Order> serdes7 = Joined
       .with(ORDERS.keySerde(), ORDER_VALIDATIONS.valueSerde(), ORDERS.valueSerde());
@@ -78,7 +79,7 @@ public class ValidationsAggregatorService implements Service {
     //If all rules pass then validate the order
     validations
         .groupByKey(serdes3)
-        .windowedBy(SessionWindows.with(5 * MIN))
+        .windowedBy(SessionWindows.with(Duration.ofMinutes(5)))
         .aggregate(
             () -> 0L,
             (id, result, total) -> PASS.equals(result.getValidationResult()) ? total + 1 : total,
@@ -95,7 +96,7 @@ public class ValidationsAggregatorService implements Service {
         .join(orders, (id, order) ->
                 //Set the order to Validated
                 newBuilder(order).setState(VALIDATED).build()
-            , JoinWindows.of(5 * MIN), serdes4)
+            , JoinWindows.of(Duration.ofMinutes(5)), serdes4)
         //Push the validated order into the orders topic
         .to(ORDERS.name(), serdes5);
 
@@ -104,7 +105,7 @@ public class ValidationsAggregatorService implements Service {
         .join(orders, (id, order) ->
                 //Set the order to Failed and bump the version on it's ID
                 newBuilder(order).setState(OrderState.FAILED).build(),
-            JoinWindows.of(5 * MIN), serdes7)
+            JoinWindows.of(Duration.ofMinutes(5)), serdes7)
         //there could be multiple failed rules for each order so collapse to a single order
         .groupByKey(serdes6)
         .reduce((order, v1) -> order)

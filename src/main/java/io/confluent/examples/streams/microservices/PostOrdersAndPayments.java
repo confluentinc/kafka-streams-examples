@@ -21,6 +21,8 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
+
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -28,7 +30,6 @@ import java.util.Properties;
 import java.util.Random;
 
 import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.MIN;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 
 public class PostOrdersAndPayments {
@@ -105,7 +106,7 @@ public class PostOrdersAndPayments {
             // GET the bean back explicitly
             System.out.printf("Getting order from: %s   .... ", path.urlGet(i));
             returnedOrder = client.target(path.urlGet(i))
-                                  .queryParam("timeout", MIN / 2)
+                                  .queryParam("timeout", Duration.ofMinutes(1).toMillis() / 2)
                                   .request(APPLICATION_JSON_TYPE)
                                   .get(newBean());
 

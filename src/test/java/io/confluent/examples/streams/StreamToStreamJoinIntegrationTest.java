@@ -15,10 +15,8 @@
  */
 package io.confluent.examples.streams;
 
-import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -27,16 +25,19 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.JoinWindows;
+import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.test.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
+
+import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -55,7 +56,7 @@ public class StreamToStreamJoinIntegrationTest {
   private static final String outputTopic = "output-topic";
 
   @BeforeClass
-  public static void startKafkaCluster() throws Exception {
+  public static void startKafkaCluster() {
     CLUSTER.createTopic(adImpressionsTopic);
     CLUSTER.createTopic(adClicksTopic);
     CLUSTER.createTopic(outputTopic);
@@ -65,32 +66,30 @@ public class StreamToStreamJoinIntegrationTest {
   public void shouldJoinTwoStreams() throws Exception {
     // Input 1: Ad impressions
     final List<KeyValue<String, String>> inputAdImpressions = Arrays.asList(
-        new KeyValue<>("car-advertisement", "shown"),
-        new KeyValue<>("newspaper-advertisement", "shown"),
-        new KeyValue<>("gadget-advertisement", "shown")
+      new KeyValue<>("car-advertisement", "shown"),
+      new KeyValue<>("newspaper-advertisement", "shown"),
+      new KeyValue<>("gadget-advertisement", "shown")
     );
 
     // Input 2: Ad clicks
     final List<KeyValue<String, String>> inputAdClicks = Arrays.asList(
-        new KeyValue<>("newspaper-advertisement", "clicked"),
-        new KeyValue<>("gadget-advertisement", "clicked"),
-        new KeyValue<>("newspaper-advertisement", "clicked")
+      new KeyValue<>("newspaper-advertisement", "clicked"),
+      new KeyValue<>("gadget-advertisement", "clicked"),
+      new KeyValue<>("newspaper-advertisement", "clicked")
     );
 
     final List<KeyValue<String, String>> expectedResults = Arrays.asList(
-        new KeyValue<>("car-advertisement", "shown/null"),
-        new KeyValue<>("newspaper-advertisement", "shown/null"),
-        new KeyValue<>("gadget-advertisement", "shown/null"),
-        new KeyValue<>("newspaper-advertisement", "shown/clicked"),
-        new KeyValue<>("gadget-advertisement", "shown/clicked"),
-        new KeyValue<>("newspaper-advertisement", "shown/clicked")
+      new KeyValue<>("car-advertisement", "shown/not-clicked-yet"),
+      new KeyValue<>("newspaper-advertisement", "shown/not-clicked-yet"),
+      new KeyValue<>("gadget-advertisement", "shown/not-clicked-yet"),
+      new KeyValue<>("newspaper-advertisement", "shown/clicked"),
+      new KeyValue<>("gadget-advertisement", "shown/clicked"),
+      new KeyValue<>("newspaper-advertisement", "shown/clicked")
     );
 
     //
     // Step 1: Configure and start the processor topology.
     //
-    final Serde<String> stringSerde = Serdes.String();
-
     final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "stream-stream-join-lambda-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
@@ -112,10 +111,19 @@ public class StreamToStreamJoinIntegrationTest {
     // for the same join key (e.g. "newspaper-advertisement"), we receive an update from either of
     // the two joined streams during the defined join window.
     final KStream<String, String> impressionsAndClicks = alerts.outerJoin(
-        incidents,
-        (impressionValue, clickValue) -> impressionValue + "/" + clickValue,
-        // KStream-KStream joins are always windowed joins, hence we must provide a join window.
-        JoinWindows.of(TimeUnit.SECONDS.toMillis(5))
+      incidents,
+      (impressionValue, clickValue) ->
+        (clickValue == null)? impressionValue + "/not-clicked-yet": impressionValue + "/" + clickValue,
+      // KStream-KStream joins are always windowed joins, hence we must provide a join window.
+      JoinWindows.of(Duration.ofSeconds(5)),
+      // In this specific example, we don't need to define join serdes explicitly because the key, left value, and
+      // right value are all of type String, which matches our default serdes configured for the application.  However,
+      // we want to showcase the use of `Joined.with(...)` in case your code needs a different type setup.
+      Joined.with(
+        Serdes.String(), /* key */
+        Serdes.String(), /* left value */
+        Serdes.String()  /* right value */
+      )
     );
 
     // Write the results to the output topic.
@@ -156,9 +164,9 @@ public class StreamToStreamJoinIntegrationTest {
     consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     final List<KeyValue<String, String>> actualResults = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(
-        consumerConfig,
-        outputTopic,
-        expectedResults.size()
+      consumerConfig,
+      outputTopic,
+      expectedResults.size()
     );
     streams.close();
     assertThat(actualResults).containsExactlyElementsOf(expectedResults);
