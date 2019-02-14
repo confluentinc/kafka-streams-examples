@@ -40,6 +40,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -132,7 +133,7 @@ public class TopArticlesLambdaExampleTest {
     final long timeout = System.currentTimeMillis() + 60_000L;
     boolean done = false;
     while(System.currentTimeMillis() < timeout && !done) {
-      final ConsumerRecords<Windowed<String>, String> records = consumer.poll(10);
+      final ConsumerRecords<Windowed<String>, String> records = consumer.poll(Duration.ofMillis(10));
       records.forEach(record ->
                           received.put(record.key().key(), Arrays.asList(record.value().split("\n"))));
 

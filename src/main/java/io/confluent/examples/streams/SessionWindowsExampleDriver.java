@@ -26,6 +26,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serdes;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
@@ -148,7 +149,7 @@ public class SessionWindowsExampleDriver {
     consumer.subscribe(Collections.singleton(SessionWindowsExample.PLAY_EVENTS_PER_SESSION));
     int received = 0;
     while(received < NUM_RECORDS_SENT) {
-      final ConsumerRecords<String, Long> records = consumer.poll(Long.MAX_VALUE);
+      final ConsumerRecords<String, Long> records = consumer.poll(Duration.ofMillis(Long.MAX_VALUE));
       records.forEach(record -> System.out.println(record.key() + " = " + record.value()));
       received += records.count();
     }

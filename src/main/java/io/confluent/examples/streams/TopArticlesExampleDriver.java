@@ -35,6 +35,7 @@ import org.apache.kafka.streams.kstream.WindowedSerdes;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.Random;
@@ -118,7 +119,7 @@ public class TopArticlesExampleDriver {
 
     consumer.subscribe(Collections.singleton(TopArticlesLambdaExample.TOP_NEWS_PER_INDUSTRY_TOPIC));
     while (true) {
-      final ConsumerRecords<Windowed<String>, String> consumerRecords = consumer.poll(Long.MAX_VALUE);
+      final ConsumerRecords<Windowed<String>, String> consumerRecords = consumer.poll(Duration.ofMillis(Long.MAX_VALUE));
       for (final ConsumerRecord<Windowed<String>, String> consumerRecord : consumerRecords) {
         System.out.println(consumerRecord.key().key() + "@" + consumerRecord.key().window().start() +  "=" + consumerRecord.value());
       }
