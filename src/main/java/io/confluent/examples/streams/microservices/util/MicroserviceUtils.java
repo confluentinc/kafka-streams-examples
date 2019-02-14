@@ -25,6 +25,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Response;
+
+import java.time.Duration;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +36,6 @@ public class MicroserviceUtils {
   private static final Logger log = LoggerFactory.getLogger(MicroserviceUtils.class);
   private static final String DEFAULT_BOOTSTRAP_SERVERS = "localhost:9092";
   private static final String DEFAULT_SCHEMA_REGISTRY_URL = "http://localhost:8081";
-  public static final long MIN = 60 * 1000L;
 
   public static String parseArgsAndConfigure(final String[] args) {
     if (args.length > 2) {

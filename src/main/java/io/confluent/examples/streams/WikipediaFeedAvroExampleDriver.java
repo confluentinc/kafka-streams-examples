@@ -29,6 +29,7 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.Random;
@@ -53,14 +54,14 @@ import java.util.stream.IntStream;
  */
 public class WikipediaFeedAvroExampleDriver {
 
-  public static void main(final String[] args) throws IOException {
+  public static void main(final String[] args) {
     final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
     final String schemaRegistryUrl = args.length > 1 ? args[1] : "http://localhost:8081";
     produceInputs(bootstrapServers, schemaRegistryUrl);
     consumeOutput(bootstrapServers, schemaRegistryUrl);
   }
 
-  private static void produceInputs(final String bootstrapServers, final String schemaRegistryUrl) throws IOException {
+  private static void produceInputs(final String bootstrapServers, final String schemaRegistryUrl) {
     final String[] users = {"erica", "bob", "joe", "damian", "tania", "phil", "sam",
             "lauren", "joseph"};
 
@@ -97,7 +98,7 @@ public class WikipediaFeedAvroExampleDriver {
 
     consumer.subscribe(Collections.singleton(WikipediaFeedAvroExample.WIKIPEDIA_STATS));
     while (true) {
-      final ConsumerRecords<String, Long> consumerRecords = consumer.poll(Long.MAX_VALUE);
+      final ConsumerRecords<String, Long> consumerRecords = consumer.poll(Duration.ofMillis(Long.MAX_VALUE));
       for (final ConsumerRecord<String, Long> consumerRecord : consumerRecords) {
         System.out.println(consumerRecord.key() + "=" + consumerRecord.value());
       }

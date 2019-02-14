@@ -143,7 +143,7 @@ import java.util.Properties;
  */
 public class SecureKafkaStreamsExample {
 
-  public static void main(final String[] args) throws Exception {
+  public static void main(final String[] args) {
     final String secureBootstrapServers = args.length > 0 ? args[0] : "localhost:9093";
     final Properties streamsConfiguration = new Properties();
     // Give the Streams application a unique name.  The name must be unique in the Kafka cluster

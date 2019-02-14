@@ -13,6 +13,8 @@ import io.confluent.examples.streams.avro.microservices.OrderValidation;
 import io.confluent.examples.streams.avro.microservices.OrderValidationResult;
 import io.confluent.examples.streams.microservices.util.MicroserviceUtils;
 import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
+
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -75,7 +77,7 @@ public class OrderDetailsService implements Service {
       }
 
       while (running) {
-        final ConsumerRecords<String, Order> records = consumer.poll(100);
+        final ConsumerRecords<String, Order> records = consumer.poll(Duration.ofMillis(100));
         if (records.count() > 0) {
           if (eosEnabled) {
             producer.beginTransaction();

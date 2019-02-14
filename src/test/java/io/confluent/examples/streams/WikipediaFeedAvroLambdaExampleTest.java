@@ -36,6 +36,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -126,7 +127,7 @@ public class WikipediaFeedAvroLambdaExampleTest {
 
     final long timeout = System.currentTimeMillis() + 30000L;
     while(!actual.equals(expected) && System.currentTimeMillis() < timeout) {
-      final ConsumerRecords<String, Long> records = consumer.poll(1000);
+      final ConsumerRecords<String, Long> records = consumer.poll(Duration.ofSeconds(1));
       records.forEach(record -> actual.put(record.key(), record.value()));
     }
 
