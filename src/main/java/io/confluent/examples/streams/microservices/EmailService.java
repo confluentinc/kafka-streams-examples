@@ -4,7 +4,6 @@ import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.
 import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS;
 import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS_ENRICHED;
 import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.PAYMENTS;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.MIN;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.baseStreamsConfig;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.parseArgsAndConfigure;
@@ -24,6 +23,8 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
 
 
 /**
@@ -71,7 +72,7 @@ public class EmailService implements Service {
     //Join the two streams and the table then send an email for each
     orders.join(payments, EmailTuple::new,
         //Join Orders and Payments streams
-        JoinWindows.of(MIN), serdes)
+        JoinWindows.of(Duration.ofMinutes(1)), serdes)
         //Next join to the GKTable of Customers
         .join(customers,
             (key1, tuple) -> tuple.order.getCustomerId(),

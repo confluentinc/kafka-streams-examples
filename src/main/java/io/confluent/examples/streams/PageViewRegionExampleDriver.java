@@ -33,6 +33,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.Random;
@@ -111,7 +112,7 @@ public class PageViewRegionExampleDriver {
     try (final KafkaConsumer<String, Long> consumer = new KafkaConsumer<>(consumerProperties)) {
       consumer.subscribe(Collections.singleton(resultTopic));
       while (true) {
-        final ConsumerRecords<String, Long> consumerRecords = consumer.poll(Long.MAX_VALUE);
+        final ConsumerRecords<String, Long> consumerRecords = consumer.poll(Duration.ofMillis(Long.MAX_VALUE));
         for (final ConsumerRecord<String, Long> consumerRecord : consumerRecords) {
           System.out.println(consumerRecord.key() + ":" + consumerRecord.value());
         }
