@@ -24,6 +24,7 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Demonstrates how to reset a Kafka Streams application to re-process its input data from scratch.
@@ -143,13 +144,13 @@ public class ApplicationResetExample {
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
     final boolean doReset = args.length > 1 && args[1].equals("--reset");
-    final KafkaStreams streams = run(doReset, streamsConfiguration);
+    final KafkaStreams streams = run(doReset, streamsConfiguration, false);
 
     // Add shutdown hook to respond to SIGTERM and gracefully close Kafka Streams
     Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
   }
 
-  public static KafkaStreams run(final boolean doReset, final Properties streamsConfiguration) {
+  public static KafkaStreams run(final boolean doReset, final Properties streamsConfiguration, final boolean wait) {
     // Define the processing topology
     final StreamsBuilder builder = new StreamsBuilder();
     final KStream<String, String> input = builder.stream("my-input-topic");
@@ -166,7 +167,22 @@ public class ApplicationResetExample {
       streams.cleanUp();
     }
 
+    final CountDownLatch latch = new CountDownLatch(1);
+    streams.setStateListener((newState, oldState) -> {
+      if (oldState == KafkaStreams.State.REBALANCING && newState == KafkaStreams.State.RUNNING) {
+        latch.countDown();
+      }
+    });
+
     streams.start();
+
+    if (wait) {
+      try {
+        latch.await();
+      } catch (final InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
 
     return streams;
   }

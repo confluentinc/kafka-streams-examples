@@ -18,6 +18,7 @@ package io.confluent.examples.streams;
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 import kafka.admin.AdminClient;
 import kafka.tools.StreamsResetter;
+import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -77,7 +78,9 @@ public class ApplicationResetIntegrationTest {
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
-    KafkaStreams streams = ApplicationResetExample.run(false, streamsConfiguration);
+    streamsConfiguration.put(AdminClientConfig.RETRY_BACKOFF_MS_CONFIG, 1000);
+
+    KafkaStreams streams = ApplicationResetExample.run(false, streamsConfiguration, true);
 
     //
     // Step 2: Produce some input data to the input topic.
@@ -133,7 +136,7 @@ public class ApplicationResetIntegrationTest {
     //
     // Step 5: Rerun application
     //
-    streams = ApplicationResetExample.run(true, streamsConfiguration);
+    streams = ApplicationResetExample.run(true, streamsConfiguration, true);
 
     //
     // Step 6: Verify the application's output data.
