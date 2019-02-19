@@ -154,10 +154,10 @@ public class ApplicationResetExample {
       streams.cleanUp();
     }
 
-    startKafkaStreams(streams);
+    startKafkaStreamsSynchronously(streams);
   }
 
-  public static KafkaStreams buildKafkaStreams(final Properties streamsConfiguration) {
+  static KafkaStreams buildKafkaStreams(final Properties streamsConfiguration) {
     // Define the processing topology
     final StreamsBuilder builder = new StreamsBuilder();
     final KStream<String, String> input = builder.stream("my-input-topic");
@@ -170,7 +170,7 @@ public class ApplicationResetExample {
     return new KafkaStreams(builder.build(), streamsConfiguration);
   }
 
-  public static void startKafkaStreams(final KafkaStreams streams) {
+  static void startKafkaStreamsSynchronously(final KafkaStreams streams) {
     final CountDownLatch latch = new CountDownLatch(1);
     streams.setStateListener((newState, oldState) -> {
       if (oldState == KafkaStreams.State.REBALANCING && newState == KafkaStreams.State.RUNNING) {

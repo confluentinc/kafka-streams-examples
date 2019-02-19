@@ -21,11 +21,7 @@ import kafka.tools.StreamsResetter;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.ByteArraySerializer;
-import org.apache.kafka.common.serialization.LongDeserializer;
-import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.common.serialization.*;
 import org.apache.kafka.common.utils.Utils;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
@@ -65,6 +61,13 @@ public class ApplicationResetIntegrationTest {
       KeyValue.pair("All", 1L)
     );
 
+    final Properties verificationConsumerConfig = new Properties();
+    verificationConsumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+    verificationConsumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "application-reset-integration-test-standard-consumer-output-topic");
+    verificationConsumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    verificationConsumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    verificationConsumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
+
     //
     // Step 1: Configure and start the processor topology.
     //
@@ -80,35 +83,37 @@ public class ApplicationResetIntegrationTest {
 
     streamsConfiguration.put(AdminClientConfig.RETRY_BACKOFF_MS_CONFIG, 1000);
 
-    final KafkaStreams streams = ApplicationResetExample.buildKafkaStreams(streamsConfiguration);
+    {
+      final KafkaStreams streams = ApplicationResetExample.buildKafkaStreams(streamsConfiguration);
 
-    ApplicationResetExample.startKafkaStreams(streams);
+      ApplicationResetExample.startKafkaStreamsSynchronously(streams);
 
-    //
-    // Step 2: Produce some input data to the input topic.
-    //
-    final Properties producerConfig = new Properties();
-    producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-    producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
-    producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
-    producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    IntegrationTestUtils.produceValuesSynchronously(inputTopic, inputValues, producerConfig);
+      //
+      // Step 2: Produce some input data to the input topic.
+      //
+      final Properties producerConfig = new Properties();
+      producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+      producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
+      producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
+      producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
+      producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+      IntegrationTestUtils.produceValuesSynchronously(inputTopic, inputValues, producerConfig);
 
-    //
-    // Step 3: Verify the application's output data.
-    //
-    final Properties consumerConfig = new Properties();
-    consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "application-reset-integration-test-standard-consumer-output-topic");
-    consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
+      //
+      // Step 3: Verify the application's output data.
+      //
 
-    final List<KeyValue<String, Long>> result = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig, outputTopic, inputValues.size());
-    assertThat(result).isEqualTo(expectedResult);
 
-    streams.close();
+      final List<KeyValue<String, Long>> result = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(
+        verificationConsumerConfig,
+        outputTopic,
+        inputValues.size()
+      );
+      assertThat(result).isEqualTo(expectedResult);
+
+      streams.close();
+    }
+
 
     //
     // Step 4: Reset application.
@@ -135,22 +140,28 @@ public class ApplicationResetIntegrationTest {
       Utils.sleep(50);
     }
 
-    //
-    // Step 5: Rerun application
-    //
-    final KafkaStreams streams1 = ApplicationResetExample.buildKafkaStreams(streamsConfiguration);
+    {
+      //
+      // Step 5: Rerun application
+      //
+      final KafkaStreams streams = ApplicationResetExample.buildKafkaStreams(streamsConfiguration);
 
-    // Delete the application's local state
-    streams1.cleanUp();
-    ApplicationResetExample.startKafkaStreams(streams1);
+      // Delete the application's local state
+      streams.cleanUp();
+      ApplicationResetExample.startKafkaStreamsSynchronously(streams);
 
-    //
-    // Step 6: Verify the application's output data.
-    //
-    final List<KeyValue<String, Long>> resultRerun = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig, outputTopic, inputValues.size());
-    assertThat(resultRerun).isEqualTo(expectedResult);
+      //
+      // Step 6: Verify the application's output data.
+      //
+      final List<KeyValue<String, Long>> resultRerun = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(
+        verificationConsumerConfig,
+        outputTopic,
+        inputValues.size()
+      );
+      assertThat(resultRerun).isEqualTo(expectedResult);
 
-    streams1.close();
+      streams.close();
+    }
   }
 
 }
