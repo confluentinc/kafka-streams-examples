@@ -80,7 +80,9 @@ public class ApplicationResetIntegrationTest {
 
     streamsConfiguration.put(AdminClientConfig.RETRY_BACKOFF_MS_CONFIG, 1000);
 
-    KafkaStreams streams = ApplicationResetExample.run(false, streamsConfiguration, true);
+    final KafkaStreams streams = ApplicationResetExample.buildKafkaStreams(streamsConfiguration);
+
+    ApplicationResetExample.startKafkaStreams(streams);
 
     //
     // Step 2: Produce some input data to the input topic.
@@ -136,7 +138,11 @@ public class ApplicationResetIntegrationTest {
     //
     // Step 5: Rerun application
     //
-    streams = ApplicationResetExample.run(true, streamsConfiguration, true);
+    final KafkaStreams streams1 = ApplicationResetExample.buildKafkaStreams(streamsConfiguration);
+
+    // Delete the application's local state
+    streams1.cleanUp();
+    ApplicationResetExample.startKafkaStreams(streams1);
 
     //
     // Step 6: Verify the application's output data.
@@ -144,7 +150,7 @@ public class ApplicationResetIntegrationTest {
     final List<KeyValue<String, Long>> resultRerun = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig, outputTopic, inputValues.size());
     assertThat(resultRerun).isEqualTo(expectedResult);
 
-    streams.close();
+    streams1.close();
   }
 
 }

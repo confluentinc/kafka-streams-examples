@@ -144,29 +144,33 @@ public class ApplicationResetExample {
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
     final boolean doReset = args.length > 1 && args[1].equals("--reset");
-    final KafkaStreams streams = run(doReset, streamsConfiguration, false);
+    final KafkaStreams streams = buildKafkaStreams(streamsConfiguration);
 
     // Add shutdown hook to respond to SIGTERM and gracefully close Kafka Streams
     Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
-  }
-
-  public static KafkaStreams run(final boolean doReset, final Properties streamsConfiguration, final boolean wait) {
-    // Define the processing topology
-    final StreamsBuilder builder = new StreamsBuilder();
-    final KStream<String, String> input = builder.stream("my-input-topic");
-    input.selectKey((key, value) -> value.split(" ")[0])
-      .groupByKey()
-      .count()
-      .toStream()
-      .to("my-output-topic", Produced.with(Serdes.String(), Serdes.Long()));
-
-    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
 
     // Delete the application's local state on reset
     if (doReset) {
       streams.cleanUp();
     }
 
+    startKafkaStreams(streams);
+  }
+
+  public static KafkaStreams buildKafkaStreams(final Properties streamsConfiguration) {
+    // Define the processing topology
+    final StreamsBuilder builder = new StreamsBuilder();
+    final KStream<String, String> input = builder.stream("my-input-topic");
+    input.selectKey((key, value) -> value.split(" ")[0])
+         .groupByKey()
+         .count()
+         .toStream()
+         .to("my-output-topic", Produced.with(Serdes.String(), Serdes.Long()));
+
+    return new KafkaStreams(builder.build(), streamsConfiguration);
+  }
+
+  public static void startKafkaStreams(final KafkaStreams streams) {
     final CountDownLatch latch = new CountDownLatch(1);
     streams.setStateListener((newState, oldState) -> {
       if (oldState == KafkaStreams.State.REBALANCING && newState == KafkaStreams.State.RUNNING) {
@@ -176,15 +180,11 @@ public class ApplicationResetExample {
 
     streams.start();
 
-    if (wait) {
-      try {
-        latch.await();
-      } catch (final InterruptedException e) {
-        throw new RuntimeException(e);
-      }
+    try {
+      latch.await();
+    } catch (final InterruptedException e) {
+      throw new RuntimeException(e);
     }
-
-    return streams;
   }
 
 }
