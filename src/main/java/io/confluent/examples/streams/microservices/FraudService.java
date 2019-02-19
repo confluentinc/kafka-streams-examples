@@ -82,9 +82,11 @@ public class FraudService implements Service {
         .selectKey((id, orderValue) -> orderValue.getOrder().getId());
 
     //Now branch the stream into two, for pass and fail, based on whether the windowed total is over Fraud Limit
-    final KStream<String, OrderValue>[] forks = ordersWithTotals.branch(
+    @SuppressWarnings("unchecked") final KStream<String, OrderValue>[] forks =
+      ordersWithTotals.branch(
         (id, orderValue) -> orderValue.getValue() >= FRAUD_LIMIT,
-        (id, orderValue) -> orderValue.getValue() < FRAUD_LIMIT);
+        (id, orderValue) -> orderValue.getValue() < FRAUD_LIMIT
+      );
 
     forks[0].mapValues(
         orderValue -> new OrderValidation(orderValue.getOrder().getId(), FRAUD_CHECK, FAIL))

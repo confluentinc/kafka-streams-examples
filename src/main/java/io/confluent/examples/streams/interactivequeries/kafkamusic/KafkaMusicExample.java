@@ -30,26 +30,12 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.Consumed;
-import org.apache.kafka.streams.kstream.Joined;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KTable;
-import org.apache.kafka.streams.kstream.Materialized;
-import org.apache.kafka.streams.kstream.Serialized;
+import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.HostInfo;
 import org.apache.kafka.streams.state.KeyValueStore;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Properties;
-import java.util.TreeSet;
+import java.io.*;
+import java.util.*;
 
 /**
  * Demonstrates how to locate and query state stores (Interactive Queries).
@@ -323,7 +309,7 @@ public class KafkaMusicExample {
 
     // create a state store to track song play counts
     final KTable<Song, Long> songPlayCounts = songPlays.groupBy((songId, song) -> song,
-                                                                Serialized.with(keySongSerde, valueSongSerde))
+                                                                Grouped.with(keySongSerde, valueSongSerde))
             .count(Materialized.<Song, Long, KeyValueStore<Bytes, byte[]>>as(SONG_PLAY_COUNT_STORE)
                            .withKeySerde(valueSongSerde)
                            .withValueSerde(Serdes.Long()));
@@ -334,10 +320,10 @@ public class KafkaMusicExample {
     // Compute the top five charts for each genre. The results of this computation will continuously update the state
     // store "top-five-songs-by-genre", and this state store can then be queried interactively via a REST API (cf.
     // MusicPlaysRestService) for the latest charts per genre.
-    songPlayCounts.groupBy((song, plays) ->
-            KeyValue.pair(song.getGenre().toLowerCase(),
-                new SongPlayCount(song.getId(), plays)),
-        Serialized.with(Serdes.String(), songPlayCountSerde))
+    songPlayCounts.groupBy(
+          (song, plays) -> KeyValue.pair(song.getGenre().toLowerCase(), new SongPlayCount(song.getId(), plays)),
+          Grouped.with(Serdes.String(), songPlayCountSerde)
+        )
         // aggregate into a TopFiveSongs instance that will keep track
         // of the current top five for each genre. The data will be available in the
         // top-five-songs-genre store
@@ -358,10 +344,10 @@ public class KafkaMusicExample {
     // Compute the top five chart. The results of this computation will continuously update the state
     // store "top-five-songs", and this state store can then be queried interactively via a REST API (cf.
     // MusicPlaysRestService) for the latest charts per genre.
-    songPlayCounts.groupBy((song, plays) ->
-            KeyValue.pair(TOP_FIVE_KEY,
-                new SongPlayCount(song.getId(), plays)),
-        Serialized.with(Serdes.String(), songPlayCountSerde))
+    songPlayCounts.groupBy(
+          (song, plays) -> KeyValue.pair(TOP_FIVE_KEY, new SongPlayCount(song.getId(), plays)),
+          Grouped.with(Serdes.String(), songPlayCountSerde)
+        )
         .aggregate(TopFiveSongs::new,
             (aggKey, value, aggregate) -> {
               aggregate.add(value);

@@ -95,7 +95,10 @@ public class Schemas {
 
   private static void configure(final Serde serde, final String url) {
     if (serde instanceof SpecificAvroSerde) {
-      serde.configure(Collections.singletonMap(SCHEMA_REGISTRY_URL_CONFIG, url), false);
+      ((SpecificAvroSerde<?>) serde).configure(
+        Collections.singletonMap(SCHEMA_REGISTRY_URL_CONFIG, url),
+        false
+      );
     }
   }
 }
