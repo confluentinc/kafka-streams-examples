@@ -15,10 +15,8 @@ NB - this is demo code, not a production system and certain elements are left fo
 ![alt text](https://www.confluent.io/wp-content/uploads/Screenshot-2017-11-09-12.34.26.png "System Diagram")
 
 # Getting Started:
-To play with this ecosystem the simplest way is to run the tests and fiddle with the code. Each test boots a self-contained Kafka cluster so it's easy to play with different queries and configurations. 
+To play with this ecosystem the simplest way is to run the tests and fiddle with the code (stand alone execution is only supported in branch 5.0.0+ so go there if you want stand alone or docker support). Each test boots a self-contained Kafka cluster so it's easy to play with different queries and configurations. 
 The best place to start is [EndToEndTest.java](https://github.com/confluentinc/kafka-streams-examples/blob/3.3.1-post/src/test/java/io/confluent/examples/streams/microservices/EndToEndTest.java)
-
-If you prefer you can also run the services individually. To do this you need to start Kafka and Zookeeper independently, compile this project with maven, then run each service. There are instructions regarding how to do this in top-level readme of this project. 
 
 # Running the Examples:
 * Requires Java 1.8
