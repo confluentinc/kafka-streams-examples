@@ -33,11 +33,12 @@ As a pre-requisite, follow the [Environment Setup instructions](https://docs.con
 Then run the fully-working demo [end-to-end](https://docs.confluent.io/current/tutorials/examples/microservices-orders/docs/index.html#exercise-0-run-end-to-end-demo).
 It runs the ecosystem and all the microservices for you including Kafka Connect, Elasticsearch, KSQL and Control Center.
 
-To play with the ecosystem code, or fork your own project, run the tests and fiddle from inside your IDE.
-Each test boots a self-contained Kafka cluster so it's easy to play with different queries and configurations. 
-The best place to start is [EndToEndTest.java](https://github.com/confluentinc/kafka-streams-examples/blob/5.1.0-post/src/test/java/io/confluent/examples/streams/microservices/EndToEndTest.java)
+To play with this ecosystem the simplest way is to run the tests and fiddle with the code (stand alone execution is only supported in branch 5.0.0+ so go there if you want stand alone or docker support). Each test boots a self-contained Kafka cluster so it's easy to play with different queries and configurations. 
+The best place to start is [EndToEndTest.java](https://github.com/confluentinc/kafka-streams-examples/blob/3.3.1-post/src/test/java/io/confluent/examples/streams/microservices/EndToEndTest.java)
 
-
+# Running the Examples:
+* Requires Java 1.8
+* mvn install -Dmaven.test.skip=true
 
 # Outstanding Work
 
