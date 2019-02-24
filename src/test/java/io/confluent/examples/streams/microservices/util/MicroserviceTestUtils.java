@@ -7,6 +7,7 @@ import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.microservices.domain.Schemas.Topic;
 import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
+import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import kafka.server.KafkaConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -43,12 +44,13 @@ public class MicroserviceTestUtils {
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster(
       MicroserviceTestUtils.propsWith(
-          //Transactions need durability so the defaults require multiple nodes.
-          //For testing purposes set transactions to work with a single kafka broker.
-          new KeyValue<>(KafkaConfig.TransactionsTopicReplicationFactorProp(), "1"),
-          new KeyValue<>(KafkaConfig.TransactionsTopicMinISRProp(), "1"),
-          new KeyValue<>(KafkaConfig.TransactionsTopicPartitionsProp(), "1")
-      ));
+        //Transactions need durability so the defaults require multiple nodes.
+        //For testing purposes set transactions to work with a single kafka broker.
+        new KeyValue<>(KafkaConfig.TransactionsTopicReplicationFactorProp(), "1"),
+        new KeyValue<>(KafkaConfig.TransactionsTopicMinISRProp(), "1"),
+        new KeyValue<>(KafkaConfig.TransactionsTopicPartitionsProp(), "1"),
+        new KeyValue<>(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, "30000")
+    ));
 
   @AfterClass
   public static void stopCluster() {
