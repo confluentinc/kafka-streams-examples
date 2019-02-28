@@ -24,6 +24,7 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Demonstrates how to reset a Kafka Streams application to re-process its input data from scratch.
@@ -143,32 +144,47 @@ public class ApplicationResetExample {
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
     final boolean doReset = args.length > 1 && args[1].equals("--reset");
-    final KafkaStreams streams = run(doReset, streamsConfiguration);
+    final KafkaStreams streams = buildKafkaStreams(streamsConfiguration);
 
     // Add shutdown hook to respond to SIGTERM and gracefully close Kafka Streams
     Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
-  }
-
-  public static KafkaStreams run(final boolean doReset, final Properties streamsConfiguration) {
-    // Define the processing topology
-    final StreamsBuilder builder = new StreamsBuilder();
-    final KStream<String, String> input = builder.stream("my-input-topic");
-    input.selectKey((key, value) -> value.split(" ")[0])
-      .groupByKey()
-      .count()
-      .toStream()
-      .to("my-output-topic", Produced.with(Serdes.String(), Serdes.Long()));
-
-    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
 
     // Delete the application's local state on reset
     if (doReset) {
       streams.cleanUp();
     }
 
+    startKafkaStreamsSynchronously(streams);
+  }
+
+  static KafkaStreams buildKafkaStreams(final Properties streamsConfiguration) {
+    // Define the processing topology
+    final StreamsBuilder builder = new StreamsBuilder();
+    final KStream<String, String> input = builder.stream("my-input-topic");
+    input.selectKey((key, value) -> value.split(" ")[0])
+         .groupByKey()
+         .count()
+         .toStream()
+         .to("my-output-topic", Produced.with(Serdes.String(), Serdes.Long()));
+
+    return new KafkaStreams(builder.build(), streamsConfiguration);
+  }
+
+  static void startKafkaStreamsSynchronously(final KafkaStreams streams) {
+    final CountDownLatch latch = new CountDownLatch(1);
+    streams.setStateListener((newState, oldState) -> {
+      if (oldState == KafkaStreams.State.REBALANCING && newState == KafkaStreams.State.RUNNING) {
+        latch.countDown();
+      }
+    });
+
     streams.start();
 
-    return streams;
+    try {
+      latch.await();
+    } catch (final InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 }
