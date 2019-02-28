@@ -21,6 +21,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -31,17 +32,18 @@ import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.ReadOnlyWindowStore;
+import org.apache.kafka.streams.state.WindowStore;
 import org.apache.kafka.test.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Demonstrates how to validate an application's expected state through interactive queries.
@@ -74,13 +76,10 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
         new KeyValue<>("bob", 3L)
     );
 
-    final Map<String, Long> expectedMaxClicksPerUser = new HashMap<String, Long>() {
-      {
-        put("alice", 78L);
-        put("bob", 19L);
-        put("chao", 56L);
-      }
-    };
+    final Map<String, Long> expectedMaxClicksPerUser = new HashMap<>();
+    expectedMaxClicksPerUser.put("alice", 78L);
+    expectedMaxClicksPerUser.put("bob", 19L);
+    expectedMaxClicksPerUser.put("chao", 56L);
 
     //
     // Step 1: Configure and start the processor topology.
@@ -112,11 +111,13 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
     // windowed MAX() aggregation
     final String maxWindowStore = "max-window-store";
     input.groupByKey()
-        .windowedBy(TimeWindows.of(TimeUnit.MINUTES.toMillis(1L)).until(TimeUnit.MINUTES.toMillis(5L)))
-        .aggregate(
-            () -> Long.MIN_VALUE,
-            (aggKey, value, aggregate) -> Math.max(value, aggregate),
-            Materialized.as(maxWindowStore));
+      .windowedBy(TimeWindows.of(Duration.ofMinutes(1L)))
+      .aggregate(
+        () -> Long.MIN_VALUE,
+        (aggKey, value, aggregate) -> Math.max(value, aggregate),
+        Materialized.<String, Long, WindowStore<Bytes, byte[]>>as(maxWindowStore)
+          .withRetention((Duration.ofMinutes(5L)))
+      );
 
     final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();

@@ -1,8 +1,5 @@
 package io.confluent.examples.streams.microservices.domain;
 
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.ProductTypeSerde;
-import static io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
-
 import io.confluent.examples.streams.avro.microservices.Customer;
 import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.OrderEnriched;
@@ -11,11 +8,15 @@ import io.confluent.examples.streams.avro.microservices.OrderValue;
 import io.confluent.examples.streams.avro.microservices.Payment;
 import io.confluent.examples.streams.avro.microservices.Product;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
+import org.apache.kafka.common.serialization.Serde;
+import org.apache.kafka.common.serialization.Serdes;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.kafka.common.serialization.Serde;
-import org.apache.kafka.common.serialization.Serdes;
+
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.ProductTypeSerde;
+import static io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
 
 /**
  * A utility class that represents Topics and their various Serializers/Deserializers in a
@@ -58,7 +59,7 @@ public class Schemas {
 
   public static class Topics {
 
-    public static final Map<String, Topic> ALL = new HashMap<>();
+    public static final Map<String, Topic<?, ?>> ALL = new HashMap<>();
     public static Topic<String, Order> ORDERS;
     public static Topic<String, OrderEnriched> ORDERS_ENRICHED;
     public static Topic<String, Payment> PAYMENTS;
@@ -76,16 +77,16 @@ public class Schemas {
       PAYMENTS = new Topic<>("payments", Serdes.String(), new SpecificAvroSerde<Payment>());
       CUSTOMERS = new Topic<>("customers", Serdes.Long(), new SpecificAvroSerde<Customer>());
       ORDER_VALIDATIONS = new Topic<>("order-validations", Serdes.String(),
-          new SpecificAvroSerde<OrderValidation>());
+        new SpecificAvroSerde<OrderValidation>());
       WAREHOUSE_INVENTORY = new Topic<>("warehouse-inventory", new ProductTypeSerde(),
-          Serdes.Integer());
+        Serdes.Integer());
       ORDER_VALUE_SERDE = new SpecificAvroSerde<>();
     }
   }
 
   public static void configureSerdesWithSchemaRegistryUrl(final String url) {
     Topics.createTopics(); //wipe cached schema registry
-    for (final Topic topic : Topics.ALL.values()) {
+    for (final Topic<?, ?> topic : Topics.ALL.values()) {
       configure(topic.keySerde(), url);
       configure(topic.valueSerde(), url);
     }
@@ -93,7 +94,7 @@ public class Schemas {
     schemaRegistryUrl = url;
   }
 
-  private static void configure(final Serde serde, final String url) {
+  private static void configure(final Serde<?> serde, final String url) {
     if (serde instanceof SpecificAvroSerde) {
       ((SpecificAvroSerde<?>) serde).configure(
         Collections.singletonMap(SCHEMA_REGISTRY_URL_CONFIG, url),

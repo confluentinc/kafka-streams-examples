@@ -32,6 +32,8 @@ import org.apache.kafka.streams.state.WindowStoreIterator;
 import org.apache.kafka.test.TestUtils;
 import org.junit.Test;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -95,7 +97,7 @@ public class IntegrationTestUtils {
     final List<KeyValue<K, V>> consumedValues = new ArrayList<>();
     while (totalPollTimeMs < maxTotalPollTimeMs && continueConsuming(consumedValues.size(), maxMessages)) {
       totalPollTimeMs += pollIntervalMs;
-      final ConsumerRecords<K, V> records = consumer.poll(pollIntervalMs);
+      final ConsumerRecords<K, V> records = consumer.poll(Duration.ofMillis(pollIntervalMs));
       for (final ConsumerRecord<K, V> record : records) {
         consumedValues.add(new KeyValue<>(record.key(), record.value()));
       }
@@ -263,8 +265,8 @@ public class IntegrationTestUtils {
    */
   public static <K, V> void assertThatOldestWindowContains(final ReadOnlyWindowStore<K, V> store, final Map<K, V> expected)
       throws InterruptedException {
-    final long fromBeginningOfTimeMs = 0;
-    final long toNowInProcessingTimeMs = System.currentTimeMillis();
+    final Instant fromBeginningOfTimeMs = Instant.ofEpochMilli(0L);
+    final Instant toNowInProcessingTimeMs = Instant.now();
     TestUtils.waitForCondition(() ->
         expected.keySet().stream().allMatch(k -> {
           try (final WindowStoreIterator<V> iterator = store.fetch(k, fromBeginningOfTimeMs, toNowInProcessingTimeMs)) {

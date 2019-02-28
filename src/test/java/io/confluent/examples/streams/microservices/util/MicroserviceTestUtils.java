@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,21 +40,25 @@ import static java.util.Collections.singletonList;
 public class MicroserviceTestUtils {
 
   private static final Logger log = LoggerFactory.getLogger(MicroserviceTestUtils.class);
-  private static final List<TopicTailer> tailers = new ArrayList<>();
+  private static final List<TopicTailer<?, ?>> tailers = new ArrayList<>();
   private static int consumerCounter;
+
+  private static final Properties brokerConfig = new Properties();
+
+  static {
+    {
+      //Transactions need durability so the defaults require multiple nodes.
+      //For testing purposes set transactions to work with a single kafka broker.
+      brokerConfig.put(KafkaConfig.TransactionsTopicReplicationFactorProp(), "1");
+      brokerConfig.put(KafkaConfig.TransactionsTopicMinISRProp(), "1");
+      brokerConfig.put(KafkaConfig.TransactionsTopicPartitionsProp(), "1");
+      brokerConfig.put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, "60000");
+    }
+  };
 
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster(
-      new Properties() {
-        {
-          //Transactions need durability so the defaults require multiple nodes.
-          //For testing purposes set transactions to work with a single kafka broker.
-          put(KafkaConfig.TransactionsTopicReplicationFactorProp(), "1");
-          put(KafkaConfig.TransactionsTopicMinISRProp(), "1");
-          put(KafkaConfig.TransactionsTopicPartitionsProp(), "1");
-          put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, "60000");
-        }
-      });
+    brokerConfig);
 
   @AfterClass
   public static void stopCluster() {
@@ -107,7 +112,7 @@ public class MicroserviceTestUtils {
 
     final List<KeyValue<K, V>> actualValues = new ArrayList<>();
     TestUtils.waitForCondition(() -> {
-      final ConsumerRecords<K, V> records = consumer.poll(100);
+      final ConsumerRecords<K, V> records = consumer.poll(Duration.ofMillis(100));
       for (final ConsumerRecord<K, V> record : records) {
         actualValues.add(KeyValue.pair(record.key(), record.value()));
       }
@@ -119,7 +124,7 @@ public class MicroserviceTestUtils {
 
   private static <K, V> void tailAllTopicsToConsole(final Schemas.Topic<K, V> topic,
                                                     final String bootstrapServers) {
-    final TopicTailer task = new TopicTailer<>(topic, bootstrapServers);
+    final TopicTailer<K, V> task = new TopicTailer<>(topic, bootstrapServers);
     tailers.add(task);
     Executors.newSingleThreadExecutor().execute(task);
   }
@@ -129,14 +134,13 @@ public class MicroserviceTestUtils {
   }
 
   public static void tailAllTopicsToConsole(final String bootstrapServers) {
-    for (final Topic t : Topics.ALL.values()) {
+    for (final Topic<?, ?> t : Topics.ALL.values()) {
       tailAllTopicsToConsole(t, bootstrapServers);
     }
   }
 
   static class TopicTailer<K, V> implements Runnable {
 
-    private final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss.SSS");
     private boolean running = true;
     private boolean closed = false;
     private final Topic<K, V> topic;
@@ -163,7 +167,7 @@ public class MicroserviceTestUtils {
         consumer.subscribe(singletonList(topic.name()));
 
         while (running) {
-          final ConsumerRecords<K, V> records = consumer.poll(100);
+          final ConsumerRecords<K, V> records = consumer.poll(Duration.ofMillis(100));
           for (final ConsumerRecord<K, V> record : records) {
             log.info("Tailer[" + topic.name() + "-Offset:" + record.offset() + "]: " + record.key()
                 + "->" + record.value());

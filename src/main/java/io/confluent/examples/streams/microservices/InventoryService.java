@@ -77,7 +77,7 @@ public class InventoryService implements Service {
 
     //Create a store to reserve inventory whilst the order is processed.
     //This will be prepopulated from Kafka before the service starts processing
-    final StoreBuilder reservedStock = Stores
+    final StoreBuilder<KeyValueStore<Product, Long>> reservedStock = Stores
       .keyValueStoreBuilder(Stores.persistentKeyValueStore(RESERVED_STOCK_STORE_NAME),
         Topics.WAREHOUSE_INVENTORY.keySerde(), Serdes.Long())
       .withLoggingEnabled(new HashMap<>());

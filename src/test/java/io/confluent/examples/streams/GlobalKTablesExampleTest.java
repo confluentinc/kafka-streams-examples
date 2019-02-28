@@ -51,22 +51,22 @@ import static org.hamcrest.core.IsCollectionContaining.hasItem;
 
 public class GlobalKTablesExampleTest {
 
+  private static final Properties brokerConfig = new Properties();
+
+  static {
+    brokerConfig.put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, "30000");
+  }
+
   @ClassRule
-  public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster(
-      new Properties() {
-        {
-          put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, "30000");
-        }
-      }
-  );
+  public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster(brokerConfig);
   private KafkaStreams streamInstanceOne;
   private KafkaStreams streamInstanceTwo;
 
   @BeforeClass
   public static void createTopics() {
-    CLUSTER.createTopic(ORDER_TOPIC, 4, 1);
-    CLUSTER.createTopic(CUSTOMER_TOPIC, 3, 1);
-    CLUSTER.createTopic(PRODUCT_TOPIC, 2, 1);
+    CLUSTER.createTopic(ORDER_TOPIC, 4, (short) 1);
+    CLUSTER.createTopic(CUSTOMER_TOPIC, 3, (short) 1);
+    CLUSTER.createTopic(PRODUCT_TOPIC, 2, (short) 1);
     CLUSTER.createTopic(ENRICHED_ORDER_TOPIC);
   }
 

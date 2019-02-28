@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
@@ -93,13 +94,13 @@ public class WordCountInteractiveQueriesExampleTest {
 
   @BeforeClass
   public static void createTopicsAndProduceDataToInputTopics() throws Exception {
-    CLUSTER.createTopic(WordCountInteractiveQueriesExample.TEXT_LINES_TOPIC, 2, 1);
+    CLUSTER.createTopic(WordCountInteractiveQueriesExample.TEXT_LINES_TOPIC, 2, (short) 1);
     // The next two topics don't need to be created as they would be auto-created
     // by Kafka Streams, but it just makes the test more reliable if they already exist
     // as creating the topics causes a rebalance which closes the stores etc. So it makes
     // the timing quite difficult...
-    CLUSTER.createTopic(WORD_COUNT, 2, 1);
-    CLUSTER.createTopic(WINDOWED_WORD_COUNT, 2, 1);
+    CLUSTER.createTopic(WORD_COUNT, 2, (short) 1);
+    CLUSTER.createTopic(WINDOWED_WORD_COUNT, 2, (short) 1);
   
     // Produce sample data to the input topic before the tests starts.
     final Properties producerConfig = new Properties();
@@ -333,7 +334,7 @@ public class WordCountInteractiveQueriesExampleTest {
         //
       }
     }
-    Collections.sort(results, (o1, o2) -> o1.getKey().compareTo(o2.getKey()));
+    results.sort(Comparator.comparing(KeyValueBean::getKey));
     return results;
   }
 

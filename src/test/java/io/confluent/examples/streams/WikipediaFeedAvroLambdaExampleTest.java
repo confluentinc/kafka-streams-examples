@@ -47,12 +47,14 @@ import static org.hamcrest.core.IsEqual.equalTo;
 
 public class WikipediaFeedAvroLambdaExampleTest {
 
+  private static final Properties brokerConfig = new Properties();
+
+  static {
+    brokerConfig.put(KafkaConfig.ZkConnectionTimeoutMsProp(), "30000");
+  }
+
   @ClassRule
-  public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster(new Properties() {
-    {
-      put(KafkaConfig.ZkConnectionTimeoutMsProp(), "30000");
-    }
-  });
+  public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster(brokerConfig);
   private KafkaStreams streams;
 
   @BeforeClass

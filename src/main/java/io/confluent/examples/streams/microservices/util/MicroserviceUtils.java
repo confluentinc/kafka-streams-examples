@@ -4,7 +4,6 @@ import io.confluent.examples.streams.avro.microservices.Product;
 import io.confluent.examples.streams.microservices.Service;
 import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
-
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -25,8 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Response;
-
-import java.time.Duration;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -40,8 +37,8 @@ public class MicroserviceUtils {
   public static String parseArgsAndConfigure(final String[] args) {
     if (args.length > 2) {
       throw new IllegalArgumentException("usage: ... " +
-          "[<bootstrap.servers> (optional, default: " + DEFAULT_BOOTSTRAP_SERVERS + ")] " +
-          "[<schema.registry.url> (optional, default: " + DEFAULT_SCHEMA_REGISTRY_URL + ")] ");
+        "[<bootstrap.servers> (optional, default: " + DEFAULT_BOOTSTRAP_SERVERS + ")] " +
+        "[<schema.registry.url> (optional, default: " + DEFAULT_SCHEMA_REGISTRY_URL + ")] ");
     }
     final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
     final String schemaRegistryUrl = args.length > 1 ? args[1] : "http://localhost:8081";
@@ -87,7 +84,7 @@ public class MicroserviceUtils {
 
     @Override
     public void setConfig(final String storeName, final Options options,
-        final Map<String, Object> configs) {
+                          final Map<String, Object> configs) {
       // Workaround: We must ensure that the parallelism is set to >= 2.  There seems to be a known
       // issue with RocksDB where explicitly setting the parallelism to 1 causes issues (even though
       // 1 seems to be RocksDB's default for this configuration).
@@ -148,9 +145,9 @@ public class MicroserviceUtils {
   public static void setTimeout(final long timeout, final AsyncResponse asyncResponse) {
     asyncResponse.setTimeout(timeout, TimeUnit.MILLISECONDS);
     asyncResponse.setTimeoutHandler(resp -> resp.resume(
-        Response.status(Response.Status.GATEWAY_TIMEOUT)
-            .entity("HTTP GET timed out after " + timeout + " ms\n")
-            .build()));
+      Response.status(Response.Status.GATEWAY_TIMEOUT)
+        .entity("HTTP GET timed out after " + timeout + " ms\n")
+        .build()));
   }
 
   public static Server startJetty(final int port, final Object binding) {
@@ -177,8 +174,8 @@ public class MicroserviceUtils {
     return jettyServer;
   }
 
-  public static <T> KafkaProducer startProducer(final String bootstrapServers,
-                                                final Schemas.Topic<String, T> topic) {
+  public static <T> KafkaProducer<String, T> startProducer(final String bootstrapServers,
+                                                           final Schemas.Topic<String, T> topic) {
     final Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     producerConfig.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
@@ -188,8 +185,8 @@ public class MicroserviceUtils {
     MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(producerConfig);
 
     return new KafkaProducer<>(producerConfig,
-        topic.keySerde().serializer(),
-        topic.valueSerde().serializer());
+      topic.keySerde().serializer(),
+      topic.valueSerde().serializer());
   }
 
   public static void addShutdownHookAndBlock(final Service service) throws InterruptedException {
