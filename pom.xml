@@ -54,7 +54,11 @@
         <docker.skip-build>false</docker.skip-build>
         <docker.skip-test>false</docker.skip-test>
         <java.version>1.8</java.version>
+<<<<<<< HEAD
         <licenses.version>5.0.2</licenses.version>
+=======
+        <licenses.version>5.0.1</licenses.version>
+>>>>>>> 5.0.1-post
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scala.version>${kafka.scala.version}.8</scala.version>
         <scalatest.version>2.2.6</scalatest.version>
