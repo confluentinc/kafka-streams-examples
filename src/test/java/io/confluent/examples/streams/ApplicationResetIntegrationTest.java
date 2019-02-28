@@ -16,8 +16,9 @@
 package io.confluent.examples.streams;
 
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
-import kafka.admin.AdminClient;
 import kafka.tools.StreamsResetter;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -36,9 +37,11 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
+import static org.apache.kafka.clients.admin.AdminClient.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ApplicationResetIntegrationTest {
@@ -110,8 +113,10 @@ public class ApplicationResetIntegrationTest {
     //
 
     // wait for application to be completely shut down
-    final AdminClient adminClient = AdminClient.createSimplePlaintext(CLUSTER.bootstrapServers());
-    while (!adminClient.describeConsumerGroup(applicationId, 0).consumers().get().isEmpty()) {
+    final Properties config = new Properties();
+    config.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+    final AdminClient adminClient = AdminClient.create(config);
+    while (!adminClient.describeConsumerGroups(Collections.singleton(applicationId)).all().get().get(applicationId).members().isEmpty()) {
       Utils.sleep(50);
     }
 
@@ -126,7 +131,7 @@ public class ApplicationResetIntegrationTest {
     Assert.assertEquals(0, exitCode);
 
     // wait for reset client to be completely closed
-    while (!adminClient.describeConsumerGroup(applicationId, 0).consumers().get().isEmpty()) {
+    while (!adminClient.describeConsumerGroups(Collections.singleton(applicationId)).all().get().get(applicationId).members().isEmpty()) {
       Utils.sleep(50);
     }
 
