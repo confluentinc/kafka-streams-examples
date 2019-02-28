@@ -21,6 +21,9 @@ import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import kafka.server.KafkaConfig$;
 import kafka.utils.ZkUtils;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.test.TestCondition;
@@ -34,6 +37,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Runs an in-memory, "embedded" Kafka cluster with 1 ZooKeeper instance, 1 Kafka broker, and 1
@@ -51,6 +55,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
   private static final String KAFKASTORE_INIT_TIMEOUT = "90000";
 
   private ZooKeeperEmbedded zookeeper;
+  @SuppressWarnings("deprecation")
   private ZkUtils zkUtils = null;
   private KafkaEmbedded broker;
   private RestApp schemaRegistry;
@@ -83,11 +88,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     zookeeper = new ZooKeeperEmbedded();
     log.debug("ZooKeeper instance is running at {}", zookeeper.connectString());
 
-    zkUtils = ZkUtils.apply(
-        zookeeper.connectString(),
-        30000,
-        30000,
-        JaasUtils.isZkSecurityEnabled());
+    zkUtils = buildZkUtils();
 
     final Properties effectiveBrokerConfig = effectiveBrokerConfigFrom(brokerConfig, zookeeper);
     log.debug("Starting a Kafka instance on port {} ...",
@@ -105,6 +106,15 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     schemaRegistry = new RestApp(0, zookeeperConnect(), KAFKA_SCHEMAS_TOPIC, AVRO_COMPATIBILITY_TYPE, schemaRegistryProps);
     schemaRegistry.start();
     running = true;
+  }
+
+  @SuppressWarnings("deprecation")
+  private ZkUtils buildZkUtils() {
+    return ZkUtils.apply(
+        zookeeper.connectString(),
+        30000,
+        30000,
+        JaasUtils.isZkSecurityEnabled());
   }
 
   private Properties effectiveBrokerConfigFrom(final Properties brokerConfig, final ZooKeeperEmbedded zookeeper) {
@@ -256,7 +266,16 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
 
     @Override
     public boolean conditionMet() {
-      final Set<String> allTopics = new HashSet<>(scala.collection.JavaConversions.seqAsJavaList(zkUtils.getAllTopics()));
+      final Properties properties = new Properties();
+      properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers());
+      final AdminClient adminClient = AdminClient.create(properties);
+      final ListTopicsResult listTopicsResult = adminClient.listTopics();
+      final Set<String> allTopics;
+      try {
+        allTopics = listTopicsResult.names().get();
+      } catch (final InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
+      }
       return !allTopics.removeAll(deletedTopics);
     }
   }

@@ -170,6 +170,7 @@ public class KafkaEmbedded {
         DEFAULT_ZK_CONNECTION_TIMEOUT_MS,
         ZKStringSerializer$.MODULE$);
     final boolean isSecure = false;
+    @SuppressWarnings("deprecation")
     final ZkUtils zkUtils = new ZkUtils(zkClient, new ZkConnection(zookeeperConnect()), isSecure);
     AdminUtils.createTopic(zkUtils, topic, partitions, replication, topicConfig, RackAwareMode.Enforced$.MODULE$);
     zkClient.close();
@@ -188,6 +189,7 @@ public class KafkaEmbedded {
         DEFAULT_ZK_CONNECTION_TIMEOUT_MS,
         ZKStringSerializer$.MODULE$);
     final boolean isSecure = false;
+    @SuppressWarnings("deprecation")
     final ZkUtils zkUtils = new ZkUtils(zkClient, new ZkConnection(zookeeperConnect()), isSecure);
     AdminUtils.deleteTopic(zkUtils, topic);
     zkClient.close();

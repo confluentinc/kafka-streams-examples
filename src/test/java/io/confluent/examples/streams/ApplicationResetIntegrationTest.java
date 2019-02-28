@@ -110,6 +110,7 @@ public class ApplicationResetIntegrationTest {
     //
 
     // wait for application to be completely shut down
+    @SuppressWarnings("deprecation")
     final AdminClient adminClient = AdminClient.createSimplePlaintext(CLUSTER.bootstrapServers());
     while (!adminClient.describeConsumerGroup(applicationId, 0).consumers().get().isEmpty()) {
       Utils.sleep(50);
