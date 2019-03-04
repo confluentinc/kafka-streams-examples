@@ -1,8 +1,10 @@
 package io.confluent.examples.streams
 
+import java.time.Duration
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
+import io.confluent.examples.streams.MapFunctionScalaExample.streams
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream._
 import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
@@ -128,7 +130,7 @@ object WordCountScalaExample extends App {
 
   // Add shutdown hook to respond to SIGTERM and gracefully close Kafka Streams
   sys.ShutdownHookThread {
-    streams.close(10, TimeUnit.SECONDS)
+    streams.close(Duration.ofSeconds(10))
   }
 
 }

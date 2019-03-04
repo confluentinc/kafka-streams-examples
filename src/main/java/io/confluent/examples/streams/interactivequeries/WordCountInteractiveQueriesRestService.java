@@ -43,6 +43,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -164,7 +165,7 @@ public class WordCountInteractiveQueriesRestService {
     }
 
     // fetch the window results for the given key and time range
-    final WindowStoreIterator<Long> results = store.fetch(key, from, to);
+    final WindowStoreIterator<Long> results = store.fetch(key, Instant.ofEpochMilli(from), Instant.ofEpochMilli(to));
 
     final List<KeyValueBean> windowResults = new ArrayList<>();
     while (results.hasNext()) {
