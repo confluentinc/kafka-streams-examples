@@ -58,7 +58,7 @@ public class Schemas {
 
   public static class Topics {
 
-    public static final Map<String, Topic> ALL = new HashMap<>();
+    public static final Map<String, Topic<?, ?>> ALL = new HashMap<>();
     public static Topic<String, Order> ORDERS;
     public static Topic<String, OrderEnriched> ORDERS_ENRICHED;
     public static Topic<String, Payment> PAYMENTS;
@@ -85,7 +85,7 @@ public class Schemas {
 
   public static void configureSerdesWithSchemaRegistryUrl(final String url) {
     Topics.createTopics(); //wipe cached schema registry
-    for (final Topic topic : Topics.ALL.values()) {
+    for (final Topic<?, ?> topic : Topics.ALL.values()) {
       configure(topic.keySerde(), url);
       configure(topic.valueSerde(), url);
     }
@@ -93,7 +93,7 @@ public class Schemas {
     schemaRegistryUrl = url;
   }
 
-  private static void configure(final Serde serde, final String url) {
+  private static void configure(final Serde<?> serde, final String url) {
     if (serde instanceof SpecificAvroSerde) {
       serde.configure(Collections.singletonMap(SCHEMA_REGISTRY_URL_CONFIG, url), false);
     }
