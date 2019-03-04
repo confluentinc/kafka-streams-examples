@@ -139,8 +139,8 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
         if (schemaRegistry != null) {
           schemaRegistry.stop();
         }
-      } catch (final Exception e) {
-        throw new RuntimeException(e);
+      } catch (final Exception fatal) {
+        throw new RuntimeException(fatal);
       }
       if (broker != null) {
         broker.stop();
@@ -149,8 +149,8 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
         if (zookeeper != null) {
           zookeeper.stop();
         }
-      } catch (final IOException e) {
-        throw new RuntimeException(e);
+      } catch (final IOException fatal) {
+        throw new RuntimeException(fatal);
       }
     } finally {
       running = false;
@@ -231,8 +231,8 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     for (final String topic : topics) {
       try {
         broker.deleteTopic(topic);
-      } catch (final UnknownTopicOrPartitionException e) {
-        // indicates success
+      } catch (final UnknownTopicOrPartitionException expected) {
+        // indicates (idempotent) success
       }
     }
 
@@ -261,8 +261,8 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
       try (final AdminClient adminClient = AdminClient.create(properties)) {
         final ListTopicsResult listTopicsResult = adminClient.listTopics();
         allTopics = listTopicsResult.names().get();
-      } catch (final InterruptedException | ExecutionException e) {
-        throw new RuntimeException(e);
+      } catch (final InterruptedException | ExecutionException fatal) {
+        throw new RuntimeException(fatal);
       }
       return !allTopics.removeAll(deletedTopics);
     }

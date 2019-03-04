@@ -167,8 +167,8 @@ public class KafkaEmbedded {
       final NewTopic newTopic = new NewTopic(topic, partitions, replication);
       newTopic.configs(topicConfig);
       adminClient.createTopics(Collections.singleton(newTopic)).all().get();
-    } catch (final InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
+    } catch (final InterruptedException | ExecutionException fatal) {
+      throw new RuntimeException(fatal);
     }
 
   }

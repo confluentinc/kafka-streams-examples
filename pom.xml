@@ -342,7 +342,7 @@
                         <arg>-Ywarn-adapted-args</arg>
                         <arg>-Ywarn-dead-code</arg>
                         <!-- Fail on compiler warnings -->
-                        <!--<arg>-Xfatal-warnings</arg>-->
+                        <!--TODO: enable this once we have warnings under control<arg>-Xfatal-warnings</arg>-->
                     </args>
                 </configuration>
                 <executions>
@@ -365,7 +365,7 @@
                     <target>${java.version}</target>
                     <compilerArgs>
                         <arg>-Xlint:all</arg>
-                        <!--<arg>-Werror</arg>-->
+                        <!--TODO: enable this once we have warnings under control<arg>-Werror</arg>-->
                     </compilerArgs>
                 </configuration>
             </plugin>
