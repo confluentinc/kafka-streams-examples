@@ -41,7 +41,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-import static org.apache.kafka.clients.admin.AdminClient.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ApplicationResetIntegrationTest {

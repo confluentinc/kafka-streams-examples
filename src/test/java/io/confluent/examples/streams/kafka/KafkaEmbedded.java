@@ -22,6 +22,7 @@ import kafka.utils.TestUtils;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Time;
@@ -184,8 +185,12 @@ public class KafkaEmbedded {
 
     try (final AdminClient adminClient = AdminClient.create(properties)) {
       adminClient.deleteTopics(Collections.singleton(topic)).all().get();
-    } catch (final InterruptedException | ExecutionException e) {
+    } catch (final InterruptedException e) {
       throw new RuntimeException(e);
+    } catch (final ExecutionException e) {
+      if (!(e.getCause() instanceof UnknownTopicOrPartitionException)) {
+        throw new RuntimeException(e);
+      }
     }
   }
 }
