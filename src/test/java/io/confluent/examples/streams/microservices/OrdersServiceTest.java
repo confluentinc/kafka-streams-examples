@@ -59,7 +59,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
     CLUSTER.deleteTopicsAndWait(30000, Topics.ORDERS.name(), "OrdersService-orders-store-changelog");
     try {
       CLUSTER.createTopic(Topics.ORDERS.name());
-    } catch (TopicExistsException tex) {
+    } catch (final TopicExistsException tex) {
       log.warn("Received a TopicExistsException after an alleged successful deletion, will retry");
       CLUSTER.createTopic(Topics.ORDERS.name());
     }
