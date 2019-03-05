@@ -38,7 +38,7 @@ import static java.util.Collections.singletonList;
 
 public class MicroserviceTestUtils {
 
-  private static final Logger log = LoggerFactory.getLogger(MicroserviceTestUtils.class);
+  protected static final Logger log = LoggerFactory.getLogger(MicroserviceTestUtils.class);
   private static final List<TopicTailer> tailers = new ArrayList<>();
   private static int consumerCounter;
 

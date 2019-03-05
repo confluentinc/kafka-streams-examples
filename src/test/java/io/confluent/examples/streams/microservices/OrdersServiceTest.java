@@ -9,6 +9,7 @@ import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
 import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
 import io.confluent.examples.streams.microservices.util.Paths;
 
+import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.test.TestUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -56,7 +57,12 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
   @Before
   public void prepareKafkaCluster() throws Exception {
     CLUSTER.deleteTopicsAndWait(30000, Topics.ORDERS.name(), "OrdersService-orders-store-changelog");
-    CLUSTER.createTopic(Topics.ORDERS.name());
+    try {
+      CLUSTER.createTopic(Topics.ORDERS.name());
+    } catch (TopicExistsException tex) {
+      log.warn("Received a TopicExistsException after an alleged successful deletion, will retry");
+      CLUSTER.createTopic(Topics.ORDERS.name());
+    }
     Schemas.configureSerdesWithSchemaRegistryUrl(CLUSTER.schemaRegistryUrl());
   }
 
