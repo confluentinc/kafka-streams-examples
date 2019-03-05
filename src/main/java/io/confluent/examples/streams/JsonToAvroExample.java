@@ -19,31 +19,25 @@ import io.confluent.examples.streams.avro.WikiFeed;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KTable;
-import org.apache.kafka.streams.kstream.Produced;
+import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
 
 /**
- * A simple example demonstrating how to convert records in JSON format in a given topic to records serialized
- * in Avro format.
+ * A simple example demonstrating how to convert records in JSON format in a given topic to records
+ * serialized in Avro format.
  * <p> Note: The specific Avro binding is used for serialization/deserialization, where the {@code
  * WikiFeed} class is auto-generated from its Avro schema by the maven avro plugin. See {@code
  * wikifeed.avsc} under {@code src/main/resources/avro/io/confluent/examples/streams/}. <p> <br> HOW
- * TO RUN THIS EXAMPLE <p> 1) Start Zookeeper, Kafka, and Confluent Schema Registry. Please refer to
+ * TO RUN THIS EXAMPLE <p> 1) Start Zookeeper, Kafka, and Confluent Schema Registry. Please refer
+ * to
  * <a href='http://docs.confluent.io/current/quickstart.html#quickstart'>QuickStart</a>. <p> 2)
  * Create the input/intermediate/output topics used by this example.
  * <pre>
@@ -53,7 +47,8 @@ import org.codehaus.jackson.type.TypeReference;
  * $ bin/kafka-topics --create --topic avro-sink \
  *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
  * }</pre>
- * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be {@code bin/kafka-topics.sh ...}.
+ * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be {@code
+ * bin/kafka-topics.sh ...}.
  * <p>
  * 3) Start this example application either in your IDE or on the command line.
  * <p>
@@ -64,10 +59,10 @@ import org.codehaus.jackson.type.TypeReference;
  * $ java -cp target/kafka-streams-examples-5.2.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.JsonToAvroExample
  * }
  * </pre>
- * 4) Write some input data to the source topics (e.g. via {@link JsonToAvroExampleDriver}).
- * The already running example application (step 3) will automatically process this input data and
- * write the results to the output topic. The {@link JsonToAvroExampleDriver} will print the
- * results from the output topic
+ * 4) Write some input data to the source topics (e.g. via {@link JsonToAvroExampleDriver}). The
+ * already running example application (step 3) will automatically process this input data and write
+ * the results to the output topic. The {@link JsonToAvroExampleDriver} will print the results from
+ * the output topic
  * <pre>
  * {@code
  * # Here: Write input data using the example driver.  Once the driver has stopped generating data,
@@ -95,7 +90,7 @@ public class JsonToAvroExample {
   }
 
   static KafkaStreams buildJsonToAvroStream(final String bootstrapServers,
-      final String schemaRegistryUrl) {
+                                            final String schemaRegistryUrl) {
     final Properties streamsConfiguration = new Properties();
 
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "json-to-avro-stream-conversion");
@@ -107,22 +102,24 @@ public class JsonToAvroExample {
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 10 * 1000);
+    streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 100 * 1000);
 
     final ObjectMapper objectMapper = new ObjectMapper();
-    final TypeReference<HashMap<String, String>> typeReference = new TypeReference<HashMap<String, String>>() {};
 
     final StreamsBuilder builder = new StreamsBuilder();
 
     // read the source stream
-    final KStream<String, String> jsonToAvroStream = builder.stream(JSON_SOURCE_TOPIC, Consumed.with(Serdes.String(), Serdes.String()));
+    final KStream<String, String> jsonToAvroStream = builder.stream(JSON_SOURCE_TOPIC,
+                                                                    Consumed.with(Serdes.String(), Serdes.String()));
     jsonToAvroStream.mapValues(v -> {
       WikiFeed wikiFeed = null;
       try {
-        final Map<String, String> jsonMap = objectMapper.readValue(v, typeReference);
-        wikiFeed = new WikiFeed(jsonMap.get("user"), Boolean.valueOf(jsonMap.get("is_new")), jsonMap.get("content"));
+        final JsonNode jsonNode = objectMapper.readTree(v);
+        wikiFeed = new WikiFeed(jsonNode.get("user").asText(),
+                                jsonNode.get("is_new").asBoolean(),
+                                jsonNode.get("content").asText());
       } catch (final IOException e) {
-        e.printStackTrace();
+        throw new RuntimeException(e);
       }
       return wikiFeed;
     }).filter((k,v) -> v != null).to(AVRO_SINK_TOPIC);

@@ -41,10 +41,10 @@ import org.codehaus.jackson.map.ObjectMapper;
  * This is a sample driver for the {@link JsonToAvroExample} and
  * To run this driver please first refer to the instructions in {@link JsonToAvroExample}
  * You can then run this class directly in your IDE or via the command line.
- *
- * To run via the command line you might want to package as a fatjar first. Please refer to:
+ * <p>
+ * To run via the command line you might want to package as a fat-jar first. Please refer to:
  * <a href='https://github.com/confluentinc/kafka-streams-examples#packaging-and-running'>Packaging</a>
- *
+ * <p>
  * Once packaged you can then run:
  * <pre>
  * {@code
@@ -64,7 +64,7 @@ public class JsonToAvroExampleDriver {
   }
 
   private static void produceJsonInputs(final String bootstrapServers, final String schemaRegistryUrl) throws IOException {
-    final String[] users = {"Black Knight","Sir Robin", "Knight Who Says Ni"};
+    final String[] users = {"Black Knight", "Sir Robin", "Knight Who Says Ni"};
     final ObjectMapper objectMapper = new ObjectMapper();
 
     final Properties props = new Properties();
@@ -114,6 +114,4 @@ public class JsonToAvroExampleDriver {
       }
     }
   }
-
-
 }
