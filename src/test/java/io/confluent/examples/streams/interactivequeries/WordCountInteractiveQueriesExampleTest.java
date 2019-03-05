@@ -94,13 +94,13 @@ public class WordCountInteractiveQueriesExampleTest {
 
   @BeforeClass
   public static void createTopicsAndProduceDataToInputTopics() throws Exception {
-    CLUSTER.createTopic(WordCountInteractiveQueriesExample.TEXT_LINES_TOPIC, 2, 1);
+    CLUSTER.createTopic(WordCountInteractiveQueriesExample.TEXT_LINES_TOPIC, 2, (short) 1);
     // The next two topics don't need to be created as they would be auto-created
     // by Kafka Streams, but it just makes the test more reliable if they already exist
     // as creating the topics causes a rebalance which closes the stores etc. So it makes
     // the timing quite difficult...
-    CLUSTER.createTopic(WORD_COUNT, 2, 1);
-    CLUSTER.createTopic(WINDOWED_WORD_COUNT, 2, 1);
+    CLUSTER.createTopic(WORD_COUNT, 2, (short) 1);
+    CLUSTER.createTopic(WINDOWED_WORD_COUNT, 2, (short) 1);
   
     // Produce sample data to the input topic before the tests starts.
     final Properties producerConfig = new Properties();

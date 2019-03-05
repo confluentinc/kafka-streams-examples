@@ -64,9 +64,9 @@ public class GlobalKTablesExampleTest {
 
   @BeforeClass
   public static void createTopics() {
-    CLUSTER.createTopic(ORDER_TOPIC, 4, 1);
-    CLUSTER.createTopic(CUSTOMER_TOPIC, 3, 1);
-    CLUSTER.createTopic(PRODUCT_TOPIC, 2, 1);
+    CLUSTER.createTopic(ORDER_TOPIC, 4, (short) 1);
+    CLUSTER.createTopic(CUSTOMER_TOPIC, 3, (short) 1);
+    CLUSTER.createTopic(PRODUCT_TOPIC, 2, (short) 1);
     CLUSTER.createTopic(ENRICHED_ORDER_TOPIC);
   }
 
