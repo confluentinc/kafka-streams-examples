@@ -8,6 +8,7 @@ import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.microservices.domain.Schemas.Topic;
 import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
+import java.time.Duration;
 import kafka.server.KafkaConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -107,12 +108,12 @@ public class MicroserviceTestUtils {
 
     final List<KeyValue<K, V>> actualValues = new ArrayList<>();
     TestUtils.waitForCondition(() -> {
-      final ConsumerRecords<K, V> records = consumer.poll(100);
+      final ConsumerRecords<K, V> records = consumer.poll(Duration.ofMillis(100));
       for (final ConsumerRecord<K, V> record : records) {
         actualValues.add(KeyValue.pair(record.key(), record.value()));
       }
       return actualValues.size() == numberToRead;
-    }, 20000, "Timed out reading orders.");
+    }, 30000, "Timed out reading orders.");
     consumer.close();
     return actualValues;
   }
@@ -136,7 +137,6 @@ public class MicroserviceTestUtils {
 
   static class TopicTailer<K, V> implements Runnable {
 
-    private final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss.SSS");
     private boolean running = true;
     private boolean closed = false;
     private final Topic<K, V> topic;
@@ -163,7 +163,7 @@ public class MicroserviceTestUtils {
         consumer.subscribe(singletonList(topic.name()));
 
         while (running) {
-          final ConsumerRecords<K, V> records = consumer.poll(100);
+          final ConsumerRecords<K, V> records = consumer.poll(Duration.ofMillis(100));
           for (final ConsumerRecord<K, V> record : records) {
             log.info("Tailer[" + topic.name() + "-Offset:" + record.offset() + "]: " + record.key()
                 + "->" + record.value());
