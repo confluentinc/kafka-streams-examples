@@ -193,4 +193,8 @@ public class KafkaEmbedded {
       }
     }
   }
+
+  KafkaServer kafkaServer() {
+    return kafka;
+  }
 }
