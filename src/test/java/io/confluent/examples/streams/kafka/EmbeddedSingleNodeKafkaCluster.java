@@ -19,24 +19,20 @@ import io.confluent.examples.streams.zookeeper.ZooKeeperEmbedded;
 import io.confluent.kafka.schemaregistry.RestApp;
 import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
-import kafka.server.KafkaConfig$;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.admin.ListTopicsResult;
-import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
-import org.apache.kafka.test.TestCondition;
-import org.apache.kafka.test.TestUtils;
-import org.junit.rules.ExternalResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
+import kafka.server.KafkaConfig$;
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
+import org.apache.kafka.test.TestCondition;
+import org.apache.kafka.test.TestUtils;
+import org.junit.rules.ExternalResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import scala.collection.JavaConverters;
 
 /**
  * Runs an in-memory, "embedded" Kafka cluster with 1 ZooKeeper instance, 1 Kafka broker, and 1
@@ -254,16 +250,8 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
 
     @Override
     public boolean conditionMet() {
-      final Properties properties = new Properties();
-      properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers());
-      final Set<String> allTopics;
-
-      try (final AdminClient adminClient = AdminClient.create(properties)) {
-        final ListTopicsResult listTopicsResult = adminClient.listTopics();
-        allTopics = listTopicsResult.names().get();
-      } catch (final InterruptedException | ExecutionException fatal) {
-        throw new RuntimeException(fatal);
-      }
+      final Set<String> allTopics = new HashSet<>(
+          JavaConverters.seqAsJavaListConverter(broker.kafkaServer().zkClient().getAllTopicsInCluster()).asJava());
       return !allTopics.removeAll(deletedTopics);
     }
   }
