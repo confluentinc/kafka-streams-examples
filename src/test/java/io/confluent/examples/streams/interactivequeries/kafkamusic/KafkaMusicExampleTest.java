@@ -52,6 +52,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExampleTest.randomFreeLocalPort;
+import static io.confluent.examples.streams.microservices.util.MicroserviceTestUtils.getWithRetires;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -216,9 +217,10 @@ public class KafkaMusicExampleTest {
 
     // wait until the StreamsMetadata is available as this indicates that
     // KafkaStreams initialization has occurred
-    TestUtils.waitForCondition(() -> !StreamsMetadata.NOT_AVAILABLE.equals(streams.allMetadataForStore(KafkaMusicExample.TOP_FIVE_SONGS_STORE)),
-                               MAX_WAIT_MS,
-                               "StreamsMetadata should be available");
+    TestUtils.waitForCondition(
+        () -> !StreamsMetadata.NOT_AVAILABLE.equals(streams.allMetadataForStore(KafkaMusicExample.TOP_FIVE_SONGS_STORE)),
+        MAX_WAIT_MS,
+        "StreamsMetadata should be available");
 
     final String baseUrl = "http://localhost:" + appServerPort + "/kafka-music";
     final Client client = ClientBuilder.newClient();
@@ -229,7 +231,7 @@ public class KafkaMusicExampleTest {
           songsStore;
       try {
         songsStore =
-            streams.store(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.<Long, Song>keyValueStore());
+            streams.store(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.keyValueStore());
         return songsStore.all().hasNext();
       } catch (Exception e) {
         return false;
@@ -259,7 +261,6 @@ public class KafkaMusicExampleTest {
                               songCountPlayBean(songs.get(2), 4L)
                               )
                 );
-
   }
 
   private SongPlayCountBean songCountPlayBean(final Song song, final long plays) {
@@ -271,31 +272,30 @@ public class KafkaMusicExampleTest {
 
   private void verifyChart(final String url,
                            final Client client,
-                           final List<SongPlayCountBean> expectedChart)
-      throws InterruptedException {
-    final Invocation.Builder genreChartRequest = client.target(url)
+                           final List<SongPlayCountBean> expectedChart) throws InterruptedException {
+    final Invocation.Builder genreChartRequest = client
+        .target(url)
         .request(MediaType.APPLICATION_JSON_TYPE);
 
     // Wait until we have 5 items available in the chart
     TestUtils.waitForCondition(() -> {
       try {
-        final List<SongPlayCountBean>
-            chart =
-            genreChartRequest.get(new GenericType<List<SongPlayCountBean>>() {
-            });
+        final List<SongPlayCountBean> chart = getWithRetires(
+            genreChartRequest,
+            new GenericType<List<SongPlayCountBean>>() {},
+            0);
+        System.err.println(chart.size());
         return chart.size() == 5;
       } catch (Exception e) {
+        e.printStackTrace();
         return false;
       }
-
     }, MAX_WAIT_MS, "chart should have 5 items");
 
-
-    final List<SongPlayCountBean>
-        chart =
-        genreChartRequest.get(new GenericType<List<SongPlayCountBean>>() {
-        });
-
+    final List<SongPlayCountBean> chart = getWithRetires(
+        genreChartRequest,
+        new GenericType<List<SongPlayCountBean>>() {},
+        3);
     assertThat(chart, is(expectedChart));
   }
 

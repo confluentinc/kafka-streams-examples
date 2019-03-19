@@ -17,6 +17,7 @@ import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.net.HttpURLConnection;
@@ -71,28 +72,28 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //When we POST an order
     Response response = client.target(paths.urlPost())
-        .request(APPLICATION_JSON_TYPE)
-        .post(Entity.json(bean));
+      .request(APPLICATION_JSON_TYPE)
+      .post(Entity.json(bean));
 
     //Then
     assertThat(response.getStatus()).isEqualTo(HttpURLConnection.HTTP_CREATED);
 
     //When GET the bean back via it's location
-    OrderBean returnedBean = client.target(response.getLocation())
-        .queryParam("timeout", MIN / 2)
-        .request(APPLICATION_JSON_TYPE)
-        .get(new GenericType<OrderBean>() {
-        });
+    Invocation.Builder builder = client.target(response.getLocation())
+      .queryParam("timeout", MIN / 3)
+      .request(APPLICATION_JSON_TYPE);
+
+    OrderBean returnedBean = getWithRetires(builder, newBean(), 5);
 
     //Then it should be the bean we PUT
     assertThat(returnedBean).isEqualTo(bean);
 
     //When GET the bean back explicitly
-    returnedBean = client.target(paths.urlGet(1))
-        .queryParam("timeout", MIN / 2)
-        .request(APPLICATION_JSON_TYPE)
-        .get(new GenericType<OrderBean>() {
-        });
+    builder = client.target(paths.urlGet(1))
+      .queryParam("timeout", MIN / 3)
+      .request(APPLICATION_JSON_TYPE);
+
+    returnedBean = getWithRetires(builder, newBean(), 5);
 
     //Then it should be the bean we PUT
     assertThat(returnedBean).isEqualTo(bean);
@@ -113,21 +114,22 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //When we post an order
     client.target(paths.urlPost())
-        .request(APPLICATION_JSON_TYPE)
-        .post(Entity.json(beanV1));
+      .request(APPLICATION_JSON_TYPE)
+      .post(Entity.json(beanV1));
 
     //Simulate the order being validated
     MicroserviceTestUtils.sendOrders(Collections.singletonList(
-        newBuilder(orderV1)
-            .setState(OrderState.VALIDATED)
-            .build()));
+      newBuilder(orderV1)
+        .setState(OrderState.VALIDATED)
+        .build()));
 
     //When we GET the order from the returned location
-    OrderBean returnedBean = client.target(paths.urlGetValidated(beanV1.getId()))
-        .queryParam("timeout", MIN / 2)
-        .request(APPLICATION_JSON_TYPE)
-        .get(new GenericType<OrderBean>() {
-        });
+    Invocation.Builder builder = client
+      .target(paths.urlGetValidated(beanV1.getId()))
+      .queryParam("timeout", MIN / 3)
+      .request(APPLICATION_JSON_TYPE);
+
+    OrderBean returnedBean = getWithRetires(builder, newBean(), 5);
 
     //Then status should be Validated
     assertThat(returnedBean.getState()).isEqualTo(OrderState.VALIDATED);
@@ -142,13 +144,14 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
     rest.start(CLUSTER.bootstrapServers());
     Paths paths = new Paths("localhost", rest.port());
 
+    Invocation.Builder builder = client
+      .target(paths.urlGet(1))
+      .queryParam("timeout", 100) //Lower the request timeout
+      .request(APPLICATION_JSON_TYPE);
+
     //Then GET order should timeout
     try {
-      client.target(paths.urlGet(1))
-          .queryParam("timeout", 100) //Lower the request timeout
-          .request(APPLICATION_JSON_TYPE)
-          .get(new GenericType<OrderBean>() {
-          });
+      getWithRetires(builder, newBean(), 0); // no retries to fail fast
       fail("Request should have failed as materialized view has not been updated");
     } catch (ServerErrorException e) {
       assertThat(e.getMessage()).isEqualTo("HTTP 504 Gateway Timeout");
@@ -170,27 +173,27 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //And one order
     client.target(paths1.urlPost())
-        .request(APPLICATION_JSON_TYPE)
-        .post(Entity.json(order));
+      .request(APPLICATION_JSON_TYPE)
+      .post(Entity.json(order));
 
     //When GET to rest1
-    OrderBean returnedOrder = client.target(paths1.urlGet(order.getId()))
-        .queryParam("timeout", MIN / 2)
-        .request(APPLICATION_JSON_TYPE)
-        .get(new GenericType<OrderBean>() {
-        });
+    Invocation.Builder builder = client.target(paths1.urlGet(order.getId()))
+      .queryParam("timeout", MIN / 3)
+      .request(APPLICATION_JSON_TYPE);
+
+    OrderBean returnedOrder = getWithRetires(builder, newBean(), 5);
 
     //Then we should get the order back
     assertThat(returnedOrder).isEqualTo(order);
 
     //When GET to rest2
-    returnedOrder = client.target(paths2.urlGet(order.getId()))
-        .queryParam("timeout", MIN / 2)
-        .request(APPLICATION_JSON_TYPE)
-        .get(new GenericType<OrderBean>() {
-        });
+    returnedOrder = getWithRetires(builder, newBean(), 5);
 
     //Then we should get the order back also
     assertThat(returnedOrder).isEqualTo(order);
+  }
+
+  private GenericType<OrderBean> newBean() {
+    return new GenericType<OrderBean>() {};
   }
 }

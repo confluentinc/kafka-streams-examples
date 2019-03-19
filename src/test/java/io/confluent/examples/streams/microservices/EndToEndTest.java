@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.GenericType;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,41 +37,43 @@ public class EndToEndTest extends MicroserviceTestUtils {
   private static final Logger log = LoggerFactory.getLogger(EndToEndTest.class);
   private static final String HOST = "localhost";
   private List<Service> services = new ArrayList<>();
-  private static int restPort;
   private OrderBean returnedBean;
   private long startTime;
   private Paths path;
   private Client client;
 
   @Test
-  public void shouldCreateNewOrderAndGetBackValidatedOrder() throws Exception {
+  public void shouldCreateNewOrderAndGetBackValidatedOrder() {
     OrderBean inputOrder = new OrderBean(id(1L), 2L, OrderState.CREATED, Product.JUMPERS, 1, 1d);
     client = getClient();
 
     //Add inventory required by the inventory service with enough items in stock to pass validation
     List<KeyValue<Product, Integer>> inventory = asList(
-        new KeyValue<>(UNDERPANTS, 75),
-        new KeyValue<>(JUMPERS, 10)
+      new KeyValue<>(UNDERPANTS, 75),
+      new KeyValue<>(JUMPERS, 10)
     );
     sendInventory(inventory, Topics.WAREHOUSE_INVENTORY);
 
     //When we POST order and immediately GET on the returned location
     client.target(path.urlPost()).request(APPLICATION_JSON_TYPE).post(Entity.json(inputOrder));
-    returnedBean = client.target(path.urlGetValidated(1)).queryParam("timeout", MIN)
-        .request(APPLICATION_JSON_TYPE).get(newBean());
+    Invocation.Builder builder = client
+      .target(path.urlGetValidated(1))
+      .queryParam("timeout", MIN)
+      .request(APPLICATION_JSON_TYPE);
+    returnedBean = getWithRetires(builder, newBean(),5);
 
     //Then
     assertThat(returnedBean.getState()).isEqualTo(OrderState.VALIDATED);
   }
 
   @Test
-  public void shouldProcessManyValidOrdersEndToEnd() throws Exception {
+  public void shouldProcessManyValidOrdersEndToEnd() {
     client = getClient();
 
     //Add inventory required by the inventory service
     List<KeyValue<Product, Integer>> inventory = asList(
-        new KeyValue<>(UNDERPANTS, 75),
-        new KeyValue<>(JUMPERS, 10)
+      new KeyValue<>(UNDERPANTS, 75),
+      new KeyValue<>(JUMPERS, 10)
     );
     sendInventory(inventory, Topics.WAREHOUSE_INVENTORY);
 
@@ -82,30 +85,33 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
       //POST & GET order
       client.target(path.urlPost()).request(APPLICATION_JSON_TYPE).post(Entity.json(inputOrder));
-      returnedBean = client.target(path.urlGetValidated(i)).queryParam("timeout", MIN)
-          .request(APPLICATION_JSON_TYPE).get(newBean());
+      Invocation.Builder builder = client
+        .target(path.urlGetValidated(i))
+        .queryParam("timeout", MIN)
+        .request(APPLICATION_JSON_TYPE);
+      returnedBean = getWithRetires(builder, newBean(),5);
 
       endTimer();
 
       assertThat(returnedBean).isEqualTo(new OrderBean(
-          inputOrder.getId(),
-          inputOrder.getCustomerId(),
-          OrderState.VALIDATED,
-          inputOrder.getProduct(),
-          inputOrder.getQuantity(),
-          inputOrder.getPrice()
+        inputOrder.getId(),
+        inputOrder.getCustomerId(),
+        OrderState.VALIDATED,
+        inputOrder.getProduct(),
+        inputOrder.getQuantity(),
+        inputOrder.getPrice()
       ));
     }
   }
 
   @Test
-  public void shouldProcessManyInvalidOrdersEndToEnd() throws Exception {
+  public void shouldProcessManyInvalidOrdersEndToEnd() {
     client = getClient();
 
     //Add inventory required by the inventory service
     List<KeyValue<Product, Integer>> inventory = asList(
-        new KeyValue<>(UNDERPANTS, 75000),
-        new KeyValue<>(JUMPERS, 0) //***nothing in stock***
+      new KeyValue<>(UNDERPANTS, 75000),
+      new KeyValue<>(JUMPERS, 0) //***nothing in stock***
     );
     sendInventory(inventory, Topics.WAREHOUSE_INVENTORY);
 
@@ -117,18 +123,21 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
       //POST & GET order
       client.target(path.urlPost()).request(APPLICATION_JSON_TYPE).post(Entity.json(inputOrder));
-      returnedBean = client.target(path.urlGetValidated(i)).queryParam("timeout", MIN)
-          .request(APPLICATION_JSON_TYPE).get(newBean());
+      Invocation.Builder builder = client
+        .target(path.urlGetValidated(i))
+        .queryParam("timeout", MIN)
+        .request(APPLICATION_JSON_TYPE);
+      returnedBean = getWithRetires(builder, newBean(), 5);
 
       endTimer();
 
       assertThat(returnedBean).isEqualTo(new OrderBean(
-          inputOrder.getId(),
-          inputOrder.getCustomerId(),
-          OrderState.FAILED,
-          inputOrder.getProduct(),
-          inputOrder.getQuantity(),
-          inputOrder.getPrice()
+        inputOrder.getId(),
+        inputOrder.getCustomerId(),
+        OrderState.FAILED,
+        inputOrder.getProduct(),
+        inputOrder.getQuantity(),
+        inputOrder.getPrice()
       ));
     }
   }
@@ -136,7 +145,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
   private Client getClient() {
     final ClientConfig clientConfig = new ClientConfig();
     clientConfig.property(ClientProperties.CONNECT_TIMEOUT, 60000)
-        .property(ClientProperties.READ_TIMEOUT, 60000);
+      .property(ClientProperties.READ_TIMEOUT, 60000);
     return ClientBuilder.newClient(clientConfig);
   }
 
@@ -165,14 +174,14 @@ public class EndToEndTest extends MicroserviceTestUtils {
     tailAllTopicsToConsole(CLUSTER.bootstrapServers());
     services.forEach(s -> s.start(CLUSTER.bootstrapServers()));
 
-    final OrdersService ordersService = new OrdersService(HOST, restPort);
+    final OrdersService ordersService = new OrdersService(HOST, 0);
     ordersService.start(CLUSTER.bootstrapServers());
     path = new Paths("localhost", ordersService.port());
     services.add(ordersService);
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     services.forEach(Service::stop);
     stopTailers();
     CLUSTER.stop();

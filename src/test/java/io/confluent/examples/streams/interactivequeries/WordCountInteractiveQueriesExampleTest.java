@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
+import static io.confluent.examples.streams.microservices.util.MicroserviceTestUtils.getWithRetires;
 import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
@@ -56,10 +57,8 @@ public class WordCountInteractiveQueriesExampleTest {
 
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
-  public static final String WORD_COUNT =
-      "interactive-queries-wordcount-example-word-count-repartition";
-  public static final String WINDOWED_WORD_COUNT =
-      "interactive-queries-wordcount-example-windowed-word-count-repartition";
+  public static final String WORD_COUNT = "interactive-queries-wordcount-example-word-count-repartition";
+  public static final String WINDOWED_WORD_COUNT = "interactive-queries-wordcount-example-windowed-word-count-repartition";
 
   @Rule
   public final TemporaryFolder temp = new TemporaryFolder();
@@ -98,13 +97,14 @@ public class WordCountInteractiveQueriesExampleTest {
 
   @Test
   public void shouldDemonstrateInteractiveQueries() throws Exception {
-    final List<String> inputValues = Arrays.asList("hello",
-        "world",
-        "world",
-        "hello world",
-        "all streams lead to kafka",
-        "streams",
-        "kafka streams");
+    final List<String> inputValues = Arrays.asList(
+      "hello",
+      "world",
+      "world",
+      "hello world",
+      "all streams lead to kafka",
+      "streams",
+      "kafka streams");
 
     Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
@@ -112,9 +112,10 @@ public class WordCountInteractiveQueriesExampleTest {
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
     producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    IntegrationTestUtils
-        .produceValuesSynchronously(WordCountInteractiveQueriesExample.TEXT_LINES_TOPIC, inputValues,
-                                    producerConfig);
+    IntegrationTestUtils.produceValuesSynchronously(
+        WordCountInteractiveQueriesExample.TEXT_LINES_TOPIC,
+        inputValues,
+        producerConfig);
 
     // Race condition caveat:  This two-step approach of finding a free port but not immediately
     // binding to it may cause occasional errors.
@@ -122,89 +123,86 @@ public class WordCountInteractiveQueriesExampleTest {
     final String baseUrl = "http://localhost:" + port + "/state";
 
     kafkaStreams = WordCountInteractiveQueriesExample.createStreams(
-        createStreamConfig(CLUSTER.bootstrapServers(), port, "one"));
+      createStreamConfig(CLUSTER.bootstrapServers(), port, "one"));
     kafkaStreams.start();
     proxy = WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, port);
 
     final Client client = ClientBuilder.newClient();
 
     // Create a request to fetch all instances of HostStoreInfo
-    final Invocation.Builder allInstancesRequest = client.target(baseUrl + "/instances")
-        .request(MediaType.APPLICATION_JSON_TYPE);
+    final Invocation.Builder allInstancesRequest = client
+      .target(baseUrl + "/instances")
+      .request(MediaType.APPLICATION_JSON_TYPE);
     final List<HostStoreInfo> hostStoreInfo = fetchHostInfo(allInstancesRequest);
 
     assertThat(hostStoreInfo, hasItem(
-        new HostStoreInfo("localhost", port, Sets.newHashSet("word-count", "windowed-word-count"))
+      new HostStoreInfo("localhost", port, Sets.newHashSet("word-count", "windowed-word-count"))
     ));
 
     // Create a request to fetch all instances with word-count
-    final Invocation.Builder wordCountInstancesRequest = client.target(baseUrl + "/instances/word-count")
-        .request(MediaType.APPLICATION_JSON_TYPE);
+    final Invocation.Builder wordCountInstancesRequest = client
+      .target(baseUrl + "/instances/word-count")
+      .request(MediaType.APPLICATION_JSON_TYPE);
     final List<HostStoreInfo>
         wordCountInstances = fetchHostInfo(wordCountInstancesRequest);
 
     assertThat(wordCountInstances, hasItem(
-        new HostStoreInfo("localhost", port, Sets.newHashSet("word-count", "windowed-word-count"))
+      new HostStoreInfo("localhost", port, Sets.newHashSet("word-count", "windowed-word-count"))
     ));
 
     // Fetch all key-value pairs from the word-count store
-    final Invocation.Builder
-        allRequest =
-        client.target(baseUrl + "/keyvalues/word-count/all")
-            .request(MediaType.APPLICATION_JSON_TYPE);
+    final Invocation.Builder allRequest = client
+      .target(baseUrl + "/keyvalues/word-count/all")
+      .request(MediaType.APPLICATION_JSON_TYPE);
 
-    final List<KeyValueBean>
-        allValues =
-        Arrays.asList(new KeyValueBean("all", 1L),
-            new KeyValueBean("hello", 2L),
-            new KeyValueBean("kafka", 2L),
-            new KeyValueBean("lead", 1L),
-            new KeyValueBean("streams", 3L),
-            new KeyValueBean("to", 1L),
-            new KeyValueBean("world", 3L));
-    final List<KeyValueBean>
-        all = fetchRangeOfValues(allRequest,
-        allValues);
+    final List<KeyValueBean> allValues = Arrays.asList(
+      new KeyValueBean("all", 1L),
+      new KeyValueBean("hello", 2L),
+      new KeyValueBean("kafka", 2L),
+      new KeyValueBean("lead", 1L),
+      new KeyValueBean("streams", 3L),
+      new KeyValueBean("to", 1L),
+      new KeyValueBean("world", 3L));
+    final List<KeyValueBean> all = fetchRangeOfValues(allRequest, allValues);
     assertThat(all, equalTo(allValues));
 
     // Fetch a range of key-value pairs from the word-count store
     final List<KeyValueBean> expectedRange = Arrays.asList(
-        new KeyValueBean("all", 1L),
-        new KeyValueBean("hello", 2L),
-        new KeyValueBean("kafka", 2L));
+      new KeyValueBean("all", 1L),
+      new KeyValueBean("hello", 2L),
+      new KeyValueBean("kafka", 2L));
 
-    final Invocation.Builder
-        request =
-        client.target(baseUrl + "/keyvalues/word-count/range/all/kafka")
-            .request(MediaType.APPLICATION_JSON_TYPE);
-    final List<KeyValueBean>
-        range = fetchRangeOfValues(request, expectedRange);
+    final Invocation.Builder request = client
+      .target(baseUrl + "/keyvalues/word-count/range/all/kafka")
+      .request(MediaType.APPLICATION_JSON_TYPE);
+    final List<KeyValueBean> range = fetchRangeOfValues(request, expectedRange);
 
     assertThat(range, equalTo(expectedRange));
 
     // Find the instance of the Kafka Streams application that would have the key hello
-    final HostStoreInfo
-        hostWithHelloKey =
-        client.target(baseUrl + "/instance/word-count/hello")
-            .request(MediaType.APPLICATION_JSON_TYPE).get(HostStoreInfo.class);
+    Invocation.Builder builder = client
+      .target(baseUrl + "/instance/word-count/hello")
+      .request(MediaType.APPLICATION_JSON_TYPE);
+    final HostStoreInfo hostWithHelloKey = getWithRetires(builder, HostStoreInfo.class, 5);
 
     // Fetch the value for the key hello from the instance.
-    final KeyValueBean result = client.target("http://" + hostWithHelloKey.getHost() +
+    builder = client
+      .target(
+        "http://" + hostWithHelloKey.getHost() +
         ":" + hostWithHelloKey.getPort() +
         "/state/keyvalue/word-count/hello")
-        .request(MediaType.APPLICATION_JSON_TYPE).get(KeyValueBean.class);
+      .request(MediaType.APPLICATION_JSON_TYPE);
+    final KeyValueBean result = getWithRetires(builder, KeyValueBean.class, 5);
 
     assertThat(result, equalTo(new KeyValueBean("hello", 2L)));
 
     // fetch windowed values for a key
-    final List<KeyValueBean>
-        windowedResult =
-        client.target(baseUrl + "/windowed/windowed-word-count/streams/0/" + System
-            .currentTimeMillis())
-            .request(MediaType.APPLICATION_JSON_TYPE)
 
-            .get(new GenericType<List<KeyValueBean>>() {
-            });
+    builder = client
+      .target(baseUrl + "/windowed/windowed-word-count/streams/0/" + System.currentTimeMillis())
+      .request(MediaType.APPLICATION_JSON_TYPE);
+    final List<KeyValueBean> windowedResult = getWithRetires(builder, new GenericType<List<KeyValueBean>>() {}, 5);
+
     assertThat(windowedResult.size(), equalTo(1));
     final KeyValueBean keyValueBean = windowedResult.get(0);
     assertTrue(keyValueBean.getKey().startsWith("streams"));
@@ -216,30 +214,24 @@ public class WordCountInteractiveQueriesExampleTest {
    * directly after KafkaStreams.start(), so it can take some time
    * for the group to stabilize and all stores/instances to be available
    */
-  private List<HostStoreInfo> fetchHostInfo(Invocation.Builder request)
-      throws InterruptedException {
-    List<HostStoreInfo> hostStoreInfo = request.get(new GenericType<List<HostStoreInfo>>() {
-    });
+  private List<HostStoreInfo> fetchHostInfo(Invocation.Builder request) throws InterruptedException {
+    List<HostStoreInfo> hostStoreInfo = getWithRetires(request, new GenericType<List<HostStoreInfo>>(){}, 5);
     final long until = System.currentTimeMillis() + 60000L;
-    while (hostStoreInfo.isEmpty()
-        || hostStoreInfo.get(0).getStoreNames().size() != 2
-        && System.currentTimeMillis() < until) {
+    while (hostStoreInfo.isEmpty() ||
+           hostStoreInfo.get(0).getStoreNames().size() != 2 && System.currentTimeMillis() < until) {
       Thread.sleep(10);
-      hostStoreInfo = request.get(new GenericType<List<HostStoreInfo>>() {
-      });
+      hostStoreInfo = getWithRetires(request, new GenericType<List<HostStoreInfo>>() {}, 5);
     }
     return hostStoreInfo;
   }
 
   private List<KeyValueBean> fetchRangeOfValues(final Invocation.Builder request,
-                                                final List<KeyValueBean>
-                                                    expectedResults) {
+                                                final List<KeyValueBean> expectedResults) {
     List<KeyValueBean> results = new ArrayList<>();
     final long timeout = System.currentTimeMillis() + 10000L;
     while (!results.containsAll(expectedResults) && System.currentTimeMillis() < timeout) {
       try {
-        results = request.get(new GenericType<List<KeyValueBean>>() {
-        });
+        results = getWithRetires(request, new GenericType<List<KeyValueBean>>() {}, 5);
       } catch (NotFoundException e) {
         //
       }
@@ -248,14 +240,12 @@ public class WordCountInteractiveQueriesExampleTest {
     return results;
   }
 
-  private Properties createStreamConfig(final String bootStrap, final int port, String stateDir)
-      throws
-      IOException {
+  private Properties createStreamConfig(final String bootStrap, final int port, String stateDir) throws IOException {
     Properties streamsConfiguration = new Properties();
     // Give the Streams application a unique name.  The name must be unique in the Kafka cluster
     // against which the application is run.
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG,
-        "interactive-queries-wordcount-example");
+      "interactive-queries-wordcount-example");
     // Where to find Kafka broker(s).
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrap);
     // The host:port the embedded REST proxy will run on
