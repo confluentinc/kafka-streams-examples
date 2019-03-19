@@ -8,7 +8,6 @@ import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
 import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
 import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
 import io.confluent.examples.streams.microservices.util.Paths;
-
 import org.apache.kafka.test.TestUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -19,6 +18,7 @@ import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.net.HttpURLConnection;
@@ -80,21 +80,45 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
     assertThat(response.getStatus()).isEqualTo(HttpURLConnection.HTTP_CREATED);
 
     //When GET the bean back via it's location
-    OrderBean returnedBean = client.target(response.getLocation())
-        .queryParam("timeout", MIN / 2)
-        .request(APPLICATION_JSON_TYPE)
-        .get(new GenericType<OrderBean>() {
-        });
+    Invocation.Builder builder = client.target(response.getLocation())
+        .queryParam("timeout", MIN / 3)
+        .request(APPLICATION_JSON_TYPE);
+
+    OrderBean returnedBean;
+    int retries = 3;
+    while (true) {
+      try {
+        returnedBean = builder.get(new GenericType<OrderBean>() {});
+        break;
+      } catch (ServerErrorException exception) {
+        if ("HTTP 504 Gateway Timeout".equals(exception.getMessage()) && --retries > 0) {
+          continue;
+        }
+        throw exception;
+      }
+    }
 
     //Then it should be the bean we PUT
     assertThat(returnedBean).isEqualTo(bean);
 
     //When GET the bean back explicitly
-    returnedBean = client.target(paths.urlGet(1))
-        .queryParam("timeout", MIN / 2)
-        .request(APPLICATION_JSON_TYPE)
-        .get(new GenericType<OrderBean>() {
+    builder = client.target(paths.urlGet(1))
+        .queryParam("timeout", MIN / 3)
+        .request(APPLICATION_JSON_TYPE);
+
+    retries = 3;
+    while (true) {
+      try {
+        returnedBean = builder.get(new GenericType<OrderBean>() {
         });
+        break;
+      } catch (ServerErrorException exception) {
+        if ("HTTP 504 Gateway Timeout".equals(exception.getMessage()) && --retries > 0) {
+          continue;
+        }
+        throw exception;
+      }
+    }
 
     //Then it should be the bean we PUT
     assertThat(returnedBean).isEqualTo(bean);
@@ -125,11 +149,24 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
             .build()));
 
     //When we GET the order from the returned location
-    OrderBean returnedBean = client.target(paths.urlGetValidated(beanV1.getId()))
-        .queryParam("timeout", MIN / 2)
-        .request(APPLICATION_JSON_TYPE)
-        .get(new GenericType<OrderBean>() {
-        });
+    Invocation.Builder builder = client
+        .target(paths.urlGetValidated(beanV1.getId()))
+        .queryParam("timeout", MIN / 3)
+        .request(APPLICATION_JSON_TYPE);
+
+      OrderBean returnedBean;
+    int retries = 3;
+    while (true) {
+      try {
+        returnedBean = builder.get(new GenericType<OrderBean>() {});
+        break;
+      } catch (ServerErrorException exception) {
+        if ("HTTP 504 Gateway Timeout".equals(exception.getMessage()) && --retries > 0) {
+          continue;
+        }
+        throw exception;
+      }
+    }
 
     //Then status should be Validated
     assertThat(returnedBean.getState()).isEqualTo(OrderState.VALIDATED);
@@ -176,18 +213,30 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
         .post(Entity.json(order));
 
     //When GET to rest1
-    OrderBean returnedOrder = client.target(paths1.urlGet(order.getId()))
-        .queryParam("timeout", MIN / 2)
-        .request(APPLICATION_JSON_TYPE)
-        .get(new GenericType<OrderBean>() {
-        });
+    Invocation.Builder builder = client.target(paths1.urlGet(order.getId()))
+        .queryParam("timeout", MIN / 3)
+        .request(APPLICATION_JSON_TYPE);
+
+    OrderBean returnedOrder;
+    int retries = 3;
+    while (true) {
+      try {
+        returnedOrder = builder.get(new GenericType<OrderBean>() {});
+        break;
+      } catch (ServerErrorException exception) {
+        if ("HTTP 504 Gateway Timeout".equals(exception.getMessage()) && --retries > 0) {
+          continue;
+        }
+        throw exception;
+      }
+    }
 
     //Then we should get the order back
     assertThat(returnedOrder).isEqualTo(order);
 
     //When GET to rest2
     returnedOrder = client.target(paths2.urlGet(order.getId()))
-        .queryParam("timeout", MIN / 2)
+        .queryParam("timeout", MIN / 3)
         .request(APPLICATION_JSON_TYPE)
         .get(new GenericType<OrderBean>() {
         });
