@@ -18,6 +18,7 @@ package io.confluent.examples.streams.interactivequeries.kafkamusic;
 import io.confluent.examples.streams.avro.PlayEvent;
 import io.confluent.examples.streams.avro.Song;
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
+import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -52,7 +53,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExampleTest.randomFreeLocalPort;
-import static io.confluent.examples.streams.microservices.util.MicroserviceTestUtils.getWithRetires;
+import static io.confluent.examples.streams.microservices.util.MicroserviceTestUtils.getWithRetries;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -280,7 +281,7 @@ public class KafkaMusicExampleTest {
     // Wait until we have 5 items available in the chart
     TestUtils.waitForCondition(() -> {
       try {
-        final List<SongPlayCountBean> chart = getWithRetires(
+        final List<SongPlayCountBean> chart = MicroserviceTestUtils.getWithRetries(
             genreChartRequest,
             new GenericType<List<SongPlayCountBean>>() {},
             0);
@@ -292,7 +293,7 @@ public class KafkaMusicExampleTest {
       }
     }, MAX_WAIT_MS, "chart should have 5 items");
 
-    final List<SongPlayCountBean> chart = getWithRetires(
+    final List<SongPlayCountBean> chart = MicroserviceTestUtils.getWithRetries(
         genreChartRequest,
         new GenericType<List<SongPlayCountBean>>() {},
         3);

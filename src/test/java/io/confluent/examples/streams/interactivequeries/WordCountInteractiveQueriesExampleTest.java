@@ -18,6 +18,7 @@ package io.confluent.examples.streams.interactivequeries;
 import com.google.common.collect.Sets;
 import io.confluent.examples.streams.IntegrationTestUtils;
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
+import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
@@ -43,7 +44,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-import static io.confluent.examples.streams.microservices.util.MicroserviceTestUtils.getWithRetires;
+import static io.confluent.examples.streams.microservices.util.MicroserviceTestUtils.getWithRetries;
 import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
@@ -183,7 +184,7 @@ public class WordCountInteractiveQueriesExampleTest {
     Invocation.Builder builder = client
       .target(baseUrl + "/instance/word-count/hello")
       .request(MediaType.APPLICATION_JSON_TYPE);
-    final HostStoreInfo hostWithHelloKey = getWithRetires(builder, HostStoreInfo.class, 5);
+    final HostStoreInfo hostWithHelloKey = getWithRetries(builder, HostStoreInfo.class, 5);
 
     // Fetch the value for the key hello from the instance.
     builder = client
@@ -192,7 +193,7 @@ public class WordCountInteractiveQueriesExampleTest {
         ":" + hostWithHelloKey.getPort() +
         "/state/keyvalue/word-count/hello")
       .request(MediaType.APPLICATION_JSON_TYPE);
-    final KeyValueBean result = getWithRetires(builder, KeyValueBean.class, 5);
+    final KeyValueBean result = getWithRetries(builder, KeyValueBean.class, 5);
 
     assertThat(result, equalTo(new KeyValueBean("hello", 2L)));
 
@@ -201,7 +202,7 @@ public class WordCountInteractiveQueriesExampleTest {
     builder = client
       .target(baseUrl + "/windowed/windowed-word-count/streams/0/" + System.currentTimeMillis())
       .request(MediaType.APPLICATION_JSON_TYPE);
-    final List<KeyValueBean> windowedResult = getWithRetires(builder, new GenericType<List<KeyValueBean>>() {}, 5);
+    final List<KeyValueBean> windowedResult = MicroserviceTestUtils.getWithRetries(builder, new GenericType<List<KeyValueBean>>() {}, 5);
 
     assertThat(windowedResult.size(), equalTo(1));
     final KeyValueBean keyValueBean = windowedResult.get(0);
@@ -215,12 +216,12 @@ public class WordCountInteractiveQueriesExampleTest {
    * for the group to stabilize and all stores/instances to be available
    */
   private List<HostStoreInfo> fetchHostInfo(Invocation.Builder request) throws InterruptedException {
-    List<HostStoreInfo> hostStoreInfo = getWithRetires(request, new GenericType<List<HostStoreInfo>>(){}, 5);
+    List<HostStoreInfo> hostStoreInfo = MicroserviceTestUtils.getWithRetries(request, new GenericType<List<HostStoreInfo>>(){}, 5);
     final long until = System.currentTimeMillis() + 60000L;
     while (hostStoreInfo.isEmpty() ||
            hostStoreInfo.get(0).getStoreNames().size() != 2 && System.currentTimeMillis() < until) {
       Thread.sleep(10);
-      hostStoreInfo = getWithRetires(request, new GenericType<List<HostStoreInfo>>() {}, 5);
+      hostStoreInfo = MicroserviceTestUtils.getWithRetries(request, new GenericType<List<HostStoreInfo>>() {}, 5);
     }
     return hostStoreInfo;
   }
@@ -231,7 +232,7 @@ public class WordCountInteractiveQueriesExampleTest {
     final long timeout = System.currentTimeMillis() + 10000L;
     while (!results.containsAll(expectedResults) && System.currentTimeMillis() < timeout) {
       try {
-        results = getWithRetires(request, new GenericType<List<KeyValueBean>>() {}, 5);
+        results = MicroserviceTestUtils.getWithRetries(request, new GenericType<List<KeyValueBean>>() {}, 5);
       } catch (NotFoundException e) {
         //
       }

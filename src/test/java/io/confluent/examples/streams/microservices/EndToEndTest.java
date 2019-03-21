@@ -60,7 +60,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
       .target(path.urlGetValidated(1))
       .queryParam("timeout", MIN)
       .request(APPLICATION_JSON_TYPE);
-    returnedBean = getWithRetires(builder, newBean(),5);
+    returnedBean = getWithRetries(builder, newBean(),5);
 
     //Then
     assertThat(returnedBean.getState()).isEqualTo(OrderState.VALIDATED);
@@ -89,7 +89,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
         .target(path.urlGetValidated(i))
         .queryParam("timeout", MIN)
         .request(APPLICATION_JSON_TYPE);
-      returnedBean = getWithRetires(builder, newBean(),5);
+      returnedBean = getWithRetries(builder, newBean(),5);
 
       endTimer();
 
@@ -127,7 +127,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
         .target(path.urlGetValidated(i))
         .queryParam("timeout", MIN)
         .request(APPLICATION_JSON_TYPE);
-      returnedBean = getWithRetires(builder, newBean(), 5);
+      returnedBean = getWithRetries(builder, newBean(), 5);
 
       endTimer();
 

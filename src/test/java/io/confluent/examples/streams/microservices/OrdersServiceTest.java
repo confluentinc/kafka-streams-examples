@@ -83,7 +83,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
       .queryParam("timeout", MIN / 3)
       .request(APPLICATION_JSON_TYPE);
 
-    OrderBean returnedBean = getWithRetires(builder, newBean(), 5);
+    OrderBean returnedBean = getWithRetries(builder, newBean(), 5);
 
     //Then it should be the bean we PUT
     assertThat(returnedBean).isEqualTo(bean);
@@ -93,7 +93,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
       .queryParam("timeout", MIN / 3)
       .request(APPLICATION_JSON_TYPE);
 
-    returnedBean = getWithRetires(builder, newBean(), 5);
+    returnedBean = getWithRetries(builder, newBean(), 5);
 
     //Then it should be the bean we PUT
     assertThat(returnedBean).isEqualTo(bean);
@@ -129,7 +129,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
       .queryParam("timeout", MIN / 3)
       .request(APPLICATION_JSON_TYPE);
 
-    OrderBean returnedBean = getWithRetires(builder, newBean(), 5);
+    OrderBean returnedBean = getWithRetries(builder, newBean(), 5);
 
     //Then status should be Validated
     assertThat(returnedBean.getState()).isEqualTo(OrderState.VALIDATED);
@@ -151,7 +151,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //Then GET order should timeout
     try {
-      getWithRetires(builder, newBean(), 0); // no retries to fail fast
+      getWithRetries(builder, newBean(), 0); // no retries to fail fast
       fail("Request should have failed as materialized view has not been updated");
     } catch (ServerErrorException e) {
       assertThat(e.getMessage()).isEqualTo("HTTP 504 Gateway Timeout");
@@ -181,13 +181,13 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
       .queryParam("timeout", MIN / 3)
       .request(APPLICATION_JSON_TYPE);
 
-    OrderBean returnedOrder = getWithRetires(builder, newBean(), 5);
+    OrderBean returnedOrder = getWithRetries(builder, newBean(), 5);
 
     //Then we should get the order back
     assertThat(returnedOrder).isEqualTo(order);
 
     //When GET to rest2
-    returnedOrder = getWithRetires(builder, newBean(), 5);
+    returnedOrder = getWithRetries(builder, newBean(), 5);
 
     //Then we should get the order back also
     assertThat(returnedOrder).isEqualTo(order);

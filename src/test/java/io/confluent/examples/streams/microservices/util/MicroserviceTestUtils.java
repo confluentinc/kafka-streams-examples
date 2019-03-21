@@ -226,7 +226,7 @@ public class MicroserviceTestUtils {
     }
   }
 
-  public static <T> T getWithRetires(final Invocation.Builder builder,
+  public static <T> T getWithRetries(final Invocation.Builder builder,
                                      final GenericType<T> genericType,
                                      int numberOfRetries) {
     while (true) {
@@ -241,7 +241,7 @@ public class MicroserviceTestUtils {
     }
   }
 
-    public static <T> T getWithRetires(final Invocation.Builder builder,
+    public static <T> T getWithRetries(final Invocation.Builder builder,
                                        final Class<T> clazz,
                                        int numberOfRetries) {
         while (true) {
