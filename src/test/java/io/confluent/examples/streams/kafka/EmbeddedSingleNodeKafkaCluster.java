@@ -19,12 +19,6 @@ import io.confluent.examples.streams.zookeeper.ZooKeeperEmbedded;
 import io.confluent.kafka.schemaregistry.RestApp;
 import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
 import kafka.server.KafkaConfig$;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.apache.kafka.test.TestCondition;
@@ -33,6 +27,13 @@ import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.collection.JavaConverters;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * Runs an in-memory, "embedded" Kafka cluster with 1 ZooKeeper instance, 1 Kafka broker, and 1
@@ -45,7 +46,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
   private static final String KAFKA_SCHEMAS_TOPIC = "_schemas";
   private static final String AVRO_COMPATIBILITY_TYPE = AvroCompatibilityLevel.NONE.name;
 
-  private static final String KAFKASTORE_OPERATION_TIMEOUT_MS = "10000";
+  private static final String KAFKASTORE_OPERATION_TIMEOUT_MS = "60000";
   private static final String KAFKASTORE_DEBUG = "true";
   private static final String KAFKASTORE_INIT_TIMEOUT = "90000";
 
@@ -69,6 +70,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
    */
   public EmbeddedSingleNodeKafkaCluster(final Properties brokerConfig) {
     this.brokerConfig = new Properties();
+    this.brokerConfig.put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, KAFKASTORE_OPERATION_TIMEOUT_MS);
     this.brokerConfig.putAll(brokerConfig);
   }
 
