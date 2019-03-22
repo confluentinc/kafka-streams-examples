@@ -77,6 +77,7 @@ public class MicroserviceUtils {
     final String processingGuaranteeConfig = enableEOS ? "exactly_once" : "at_least_once";
     config.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, processingGuaranteeConfig);
     config.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 1); //commit as fast as possible
+    config.put(StreamsConfig.consumerPrefix(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG), 30000);
     MonitoringInterceptorUtils.maybeConfigureInterceptorsStreams(config);
 
     return config;

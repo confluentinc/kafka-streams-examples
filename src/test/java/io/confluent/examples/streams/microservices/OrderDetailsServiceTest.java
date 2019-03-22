@@ -1,5 +1,17 @@
 package io.confluent.examples.streams.microservices;
 
+import io.confluent.examples.streams.avro.microservices.Order;
+import io.confluent.examples.streams.avro.microservices.OrderValidation;
+import io.confluent.examples.streams.microservices.domain.Schemas;
+import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
+import org.apache.kafka.test.TestUtils;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.Collections;
+import java.util.List;
+
 import static io.confluent.examples.streams.avro.microservices.OrderState.CREATED;
 import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.FAIL;
 import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.PASS;
@@ -11,25 +23,11 @@ import static io.confluent.examples.streams.microservices.domain.beans.OrderId.i
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.confluent.examples.streams.avro.microservices.Order;
-import io.confluent.examples.streams.avro.microservices.OrderValidation;
-import io.confluent.examples.streams.microservices.domain.Schemas;
-import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
-
-import java.util.Collections;
-import java.util.List;
-
-import org.apache.kafka.test.TestUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 public class OrderDetailsServiceTest extends MicroserviceTestUtils {
 
   private List<Order> orders;
   private List<OrderValidation> expected;
   private OrderDetailsService orderValService;
-
 
   @Before
   public void startKafkaCluster() throws Exception {
