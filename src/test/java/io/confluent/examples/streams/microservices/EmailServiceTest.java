@@ -66,6 +66,6 @@ public class EmailServiceTest extends MicroserviceTestUtils {
     emailService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
 
     //Then
-    TestUtils.waitForCondition(() -> complete, 30000, "Email was never sent.");
+    TestUtils.waitForCondition(() -> complete, 60000L, "Email was never sent.");
   }
 }
