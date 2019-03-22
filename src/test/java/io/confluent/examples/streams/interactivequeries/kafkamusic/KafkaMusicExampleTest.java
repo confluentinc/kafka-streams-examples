@@ -19,6 +19,7 @@ import io.confluent.examples.streams.avro.PlayEvent;
 import io.confluent.examples.streams.avro.Song;
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 import io.confluent.examples.streams.ExampleTestUtils;
+import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -59,6 +60,8 @@ import java.util.stream.IntStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static junit.framework.TestCase.fail;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * End-to-end integration test for {@link KafkaMusicExample}. Demonstrates
@@ -188,21 +191,21 @@ public class KafkaMusicExampleTest {
     if (restProxy != null) {
       // wait until the StreamsMetadata is available as this indicates that
       // KafkaStreams initialization has occurred
-      TestUtils.waitForCondition(() -> !StreamsMetadata.NOT_AVAILABLE.equals(streams.allMetadataForStore(KafkaMusicExample.TOP_FIVE_SONGS_STORE)),
-                                 MAX_WAIT_MS,
-                                 "StreamsMetadata should be available");
+      TestUtils.waitForCondition(
+        () -> !StreamsMetadata.NOT_AVAILABLE.equals(streams.allMetadataForStore(KafkaMusicExample.TOP_FIVE_SONGS_STORE)),
+        MAX_WAIT_MS,
+        "StreamsMetadata should be available");
       final String baseUrl = "http://" + host + ":" + appServerPort + "/kafka-music";
       final Client client = ClientBuilder.newClient();
   
       // Wait until the all-songs state store has some data in it
       TestUtils.waitForCondition(() -> {
-        final ReadOnlyKeyValueStore<Long, Song>
-            songsStore;
+        final ReadOnlyKeyValueStore<Long, Song> songsStore;
         try {
-          songsStore =
-              streams.store(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.keyValueStore());
+          songsStore = streams.store(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.keyValueStore());
           return songsStore.all().hasNext();
         } catch (final Exception e) {
+          e.printStackTrace();
           return false;
         }
       }, MAX_WAIT_MS, KafkaMusicExample.ALL_SONGS + " should be non-empty");
@@ -245,22 +248,30 @@ public class KafkaMusicExampleTest {
 
   private void verifyChart(final String url,
                            final Client client,
-                           final List<SongPlayCountBean> expectedChart)
-      throws InterruptedException {
-    final Invocation.Builder genreChartRequest = client.target(url)
-                                                       .request(MediaType.APPLICATION_JSON_TYPE);
+                           final List<SongPlayCountBean> expectedChart) throws InterruptedException {
+    final Invocation.Builder genreChartRequest = client
+      .target(url)
+      .request(MediaType.APPLICATION_JSON_TYPE);
 
     TestUtils.waitForCondition(() -> {
       try {
-        final List<SongPlayCountBean> chart =
-            genreChartRequest.get(new GenericType<List<SongPlayCountBean>>() {});
-        return chart.equals(expectedChart);
+        final List<SongPlayCountBean> chart = MicroserviceTestUtils.getWithRetries(
+            genreChartRequest,
+            new GenericType<List<SongPlayCountBean>>() {},
+            0);
+        System.err.println(chart.size());
+        return chart.size() == 5;
       } catch (final Exception e) {
-
+        e.printStackTrace();
         return false;
       }
+    }, MAX_WAIT_MS, "chart should have 5 items");
 
-    }, MAX_WAIT_MS, "Returned chart should equal to the expected items");
+    final List<SongPlayCountBean> chart = MicroserviceTestUtils.getWithRetries(
+      genreChartRequest,
+      new GenericType<List<SongPlayCountBean>>() {},
+      5);
+    assertThat(chart, is(expectedChart));
   }
 
   private static void sendPlayEvents(final int count,
