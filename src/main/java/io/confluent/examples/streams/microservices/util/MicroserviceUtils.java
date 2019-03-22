@@ -4,7 +4,6 @@ import io.confluent.examples.streams.avro.microservices.Product;
 import io.confluent.examples.streams.microservices.Service;
 import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
-
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -25,8 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Response;
-
-import java.time.Duration;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -78,6 +75,7 @@ public class MicroserviceUtils {
     final String processingGuaranteeConfig = enableEOS ? "exactly_once" : "at_least_once";
     config.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, processingGuaranteeConfig);
     config.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 1); //commit as fast as possible
+    config.put(StreamsConfig.consumerPrefix(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG), 30000);
     MonitoringInterceptorUtils.maybeConfigureInterceptorsStreams(config);
 
     return config;
