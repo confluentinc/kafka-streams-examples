@@ -7,7 +7,6 @@ import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.microservices.domain.Schemas.Topic;
 import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
-import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import kafka.server.KafkaConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -51,8 +50,7 @@ public class MicroserviceTestUtils {
         //For testing purposes set transactions to work with a single kafka broker.
         new KeyValue<>(KafkaConfig.TransactionsTopicReplicationFactorProp(), "1"),
         new KeyValue<>(KafkaConfig.TransactionsTopicMinISRProp(), "1"),
-        new KeyValue<>(KafkaConfig.TransactionsTopicPartitionsProp(), "1"),
-        new KeyValue<>(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, "30000")
+        new KeyValue<>(KafkaConfig.TransactionsTopicPartitionsProp(), "1")
     ));
 
   @AfterClass
@@ -233,7 +231,7 @@ public class MicroserviceTestUtils {
       try {
         return builder.get(genericType);
       } catch (ServerErrorException exception) {
-        if ("HTTP 504 Gateway Timeout".equals(exception.getMessage()) && numberOfRetries-- > 0) {
+        if (exception.getMessage().contains("504") && numberOfRetries-- > 0) {
           continue;
         }
         throw exception;
@@ -241,19 +239,19 @@ public class MicroserviceTestUtils {
     }
   }
 
-    public static <T> T getWithRetries(final Invocation.Builder builder,
-                                       final Class<T> clazz,
-                                       int numberOfRetries) {
-        while (true) {
-            try {
-                return builder.get(clazz);
-            } catch (ServerErrorException exception) {
-                if ("HTTP 504 Gateway Timeout".equals(exception.getMessage()) && numberOfRetries-- > 0) {
-                    continue;
-                }
-                throw exception;
-            }
+  public static <T> T getWithRetries(final Invocation.Builder builder,
+                                     final Class<T> clazz,
+                                     int numberOfRetries) {
+    while (true) {
+      try {
+        return builder.get(clazz);
+      } catch (ServerErrorException exception) {
+        if (exception.getMessage().contains("504") && numberOfRetries-- > 0) {
+          continue;
         }
+        throw exception;
+      }
     }
+  }
 
 }

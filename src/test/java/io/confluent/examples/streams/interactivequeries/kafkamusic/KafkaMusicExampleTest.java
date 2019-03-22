@@ -53,7 +53,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExampleTest.randomFreeLocalPort;
-import static io.confluent.examples.streams.microservices.util.MicroserviceTestUtils.getWithRetries;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -228,13 +227,12 @@ public class KafkaMusicExampleTest {
 
     // Wait until the all-songs state store has some data in it
     TestUtils.waitForCondition(() -> {
-      final ReadOnlyKeyValueStore<Long, Song>
-          songsStore;
+      final ReadOnlyKeyValueStore<Long, Song> songsStore;
       try {
-        songsStore =
-            streams.store(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.keyValueStore());
+        songsStore = streams.store(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.keyValueStore());
         return songsStore.all().hasNext();
       } catch (Exception e) {
+        e.printStackTrace();
         return false;
       }
     }, MAX_WAIT_MS, KafkaMusicExample.ALL_SONGS + " should be non-empty");
