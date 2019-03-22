@@ -18,6 +18,7 @@ package io.confluent.examples.streams.kafka;
 import io.confluent.examples.streams.zookeeper.ZooKeeperEmbedded;
 import io.confluent.kafka.schemaregistry.RestApp;
 import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
+import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import kafka.server.KafkaConfig$;
 import kafka.utils.ZkUtils;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
@@ -45,9 +46,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
   private static final String KAFKA_SCHEMAS_TOPIC = "_schemas";
   private static final String AVRO_COMPATIBILITY_TYPE = AvroCompatibilityLevel.NONE.name;
 
-  private static final String KAFKASTORE_OPERATION_TIMEOUT_MS = "10000";
-  private static final String KAFKASTORE_DEBUG = "true";
-  private static final String KAFKASTORE_INIT_TIMEOUT = "90000";
+  private static final String KAFKASTORE_OPERATION_TIMEOUT_MS = "30000";
 
   private ZooKeeperEmbedded zookeeper;
   private ZkUtils zkUtils = null;
@@ -70,6 +69,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
    */
   public EmbeddedSingleNodeKafkaCluster(Properties brokerConfig) {
     this.brokerConfig = new Properties();
+    this.brokerConfig.put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, KAFKASTORE_OPERATION_TIMEOUT_MS);
     this.brokerConfig.putAll(brokerConfig);
   }
 
