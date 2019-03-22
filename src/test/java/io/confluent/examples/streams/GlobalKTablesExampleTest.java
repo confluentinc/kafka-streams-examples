@@ -19,7 +19,6 @@ import io.confluent.examples.streams.avro.EnrichedOrder;
 import io.confluent.examples.streams.avro.Order;
 import io.confluent.examples.streams.avro.Product;
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
-import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig;
@@ -51,13 +50,7 @@ import static org.hamcrest.core.IsCollectionContaining.hasItem;
 public class GlobalKTablesExampleTest {
 
   @ClassRule
-  public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster(
-      new Properties() {
-        {
-          put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, "30000");
-        }
-      }
-  );
+  public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
   private KafkaStreams streamInstanceOne;
   private KafkaStreams streamInstanceTwo;
 
