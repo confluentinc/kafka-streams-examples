@@ -18,6 +18,7 @@ package io.confluent.examples.streams.interactivequeries.kafkamusic;
 import io.confluent.examples.streams.avro.PlayEvent;
 import io.confluent.examples.streams.avro.Song;
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
+import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -216,22 +217,22 @@ public class KafkaMusicExampleTest {
 
     // wait until the StreamsMetadata is available as this indicates that
     // KafkaStreams initialization has occurred
-    TestUtils.waitForCondition(() -> !StreamsMetadata.NOT_AVAILABLE.equals(streams.allMetadataForStore(KafkaMusicExample.TOP_FIVE_SONGS_STORE)),
-                               MAX_WAIT_MS,
-                               "StreamsMetadata should be available");
+    TestUtils.waitForCondition(
+        () -> !StreamsMetadata.NOT_AVAILABLE.equals(streams.allMetadataForStore(KafkaMusicExample.TOP_FIVE_SONGS_STORE)),
+        MAX_WAIT_MS,
+        "StreamsMetadata should be available");
 
     final String baseUrl = "http://localhost:" + appServerPort + "/kafka-music";
     final Client client = ClientBuilder.newClient();
 
     // Wait until the all-songs state store has some data in it
     TestUtils.waitForCondition(() -> {
-      final ReadOnlyKeyValueStore<Long, Song>
-          songsStore;
+      final ReadOnlyKeyValueStore<Long, Song> songsStore;
       try {
-        songsStore =
-            streams.store(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.<Long, Song>keyValueStore());
+        songsStore = streams.store(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.keyValueStore());
         return songsStore.all().hasNext();
       } catch (Exception e) {
+        e.printStackTrace();
         return false;
       }
     }, MAX_WAIT_MS, KafkaMusicExample.ALL_SONGS + " should be non-empty");
@@ -259,7 +260,6 @@ public class KafkaMusicExampleTest {
                               songCountPlayBean(songs.get(2), 4L)
                               )
                 );
-
   }
 
   private SongPlayCountBean songCountPlayBean(final Song song, final long plays) {
@@ -271,31 +271,30 @@ public class KafkaMusicExampleTest {
 
   private void verifyChart(final String url,
                            final Client client,
-                           final List<SongPlayCountBean> expectedChart)
-      throws InterruptedException {
-    final Invocation.Builder genreChartRequest = client.target(url)
+                           final List<SongPlayCountBean> expectedChart) throws InterruptedException {
+    final Invocation.Builder genreChartRequest = client
+        .target(url)
         .request(MediaType.APPLICATION_JSON_TYPE);
 
     // Wait until we have 5 items available in the chart
     TestUtils.waitForCondition(() -> {
       try {
-        final List<SongPlayCountBean>
-            chart =
-            genreChartRequest.get(new GenericType<List<SongPlayCountBean>>() {
-            });
+        final List<SongPlayCountBean> chart = MicroserviceTestUtils.getWithRetries(
+            genreChartRequest,
+            new GenericType<List<SongPlayCountBean>>() {},
+            0);
+        System.err.println(chart.size());
         return chart.size() == 5;
       } catch (Exception e) {
+        e.printStackTrace();
         return false;
       }
-
     }, MAX_WAIT_MS, "chart should have 5 items");
 
-
-    final List<SongPlayCountBean>
-        chart =
-        genreChartRequest.get(new GenericType<List<SongPlayCountBean>>() {
-        });
-
+    final List<SongPlayCountBean> chart = MicroserviceTestUtils.getWithRetries(
+        genreChartRequest,
+        new GenericType<List<SongPlayCountBean>>() {},
+        3);
     assertThat(chart, is(expectedChart));
   }
 
