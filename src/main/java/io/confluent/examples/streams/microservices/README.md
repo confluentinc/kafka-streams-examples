@@ -1,6 +1,6 @@
 # Kafka Streams Microservice Examples
 
-**Try [the quickstart](https://github.com/confluentinc/quickstart-demos/blob/5.0.0-post/microservices-orders/README.md) which runs the ecosystem for you including Kafka Connect, Elasticsearch, KSQL and Control Centre**
+**Try [the quickstart](https://github.com/confluentinc/quickstart-demos/blob/5.0.3-post/microservices-orders/README.md) which runs the ecosystem for you including Kafka Connect, Elasticsearch, KSQL and Control Centre**
 ---
 
 Here is a small microservice ecosystem built with Kafka Streams. There is a related [blog post](https://www.confluent.io/blog/building-a-microservices-ecosystem-with-kafka-streams-and-ksql/) that outlines the approach used.  
@@ -19,7 +19,7 @@ NB - this is demo code, not a production system and certain elements are left fo
 
 # Getting Started:
 To play with this ecosystem the simplest way is to run the tests and fiddle with the code (stand alone execution is only supported in branch 5.0.0+ so go there if you want stand alone or docker support). Each test boots a self-contained Kafka cluster so it's easy to play with different queries and configurations. 
-The best place to start is [EndToEndTest.java](https://github.com/confluentinc/kafka-streams-examples/blob/3.3.1-post/src/test/java/io/confluent/examples/streams/microservices/EndToEndTest.java)
+The best place to start is [EndToEndTest.java](https://github.com/confluentinc/kafka-streams-examples/blob/5.0.3-post/src/test/java/io/confluent/examples/streams/microservices/EndToEndTest.java)
 
 # Running the Examples:
 * Requires Java 1.8
