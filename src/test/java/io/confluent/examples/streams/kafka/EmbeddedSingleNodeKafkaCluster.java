@@ -46,7 +46,9 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
   private static final String KAFKA_SCHEMAS_TOPIC = "_schemas";
   private static final String AVRO_COMPATIBILITY_TYPE = AvroCompatibilityLevel.NONE.name;
 
-  private static final String KAFKASTORE_OPERATION_TIMEOUT_MS = "30000";
+  private static final String KAFKASTORE_OPERATION_TIMEOUT_MS = "60000";
+  private static final String KAFKASTORE_DEBUG = "true";
+  private static final String KAFKASTORE_INIT_TIMEOUT = "90000";
 
   private ZooKeeperEmbedded zookeeper;
   private ZkUtils zkUtils = null;
@@ -69,7 +71,6 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
    */
   public EmbeddedSingleNodeKafkaCluster(Properties brokerConfig) {
     this.brokerConfig = new Properties();
-    this.brokerConfig.put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, KAFKASTORE_OPERATION_TIMEOUT_MS);
     this.brokerConfig.putAll(brokerConfig);
   }
 
@@ -95,19 +96,16 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     log.debug("Kafka instance is running at {}, connected to ZooKeeper at {}",
         broker.brokerList(), broker.zookeeperConnect());
 
-    // TODO: use this properties when 3.3.2 is released (left intentionally; compare TODO below)
-    // note: this fix only goes to 3.3.x branches---don't merge into 4.x branches; 4.x branches have a different fix
-    // this fix also requires to update pom.xml do depend on schema registry 3.3.2 (test artifact for unit tests only)
-    //Properties schemaRegistryProps = new Properties();
-    //schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, KAFKASTORE_OPERATION_TIMEOUT_MS);
-    //schemaRegistryProps.put(SchemaRegistryConfig.DEBUG_CONFIG, KAFKASTORE_DEBUG);
-    //schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_INIT_TIMEOUT_CONFIG, KAFKASTORE_INIT_TIMEOUT);
-
     schemaRegistry = new RestApp(0, zookeeperConnect(), KAFKA_SCHEMAS_TOPIC, AVRO_COMPATIBILITY_TYPE);
-    // TODO: pass properties to schema registry when 3.3.2 is released (left intentionally; compare TODO above)
-    // note: this fix only goes to 3.3.x branches---don't merge into 4.x branches; 4.x branches have a different fix
+    // note: this following only goes to 3.3.x branches---don't merge into 4.x branches;
+    // 4.x branches have a different fix to make SR access stable
     // this fix also requires to update pom.xml do depend on schema registry 3.3.2 (test artifact for unit tests only)
-    //schemaRegistry.addConfigs(schemaRegistryProps);
+    Properties schemaRegistryProps = new Properties();
+    schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, KAFKASTORE_OPERATION_TIMEOUT_MS);
+    schemaRegistryProps.put(SchemaRegistryConfig.DEBUG_CONFIG, KAFKASTORE_DEBUG);
+    schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_INIT_TIMEOUT_CONFIG, KAFKASTORE_INIT_TIMEOUT);
+    schemaRegistry.addConfigs(schemaRegistryProps);
+    // end fix
     schemaRegistry.start();
     running = true;
   }
