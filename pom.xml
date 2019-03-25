@@ -221,8 +221,9 @@
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-schema-registry</artifactId>
-            <version>${confluent.version}</version>
-            <!-- Required for e.g. schema registry's RestApp -->
+            <!-- we explicitly depend on 3.3.2 here because it contains a bug fix
+                 that we want for EmbeddedSingleNodeKafkaCluster class -->
+            <version>3.3.2</version>
             <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
