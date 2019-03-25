@@ -283,7 +283,6 @@ public class KafkaMusicExampleTest {
             genreChartRequest,
             new GenericType<List<SongPlayCountBean>>() {},
             0);
-        System.err.println(chart.size());
         return chart.size() == 5;
       } catch (Exception e) {
         e.printStackTrace();
