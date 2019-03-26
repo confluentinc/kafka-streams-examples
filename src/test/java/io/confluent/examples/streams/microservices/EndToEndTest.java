@@ -56,7 +56,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
     sendInventory(inventory, Topics.WAREHOUSE_INVENTORY);
 
     //When we POST order and immediately GET on the returned location
-    client.target(path.urlPost()).request(APPLICATION_JSON_TYPE).post(Entity.json(inputOrder));
+    postWithRetries(client.target(path.urlPost()).request(APPLICATION_JSON_TYPE), Entity.json(inputOrder), 5);
     Invocation.Builder builder = client
       .target(path.urlGetValidated(1))
       .queryParam("timeout", MIN)
@@ -85,7 +85,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
       startTimer();
 
       //POST & GET order
-      client.target(path.urlPost()).request(APPLICATION_JSON_TYPE).post(Entity.json(inputOrder));
+      postWithRetries(client.target(path.urlPost()).request(APPLICATION_JSON_TYPE), Entity.json(inputOrder), 5);
       Invocation.Builder builder = client
         .target(path.urlGetValidated(i))
         .queryParam("timeout", MIN)
@@ -123,7 +123,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
       startTimer();
 
       //POST & GET order
-      client.target(path.urlPost()).request(APPLICATION_JSON_TYPE).post(Entity.json(inputOrder));
+      postWithRetries(client.target(path.urlPost()).request(APPLICATION_JSON_TYPE), Entity.json(inputOrder), 5);
       Invocation.Builder builder = client
         .target(path.urlGetValidated(i))
         .queryParam("timeout", MIN)
