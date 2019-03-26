@@ -24,8 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.ServerErrorException;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -254,4 +256,18 @@ public class MicroserviceTestUtils {
     }
   }
 
+  public static <T> Response postWithRetries(final Invocation.Builder builder,
+                                             final Entity<T> entity,
+                                             int numberOfRetries) {
+    while (true) {
+      try {
+        return builder.post(entity);
+      } catch (ServerErrorException exception) {
+        if (exception.getMessage().contains("504") && numberOfRetries-- > 0) {
+          continue;
+        }
+        throw exception;
+      }
+    }
+  }
 }
