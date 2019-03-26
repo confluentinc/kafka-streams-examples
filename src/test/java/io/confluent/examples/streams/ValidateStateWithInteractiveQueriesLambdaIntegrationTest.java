@@ -34,6 +34,8 @@ import org.apache.kafka.test.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -48,6 +50,8 @@ import java.util.concurrent.TimeUnit;
  * Note: This example uses lambda expressions and thus works with Java 8+ only.
  */
 public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ValidateStateWithInteractiveQueriesLambdaIntegrationTest.class);
 
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
@@ -81,9 +85,8 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
       }
     };
 
-    //
-    // Step 1: Configure and start the processor topology.
-    //
+    LOG.info("Step 1: Configure and start the processor topology.");
+
     KStreamBuilder builder = new KStreamBuilder();
 
     Properties streamsConfiguration = new Properties();
@@ -120,9 +123,8 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
     KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
     streams.start();
 
-    //
-    // Step 2: Produce some input data to the input topic.
-    //
+    LOG.info("Step 2: Produce some input data to the input topic.");
+
     Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
@@ -131,9 +133,8 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
     producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
     IntegrationTestUtils.produceKeyValuesSynchronously(inputTopic, inputUserClicks, producerConfig);
 
-    //
-    // Step 3: Validate the application's state by interactively querying its state stores.
-    //
+    LOG.info("Step 3: Validate the application's state by interactively querying its state stores.");
+
     ReadOnlyKeyValueStore<String, Long> keyValueStore =
         IntegrationTestUtils.waitUntilStoreIsQueryable("max-store", QueryableStoreTypes.keyValueStore(), streams);
     ReadOnlyWindowStore<String, Long> windowStore =
@@ -146,7 +147,12 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
 
     IntegrationTestUtils.assertThatKeyValueStoreContains(keyValueStore, expectedMaxClicksPerUser);
     IntegrationTestUtils.assertThatOldestWindowContains(windowStore, expectedMaxClicksPerUser);
+
+    LOG.info("Step 4: Shut down.");
+
     streams.close();
+
+    LOG.info("Shutdown complete.");
   }
 
 }
