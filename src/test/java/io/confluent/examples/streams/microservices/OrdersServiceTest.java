@@ -71,9 +71,10 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
     Paths paths = new Paths("localhost", rest.port());
 
     //When we POST an order
-    Response response = client.target(paths.urlPost())
-      .request(APPLICATION_JSON_TYPE)
-      .post(Entity.json(bean));
+    Response response = postWithRetries(
+      client.target(paths.urlPost()).request(APPLICATION_JSON_TYPE),
+      Entity.json(bean),
+      5);
 
     //Then
     assertThat(response.getStatus()).isEqualTo(HttpURLConnection.HTTP_CREATED);
@@ -113,9 +114,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
     Paths paths = new Paths("localhost", rest.port());
 
     //When we post an order
-    client.target(paths.urlPost())
-      .request(APPLICATION_JSON_TYPE)
-      .post(Entity.json(beanV1));
+    postWithRetries(client.target(paths.urlPost()).request(APPLICATION_JSON_TYPE), Entity.json(beanV1), 5);
 
     //Simulate the order being validated
     MicroserviceTestUtils.sendOrders(Collections.singletonList(
@@ -172,9 +171,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
     Paths paths2 = new Paths("localhost", rest2.port());
 
     //And one order
-    client.target(paths1.urlPost())
-      .request(APPLICATION_JSON_TYPE)
-      .post(Entity.json(order));
+    postWithRetries(client.target(paths1.urlPost()).request(APPLICATION_JSON_TYPE), Entity.json(order), 5);
 
     //When GET to rest1
     Invocation.Builder builder = client.target(paths1.urlGet(order.getId()))
