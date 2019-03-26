@@ -10,7 +10,6 @@
         <version>3.3.3</version>
     </parent>
 
-    <groupId>io.confluent</groupId>
     <artifactId>kafka-streams-examples</artifactId>
     <packaging>jar</packaging>
 
