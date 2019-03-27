@@ -140,8 +140,10 @@ public class OrdersService implements Service {
 
   private void maybeCompleteLongPollGet(String id, Order order) {
     FilteredResponse<String, Order> callback = outstandingRequests.get(id);
-    if (callback != null && callback.predicate.test(id, order)) {
-      callback.asyncResponse.resume(toBean(order));
+    if (callback != null
+        && callback.predicate.test(id, order)
+        && !callback.asyncResponse.isDone()) {
+        callback.asyncResponse.resume(toBean(order));
     }
   }
 
@@ -204,6 +206,11 @@ public class OrdersService implements Service {
       if (order == null || !predicate.test(id, order)) {
         log.info("Delaying get as order not present for id " + id);
         outstandingRequests.put(id, new FilteredResponse<>(asyncResponse, predicate));
+        //check order didn't arrive whilst request was added
+        order = ordersStore().get(id);
+        if (order != null) {
+          maybeCompleteLongPollGet(id, order);
+        }
       } else {
         asyncResponse.resume(toBean(order));
       }
@@ -315,7 +322,7 @@ public class OrdersService implements Service {
   public void start(final String bootstrapServers, final String stateDir) {
     jettyServer = startJetty(port, this);
     port = jettyServer.getURI().getPort(); // update port, in case port was zero
-    producer = startProducer(bootstrapServers, ORDER_VALIDATIONS);
+    producer = startProducer(bootstrapServers, ORDERS);
     streams = startKStreams(bootstrapServers);
     log.info("Started Service " + getClass().getSimpleName());
   }
@@ -386,13 +393,16 @@ public class OrdersService implements Service {
 
   public static void main(String[] args) throws Exception {
 
-    final String bootstrapServers = args.length > 1 ? args[1] : "localhost:9092";
-    final String schemaRegistryUrl = args.length > 2 ? args[2] : "http://localhost:8081";
-    final String restHostname = args.length > 3 ? args[3] : "localhost";
-    final String restPort = args.length > 4 ? args[4] : null;
+    final String bootstrapServers = args.length >= 1 ? args[0] : "localhost:9092";
+    final String schemaRegistryUrl = args.length >= 2 ? args[1] : "http://localhost:8081";
+    final String restHostname = args.length >= 3 ? args[2] : "localhost";
+    final String restPort = args.length >= 4 ? args[3] : null;
+    System.out.printf("Running orders service with %s %s, %s, %s\n", bootstrapServers, schemaRegistryUrl, restHostname, restPort);
+
 
     Schemas.configureSerdesWithSchemaRegistryUrl(schemaRegistryUrl);
-    OrdersService service = new OrdersService(restHostname, restPort == null ? 0 : Integer.valueOf(restPort));
+    OrdersService service = new OrdersService(restHostname,
+        restPort == null ? 0 : Integer.valueOf(restPort));
     service.start(bootstrapServers, "/tmp/kafka-streams");
     addShutdownHookAndBlock(service);
   }
