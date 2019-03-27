@@ -30,6 +30,8 @@ import org.apache.kafka.test.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -44,6 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Note: This example uses lambda expressions and thus works with Java 8+ only.
  */
 public class SumLambdaIntegrationTest {
+  private static final Logger LOG = LoggerFactory.getLogger(SumLambdaIntegrationTest.class);
 
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
@@ -62,9 +65,9 @@ public class SumLambdaIntegrationTest {
     List<Integer> inputValues = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
     List<Integer> expectedValues = Arrays.asList(30);
 
-    //
-    // Step 1: Configure and start the processor topology.
-    //
+
+    LOG.info("Step 1: Configure and start the processor topology.");
+
     KStreamBuilder builder = new KStreamBuilder();
 
     Properties streamsConfiguration = new Properties();
@@ -91,30 +94,34 @@ public class SumLambdaIntegrationTest {
     KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
     streams.start();
 
-    //
-    // Step 2: Produce some input data to the input topic.
-    //
-    Properties producerConfig = new Properties();
-    producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-    producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
-    producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class);
-    producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class);
-    IntegrationTestUtils.produceValuesSynchronously(inputTopic, inputValues, producerConfig);
+    try {
+      LOG.info("Step 2: Produce some input data to the input topic.");
 
-    //
-    // Step 3: Verify the application's output data.
-    //
-    Properties consumerConfig = new Properties();
-    consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "sum-lambda-integration-test-standard-consumer");
-    consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, IntegerDeserializer.class);
-    consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, IntegerDeserializer.class);
-    List<String> actualValues = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfig,
+      Properties producerConfig = new Properties();
+      producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+      producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
+      producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
+      producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class);
+      producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class);
+      IntegrationTestUtils.produceValuesSynchronously(inputTopic, inputValues, producerConfig);
+
+
+      LOG.info("Step 3: Verify the application's output data.");
+
+      Properties consumerConfig = new Properties();
+      consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+      consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "sum-lambda-integration-test-standard-consumer");
+      consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+      consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, IntegerDeserializer.class);
+      consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, IntegerDeserializer.class);
+      List<String> actualValues = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfig,
         outputTopic, expectedValues.size());
-    streams.close();
-    assertThat(actualValues).isEqualTo(expectedValues);
+      assertThat(actualValues).isEqualTo(expectedValues);
+    } finally {
+      LOG.info("Step 4: Shut down.");
+      streams.close();
+      LOG.info("Shutdown complete.");
+    }
   }
 
 }

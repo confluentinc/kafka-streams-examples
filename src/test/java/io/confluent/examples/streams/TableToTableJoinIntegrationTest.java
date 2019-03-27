@@ -35,6 +35,8 @@ import org.apache.kafka.test.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -50,6 +52,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Note: This example uses lambda expressions and thus works with Java 8+ only.
  */
 public class TableToTableJoinIntegrationTest {
+  private static final Logger LOG = LoggerFactory.getLogger(TableToTableJoinIntegrationTest.class);
 
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
@@ -96,9 +99,9 @@ public class TableToTableJoinIntegrationTest {
         new KeyValue<>("bob", "asia/1485560000")
     );
 
-    //
-    // Step 1: Configure and start the processor topology.
-    //
+
+    LOG.info("Step 1: Configure and start the processor topology.");
+
     final Serde<String> stringSerde = Serdes.String();
     final Serde<Long> longSerde = Serdes.Long();
 
@@ -143,49 +146,53 @@ public class TableToTableJoinIntegrationTest {
     KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
     streams.start();
 
-    //
-    // Step 2: Publish user regions.
-    //
-    Properties regionsProducerConfig = new Properties();
-    regionsProducerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    regionsProducerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-    regionsProducerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
-    regionsProducerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    regionsProducerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    IntegrationTestUtils.produceKeyValuesSynchronously(userRegionTopic, userRegionRecords, regionsProducerConfig);
+    try {
+      LOG.info("Step 2: Publish user regions.");
 
-    //
-    // Step 3: Publish user's last login timestamps.
-    //
-    Properties lastLoginProducerConfig = new Properties();
-    lastLoginProducerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    lastLoginProducerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-    lastLoginProducerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
-    lastLoginProducerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    lastLoginProducerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
-    IntegrationTestUtils.produceKeyValuesSynchronously(userLastLoginTopic, userLastLoginRecords, lastLoginProducerConfig);
+      Properties regionsProducerConfig = new Properties();
+      regionsProducerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+      regionsProducerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
+      regionsProducerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
+      regionsProducerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+      regionsProducerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+      IntegrationTestUtils.produceKeyValuesSynchronously(userRegionTopic, userRegionRecords, regionsProducerConfig);
 
-    //
-    // Step 4: Verify the application's output data.
-    //
-    Properties consumerConfig = new Properties();
-    consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "stream-stream-join-lambda-integration-test-standard-consumer");
-    consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    List<KeyValue<String, String>> actualResults = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig,
+
+      LOG.info("Step 3: Publish user's last login timestamps.");
+
+      Properties lastLoginProducerConfig = new Properties();
+      lastLoginProducerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+      lastLoginProducerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
+      lastLoginProducerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
+      lastLoginProducerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+      lastLoginProducerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
+      IntegrationTestUtils.produceKeyValuesSynchronously(userLastLoginTopic, userLastLoginRecords, lastLoginProducerConfig);
+
+
+      LOG.info("Step 4: Verify the application's output data.");
+
+      Properties consumerConfig = new Properties();
+      consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+      consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "stream-stream-join-lambda-integration-test-standard-consumer");
+      consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+      consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+      consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+      List<KeyValue<String, String>> actualResults = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig,
         outputTopic, expectedResults.size());
 
-    // Verify the (local) state store of the joined table.
-    // For a comprehensive demonstration of interactive queries please refer to KafkaMusicExample.
-    ReadOnlyKeyValueStore<String, String> readOnlyKeyValueStore =
+      // Verify the (local) state store of the joined table.
+      // For a comprehensive demonstration of interactive queries please refer to KafkaMusicExample.
+      ReadOnlyKeyValueStore<String, String> readOnlyKeyValueStore =
         streams.store("joined-store", QueryableStoreTypes.keyValueStore());
-    KeyValueIterator<String, String> keyValueIterator = readOnlyKeyValueStore.all();
-    assertThat(keyValueIterator).containsExactlyElementsOf(expectedResultsForJoinStateStore);
+      KeyValueIterator<String, String> keyValueIterator = readOnlyKeyValueStore.all();
+      assertThat(keyValueIterator).containsExactlyElementsOf(expectedResultsForJoinStateStore);
 
-    streams.close();
-    assertThat(actualResults).containsExactlyElementsOf(expectedResults);
+      assertThat(actualResults).containsExactlyElementsOf(expectedResults);
+    } finally {
+      LOG.info("Step 5: Shut down.");
+      streams.close();
+      LOG.info("Shutdown complete.");
+    }
   }
 
 }

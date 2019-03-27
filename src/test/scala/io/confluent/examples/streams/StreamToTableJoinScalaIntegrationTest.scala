@@ -40,7 +40,7 @@ import org.scalatest.junit.AssertionsForJUnit
   * switched from BeforeClass (which must be `static`) to Before as well as from @ClassRule (which
   * must be `static` and `public`) to a workaround combination of `@Rule def` and a `private val`.
   */
-class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
+class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit with LoggerTrait {
 
   private val privateCluster: EmbeddedSingleNodeKafkaCluster = new EmbeddedSingleNodeKafkaCluster
 
@@ -91,9 +91,9 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
       ("asia", 124L)
     )
 
-    //
-    // Step 1: Configure and start the processor topology.
-    //
+
+    log.info("Step 1: Configure and start the processor topology.")
+
     val stringSerde: Serde[String] = Serdes.String()
     // We want to use `Long` (which refers to `scala.Long`) throughout this code.  However, Kafka
     // ships only with serdes for `java.lang.Long`.  The "trick" below works because there is no
@@ -171,54 +171,58 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
     val streams: KafkaStreams = new KafkaStreams(builder, streamsConfiguration)
     streams.start()
 
-    //
-    // Step 2: Publish user-region information.
-    //
-    // To keep this code example simple and easier to understand/reason about, we publish all
-    // user-region records before any user-click records (cf. step 3).  In practice though,
-    // data records would typically be arriving concurrently in both input streams/topics.
-    val userRegionsProducerConfig: Properties = {
-      val p = new Properties()
-      p.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
-      p.put(ProducerConfig.ACKS_CONFIG, "all")
-      p.put(ProducerConfig.RETRIES_CONFIG, "0")
-      p.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
-      p.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
-      p
-    }
-    import collection.JavaConverters._
-    IntegrationTestUtils.produceKeyValuesSynchronously(userRegionsTopic, userRegions.asJava, userRegionsProducerConfig)
+    try {
+      log.info("Step 2: Publish user-region information.")
 
-    //
-    // Step 3: Publish some user click events.
-    //
-    val userClicksProducerConfig: Properties = {
-      val p = new Properties()
-      p.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
-      p.put(ProducerConfig.ACKS_CONFIG, "all")
-      p.put(ProducerConfig.RETRIES_CONFIG, "0")
-      p.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
-      p.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[LongSerializer])
-      p
-    }
-    IntegrationTestUtils.produceKeyValuesSynchronously(userClicksTopic, userClicks.asJava, userClicksProducerConfig)
+      // To keep this code example simple and easier to understand/reason about, we publish all
+      // user-region records before any user-click records (cf. step 3).  In practice though,
+      // data records would typically be arriving concurrently in both input streams/topics.
+      val userRegionsProducerConfig: Properties = {
+        val p = new Properties()
+        p.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
+        p.put(ProducerConfig.ACKS_CONFIG, "all")
+        p.put(ProducerConfig.RETRIES_CONFIG, "0")
+        p.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
+        p.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
+        p
+      }
+      import collection.JavaConverters._
+      IntegrationTestUtils.produceKeyValuesSynchronously(userRegionsTopic, userRegions.asJava, userRegionsProducerConfig)
 
-    //
-    // Step 4: Verify the application's output data.
-    //
-    val consumerConfig = {
-      val p = new Properties()
-      p.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
-      p.put(ConsumerConfig.GROUP_ID_CONFIG, "join-scala-integration-test-standard-consumer")
-      p.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
-      p.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer])
-      p.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, classOf[LongDeserializer])
-      p
+
+      log.info("Step 3: Publish some user click events.")
+
+      val userClicksProducerConfig: Properties = {
+        val p = new Properties()
+        p.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
+        p.put(ProducerConfig.ACKS_CONFIG, "all")
+        p.put(ProducerConfig.RETRIES_CONFIG, "0")
+        p.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
+        p.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[LongSerializer])
+        p
+      }
+      IntegrationTestUtils.produceKeyValuesSynchronously(userClicksTopic, userClicks.asJava, userClicksProducerConfig)
+
+
+      log.info("Step 4: Verify the application's output data.")
+
+      val consumerConfig = {
+        val p = new Properties()
+        p.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
+        p.put(ConsumerConfig.GROUP_ID_CONFIG, "join-scala-integration-test-standard-consumer")
+        p.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+        p.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer])
+        p.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, classOf[LongDeserializer])
+        p
+      }
+      val actualClicksPerRegion: java.util.List[KeyValue[String, Long]] = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig,
+        outputTopic, expectedClicksPerRegion.size)
+      assertThat(actualClicksPerRegion).containsExactlyElementsOf(expectedClicksPerRegion.asJava)
+    } finally {
+      log.info("Step 5: Shut down.")
+      streams.close()
+      log.info("Shutdown complete.")
     }
-    val actualClicksPerRegion: java.util.List[KeyValue[String, Long]] = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig,
-      outputTopic, expectedClicksPerRegion.size)
-    streams.close()
-    assertThat(actualClicksPerRegion).containsExactlyElementsOf(expectedClicksPerRegion.asJava)
   }
 
 }

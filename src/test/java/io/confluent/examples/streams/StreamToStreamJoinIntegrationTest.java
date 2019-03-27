@@ -32,6 +32,8 @@ import org.apache.kafka.test.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -42,10 +44,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * End-to-end integration test that demonstrates how to perform a join between two KStreams.
- *
+ * <p>
  * Note: This example uses lambda expressions and thus works with Java 8+ only.
  */
 public class StreamToStreamJoinIntegrationTest {
+  private static final Logger LOG = LoggerFactory.getLogger(StreamToStreamJoinIntegrationTest.class);
 
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
@@ -86,9 +89,8 @@ public class StreamToStreamJoinIntegrationTest {
         new KeyValue<>("newspaper-advertisement", "shown/clicked")
     );
 
-    //
-    // Step 1: Configure and start the processor topology.
-    //
+    LOG.info("Step 1: Configure and start the processor topology.");
+
     final Serde<String> stringSerde = Serdes.String();
 
     Properties streamsConfiguration = new Properties();
@@ -123,41 +125,49 @@ public class StreamToStreamJoinIntegrationTest {
     KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
     streams.start();
 
-    //
-    // Step 2: Publish ad impressions.
-    //
-    Properties alertsProducerConfig = new Properties();
-    alertsProducerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    alertsProducerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-    alertsProducerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
-    alertsProducerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    alertsProducerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    IntegrationTestUtils.produceKeyValuesSynchronously(adImpressionsTopic, inputAdImpressions, alertsProducerConfig);
+    try {
 
-    //
-    // Step 3: Publish ad clicks.
-    //
-    Properties incidentsProducerConfig = new Properties();
-    incidentsProducerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    incidentsProducerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-    incidentsProducerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
-    incidentsProducerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    incidentsProducerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    IntegrationTestUtils.produceKeyValuesSynchronously(adClicksTopic, inputAdClicks, incidentsProducerConfig);
+      LOG.info("Step 2: Publish ad impressions.");
 
-    //
-    // Step 4: Verify the application's output data.
-    //
-    Properties consumerConfig = new Properties();
-    consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "stream-stream-join-lambda-integration-test-standard-consumer");
-    consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    List<KeyValue<String, String>> actualResults = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig,
+      Properties alertsProducerConfig = new Properties();
+      alertsProducerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+      alertsProducerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
+      alertsProducerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
+      alertsProducerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+      alertsProducerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+      IntegrationTestUtils.produceKeyValuesSynchronously(adImpressionsTopic, inputAdImpressions, alertsProducerConfig);
+
+      LOG.info("Step 3: Publish ad clicks.");
+
+      Properties incidentsProducerConfig = new Properties();
+      incidentsProducerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+      incidentsProducerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
+      incidentsProducerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
+      incidentsProducerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+      incidentsProducerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+      IntegrationTestUtils.produceKeyValuesSynchronously(adClicksTopic, inputAdClicks, incidentsProducerConfig);
+
+      LOG.info("Step 4: Verify the application's output data.");
+
+      Properties consumerConfig = new Properties();
+      consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+      consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "stream-stream-join-lambda-integration-test-standard-consumer");
+      consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+      consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+      consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+      List<KeyValue<String, String>> actualResults = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig,
         outputTopic, expectedResults.size());
-    streams.close();
-    assertThat(actualResults).containsExactlyElementsOf(expectedResults);
+
+      assertThat(actualResults).containsExactlyElementsOf(expectedResults);
+
+    } finally {
+      LOG.info("Step 5: Shut down.");
+
+      streams.close();
+
+      LOG.info("Shutdown complete.");
+
+    }
   }
 
 }

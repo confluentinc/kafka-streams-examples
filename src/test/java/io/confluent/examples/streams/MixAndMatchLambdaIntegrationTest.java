@@ -35,6 +35,8 @@ import org.apache.kafka.streams.processor.ProcessorSupplier;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -61,6 +63,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Note: This example uses lambda expressions and thus works with Java 8+ only.
  */
 public class MixAndMatchLambdaIntegrationTest {
+  private static final Logger LOG = LoggerFactory.getLogger(MixAndMatchLambdaIntegrationTest.class);
 
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
@@ -131,7 +134,7 @@ public class MixAndMatchLambdaIntegrationTest {
     List<String> expectedValues = Arrays.asList("HELLO, 1.2.3.XXX!", "FOO 192.168.1.XXX BAR");
 
     //
-    // Step 1: Configure and start the processor topology.
+    LOG.info("Step 1: Configure and start the processor topology.");
     //
     KStreamBuilder builder = new KStreamBuilder();
 
@@ -151,30 +154,36 @@ public class MixAndMatchLambdaIntegrationTest {
     KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
     streams.start();
 
-    //
-    // Step 2: Produce some input data to the input topic.
-    //
-    Properties producerConfig = new Properties();
-    producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-    producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
-    producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
-    producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    IntegrationTestUtils.produceValuesSynchronously(inputTopic, inputValues, producerConfig);
+    try {
+      //
+      LOG.info("Step 2: Produce some input data to the input topic.");
+      //
+      Properties producerConfig = new Properties();
+      producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+      producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
+      producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
+      producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
+      producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+      IntegrationTestUtils.produceValuesSynchronously(inputTopic, inputValues, producerConfig);
 
-    //
-    // Step 3: Verify the application's output data.
-    //
-    Properties consumerConfig = new Properties();
-    consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "mix-and-match-lambda-integration-test-standard-consumer");
-    consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
-    consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    List<String> actualValues = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfig,
+      //
+      LOG.info("Step 3: Verify the application's output data.");
+      //
+      Properties consumerConfig = new Properties();
+      consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+      consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "mix-and-match-lambda-integration-test-standard-consumer");
+      consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+      consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
+      consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+      List<String> actualValues = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfig,
         outputTopic, expectedValues.size());
-    streams.close();
-    assertThat(actualValues).isEqualTo(expectedValues);
+      assertThat(actualValues).isEqualTo(expectedValues);
+    } finally {
+      LOG.info("Step 4: Shut down.");
+      streams.close();
+      LOG.info("Shutdown complete.");
+    }
+
   }
 
 }

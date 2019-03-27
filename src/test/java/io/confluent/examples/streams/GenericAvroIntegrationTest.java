@@ -36,6 +36,8 @@ import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
@@ -49,7 +51,8 @@ import static org.junit.Assert.assertEquals;
  * See {@link SpecificAvroIntegrationTest} for the equivalent Specific Avro integration test.
  */
 public class GenericAvroIntegrationTest {
-
+  private static final Logger LOG = LoggerFactory.getLogger(GenericAvroIntegrationTest.class);
+  
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
 
@@ -73,7 +76,7 @@ public class GenericAvroIntegrationTest {
     List<GenericRecord> inputValues = Collections.singletonList(record);
 
     //
-    // Step 1: Configure and start the processor topology.
+    LOG.info("Step 1: Configure and start the processor topology.");
     //
     KStreamBuilder builder = new KStreamBuilder();
 
@@ -109,33 +112,38 @@ public class GenericAvroIntegrationTest {
 
     KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
     streams.start();
+    try {
+      //
+      LOG.info("Step 2: Produce some input data to the input topic.");
+      //
+      Properties producerConfig = new Properties();
+      producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+      producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
+      producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
+      producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
+      producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
+      producerConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl());
+      IntegrationTestUtils.produceValuesSynchronously(inputTopic, inputValues, producerConfig);
 
-    //
-    // Step 2: Produce some input data to the input topic.
-    //
-    Properties producerConfig = new Properties();
-    producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-    producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
-    producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
-    producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
-    producerConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl());
-    IntegrationTestUtils.produceValuesSynchronously(inputTopic, inputValues, producerConfig);
-
-    //
-    // Step 3: Verify the application's output data.
-    //
-    Properties consumerConfig = new Properties();
-    consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "generic-avro-integration-test-standard-consumer");
-    consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
-    consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
-    consumerConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl());
-    List<GenericRecord> actualValues = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfig,
+      //
+      LOG.info("Step 3: Verify the application's output data.");
+      //
+      Properties consumerConfig = new Properties();
+      consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+      consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "generic-avro-integration-test-standard-consumer");
+      consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+      consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
+      consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
+      consumerConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl());
+      List<GenericRecord> actualValues = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfig,
         outputTopic, inputValues.size());
-    streams.close();
-    assertEquals(inputValues, actualValues);
+      assertEquals(inputValues, actualValues);
+
+    } finally {
+      LOG.info("Step 4: Shut down.");
+      streams.close();
+      LOG.info("Shutdown complete.");
+    }
   }
 
 }

@@ -42,7 +42,7 @@ import org.scalatest.junit.AssertionsForJUnit
   * switched from BeforeClass (which must be `static`) to Before as well as from @ClassRule (which
   * must be `static` and `public`) to a workaround combination of `@Rule def` and a `private val`.
   */
-class WordCountScalaIntegrationTest extends AssertionsForJUnit {
+class WordCountScalaIntegrationTest extends AssertionsForJUnit with LoggerTrait {
 
   private val privateCluster: EmbeddedSingleNodeKafkaCluster = new EmbeddedSingleNodeKafkaCluster
 
@@ -79,9 +79,9 @@ class WordCountScalaIntegrationTest extends AssertionsForJUnit {
       ("summit", 1L)
     )
 
-    //
-    // Step 1: Configure and start the processor topology.
-    //
+
+    log.info("Step 1: Configure and start the processor topology.")
+
     val streamsConfiguration: Properties = {
       val p = new Properties()
       p.put(StreamsConfig.APPLICATION_ID_CONFIG, "wordcount-scala-integration-test")
@@ -121,37 +121,41 @@ class WordCountScalaIntegrationTest extends AssertionsForJUnit {
     val streams: KafkaStreams = new KafkaStreams(builder, streamsConfiguration)
     streams.start()
 
-    //
-    // Step 2: Publish some input text lines.
-    //
-    val producerConfig: Properties = {
-      val p = new Properties()
-      p.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
-      p.put(ProducerConfig.ACKS_CONFIG, "all")
-      p.put(ProducerConfig.RETRIES_CONFIG, "0")
-      p.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
-      p.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
-      p
-    }
-    import collection.JavaConverters._
-    IntegrationTestUtils.produceValuesSynchronously(inputTopic, inputTextLines.asJava, producerConfig)
+    try {
+      log.info("Step 2: Publish some input text lines.")
 
-    //
-    // Step 3: Verify the application's output data.
-    //
-    val consumerConfig = {
-      val p = new Properties()
-      p.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
-      p.put(ConsumerConfig.GROUP_ID_CONFIG, "wordcount-scala-integration-test-standard-consumer")
-      p.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
-      p.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer])
-      p.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, classOf[LongDeserializer])
-      p
+      val producerConfig: Properties = {
+        val p = new Properties()
+        p.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
+        p.put(ProducerConfig.ACKS_CONFIG, "all")
+        p.put(ProducerConfig.RETRIES_CONFIG, "0")
+        p.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
+        p.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
+        p
+      }
+      import collection.JavaConverters._
+      IntegrationTestUtils.produceValuesSynchronously(inputTopic, inputTextLines.asJava, producerConfig)
+
+
+      log.info("Step 3: Verify the application's output data.")
+
+      val consumerConfig = {
+        val p = new Properties()
+        p.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
+        p.put(ConsumerConfig.GROUP_ID_CONFIG, "wordcount-scala-integration-test-standard-consumer")
+        p.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+        p.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer])
+        p.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, classOf[LongDeserializer])
+        p
+      }
+      val actualWordCounts: java.util.List[KeyValue[String, Long]] =
+        IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig, outputTopic, expectedWordCounts.size)
+      assertThat(actualWordCounts).containsExactlyElementsOf(expectedWordCounts.asJava)
+    } finally {
+      log.info("Step 4: Shut down.")
+      streams.close()
+      log.info("Shutdown complete.")
     }
-    val actualWordCounts: java.util.List[KeyValue[String, Long]] =
-      IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig, outputTopic, expectedWordCounts.size)
-    streams.close()
-    assertThat(actualWordCounts).containsExactlyElementsOf(expectedWordCounts.asJava)
   }
 
 }

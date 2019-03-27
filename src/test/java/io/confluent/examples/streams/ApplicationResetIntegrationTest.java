@@ -34,6 +34,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -42,6 +44,7 @@ import java.util.Properties;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ApplicationResetIntegrationTest {
+  private static final Logger LOG = LoggerFactory.getLogger(ApplicationResetIntegrationTest.class);
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
 
@@ -65,7 +68,7 @@ public class ApplicationResetIntegrationTest {
     );
 
     //
-    // Step 1: Configure and start the processor topology.
+    LOG.info("Step 1: Configure and start the processor topology.");
     //
     final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, applicationId);
@@ -77,22 +80,14 @@ public class ApplicationResetIntegrationTest {
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
-    KafkaStreams streams = ApplicationResetExample.run(new String[0], streamsConfiguration);
 
-    //
-    // Step 2: Produce some input data to the input topic.
-    //
     final Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
     producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
     producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    IntegrationTestUtils.produceValuesSynchronously(inputTopic, inputValues, producerConfig);
 
-    //
-    // Step 3: Verify the application's output data.
-    //
     final Properties consumerConfig = new Properties();
     consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "application-reset-integration-test-standard-consumer-output-topic");
@@ -100,13 +95,26 @@ public class ApplicationResetIntegrationTest {
     consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
 
-    final List<KeyValue<String, Long>> result = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig, outputTopic, inputValues.size());
-    assertThat(result).isEqualTo(expectedResult);
+    KafkaStreams streams = ApplicationResetExample.run(new String[0], streamsConfiguration);
+    try {
+      //
+      LOG.info("Step 2: Produce some input data to the input topic.");
+      //
+      IntegrationTestUtils.produceValuesSynchronously(inputTopic, inputValues, producerConfig);
 
-    streams.close();
+      //
+      LOG.info("Step 3: Verify the application's output data.");
+      //
 
+
+      final List<KeyValue<String, Long>> result = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig, outputTopic, inputValues.size());
+      assertThat(result).isEqualTo(expectedResult);
+
+    } finally {
+      streams.close();
+    }
     //
-    // Step 4: Reset application.
+    LOG.info("Step 4: Reset application.");
     //
 
     // wait for application to be completely shut down
@@ -131,17 +139,20 @@ public class ApplicationResetIntegrationTest {
     }
 
     //
-    // Step 5: Rerun application
+    LOG.info("Step 5: Rerun application");
     //
     streams = ApplicationResetExample.run(new String[]{"--reset"}, streamsConfiguration);
-
-    //
-    // Step 6: Verify the application's output data.
-    //
-    final List<KeyValue<String, Long>> resultRerun = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig, outputTopic, inputValues.size());
-    assertThat(resultRerun).isEqualTo(expectedResult);
-
-    streams.close();
+    try {
+      //
+      LOG.info("Step 6: Verify the application's output data.");
+      //
+      final List<KeyValue<String, Long>> resultRerun = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig, outputTopic, inputValues.size());
+      assertThat(resultRerun).isEqualTo(expectedResult);
+    } finally {
+      LOG.info("Step 7: Shut down.");
+      streams.close();
+      LOG.info("Shutdown complete.");
+    }
   }
 
 }

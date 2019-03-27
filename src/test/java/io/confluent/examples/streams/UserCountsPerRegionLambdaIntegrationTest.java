@@ -32,6 +32,8 @@ import org.apache.kafka.test.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -59,6 +61,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Note: This example uses lambda expressions and thus works with Java 8+ only.
  */
 public class UserCountsPerRegionLambdaIntegrationTest {
+  private static final Logger LOG = LoggerFactory.getLogger(UserCountsPerRegionLambdaIntegrationTest.class);
 
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
@@ -93,9 +96,8 @@ public class UserCountsPerRegionLambdaIntegrationTest {
         new KeyValue<>("asia", 1L)    // in the end, Bob is in asia
     );
 
-    //
-    // Step 1: Configure and start the processor topology.
-    //
+    LOG.info("Step 1: Configure and start the processor topology.");
+
     final Serde<String> stringSerde = Serdes.String();
     final Serde<Long> longSerde = Serdes.Long();
 
@@ -124,31 +126,33 @@ public class UserCountsPerRegionLambdaIntegrationTest {
 
     KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
     streams.start();
+    try {
+      LOG.info("Step 2: Publish user-region information.");
 
-    //
-    // Step 2: Publish user-region information.
-    //
-    Properties userRegionsProducerConfig = new Properties();
-    userRegionsProducerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    userRegionsProducerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-    userRegionsProducerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
-    userRegionsProducerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    userRegionsProducerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    IntegrationTestUtils.produceKeyValuesSynchronously(inputTopic, userRegionRecords, userRegionsProducerConfig);
+      Properties userRegionsProducerConfig = new Properties();
+      userRegionsProducerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+      userRegionsProducerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
+      userRegionsProducerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
+      userRegionsProducerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+      userRegionsProducerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+      IntegrationTestUtils.produceKeyValuesSynchronously(inputTopic, userRegionRecords, userRegionsProducerConfig);
 
-    //
-    // Step 3: Verify the application's output data.
-    //
-    Properties consumerConfig = new Properties();
-    consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "user-regions-lambda-integration-test-standard-consumer");
-    consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
-    List<KeyValue<String, Long>> actualClicksPerRegion = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig,
+      LOG.info("Step 3: Verify the application's output data.");
+
+      Properties consumerConfig = new Properties();
+      consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+      consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "user-regions-lambda-integration-test-standard-consumer");
+      consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+      consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+      consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
+      List<KeyValue<String, Long>> actualClicksPerRegion = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig,
         outputTopic, expectedUsersPerRegion.size());
-    streams.close();
-    assertThat(actualClicksPerRegion).containsExactlyElementsOf(expectedUsersPerRegion);
+      assertThat(actualClicksPerRegion).containsExactlyElementsOf(expectedUsersPerRegion);
+    } finally {
+      LOG.info("Step 4: Shut down.");
+      streams.close();
+      LOG.info("Shutdown complete.");
+    }
   }
 
 }

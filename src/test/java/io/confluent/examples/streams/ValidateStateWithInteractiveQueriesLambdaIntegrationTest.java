@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Demonstrates how to validate an application's expected state through interactive queries.
- *
+ * <p>
  * Note: This example uses lambda expressions and thus works with Java 8+ only.
  */
 public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
@@ -123,36 +123,40 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
     KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
     streams.start();
 
-    LOG.info("Step 2: Produce some input data to the input topic.");
+    try {
 
-    Properties producerConfig = new Properties();
-    producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-    producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
-    producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
-    IntegrationTestUtils.produceKeyValuesSynchronously(inputTopic, inputUserClicks, producerConfig);
+      LOG.info("Step 2: Produce some input data to the input topic.");
 
-    LOG.info("Step 3: Validate the application's state by interactively querying its state stores.");
+      Properties producerConfig = new Properties();
+      producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+      producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
+      producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
+      producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+      producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
+      IntegrationTestUtils.produceKeyValuesSynchronously(inputTopic, inputUserClicks, producerConfig);
 
-    ReadOnlyKeyValueStore<String, Long> keyValueStore =
+      LOG.info("Step 3: Validate the application's state by interactively querying its state stores.");
+
+      ReadOnlyKeyValueStore<String, Long> keyValueStore =
         IntegrationTestUtils.waitUntilStoreIsQueryable("max-store", QueryableStoreTypes.keyValueStore(), streams);
-    ReadOnlyWindowStore<String, Long> windowStore =
+      ReadOnlyWindowStore<String, Long> windowStore =
         IntegrationTestUtils.waitUntilStoreIsQueryable("max-window-store", QueryableStoreTypes.windowStore(), streams);
 
-    // Wait a bit so that the input data can be fully processed to ensure that the stores can
-    // actually be populated with data.  Running the build on (slow) Travis CI in particular
-    // requires a few seconds to run this test reliably.
-    Thread.sleep(3000);
+      // Wait a bit so that the input data can be fully processed to ensure that the stores can
+      // actually be populated with data.  Running the build on (slow) Travis CI in particular
+      // requires a few seconds to run this test reliably.
+      Thread.sleep(3000);
 
-    IntegrationTestUtils.assertThatKeyValueStoreContains(keyValueStore, expectedMaxClicksPerUser);
-    IntegrationTestUtils.assertThatOldestWindowContains(windowStore, expectedMaxClicksPerUser);
+      IntegrationTestUtils.assertThatKeyValueStoreContains(keyValueStore, expectedMaxClicksPerUser);
+      IntegrationTestUtils.assertThatOldestWindowContains(windowStore, expectedMaxClicksPerUser);
 
-    LOG.info("Step 4: Shut down.");
+    } finally {
+      LOG.info("Step 4: Shut down.");
 
-    streams.close();
+      streams.close();
 
-    LOG.info("Shutdown complete.");
+      LOG.info("Shutdown complete.");
+    }
   }
 
 }
