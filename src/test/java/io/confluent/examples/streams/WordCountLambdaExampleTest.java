@@ -57,7 +57,7 @@ public class WordCountLambdaExampleTest {
   public void tearDown() {
     try {
       testDriver.close();
-    } catch (RuntimeException e) {
+    } catch (final RuntimeException e) {
       // https://issues.apache.org/jira/browse/KAFKA-6647 causes exception when executed in Windows, ignoring it
       // Logged stacktrace cannot be avoided
       System.out.println("Ignoring exception, test failing in Windows due this exception:" + e.getLocalizedMessage());
@@ -79,7 +79,7 @@ public class WordCountLambdaExampleTest {
    * @return Map of Word and counts
    */
   private Map<String, Long> getOutputList() {
-    Map<String, Long> output = new HashMap<>();
+    final Map<String, Long> output = new HashMap<>();
     ProducerRecord<String, Long> outputRow;
     while((outputRow = readOutput()) != null) {
       output.put(outputRow.key(), outputRow.value());
@@ -91,11 +91,11 @@ public class WordCountLambdaExampleTest {
    */
   @Test
   public void testOneWord() {
-    String nullKey = null;
+    final String nullKey = null;
     //Feed word "Hello" to inputTopic and no kafka key, timestamp is irrelevant in this case
     testDriver.pipeInput(recordFactory.create(WordCountLambdaExample.inputTopic, nullKey, "Hello", 1L));
     //Read and validate output
-    ProducerRecord<String, Long> output = readOutput();
+    final ProducerRecord<String, Long> output = readOutput();
     OutputVerifier.compareKeyValue(output, "hello", 1L);
     //No more output in topic
     assertThat(readOutput()).isNull();
@@ -127,7 +127,7 @@ public class WordCountLambdaExampleTest {
     expectedWordCounts.put("русские", 1L);
     expectedWordCounts.put("слова", 1L);
 
-    List<KeyValue<String, String>> records = inputValues.stream().map(v -> new KeyValue<String, String>(null, v)).collect(Collectors.toList());
+    final List<KeyValue<String, String>> records = inputValues.stream().map(v -> new KeyValue<String, String>(null, v)).collect(Collectors.toList());
     testDriver.pipeInput(recordFactory.create(WordCountLambdaExample.inputTopic, records, 1L, 100L));
 
     final Map<String, Long> actualWordCounts = getOutputList();
