@@ -72,10 +72,24 @@ public class WordCountLambdaExampleTest {
     }
   }
 
+
+  /** Read one Record from output topic.
+   *
+   * @return ProducerRecord containing word as key and count as value
+   */
+  private ProducerRecord<String, Long> readOutput() {
+    return testDriver.readOutput(WordCountLambdaExample.outputTopic, stringDeserializer, longDeserializer);
+  }
+
+  /** Read counts from output to map.
+   * If existing word is incremented, it can appear twice in output and is replaced in map
+   *
+   * @return Map of Word and counts
+   */
   private Map<String, Long> getOutputList() {
     Map<String, Long> output = new HashMap<>();
     ProducerRecord<String, Long> outputRow;
-    while((outputRow = testDriver.readOutput(WordCountLambdaExample.outputTopic, stringDeserializer, longDeserializer)) != null) {
+    while((outputRow = readOutput()) != null) {
       output.put(outputRow.key(), outputRow.value());
     }
     return output;
@@ -86,9 +100,13 @@ public class WordCountLambdaExampleTest {
   @Test
   public void testOneWord() {
     String nullKey = null;
+    //Feed word "Hello" to inputTopic and no kafka key, timestamp is irrelevant in this case
     testDriver.pipeInput(recordFactory.create(WordCountLambdaExample.inputTopic, nullKey, "Hello", 1L));
-    ProducerRecord<String, Long> output = testDriver.readOutput(WordCountLambdaExample.outputTopic, stringDeserializer, longDeserializer);
+    //Read and validate output
+    ProducerRecord<String, Long> output = readOutput();
     OutputVerifier.compareKeyValue(output, "hello", 1L);
+    //No more output in topic
+    assertThat(readOutput()).isNull();
   }
 
   @Test
