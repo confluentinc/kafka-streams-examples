@@ -152,7 +152,7 @@ public class WordCountLambdaExample {
    * @param bootstrapServers
    * @return Properties getStreamsConfiguration
    */
-  static Properties getStreamsConfiguration(String bootstrapServers) {
+  static Properties getStreamsConfiguration(final String bootstrapServers) {
     final Properties streamsConfiguration = new Properties();
     // Give the Streams application a unique name.  The name must be unique in the Kafka cluster
     // against which the application is run.
@@ -175,7 +175,7 @@ public class WordCountLambdaExample {
    *
    * @param builder
    */
-  static void createWordCountStream(StreamsBuilder builder) {
+  static void createWordCountStream(final StreamsBuilder builder) {
     // Set up serializers and deserializers, which we will use for overriding the default serdes
     // specified above.
     final Serde<String> stringSerde = Serdes.String();
