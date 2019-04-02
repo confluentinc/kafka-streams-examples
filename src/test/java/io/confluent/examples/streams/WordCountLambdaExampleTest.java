@@ -1,5 +1,4 @@
 /*
- * Copyright Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +14,22 @@
  */
 package io.confluent.examples.streams;
 
-import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.*;
 import org.apache.kafka.streams.*;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KTable;
-import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.test.ConsumerRecordFactory;
 import org.apache.kafka.streams.test.OutputVerifier;
-import org.apache.kafka.test.TestUtils;
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.*;
 
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Stream processing unit test of {@link WordCountLambdaExample}, using TopologyTestDriver.
+ *
+ * @author Jukka Karvanen / jukinimi.com
  *
  * See {@link WordCountLambdaExample} for further documentation.
  *
@@ -109,8 +101,11 @@ public class WordCountLambdaExampleTest {
     assertThat(readOutput()).isNull();
   }
 
+  /** Test Word count of sentence list.
+   *  Test logic copied from {@link WordCountLambdaIntegrationTest}
+   */
   @Test
-  public void shouldCountWords() throws Exception {
+  public void shouldCountWords() {
     final List<String> inputValues = Arrays.asList(
         "Hello Kafka Streams",
         "All streams lead to Kafka",
