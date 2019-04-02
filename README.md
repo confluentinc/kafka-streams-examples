@@ -43,11 +43,12 @@ There are two kinds of examples:
   must first install and run Apache Kafka and friends, which we describe in section
   [Packaging and running the examples](#packaging-and-running).  Each example also states its exact requirements and
   instructions at the very top.
-* **Examples under [src/test/](src/test/)**: These examples are a bit longer because they implement integration tests
-  that demonstrate end-to-end data pipelines.  Here, we use a testing framework to automatically spawn embedded Kafka
+* **Examples under [src/test/](src/test/)**: These examples should test applications under [src/main/](src/main/).
+  Unit Tests with TopologyTestDriver test the stream logic without external system dependencies.
+  The integration tests use a testing framework to automatically spawn embedded Kafka
   clusters, feed input data to them (using the standard Kafka producer client), process the data using Kafka Streams,
   and finally read and verify the output results (using the standard Kafka consumer client).
-  These examples are also a good starting point to learn how to implement your own end-to-end integration tests.
+  These examples are also a good starting point to learn how to implement your own tests.
 
 ## Examples
 
@@ -76,18 +77,26 @@ There are two kinds of examples:
 
 Additional examples may be found [here](src/main/java/io/confluent/examples/streams/).
 
-## Integration Tests
+##Tests
+
+### Unit Tests
+
+The stream processing of Kafka Streams can be tested with TopologyTestDriver from kafka-streams-test-utils packages.
+This way you pipe sample input to pipeline and validate output.  
+See more info [Testing Streams Code](https://docs.confluent.io/current/streams/developer-guide/test-streams.html)
+
+### Integration Tests
 
 We also provide several **integration tests**, which demonstrate end-to-end data pipelines.  Here, we spawn embedded Kafka
 clusters and the [Confluent Schema Registry](https://github.com/confluentinc/schema-registry), feed input data to them
 (using the standard Kafka producer client), process the data using Kafka Streams, and finally read and verify the output
 results (using the standard Kafka consumer client).
 
-> Tip: Run `mvn test` to launch the integration tests.
+> Tip: Run `mvn test` to launch the tests.
 
-| Integration Test Name  | Java 8+ | Java 7+ | Scala |
+| Test  | Java 8+ | Java 7+ | Scala |
 | --- | --- | --- | --- |
-| WordCount | [Java 8+ Integration Test](src/test/java/io/confluent/examples/streams/WordCountLambdaIntegrationTest.java) | | [Scala Integration Test](src/test/scala/io/confluent/examples/streams/WordCountScalaIntegrationTest.scala)
+| WordCount | [Java 8+ Unit Test](src/test/java/io/confluent/examples/streams/WordCountLambdaExampleTest.java)[Java 8+ Integration Test](src/test/java/io/confluent/examples/streams/WordCountLambdaIntegrationTest.java) | | [Scala Integration Test](src/test/scala/io/confluent/examples/streams/WordCountScalaIntegrationTest.scala)
 | WordCountInteractiveQueries | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/interactivequeries/WordCountInteractiveQueriesExampleTest.java)
 | EventDeduplication | [Java 8+ Integration Test](src/test/java/io/confluent/examples/streams/EventDeduplicationLambdaIntegrationTest.java)
 | GlobalKTable | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/GlobalKTablesExampleTest.java)
