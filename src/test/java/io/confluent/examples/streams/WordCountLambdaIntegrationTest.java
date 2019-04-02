@@ -57,13 +57,10 @@ public class WordCountLambdaIntegrationTest {
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
 
-  private static final String inputTopic = "inputTopic";
-  private static final String outputTopic = "outputTopic";
-
   @BeforeClass
   public static void startKafkaCluster() {
-    CLUSTER.createTopic(inputTopic);
-    CLUSTER.createTopic(outputTopic);
+    CLUSTER.createTopic(WordCountLambdaExample.inputTopic);
+    CLUSTER.createTopic(WordCountLambdaExample.outputTopic);
   }
 
   @Test
@@ -93,34 +90,25 @@ public class WordCountLambdaIntegrationTest {
     //
     // Step 1: Configure and start the processor topology.
     //
-    final Serde<String> stringSerde = Serdes.String();
-    final Serde<Long> longSerde = Serdes.Long();
 
-    final Properties streamsConfiguration = new Properties();
-    streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "wordcount-lambda-integration-test");
-    streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+
+    //Populate Stream Configuration
+    final Properties streamsConfiguration = WordCountLambdaExample.getStreamsConfiguration(CLUSTER.bootstrapServers());
+    //Add or modify test specific configuration
+
+    //Remove cache setting zero, so output does not contain repeating words multiple times
+    streamsConfiguration.remove(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG);
+
     // The commit interval for flushing records to state stores and downstream must be lower than
     // this integration test's timeout (30 secs) to ensure we observe the expected processing results.
     streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 10 * 1000);
-    streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
     final StreamsBuilder builder = new StreamsBuilder();
 
-    final KStream<String, String> textLines = builder.stream(inputTopic);
-
-    final Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
-
-    final KTable<String, Long> wordCounts = textLines
-        .flatMapValues(value -> Arrays.asList(pattern.split(value.toLowerCase())))
-        // no need to specify explicit serdes because the resulting key and value types match our default serde settings
-        .groupBy((key, word) -> word)
-        .count();
-
-    wordCounts.toStream().to(outputTopic, Produced.with(stringSerde, longSerde));
+    //Create Actual Stream Processing pipeline
+    WordCountLambdaExample.createWordCountStream(builder);
 
     final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();
@@ -134,7 +122,7 @@ public class WordCountLambdaIntegrationTest {
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
     producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    IntegrationTestUtils.produceValuesSynchronously(inputTopic, inputValues, producerConfig);
+    IntegrationTestUtils.produceValuesSynchronously(WordCountLambdaExample.inputTopic, inputValues, producerConfig);
 
     //
     // Step 3: Verify the application's output data.
@@ -147,7 +135,7 @@ public class WordCountLambdaIntegrationTest {
     consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
     final List<KeyValue<String, Long>> actualWordCounts = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(
         consumerConfig,
-        outputTopic,
+        WordCountLambdaExample.outputTopic,
         expectedWordCounts.size()
     );
     streams.close();
