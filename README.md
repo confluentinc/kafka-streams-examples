@@ -272,7 +272,6 @@ Kafka Streams examples via:
 $ mvn clean package
 
 # >>> Creates target/kafka-streams-examples-5.0.3-standalone.jar
-
 ```
 
 You can now run the example applications as follows:
