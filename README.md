@@ -325,9 +325,9 @@ $ mvn test    # Runs unit and integration tests
 
 | Branch (this repo)                      | Apache Kafka      | Confluent Platform | Notes                                                                                                                                |
 | ----------------------------------------|-------------------|--------------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| [master](../../../tree/master/)         | 2.2.1-SNAPSHOT    | 5.2.2-SNAPSHOT     | You must manually build the `trunk` version of Apache Kafka and the `master` version of Confluent Platform.  See instructions above. |
-| [5.2.0-post](../../../tree/5.1.0-post/) | 2.2.0             | 5.2.0              | Works out of the box                                                                                                                 |
-| [5.1.0-post](../../../tree/5.0.0-post/) | 2.1.0             | 5.1.0              | Works out of the box                                                                                                                 |
+| [5.2.x](../../../tree/5.2.x/)           | 2.2.1-SNAPSHOT    | 5.2.2-SNAPSHOT     | You must manually build the `2.2` version of Apache Kafka and the `5.2.x` version of Confluent Platform.  See instructions above.    |
+| [5.2.0-post](../../../tree/5.2.0-post/) | 2.2.0             | 5.2.0              | Works out of the box                                                                                                                 |
+| [5.1.0-post](../../../tree/5.1.0-post/) | 2.1.0             | 5.1.0              | Works out of the box                                                                                                                 |
 | [5.0.0-post](../../../tree/5.0.0-post/) | 2.0.0             | 5.0.0              | Works out of the box                                                                                                                 |
 | [4.1.0-post](../../../tree/4.1.0-post/) | 1.1.0(-cp1)       | 4.1.0              | Works out of the box                                                                                                                 |
 | [4.0.0-post](../../../tree/4.4.0-post/) | 1.0.0(-cp1)       | 4.0.0              | Works out of the box                                                                                                                 |
