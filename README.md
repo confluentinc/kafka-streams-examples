@@ -326,7 +326,8 @@ $ mvn test    # Runs unit and integration tests
 
 | Branch (this repo)                      | Apache Kafka      | Confluent Platform | Notes                                                                                                                                |
 | ----------------------------------------|-------------------|--------------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| [master](../../../tree/master/)         | 2.1.1             | 5.1.1              | You must manually build the `trunk` version of Apache Kafka and the `master` version of Confluent Platform.  See instructions above. |
+| [5.1.1-post](../../../tree/5.1.1-post/) | 2.1.1             | 5.1.1              | Works out of the box                                                                                                                 |
+| [5.0.0-post](../../../tree/5.0.0-post/) | 2.0.0             | 5.0.0              | Works out of the box                                                                                                                 |
 | [4.1.0-post](../../../tree/4.1.0-post/) | 1.1.0(-cp1)       | 4.1.0              | Works out of the box                                                                                                                 |
 | [4.0.0-post](../../../tree/4.4.0-post/) | 1.0.0(-cp1)       | 4.0.0              | Works out of the box                                                                                                                 |
 | [3.3.0-post](../../../tree/3.3.0-post/) | 0.11.0.0(-cp1)    | 3.3.0              | Works out of the box                                                                                                                 |
