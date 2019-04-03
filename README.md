@@ -279,7 +279,7 @@ You can now run the example applications as follows:
 ```shell
 # Run an example application from the standalone jar.
 # Here: `WordCountLambdaExample`
-$ java -cp target/kafka-streams-examples-5.0.3T-standalone.jar \
+$ java -cp target/kafka-streams-examples-5.0.3-standalone.jar \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
 
