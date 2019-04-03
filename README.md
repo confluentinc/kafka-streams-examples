@@ -271,7 +271,7 @@ Kafka Streams examples via:
 #
 $ mvn clean package
 
-# >>> Creates target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar
+# >>> Creates target/kafka-streams-examples-5.0.2-standalone.jar
 
 ```
 
@@ -280,7 +280,7 @@ You can now run the example applications as follows:
 ```shell
 # Run an example application from the standalone jar.
 # Here: `WordCountLambdaExample`
-$ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar \
+$ java -cp target/kafka-streams-examples-5.0.2-standalone.jar \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
 
@@ -296,7 +296,7 @@ If you want to turn on log4j while running your example application, you can edi
 ```shell
 # Run an example application from the standalone jar.
 # Here: `WordCountLambdaExample`
-$ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar \
+$ java -cp target/kafka-streams-examples-5.0.2-standalone.jar \
   -Dlog4j.configuration=file:src/main/resources/log4j.properties \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
@@ -326,7 +326,7 @@ $ mvn test    # Runs unit and integration tests
 
 | Branch (this repo)                      | Apache Kafka      | Confluent Platform | Notes                                                                                                                                |
 | ----------------------------------------|-------------------|--------------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| [master](../../../tree/master/)         | 2.0.0-SNAPSHOT    | 5.0.0-SNAPSHOT     | You must manually build the `trunk` version of Apache Kafka and the `master` version of Confluent Platform.  See instructions above. |
+| [master](../../../tree/master/)         | 2.0.1             | 5.0.2              | You must manually build the `trunk` version of Apache Kafka and the `master` version of Confluent Platform.  See instructions above. |
 | [4.1.0-post](../../../tree/4.1.0-post/) | 1.1.0(-cp1)       | 4.1.0              | Works out of the box                                                                                                                 |
 | [4.0.0-post](../../../tree/4.4.0-post/) | 1.0.0(-cp1)       | 4.0.0              | Works out of the box                                                                                                                 |
 | [3.3.0-post](../../../tree/3.3.0-post/) | 0.11.0.0(-cp1)    | 3.3.0              | Works out of the box                                                                                                                 |
