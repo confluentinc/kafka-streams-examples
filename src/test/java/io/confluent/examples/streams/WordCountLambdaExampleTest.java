@@ -15,21 +15,28 @@
 package io.confluent.examples.streams;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.*;
-import org.apache.kafka.streams.*;
+import org.apache.kafka.common.serialization.LongDeserializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.test.ConsumerRecordFactory;
 import org.apache.kafka.streams.test.OutputVerifier;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Stream processing unit test of {@link WordCountLambdaExample}, using TopologyTestDriver.
- *
- * @author Jukka Karvanen / jukinimi.com
  *
  * See {@link WordCountLambdaExample} for further documentation.
  *
@@ -46,7 +53,7 @@ public class WordCountLambdaExampleTest {
   private ConsumerRecordFactory<String, String> recordFactory = new ConsumerRecordFactory<>(new StringSerializer(), new StringSerializer());
 
   @Before
-  public void setup() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
+  public void setup() {
     final StreamsBuilder builder = new StreamsBuilder();
     //Create Actual Stream Processing pipeline
     WordCountLambdaExample.createWordCountStream(builder);
@@ -65,7 +72,8 @@ public class WordCountLambdaExampleTest {
   }
 
 
-  /** Read one Record from output topic.
+  /**
+   * Read one Record from output topic.
    *
    * @return ProducerRecord containing word as key and count as value
    */
@@ -73,7 +81,8 @@ public class WordCountLambdaExampleTest {
     return testDriver.readOutput(WordCountLambdaExample.outputTopic, stringDeserializer, longDeserializer);
   }
 
-  /** Read counts from output to map.
+  /**
+   * Read counts from output to map.
    * If existing word is incremented, it can appear twice in output and is replaced in map
    *
    * @return Map of Word and counts
@@ -87,7 +96,8 @@ public class WordCountLambdaExampleTest {
     return output;
   }
 
-  /** Simple test validating count of one word
+  /**
+   *  Simple test validating count of one word
    */
   @Test
   public void testOneWord() {
@@ -101,7 +111,8 @@ public class WordCountLambdaExampleTest {
     assertThat(readOutput()).isNull();
   }
 
-  /** Test Word count of sentence list.
+  /**
+   *  Test Word count of sentence list.
    *  Test logic copied from {@link WordCountLambdaIntegrationTest}
    */
   @Test

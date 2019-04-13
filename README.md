@@ -45,7 +45,7 @@ There are two kinds of examples:
   instructions at the very top.
 * **Examples under [src/test/](src/test/)**: These examples should test applications under [src/main/](src/main/).
   Unit Tests with TopologyTestDriver test the stream logic without external system dependencies.
-  The integration tests use a testing framework to automatically spawn embedded Kafka
+  The integration tests use an embedded Kafka 
   clusters, feed input data to them (using the standard Kafka producer client), process the data using Kafka Streams,
   and finally read and verify the output results (using the standard Kafka consumer client).
   These examples are also a good starting point to learn how to implement your own tests.

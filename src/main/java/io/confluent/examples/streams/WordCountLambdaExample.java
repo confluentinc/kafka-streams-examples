@@ -111,10 +111,10 @@ import java.util.regex.Pattern;
  */
 public class WordCountLambdaExample {
 
-  static final String inputTopic = "inputTopic";
-  static final String outputTopic = "outputTopic";
+  static final String inputTopic = "streams-plaintext-input";
+  static final String outputTopic = "streams-wordcount-output";
 
-  public static void main(final String[] args) throws Exception {
+  public static void main(final String[] args) {
     final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
 
     //Populate Stream Configuration
@@ -147,9 +147,10 @@ public class WordCountLambdaExample {
     Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
   }
 
-  /** Populate Stream Configuration.
+  /**
+   * Populate Stream Configuration.
    *
-   * @param bootstrapServers
+   * @param bootstrapServers Kafka Cluster address
    * @return Properties getStreamsConfiguration
    */
   static Properties getStreamsConfiguration(final String bootstrapServers) {
@@ -171,9 +172,10 @@ public class WordCountLambdaExample {
     return streamsConfiguration;
   }
 
-  /** Create Actual Stream Processing pipeline for Word Count.
+  /**
+   * Create Actual Stream Processing pipeline for Word Count.
    *
-   * @param builder
+   * @param builder StreamBuilder to use
    */
   static void createWordCountStream(final StreamsBuilder builder) {
     // Set up serializers and deserializers, which we will use for overriding the default serdes
