@@ -83,7 +83,7 @@ public class WordCountLambdaExampleTest {
 
   /**
    * Read counts from output to map.
-   * If existing word is incremented, it can appear twice in output and is replaced in map
+   * If the existing word is incremented, it can appear twice in output and is replaced in map
    *
    * @return Map of Word and counts
    */
