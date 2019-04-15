@@ -57,10 +57,7 @@ public class PairDeserializer<X, Y> implements Deserializer<Pair<X, Y>> {
         deserializedY = readY(in, topic);
       }
       pair = new Pair<>(deserializedX, deserializedY);
-    } catch (
-      final IOException e)
-
-    {
+    } catch (final IOException e) {
       throw new RuntimeException("Unable to deserialize Pair", e);
     }
     return pair;

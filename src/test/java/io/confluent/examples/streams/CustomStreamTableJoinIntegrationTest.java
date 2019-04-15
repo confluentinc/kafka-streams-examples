@@ -191,24 +191,24 @@ public class CustomStreamTableJoinIntegrationTest {
     final Duration frequencyToCheckForExpiredWaitTimes = Duration.ofSeconds(2);
 
     final List<KeyValueWithTimestamp<String, Double>> inputStreamRecords = Arrays.asList(
-      new KeyValueWithTimestamp<>("alice", 999.99, TimeUnit.MILLISECONDS.toMillis(10)),
-      new KeyValueWithTimestamp<>("bobby", 222.22, TimeUnit.MILLISECONDS.toMillis(15)),
-      new KeyValueWithTimestamp<>("alice", 555.55, TimeUnit.MILLISECONDS.toMillis(30)),
-      new KeyValueWithTimestamp<>("alice", 666.66, TimeUnit.MILLISECONDS.toMillis(40))
+        new KeyValueWithTimestamp<>("alice", 999.99, TimeUnit.MILLISECONDS.toMillis(10)),
+        new KeyValueWithTimestamp<>("bobby", 222.22, TimeUnit.MILLISECONDS.toMillis(15)),
+        new KeyValueWithTimestamp<>("alice", 555.55, TimeUnit.MILLISECONDS.toMillis(30)),
+        new KeyValueWithTimestamp<>("alice", 666.66, TimeUnit.MILLISECONDS.toMillis(40))
     );
 
     final List<KeyValueWithTimestamp<String, Long>> inputTableRecords = Arrays.asList(
-      new KeyValueWithTimestamp<>("alice", 1L, TimeUnit.MILLISECONDS.toMillis(20)),
-      new KeyValueWithTimestamp<>("alice", 2L, TimeUnit.MILLISECONDS.toMillis(39)),
-      new KeyValueWithTimestamp<>("bobby", 8L,
-        approxMaxWaitTimePerRecordForTableData.plus(Duration.ofSeconds(1)).toMillis())
+        new KeyValueWithTimestamp<>("alice", 1L, TimeUnit.MILLISECONDS.toMillis(20)),
+        new KeyValueWithTimestamp<>("alice", 2L, TimeUnit.MILLISECONDS.toMillis(39)),
+        new KeyValueWithTimestamp<>("bobby", 8L,
+            approxMaxWaitTimePerRecordForTableData.plus(Duration.ofSeconds(1)).toMillis())
     );
 
     final List<KeyValue<String, Pair<Double, Long>>> expectedOutputRecords = Arrays.asList(
-      new KeyValue<>("alice", new Pair<>(999.99, 1L)),
-      new KeyValue<>("alice", new Pair<>(555.55, 1L)),
-      new KeyValue<>("alice", new Pair<>(666.66, 2L)),
-      new KeyValue<>("bobby", new Pair<>(222.22, null))
+        new KeyValue<>("alice", new Pair<>(999.99, 1L)),
+        new KeyValue<>("alice", new Pair<>(555.55, 1L)),
+        new KeyValue<>("alice", new Pair<>(666.66, 2L)),
+        new KeyValue<>("bobby", new Pair<>(222.22, null))
     );
 
     //
@@ -226,63 +226,63 @@ public class CustomStreamTableJoinIntegrationTest {
     // This state store is used to temporarily buffer any records arriving at the stream side of the join, so that
     // we can wait (if needed) for matching data to arrive at the table side.
     final StoreBuilder<KeyValueStore<String, Pair<Double, Instant>>> streamBufferStateStore =
-      Stores
-        .keyValueStoreBuilder(
-          Stores.persistentKeyValueStore("stream-buffer-state-store"),
-          Serdes.String(),
-          new PairSerde<>(Serdes.Double(), new InstantSerde())
-        )
-        .withCachingEnabled();
+        Stores
+            .keyValueStoreBuilder(
+                Stores.persistentKeyValueStore("stream-buffer-state-store"),
+                Serdes.String(),
+                new PairSerde<>(Serdes.Double(), new InstantSerde())
+            )
+            .withCachingEnabled();
     builder.addStateStore(streamBufferStateStore);
 
     // Read the input data.
     final KStream<String, Double> stream = builder.stream(inputTopicForStream, Consumed.with(Serdes.String(), Serdes.Double()));
     final KTable<String, Long> table =
-      builder.table(inputTopicForTable, Consumed.with(Serdes.String(), Serdes.Long()),
-        // Disabling this state store's cache ensures that table-side data is seen more immediately and that reading the
-        // stream-side data doesn't advance the stream-time too quickly (which might result in join output being
-        // sent by the stream side before the processing topology had the chance to look at the table side).
-        Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as(tableStoreName).withCachingDisabled());
+        builder.table(inputTopicForTable, Consumed.with(Serdes.String(), Serdes.Long()),
+            // Disabling this state store's cache ensures that table-side data is seen more immediately and that reading the
+            // stream-side data doesn't advance the stream-time too quickly (which might result in join output being
+            // sent by the stream side before the processing topology had the chance to look at the table side).
+            Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as(tableStoreName).withCachingDisabled());
 
     // Perform the custom join operation.
     final KStream<String, Pair<Double, Long>> transformedStream =
-      stream.transform(
-        new StreamTableJoinStreamSideLogic(
-          approxMaxWaitTimePerRecordForTableData,
-          frequencyToCheckForExpiredWaitTimes,
-          streamBufferStateStore.name(),
-          tableStoreName),
-        streamBufferStateStore.name(),
-        tableStoreName);
+        stream.transform(
+            new StreamTableJoinStreamSideLogic(
+                approxMaxWaitTimePerRecordForTableData,
+                frequencyToCheckForExpiredWaitTimes,
+                streamBufferStateStore.name(),
+                tableStoreName),
+            streamBufferStateStore.name(),
+            tableStoreName);
     final KTable<String, Pair<Double, Long>> transformedTable =
-      table.transformValues(
-        new StreamTableJoinTableSideLogic(approxMaxWaitTimePerRecordForTableData, streamBufferStateStore.name()),
-        streamBufferStateStore.name());
+        table.transformValues(
+            new StreamTableJoinTableSideLogic(approxMaxWaitTimePerRecordForTableData, streamBufferStateStore.name()),
+            streamBufferStateStore.name());
     final KStream<String, Pair<Double, Long>> joined =
-      // We need to discard the table's tombstone records (records with null values) from the stream-table join output.
-      // Such tombstone records are present because we are working with a KTable and a `ValueTransformerWithKey`, and
-      // the latter is not able to discard these itself.
-      transformedStream.merge(transformedTable.toStream().filter((k, v) -> v != null));
+        // We need to discard the table's tombstone records (records with null values) from the stream-table join output.
+        // Such tombstone records are present because we are working with a KTable and a `ValueTransformerWithKey`, and
+        // the latter is not able to discard these itself.
+        transformedStream.merge(transformedTable.toStream().filter((k, v) -> v != null));
 
     // Write the join results back to Kafka.
     joined.to(outputTopic, Produced.with(Serdes.String(), new PairSerde<>(Serdes.Double(), Serdes.Long())));
 
-    // Start the topology.
-    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
-    streams.start();
+    try (final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration)) {
+      // Start the topology.
+      streams.start();
 
-    //
-    // Step 2: Produce some input data to the input topics.
-    //
-    writeInputDataToStream(inputStreamRecords);
-    writeInputDataToTable(inputTableRecords);
+      //
+      // Step 2: Produce some input data to the input topics.
+      //
+      writeInputDataToStream(inputStreamRecords);
+      writeInputDataToTable(inputTableRecords);
 
-    //
-    // Step 3: Verify the application's output data.
-    //
-    final List<KeyValue<String, Long>> actualRecords = readOutputDataFromJoinedStream(expectedOutputRecords.size());
-    streams.close();
-    assertThat(actualRecords).isEqualTo(expectedOutputRecords);
+      //
+      // Step 3: Verify the application's output data.
+      //
+      final List<KeyValue<String, Long>> actualRecords = readOutputDataFromJoinedStream(expectedOutputRecords.size());
+      assertThat(actualRecords).isEqualTo(expectedOutputRecords);
+    }
   }
 
   /**
@@ -295,7 +295,7 @@ public class CustomStreamTableJoinIntegrationTest {
    * latency for a stream-side record in the topology.
    */
   private static final class StreamTableJoinStreamSideLogic
-    implements TransformerSupplier<String, Double, KeyValue<String, Pair<Double, Long>>> {
+      implements TransformerSupplier<String, Double, KeyValue<String, Pair<Double, Long>>> {
 
     private static final Logger LOG = LoggerFactory.getLogger(StreamTableJoinStreamSideLogic.class);
 
@@ -345,14 +345,14 @@ public class CustomStreamTableJoinIntegrationTest {
          */
         private void sendAnyWaitingRecordForKey(final String key) {
           LOG.info("Checking whether there is any waiting stream record for key {} to forward because new stream " +
-            "record was received for same key", key);
+              "record was received for same key", key);
           final Pair<Double, Instant> streamValue = streamBufferStore.get(key);
           if (streamValue != null) {
             // No need to check whether a table-side record exists. Because if it did, the table side would have
             // already triggered a join update and removed that stream record from the buffer.
             final Pair<Double, Long> joinedValue = new Pair<>(streamValue.x, null);
             LOG.info("Force-forwarding waiting stream record ({}, {}) because new stream record received for key {}",
-              key, joinedValue, key);
+                key, joinedValue, key);
             context.forward(key, joinedValue);
             streamBufferStore.delete(key);
           }
@@ -383,11 +383,11 @@ public class CustomStreamTableJoinIntegrationTest {
             while (iterator.hasNext()) {
               final KeyValue<String, Pair<Double, Instant>> record = iterator.next();
               LOG.info("Checking waiting stream record ({}, {}) with timestamp {}", record.key, record.value.x,
-                record.value.y.toEpochMilli());
+                  record.value.y.toEpochMilli());
               if (waitTimeExpired(record.value.y, currentStreamTime)) {
                 final Pair<Double, Long> joinedValue = new Pair<>(record.value.x, null);
                 LOG.info("Wait time for stream record ({}, {}) expired, force-forwarding now as join message " +
-                  "({}, ({}, {}))", record.key, record.value.x, record.key, joinedValue.x, joinedValue.y);
+                    "({}, ({}, {}))", record.key, record.value.x, record.key, joinedValue.x, joinedValue.y);
                 context.forward(record.key, joinedValue);
                 streamBufferStore.delete(record.key);
               }
@@ -397,7 +397,7 @@ public class CustomStreamTableJoinIntegrationTest {
 
         private boolean waitTimeExpired(final Instant recordTimestamp, final long currentStreamTime) {
           return Duration.between(recordTimestamp, Instant.ofEpochMilli(currentStreamTime))
-            .compareTo(approxMaxWaitTimePerRecordForTableData) > 0;
+              .compareTo(approxMaxWaitTimePerRecordForTableData) > 0;
         }
 
         @Override
@@ -419,7 +419,7 @@ public class CustomStreamTableJoinIntegrationTest {
    * the transformer will effectively do nothing (it will actually send a tombstone record).
    */
   private static final class StreamTableJoinTableSideLogic
-    implements ValueTransformerWithKeySupplier<String, Long, Pair<Double, Long>> {
+      implements ValueTransformerWithKeySupplier<String, Long, Pair<Double, Long>> {
 
     private static final Logger LOG = LoggerFactory.getLogger(StreamTableJoinTableSideLogic.class);
 
@@ -451,6 +451,12 @@ public class CustomStreamTableJoinIntegrationTest {
          * tombstone records in the downstream processing topology (see code further above in this file) because, in the
          * context of this example of a custom stream-table join, they must not appear in the join output.  Note that we
          * can't discard the tombstones directly in the ValueTransformerWithKey.
+         *
+         * Alternatively, we could switch from the use of `transformValues()` to `transform()` to avoid this issue.
+         * However, the benefit of `transformValues()` is that we avoid potential downstream re-partitioning.
+         *
+         * TODO: In upcoming Apache Kafka 2.3 and Confluent Platform 5.3, we should switch this example to use
+         *       `flatTransformValues()` (introduced by KIP-313).
          */
         @Override
         public Pair<Double, Long> transform(final String key, final Long value) {
@@ -467,7 +473,7 @@ public class CustomStreamTableJoinIntegrationTest {
               // You can also incorporate timestamps of records into your join logic as shown here.
               if (withinAcceptableBounds(streamValue.y, Instant.ofEpochMilli(tableRecordTimestamp))) {
                 LOG.info("Stream data available for key {}, sending fully populated join message ({}, ({}, {}))", key,
-                  key, streamValue.x, tableValue);
+                    key, streamValue.x, tableValue);
                 streamBufferStore.delete(key);
                 return new Pair<>(streamValue.x, tableValue);
               } else {
@@ -487,7 +493,7 @@ public class CustomStreamTableJoinIntegrationTest {
         private boolean withinAcceptableBounds(final Instant streamRecordTimestamp,
                                                final Instant tableRecordTimestamp) {
           return Duration.between(streamRecordTimestamp, tableRecordTimestamp)
-            .compareTo(approxMaxWaitTimePerRecordForTableData) <= 0;
+              .compareTo(approxMaxWaitTimePerRecordForTableData) <= 0;
         }
 
         @Override
@@ -500,7 +506,7 @@ public class CustomStreamTableJoinIntegrationTest {
   }
 
   private void writeInputDataToStream(final List<KeyValueWithTimestamp<String, Double>> inputStreamRecords)
-    throws ExecutionException, InterruptedException {
+      throws ExecutionException, InterruptedException {
     // Produce input data for the stream
     final Properties producerConfigStream = new Properties();
     producerConfigStream.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
@@ -508,24 +514,24 @@ public class CustomStreamTableJoinIntegrationTest {
     producerConfigStream.put(ProducerConfig.RETRIES_CONFIG, 0);
     producerConfigStream.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     producerConfigStream.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, DoubleSerializer.class);
-    IntegrationTestUtils.produceKeyValuesWithTimestampsSynchronously(inputTopicForStream, inputStreamRecords,
-      producerConfigStream);
+    IntegrationTestUtils.produceKeyValuesWithTimestampsSynchronously(
+        inputTopicForStream, inputStreamRecords, producerConfigStream);
   }
 
   private void writeInputDataToTable(final List<KeyValueWithTimestamp<String, Long>> inputTableRecords)
-    throws ExecutionException, InterruptedException {
+      throws ExecutionException, InterruptedException {
     final Properties producerConfigTable = new Properties();
     producerConfigTable.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     producerConfigTable.put(ProducerConfig.ACKS_CONFIG, "all");
     producerConfigTable.put(ProducerConfig.RETRIES_CONFIG, 0);
     producerConfigTable.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     producerConfigTable.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
-    IntegrationTestUtils.produceKeyValuesWithTimestampsSynchronously(inputTopicForTable, inputTableRecords,
-      producerConfigTable);
+    IntegrationTestUtils.produceKeyValuesWithTimestampsSynchronously(
+        inputTopicForTable, inputTableRecords, producerConfigTable);
   }
 
   private List<KeyValue<String, Long>> readOutputDataFromJoinedStream(final int numExpectedRecords)
-    throws InterruptedException {
+      throws InterruptedException {
     final Properties consumerConfig = new Properties();
     consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "custom-join-integration-test-standard-consumer");
