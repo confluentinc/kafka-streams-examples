@@ -64,6 +64,7 @@ There are two kinds of examples:
 | WikipediaFeedSpecificAvro | Specific Avro | [Java 8+ example](src/main/java/io/confluent/examples/streams/WikipediaFeedAvroLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/WikipediaFeedAvroExample.java)
 | SecureKafkaStreams | Secure, encryption, client authentication | | [Java 7+ example](src/main/java/io/confluent/examples/streams/SecureKafkaStreamsExample.java)
 | StatesStoresDSL | State Stores, DSL | [Java 8+ example](src/test/java/io/confluent/examples/streams/StateStoresInTheDSLIntegrationTest.java)
+| CustomStreamTableJoin | How to implement custom join semantics with Processor API, DSL, Transformers | [Java 8+ example](src/test/java/io/confluent/examples/streams/CustomStreamTableJoinIntegrationTest.java)
 | WordCountInteractiveQueries | Interactive Queries, REST, RPC | [Java 8+ example](src/main/java/io/confluent/examples/streams/interactivequeries/WordCountInteractiveQueriesExample.java)
 | KafkaMusic | Interactive Queries, State Stores, REST API | [Java 8+ example](src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java)
 | PoisonPill | Corrupt input records | [Java 8+ example](src/test/java/io/confluent/examples/streams/HandlingCorruptedInputRecordsIntegrationTest.java)
@@ -271,7 +272,7 @@ Kafka Streams examples via:
 #
 $ mvn clean package
 
-# >>> Creates target/kafka-streams-examples-5.2.0-standalone.jar
+# >>> Creates target/kafka-streams-examples-5.2.1-standalone.jar
 
 ```
 
@@ -280,7 +281,7 @@ You can now run the example applications as follows:
 ```shell
 # Run an example application from the standalone jar.
 # Here: `WordCountLambdaExample`
-$ java -cp target/kafka-streams-examples-5.2.0-standalone.jar \
+$ java -cp target/kafka-streams-examples-5.2.1-standalone.jar \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
 
@@ -296,7 +297,7 @@ If you want to turn on log4j while running your example application, you can edi
 ```shell
 # Run an example application from the standalone jar.
 # Here: `WordCountLambdaExample`
-$ java -cp target/kafka-streams-examples-5.2.0-standalone.jar \
+$ java -cp target/kafka-streams-examples-5.2.1-standalone.jar \
   -Dlog4j.configuration=file:src/main/resources/log4j.properties \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
@@ -326,7 +327,7 @@ $ mvn test    # Runs unit and integration tests
 
 | Branch (this repo)                      | Apache Kafka      | Confluent Platform | Notes                                                                                                                                |
 | ----------------------------------------|-------------------|--------------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| [5.2.0-post](../../../tree/5.2.0-post/) | 2.2.0             | 5.2.0              | Works out of the box                                                                                                                 |
+| [5.2.1-post](../../../tree/5.2.1-post/) | 2.2.1             | 5.2.1              | Works out of the box                                                                                                                 |
 | [5.1.0-post](../../../tree/5.1.0-post/) | 2.1.0             | 5.1.0              | Works out of the box                                                                                                                 |
 | [5.0.0-post](../../../tree/5.0.0-post/) | 2.0.0             | 5.0.0              | Works out of the box                                                                                                                 |
 | [4.1.0-post](../../../tree/4.1.0-post/) | 1.1.0(-cp1)       | 4.1.0              | Works out of the box                                                                                                                 |
