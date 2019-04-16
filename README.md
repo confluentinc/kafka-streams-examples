@@ -95,7 +95,7 @@ results (using the standard Kafka consumer client).
 
 | Test  | Java 8+ | Java 7+ | Scala |
 | --- | --- | --- | --- |
-| WordCount | [Java 8+ Unit Test](src/test/java/io/confluent/examples/streams/WordCountLambdaExampleTest.java) / [Java 8+ Integration Test](src/test/java/io/confluent/examples/streams/WordCountLambdaIntegrationTest.java) | | [Scala Integration Test](src/test/scala/io/confluent/examples/streams/WordCountScalaIntegrationTest.scala)
+| WordCount | [Java 8+ Unit Test](src/test/java/io/confluent/examples/streams/WordCountLambdaExampleTest.java)  | | [Scala Integration Test](src/test/scala/io/confluent/examples/streams/WordCountScalaIntegrationTest.scala)
 | WordCountInteractiveQueries | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/interactivequeries/WordCountInteractiveQueriesExampleTest.java)
 | EventDeduplication | [Java 8+ Integration Test](src/test/java/io/confluent/examples/streams/EventDeduplicationLambdaIntegrationTest.java)
 | GlobalKTable | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/GlobalKTablesExampleTest.java)
