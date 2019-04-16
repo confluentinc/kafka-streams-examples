@@ -455,8 +455,11 @@ public class CustomStreamTableJoinIntegrationTest {
          * Alternatively, we could switch from the use of `transformValues()` to `transform()` to avoid this issue.
          * However, the benefit of `transformValues()` is that we avoid potential downstream re-partitioning.
          *
-         * TODO: In upcoming Apache Kafka 2.3 and Confluent Platform 5.3, we should switch this example to use
-         *       `flatTransformValues()` (introduced by KIP-313).
+         * TODO: In upcoming Apache Kafka 2.3 and Confluent Platform 5.3, we should consider switching this example to
+         *       use `flatTransformValues()` (introduced by KIP-313). The example would then change from
+         *       `KTable#transformValues()` to a setup with `KTable#toStream()#flatTransformValues()`. This would also
+         *       get rid of tombstones in the output because `KStream#flatTransformValues()` may output zero records
+         *       for an input record.
          */
         @Override
         public Pair<Double, Long> transform(final String key, final Long value) {
