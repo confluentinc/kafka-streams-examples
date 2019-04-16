@@ -22,27 +22,29 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.record.TimestampType;
+import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.errors.InvalidStateStoreException;
 import org.apache.kafka.streams.state.QueryableStoreType;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.ReadOnlyWindowStore;
 import org.apache.kafka.streams.state.WindowStoreIterator;
 import org.apache.kafka.test.TestUtils;
-import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Utility functions to make integration testing more convenient.
@@ -276,5 +278,88 @@ public class IntegrationTestUtils {
         }),
         30000,
         "Expected values not found in WindowStore"); }
+
+  static <K, V> Map<K, V> drainTableOutput(final String outputTopic,
+                                           final TopologyTestDriver topologyTestDriver,
+                                           final Deserializer<K> keyDeserializer,
+                                           final Deserializer<V> valueDeserializer) {
+
+    final Map<K, V> results = new LinkedHashMap<>();
+    while (true) {
+      final ProducerRecord<K, V> record = topologyTestDriver.readOutput(outputTopic, keyDeserializer, valueDeserializer);
+      if (record == null) {
+        break;
+      } else {
+        results.put(record.key(), record.value());
+      }
+    }
+    return results;
+  }
+
+  static <K, V> void produceKeyValuesSynchronously(final String inputTopic,
+                                                   final List<KeyValue<K, V>> entities,
+                                                   final TopologyTestDriver topologyTestDriver,
+                                                   final Serializer<K> keySerializer,
+                                                   final Serializer<V> valueSerializer) {
+    for (final KeyValue<K, V> entity : entities) {
+      topologyTestDriver.pipeInput(new ConsumerRecord<>(
+        inputTopic,
+        0,
+        0,
+        0,
+        TimestampType.CREATE_TIME,
+        -1,
+        -1,
+        -1,
+        keySerializer.serialize(inputTopic, entity.key),
+        valueSerializer.serialize(inputTopic, entity.value)
+      ));
+    }
+  }
+
+  /**
+   * Creates a map entry (for use with {@link IntegrationTestUtils#mkMap(java.util.Map.Entry[])})
+   *
+   * @param k   The key
+   * @param v   The value
+   * @param <K> The key type
+   * @param <V> The value type
+   * @return An entry
+   */
+  static <K, V> Map.Entry<K, V> mkEntry(final K k, final V v) {
+    return new Map.Entry<K, V>() {
+      @Override
+      public K getKey() {
+        return k;
+      }
+
+      @Override
+      public V getValue() {
+        return v;
+      }
+
+      @Override
+      public V setValue(final V value) {
+        throw new UnsupportedOperationException();
+      }
+    };
+  }
+
+  /**
+   * Creates a map from a sequence of entries
+   *
+   * @param entries The entries to map
+   * @param <K>     The key type
+   * @param <V>     The value type
+   * @return A map
+   */
+  @SafeVarargs
+  static <K, V> Map<K, V> mkMap(final Map.Entry<K, V>... entries) {
+    final LinkedHashMap<K, V> result = new LinkedHashMap<>();
+    for (final Map.Entry<K, V> entry : entries) {
+      result.put(entry.getKey(), entry.getValue());
+    }
+    return result;
+  }
 
 }
