@@ -30,7 +30,6 @@ import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.ReadOnlyWindowStore;
 import org.apache.kafka.streams.state.WindowStoreIterator;
 import org.apache.kafka.test.TestUtils;
-import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,7 +41,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import io.confluent.examples.streams.utils.KeyValueWithTimestamp;
 
 /**
  * Utility functions to make integration testing more convenient.
@@ -109,6 +108,30 @@ public class IntegrationTestUtils {
   }
 
   /**
+   * Write a collection of KeyValueWithTimestamp pairs, with explicitly defined timestamps, to Kafka.
+   *
+   * @param topic          Kafka topic to write the data records to
+   * @param records        Data records to write to Kafka
+   * @param producerConfig Kafka producer configuration
+   * @param <K>            Key type of the data records
+   * @param <V>            Value type of the data records
+   */
+  public static <K, V> void produceKeyValuesWithTimestampsSynchronously(
+      final String topic,
+      final Collection<KeyValueWithTimestamp<K, V>> records,
+      final Properties producerConfig)
+      throws ExecutionException, InterruptedException {
+    final Producer<K, V> producer = new KafkaProducer<>(producerConfig);
+    for (final KeyValueWithTimestamp<K, V> record : records) {
+      final Future<RecordMetadata> f = producer.send(
+          new ProducerRecord<>(topic, null, record.timestamp, record.key, record.value));
+      f.get();
+    }
+    producer.flush();
+    producer.close();
+  }
+
+  /**
    * @param topic          Kafka topic to write the data records to
    * @param records        Data records to write to Kafka
    * @param producerConfig Kafka producer configuration
@@ -116,30 +139,34 @@ public class IntegrationTestUtils {
    * @param <V>            Value type of the data records
    */
   public static <K, V> void produceKeyValuesSynchronously(
-      final String topic, final Collection<KeyValue<K, V>> records, final Properties producerConfig)
+      final String topic,
+      final Collection<KeyValue<K, V>> records,
+      final Properties producerConfig)
       throws ExecutionException, InterruptedException {
-    final Producer<K, V> producer = new KafkaProducer<>(producerConfig);
-    for (final KeyValue<K, V> record : records) {
-      final Future<RecordMetadata> f = producer.send(
-          new ProducerRecord<>(topic, record.key, record.value));
-      f.get();
-    }
-    producer.flush();
-    producer.close();
+    final Collection<KeyValueWithTimestamp<K, V>> keyedRecordsWithTimestamp =
+        records
+            .stream()
+            .map(record -> new KeyValueWithTimestamp<>(record.key, record.value, System.currentTimeMillis()))
+            .collect(Collectors.toList());
+    produceKeyValuesWithTimestampsSynchronously(topic, keyedRecordsWithTimestamp, producerConfig);
   }
 
   public static <V> void produceValuesSynchronously(
       final String topic, final Collection<V> records, final Properties producerConfig)
       throws ExecutionException, InterruptedException {
     final Collection<KeyValue<Object, V>> keyedRecords =
-        records.stream().map(record -> new KeyValue<>(null, record)).collect(Collectors.toList());
+        records
+            .stream()
+            .map(record -> new KeyValue<>(null, record))
+            .collect(Collectors.toList());
     produceKeyValuesSynchronously(topic, keyedRecords, producerConfig);
   }
 
-  public static <K, V> List<KeyValue<K, V>> waitUntilMinKeyValueRecordsReceived(final Properties consumerConfig,
-                                                                                final String topic,
-                                                                                final int expectedNumRecords) throws InterruptedException {
-
+  public static <K, V> List<KeyValue<K, V>> waitUntilMinKeyValueRecordsReceived(
+      final Properties consumerConfig,
+      final String topic,
+      final int expectedNumRecords)
+      throws InterruptedException {
     return waitUntilMinKeyValueRecordsReceived(consumerConfig, topic, expectedNumRecords, DEFAULT_TIMEOUT);
   }
 
@@ -266,15 +293,16 @@ public class IntegrationTestUtils {
     final long fromBeginningOfTimeMs = 0;
     final long toNowInProcessingTimeMs = System.currentTimeMillis();
     TestUtils.waitForCondition(() ->
-        expected.keySet().stream().allMatch(k -> {
-          try (final WindowStoreIterator<V> iterator = store.fetch(k, fromBeginningOfTimeMs, toNowInProcessingTimeMs)) {
-            if (iterator.hasNext()) {
-              return expected.get(k).equals(iterator.next().value);
-            }
-            return false;
-          }
-        }),
+            expected.keySet().stream().allMatch(k -> {
+              try (final WindowStoreIterator<V> iterator = store.fetch(k, fromBeginningOfTimeMs, toNowInProcessingTimeMs)) {
+                if (iterator.hasNext()) {
+                  return expected.get(k).equals(iterator.next().value);
+                }
+                return false;
+              }
+            }),
         30000,
-        "Expected values not found in WindowStore"); }
+        "Expected values not found in WindowStore");
+  }
 
 }
