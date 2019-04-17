@@ -47,7 +47,7 @@ public class FraudServiceTest extends MicroserviceTestUtils {
     //Given
     fraudService = new FraudService();
 
-    List<Order> orders = asList(
+    final List<Order> orders = asList(
         new Order(id(0L), 0L, CREATED, UNDERPANTS, 3, 5.00d),
         new Order(id(1L), 0L, CREATED, JUMPERS, 1, 75.00d),
         new Order(id(2L), 1L, CREATED, JUMPERS, 1, 75.00d),
@@ -63,7 +63,7 @@ public class FraudServiceTest extends MicroserviceTestUtils {
     fraudService.start(CLUSTER.bootstrapServers());
 
     //Then there should be failures for the two orders that push customers over their limit.
-    List<OrderValidation> expected = asList(
+    final List<OrderValidation> expected = asList(
         new OrderValidation(id(0L), FRAUD_CHECK, PASS),
         new OrderValidation(id(1L), FRAUD_CHECK, PASS),
         new OrderValidation(id(2L), FRAUD_CHECK, PASS),
@@ -73,7 +73,7 @@ public class FraudServiceTest extends MicroserviceTestUtils {
         new OrderValidation(id(6L), FRAUD_CHECK, FAIL),
         new OrderValidation(id(7L), FRAUD_CHECK, FAIL)
     );
-    List<OrderValidation> read = read(Topics.ORDER_VALIDATIONS, 8, CLUSTER.bootstrapServers());
+    final List<OrderValidation> read = read(Topics.ORDER_VALIDATIONS, 8, CLUSTER.bootstrapServers());
     assertThat(read).isEqualTo(expected);
   }
 }

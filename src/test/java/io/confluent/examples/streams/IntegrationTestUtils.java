@@ -58,8 +58,10 @@ public class IntegrationTestUtils {
    * @param maxMessages    Maximum number of messages to read via the consumer.
    * @return The values retrieved via the consumer.
    */
-  public static <K, V> List<V> readValues(String topic, Properties consumerConfig, int maxMessages) {
-    List<KeyValue<K, V>> kvs = readKeyValues(topic, consumerConfig, maxMessages);
+  public static <K, V> List<V> readValues(final String topic,
+                                          final Properties consumerConfig,
+                                          final int maxMessages) {
+    final List<KeyValue<K, V>> kvs = readKeyValues(topic, consumerConfig, maxMessages);
     return kvs.stream().map(kv -> kv.value).collect(Collectors.toList());
   }
 
@@ -71,7 +73,8 @@ public class IntegrationTestUtils {
    * @param consumerConfig Kafka consumer configuration
    * @return The KeyValue elements retrieved via the consumer.
    */
-  public static <K, V> List<KeyValue<K, V>> readKeyValues(String topic, Properties consumerConfig) {
+  public static <K, V> List<KeyValue<K, V>> readKeyValues(final String topic,
+                                                          final Properties consumerConfig) {
     return readKeyValues(topic, consumerConfig, UNLIMITED_MESSAGES);
   }
 
@@ -84,17 +87,19 @@ public class IntegrationTestUtils {
    * @param maxMessages    Maximum number of messages to read via the consumer
    * @return The KeyValue elements retrieved via the consumer
    */
-  public static <K, V> List<KeyValue<K, V>> readKeyValues(String topic, Properties consumerConfig, int maxMessages) {
-    KafkaConsumer<K, V> consumer = new KafkaConsumer<>(consumerConfig);
+  public static <K, V> List<KeyValue<K, V>> readKeyValues(final String topic,
+                                                          final Properties consumerConfig,
+                                                          final int maxMessages) {
+    final KafkaConsumer<K, V> consumer = new KafkaConsumer<>(consumerConfig);
     consumer.subscribe(Collections.singletonList(topic));
-    int pollIntervalMs = 100;
-    int maxTotalPollTimeMs = 2000;
+    final int pollIntervalMs = 100;
+    final int maxTotalPollTimeMs = 2000;
     int totalPollTimeMs = 0;
-    List<KeyValue<K, V>> consumedValues = new ArrayList<>();
+    final List<KeyValue<K, V>> consumedValues = new ArrayList<>();
     while (totalPollTimeMs < maxTotalPollTimeMs && continueConsuming(consumedValues.size(), maxMessages)) {
       totalPollTimeMs += pollIntervalMs;
-      ConsumerRecords<K, V> records = consumer.poll(pollIntervalMs);
-      for (ConsumerRecord<K, V> record : records) {
+      final ConsumerRecords<K, V> records = consumer.poll(pollIntervalMs);
+      for (final ConsumerRecord<K, V> record : records) {
         consumedValues.add(new KeyValue<>(record.key(), record.value()));
       }
     }
@@ -102,7 +107,7 @@ public class IntegrationTestUtils {
     return consumedValues;
   }
 
-  private static boolean continueConsuming(int messagesConsumed, int maxMessages) {
+  private static boolean continueConsuming(final int messagesConsumed, final int maxMessages) {
     return maxMessages <= 0 || messagesConsumed < maxMessages;
   }
 
@@ -114,11 +119,11 @@ public class IntegrationTestUtils {
    * @param <V>            Value type of the data records
    */
   public static <K, V> void produceKeyValuesSynchronously(
-      String topic, Collection<KeyValue<K, V>> records, Properties producerConfig)
+    final String topic, final Collection<KeyValue<K, V>> records, final Properties producerConfig)
       throws ExecutionException, InterruptedException {
-    Producer<K, V> producer = new KafkaProducer<>(producerConfig);
-    for (KeyValue<K, V> record : records) {
-      Future<RecordMetadata> f = producer.send(
+    final Producer<K, V> producer = new KafkaProducer<>(producerConfig);
+    for (final KeyValue<K, V> record : records) {
+      final Future<RecordMetadata> f = producer.send(
           new ProducerRecord<>(topic, record.key, record.value));
       f.get();
     }
@@ -127,16 +132,17 @@ public class IntegrationTestUtils {
   }
 
   public static <V> void produceValuesSynchronously(
-      String topic, Collection<V> records, Properties producerConfig)
+    final String topic, final Collection<V> records, final Properties producerConfig)
       throws ExecutionException, InterruptedException {
-    Collection<KeyValue<Object, V>> keyedRecords =
+    final Collection<KeyValue<Object, V>> keyedRecords =
         records.stream().map(record -> new KeyValue<>(null, record)).collect(Collectors.toList());
     produceKeyValuesSynchronously(topic, keyedRecords, producerConfig);
   }
 
-  public static <K, V> List<KeyValue<K, V>> waitUntilMinKeyValueRecordsReceived(Properties consumerConfig,
-                                                                                String topic,
-                                                                                int expectedNumRecords) throws InterruptedException {
+  public static <K, V> List<KeyValue<K, V>> waitUntilMinKeyValueRecordsReceived(final Properties consumerConfig,
+                                                                                final String topic,
+                                                                                final int expectedNumRecords)
+    throws InterruptedException {
 
     return waitUntilMinKeyValueRecordsReceived(consumerConfig, topic, expectedNumRecords, DEFAULT_TIMEOUT);
   }
@@ -151,14 +157,15 @@ public class IntegrationTestUtils {
    * @return All the records consumed, or null if no records are consumed
    * @throws AssertionError if the given wait time elapses
    */
-  public static <K, V> List<KeyValue<K, V>> waitUntilMinKeyValueRecordsReceived(Properties consumerConfig,
-                                                                                String topic,
-                                                                                int expectedNumRecords,
-                                                                                long waitTime) throws InterruptedException {
-    List<KeyValue<K, V>> accumData = new ArrayList<>();
-    long startTime = System.currentTimeMillis();
+  public static <K, V> List<KeyValue<K, V>> waitUntilMinKeyValueRecordsReceived(final Properties consumerConfig,
+                                                                                final String topic,
+                                                                                final int expectedNumRecords,
+                                                                                final long waitTime)
+    throws InterruptedException {
+    final List<KeyValue<K, V>> accumData = new ArrayList<>();
+    final long startTime = System.currentTimeMillis();
     while (true) {
-      List<KeyValue<K, V>> readData = readKeyValues(topic, consumerConfig);
+      final List<KeyValue<K, V>> readData = readKeyValues(topic, consumerConfig);
       accumData.addAll(readData);
       if (accumData.size() >= expectedNumRecords)
         return accumData;
@@ -170,9 +177,10 @@ public class IntegrationTestUtils {
     }
   }
 
-  public static <V> List<V> waitUntilMinValuesRecordsReceived(Properties consumerConfig,
-                                                              String topic,
-                                                              int expectedNumRecords) throws InterruptedException {
+  public static <V> List<V> waitUntilMinValuesRecordsReceived(final Properties consumerConfig,
+                                                              final String topic,
+                                                              final int expectedNumRecords)
+    throws InterruptedException {
 
     return waitUntilMinValuesRecordsReceived(consumerConfig, topic, expectedNumRecords, DEFAULT_TIMEOUT);
   }
@@ -187,14 +195,14 @@ public class IntegrationTestUtils {
    * @return All the records consumed, or null if no records are consumed
    * @throws AssertionError if the given wait time elapses
    */
-  public static <V> List<V> waitUntilMinValuesRecordsReceived(Properties consumerConfig,
-                                                              String topic,
-                                                              int expectedNumRecords,
-                                                              long waitTime) throws InterruptedException {
-    List<V> accumData = new ArrayList<>();
-    long startTime = System.currentTimeMillis();
+  public static <V> List<V> waitUntilMinValuesRecordsReceived(final Properties consumerConfig,
+                                                              final String topic,
+                                                              final int expectedNumRecords,
+                                                              final long waitTime) throws InterruptedException {
+    final List<V> accumData = new ArrayList<>();
+    final long startTime = System.currentTimeMillis();
     while (true) {
-      List<V> readData = readValues(topic, consumerConfig, expectedNumRecords);
+      final List<V> readData = readValues(topic, consumerConfig, expectedNumRecords);
       accumData.addAll(readData);
       if (accumData.size() >= expectedNumRecords)
         return accumData;
@@ -226,7 +234,7 @@ public class IntegrationTestUtils {
     while (true) {
       try {
         return streams.store(storeName, queryableStoreType);
-      } catch (InvalidStateStoreException ignored) {
+      } catch (final InvalidStateStoreException ignored) {
         // store not yet ready for querying
         Thread.sleep(50);
       }
@@ -241,9 +249,10 @@ public class IntegrationTestUtils {
    * @param <K>      the store's key type
    * @param <V>      the store's value type
    */
-  public static <K, V> void assertThatKeyValueStoreContains(ReadOnlyKeyValueStore<K, V> store, Map<K, V> expected) {
-    for (K key : expected.keySet()) {
-      V actualValue = store.get(key);
+  public static <K, V> void assertThatKeyValueStoreContains(final ReadOnlyKeyValueStore<K, V> store,
+                                                            final Map<K, V> expected) {
+    for (final K key : expected.keySet()) {
+      final V actualValue = store.get(key);
       assertThat(actualValue).isEqualTo(expected.get(key));
     }
   }
@@ -256,19 +265,20 @@ public class IntegrationTestUtils {
    * @param <K>      the store's key type
    * @param <V>      the store's value type
    */
-  public static <K, V> void assertThatOldestWindowContains(ReadOnlyWindowStore<K, V> store, Map<K, V> expected) {
-    long fromBeginningOfTimeMs = 0;
-    long toNowInProcessingTimeMs = System.currentTimeMillis();
-    for (K key : expected.keySet()) {
+  public static <K, V> void assertThatOldestWindowContains(final ReadOnlyWindowStore<K, V> store,
+                                                           final Map<K, V> expected) {
+    final long fromBeginningOfTimeMs = 0;
+    final long toNowInProcessingTimeMs = System.currentTimeMillis();
+    for (final K key : expected.keySet()) {
       long windowCounter = 0;
       // For each key, `ReadOnlyWindowStore#fetch()` guarantees that the iterator iterates through
       // the windows in ascending-time order; that is, the first window (if any) is the oldest
       // available window for that key.
-      try (WindowStoreIterator<V> iterator = store.fetch(key, fromBeginningOfTimeMs, toNowInProcessingTimeMs)) {
+      try (final WindowStoreIterator<V> iterator = store.fetch(key, fromBeginningOfTimeMs, toNowInProcessingTimeMs)) {
         while (iterator.hasNext() && windowCounter <= 1) {
           windowCounter++;
-          KeyValue<Long, V> next = iterator.next();
-          V actualValue = next.value;
+          final KeyValue<Long, V> next = iterator.next();
+          final V actualValue = next.value;
           assertThat(actualValue).isEqualTo(expected.get(key));
         }
       }

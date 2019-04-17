@@ -53,27 +53,27 @@ public class OrderDetailsService implements Service {
   private volatile boolean running;
 
   @Override
-  public void start(String bootstrapServers) {
+  public void start(final String bootstrapServers) {
     executorService.execute(() -> startService(bootstrapServers));
     running = true;
     log.info("Started Service " + getClass().getSimpleName());
   }
 
-  private void startService(String bootstrapServers) {
+  private void startService(final String bootstrapServers) {
     startConsumer(bootstrapServers);
     startProducer(bootstrapServers);
 
     try {
-      Map<TopicPartition, OffsetAndMetadata> consumedOffsets = new HashMap<>();
+      final Map<TopicPartition, OffsetAndMetadata> consumedOffsets = new HashMap<>();
       consumer.subscribe(singletonList(Topics.ORDERS.name()));
       producer.initTransactions();
 
       while (running) {
-        ConsumerRecords<String, Order> records = consumer.poll(100);
+        final ConsumerRecords<String, Order> records = consumer.poll(100);
         if (records.count() > 0) {
           producer.beginTransaction();
-          for (ConsumerRecord<String, Order> record : records) {
-            Order order = record.value();
+          for (final ConsumerRecord<String, Order> record : records) {
+            final Order order = record.value();
             if (OrderState.CREATED.equals(order.getState())) {
               //Validate the order then send the result (but note we are in a transaction so
               //nothing will be "seen" downstream until we commit the transaction below)
@@ -90,14 +90,14 @@ public class OrderDetailsService implements Service {
     }
   }
 
-  private void recordOffset(Map<TopicPartition, OffsetAndMetadata> consumedOffsets,
-      ConsumerRecord<String, Order> record) {
-    OffsetAndMetadata nextOffset = new OffsetAndMetadata(record.offset() + 1);
+  private void recordOffset(final Map<TopicPartition, OffsetAndMetadata> consumedOffsets,
+                            final ConsumerRecord<String, Order> record) {
+    final OffsetAndMetadata nextOffset = new OffsetAndMetadata(record.offset() + 1);
     consumedOffsets.put(new TopicPartition(record.topic(), record.partition()), nextOffset);
   }
 
-  private ProducerRecord<String, OrderValidation> result(Order order,
-      OrderValidationResult passOrFail) {
+  private ProducerRecord<String, OrderValidation> result(final Order order,
+                                                         final OrderValidationResult passOrFail) {
     return new ProducerRecord<>(
         Topics.ORDER_VALIDATIONS.name(),
         order.getId(),
@@ -105,8 +105,8 @@ public class OrderDetailsService implements Service {
     );
   }
 
-  private void startProducer(String bootstrapServers) {
-    Properties producerConfig = new Properties();
+  private void startProducer(final String bootstrapServers) {
+    final Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     producerConfig.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "OrderDetailsServiceInstance1");
     producerConfig.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
@@ -118,8 +118,8 @@ public class OrderDetailsService implements Service {
         Topics.ORDER_VALIDATIONS.valueSerde().serializer());
   }
 
-  private void startConsumer(String bootstrapServers) {
-    Properties consumerConfig = new Properties();
+  private void startConsumer(final String bootstrapServers) {
+    final Properties consumerConfig = new Properties();
     consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, CONSUMER_GROUP_ID);
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -144,13 +144,13 @@ public class OrderDetailsService implements Service {
     running = false;
     try {
       executorService.awaitTermination(1000, TimeUnit.MILLISECONDS);
-    } catch (InterruptedException e) {
+    } catch (final InterruptedException e) {
       log.info("Failed to stop " + getClass().getSimpleName() + " in 1000ms");
     }
     log.info(getClass().getSimpleName() + " was stopped");
   }
 
-  private boolean isValid(Order order) {
+  private boolean isValid(final Order order) {
     if (order.getCustomerId() == null) {
       return false;
     }
@@ -163,8 +163,8 @@ public class OrderDetailsService implements Service {
     return order.getProduct() != null;
   }
 
-  public static void main(String[] args) throws Exception {
-    OrderDetailsService service = new OrderDetailsService();
+  public static void main(final String[] args) throws Exception {
+    final OrderDetailsService service = new OrderDetailsService();
     service.start(MicroserviceUtils.parseArgsAndConfigure(args));
     addShutdownHookAndBlock(service);
   }

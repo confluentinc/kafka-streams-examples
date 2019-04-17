@@ -61,17 +61,17 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
   @Test
   public void shouldPostOrderAndGetItBack() {
-    OrderBean bean = new OrderBean(id(1L), 2L, OrderState.CREATED, Product.JUMPERS, 10, 100d);
+    final OrderBean bean = new OrderBean(id(1L), 2L, OrderState.CREATED, Product.JUMPERS, 10, 100d);
 
     final Client client = ClientBuilder.newClient();
 
     //Given a rest service
     rest = new OrdersService("localhost");
     rest.start(CLUSTER.bootstrapServers());
-    Paths paths = new Paths("localhost", rest.port());
+    final Paths paths = new Paths("localhost", rest.port());
 
     //When we POST an order
-    Response response = postWithRetries(
+    final Response response = postWithRetries(
       client.target(paths.urlPost()).request(APPLICATION_JSON_TYPE),
       Entity.json(bean),
       5);
@@ -103,15 +103,15 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
   @Test
   public void shouldGetValidatedOrderOnRequest() {
-    Order orderV1 = new Order(id(1L), 3L, OrderState.CREATED, Product.JUMPERS, 10, 100d);
-    OrderBean beanV1 = OrderBean.toBean(orderV1);
+    final Order orderV1 = new Order(id(1L), 3L, OrderState.CREATED, Product.JUMPERS, 10, 100d);
+    final OrderBean beanV1 = OrderBean.toBean(orderV1);
 
     final Client client = ClientBuilder.newClient();
 
     //Given a rest service
     rest = new OrdersService("localhost");
     rest.start(CLUSTER.bootstrapServers());
-    Paths paths = new Paths("localhost", rest.port());
+    final Paths paths = new Paths("localhost", rest.port());
 
     //When we post an order
     postWithRetries(client.target(paths.urlPost()).request(APPLICATION_JSON_TYPE), Entity.json(beanV1), 5);
@@ -123,12 +123,12 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
         .build()));
 
     //When we GET the order from the returned location
-    Invocation.Builder builder = client
+    final Invocation.Builder builder = client
       .target(paths.urlGetValidated(beanV1.getId()))
       .queryParam("timeout", MIN / 3)
       .request(APPLICATION_JSON_TYPE);
 
-    OrderBean returnedBean = getWithRetries(builder, newBean(), 5);
+    final OrderBean returnedBean = getWithRetries(builder, newBean(), 5);
 
     //Then status should be Validated
     assertThat(returnedBean.getState()).isEqualTo(OrderState.VALIDATED);
@@ -141,9 +141,9 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
     //Start the rest interface
     rest = new OrdersService("localhost");
     rest.start(CLUSTER.bootstrapServers());
-    Paths paths = new Paths("localhost", rest.port());
+    final Paths paths = new Paths("localhost", rest.port());
 
-    Invocation.Builder builder = client
+    final Invocation.Builder builder = client
       .target(paths.urlGet(1))
       .queryParam("timeout", 100) //Lower the request timeout
       .request(APPLICATION_JSON_TYPE);
@@ -152,29 +152,29 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
     try {
       getWithRetries(builder, newBean(), 0); // no retries to fail fast
       fail("Request should have failed as materialized view has not been updated");
-    } catch (ServerErrorException e) {
+    } catch (final ServerErrorException e) {
       assertThat(e.getMessage()).isEqualTo("HTTP 504 Gateway Timeout");
     }
   }
 
   @Test
   public void shouldGetOrderByIdWhenOnDifferentHost() {
-    OrderBean order = new OrderBean(id(1L), 4L, OrderState.VALIDATED, Product.JUMPERS, 10, 100d);
+    final OrderBean order = new OrderBean(id(1L), 4L, OrderState.VALIDATED, Product.JUMPERS, 10, 100d);
     final Client client = ClientBuilder.newClient();
 
     //Given two rest servers on different ports
     rest = new OrdersService("localhost");
     rest.start(CLUSTER.bootstrapServers());
-    Paths paths1 = new Paths("localhost", rest.port());
+    final Paths paths1 = new Paths("localhost", rest.port());
     rest2 = new OrdersService("localhost");
     rest2.start(CLUSTER.bootstrapServers());
-    Paths paths2 = new Paths("localhost", rest2.port());
+    final Paths paths2 = new Paths("localhost", rest2.port());
 
     //And one order
     postWithRetries(client.target(paths1.urlPost()).request(APPLICATION_JSON_TYPE), Entity.json(order), 5);
 
     //When GET to rest1
-    Invocation.Builder builder = client.target(paths1.urlGet(order.getId()))
+    final Invocation.Builder builder = client.target(paths1.urlGet(order.getId()))
       .queryParam("timeout", MIN / 3)
       .request(APPLICATION_JSON_TYPE);
 
