@@ -61,7 +61,7 @@ public class PageViewRegionExampleDriver {
     consumeOutput(bootstrapServers);
   }
 
-  private static void produceInputs(String bootstrapServers, String schemaRegistryUrl) throws IOException {
+  private static void produceInputs(final String bootstrapServers, final String schemaRegistryUrl) throws IOException {
     final String[] users = {"erica", "bob", "joe", "damian", "tania", "phil", "sam", "lauren", "joseph"};
     final String[] regions = {"europe", "usa", "asia", "africa"};
 
@@ -97,7 +97,7 @@ public class PageViewRegionExampleDriver {
     }
   }
 
-  private static void consumeOutput(String bootstrapServers) {
+  private static void consumeOutput(final String bootstrapServers) {
     final String resultTopic = "PageViewsByRegion";
     final Properties consumerProperties = new Properties();
     consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -118,11 +118,16 @@ public class PageViewRegionExampleDriver {
     }
   }
 
-  private static Schema loadSchema(final String name) throws IOException {
-    try (InputStream input = PageViewRegionLambdaExample.class.getClassLoader()
-      .getResourceAsStream("avro/io/confluent/examples/streams/" + name)) {
-      return new Schema.Parser().parse(input);
-    }
+    private static Schema loadSchema(final String name) throws IOException {
+        try (
+            final InputStream input =
+                PageViewRegionLambdaExample
+                    .class
+                    .getClassLoader()
+                    .getResourceAsStream("avro/io/confluent/examples/streams/" + name)
+        ) {
+            return new Schema.Parser().parse(input);
+      }
   }
 
 }

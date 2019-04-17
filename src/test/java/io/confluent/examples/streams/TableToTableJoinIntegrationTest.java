@@ -68,7 +68,7 @@ public class TableToTableJoinIntegrationTest {
   @Test
   public void shouldJoinTwoTables() throws Exception {
     // Input: Region per user (multiple records allowed per user).
-    List<KeyValue<String, String>> userRegionRecords = Arrays.asList(
+    final List<KeyValue<String, String>> userRegionRecords = Arrays.asList(
         new KeyValue<>("alice", "asia"),
         new KeyValue<>("bob", "europe"),
         new KeyValue<>("alice", "europe"),
@@ -77,21 +77,21 @@ public class TableToTableJoinIntegrationTest {
     );
 
     // Input 2: Timestamp of last login per user (multiple records allowed per user)
-    List<KeyValue<String, Long>> userLastLoginRecords = Arrays.asList(
+    final List<KeyValue<String, Long>> userLastLoginRecords = Arrays.asList(
         new KeyValue<>("alice", 1485500000L),
         new KeyValue<>("bob", 1485520000L),
         new KeyValue<>("alice", 1485530000L),
         new KeyValue<>("bob", 1485560000L)
     );
 
-    List<KeyValue<String, String>> expectedResults = Arrays.asList(
+    final List<KeyValue<String, String>> expectedResults = Arrays.asList(
         new KeyValue<>("alice", "europe/1485500000"),
         new KeyValue<>("bob", "asia/1485520000"),
         new KeyValue<>("alice", "europe/1485530000"),
         new KeyValue<>("bob", "asia/1485560000")
     );
 
-    List<KeyValue<String, String>> expectedResultsForJoinStateStore = Arrays.asList(
+    final List<KeyValue<String, String>> expectedResultsForJoinStateStore = Arrays.asList(
         new KeyValue<>("alice", "europe/1485530000"),
         new KeyValue<>("bob", "asia/1485560000")
     );
@@ -102,7 +102,7 @@ public class TableToTableJoinIntegrationTest {
     final Serde<String> stringSerde = Serdes.String();
     final Serde<Long> longSerde = Serdes.Long();
 
-    Properties streamsConfiguration = new Properties();
+    final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "table-table-join-lambda-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
@@ -116,11 +116,13 @@ public class TableToTableJoinIntegrationTest {
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
-    KStreamBuilder builder = new KStreamBuilder();
-    KTable<String, String> userRegions = builder.table(stringSerde, stringSerde, userRegionTopic, "user-region-store");
-    KTable<String, Long> userLastLogins = builder.table(stringSerde, longSerde, userLastLoginTopic, "user-last-login-store");
+    final KStreamBuilder builder = new KStreamBuilder();
+    final KTable<String, String> userRegions =
+      builder.table(stringSerde, stringSerde, userRegionTopic, "user-region-store");
+    final KTable<String, Long> userLastLogins =
+      builder.table(stringSerde, longSerde, userLastLoginTopic, "user-last-login-store");
 
-    KTable<String, String> regionAndLastLogin = userRegions.join(userLastLogins,
+    final KTable<String, String> regionAndLastLogin = userRegions.join(userLastLogins,
         (regionValue, lastLoginValue) -> regionValue + "/" + lastLoginValue);
 
     // Write the results to the output topic.
@@ -140,13 +142,13 @@ public class TableToTableJoinIntegrationTest {
     //
     regionAndLastLogin.through(stringSerde, stringSerde, outputTopic, "joined-store");
 
-    KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
     streams.start();
 
     //
     // Step 2: Publish user regions.
     //
-    Properties regionsProducerConfig = new Properties();
+    final Properties regionsProducerConfig = new Properties();
     regionsProducerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     regionsProducerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     regionsProducerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
@@ -157,7 +159,7 @@ public class TableToTableJoinIntegrationTest {
     //
     // Step 3: Publish user's last login timestamps.
     //
-    Properties lastLoginProducerConfig = new Properties();
+    final Properties lastLoginProducerConfig = new Properties();
     lastLoginProducerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     lastLoginProducerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     lastLoginProducerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
@@ -168,20 +170,20 @@ public class TableToTableJoinIntegrationTest {
     //
     // Step 4: Verify the application's output data.
     //
-    Properties consumerConfig = new Properties();
+    final Properties consumerConfig = new Properties();
     consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "stream-stream-join-lambda-integration-test-standard-consumer");
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    List<KeyValue<String, String>> actualResults = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig,
+    final List<KeyValue<String, String>> actualResults = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig,
         outputTopic, expectedResults.size());
 
     // Verify the (local) state store of the joined table.
     // For a comprehensive demonstration of interactive queries please refer to KafkaMusicExample.
-    ReadOnlyKeyValueStore<String, String> readOnlyKeyValueStore =
+    final ReadOnlyKeyValueStore<String, String> readOnlyKeyValueStore =
         streams.store("joined-store", QueryableStoreTypes.keyValueStore());
-    KeyValueIterator<String, String> keyValueIterator = readOnlyKeyValueStore.all();
+    final KeyValueIterator<String, String> keyValueIterator = readOnlyKeyValueStore.all();
     assertThat(keyValueIterator).containsExactlyElementsOf(expectedResultsForJoinStateStore);
 
     streams.close();
