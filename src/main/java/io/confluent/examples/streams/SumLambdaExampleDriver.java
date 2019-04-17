@@ -56,7 +56,7 @@ public class SumLambdaExampleDriver {
     consumeOutput(bootstrapServers);
   }
 
-  private static void consumeOutput(String bootstrapServers) {
+  private static void consumeOutput(final String bootstrapServers) {
     final Properties properties = new Properties();
     properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, IntegerDeserializer.class);
@@ -75,7 +75,7 @@ public class SumLambdaExampleDriver {
     }
   }
 
-  private static void produceInput(String bootstrapServers) {
+  private static void produceInput(final String bootstrapServers) {
     final Properties props = new Properties();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class);
