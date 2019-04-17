@@ -85,7 +85,7 @@ public class MixAndMatchLambdaIntegrationTest {
 
     @Override
     @SuppressWarnings("unchecked")
-    public void init(ProcessorContext context) {
+    public void init(final ProcessorContext context) {
       // Not needed.
     }
 
@@ -93,7 +93,7 @@ public class MixAndMatchLambdaIntegrationTest {
     public KeyValue<byte[], String> transform(final byte[] recordKey, final String recordValue) {
       // The record value contains the IP address in string representation.
       // The original record key is ignored because we don't need it for this logic.
-      String anonymizedIpAddress = anonymizeIpAddress(recordValue);
+      final String anonymizedIpAddress = anonymizeIpAddress(recordValue);
       return KeyValue.pair(recordKey, anonymizedIpAddress);
     }
 
@@ -107,12 +107,12 @@ public class MixAndMatchLambdaIntegrationTest {
      * @param ipAddress The IPv4 address
      * @return Anonymized IPv4 address.
      */
-    private String anonymizeIpAddress(String ipAddress) {
+    private String anonymizeIpAddress(final String ipAddress) {
       return ipv4AddressPattern.matcher(ipAddress).replaceAll("${keep}XXX");
     }
 
     @Override
-    public KeyValue<byte[], String> punctuate(long timestamp) {
+    public KeyValue<byte[], String> punctuate(final long timestamp) {
       // We don't need any periodic actions in this transformer.  Returning null achieves that.
       return null;
     }
@@ -127,34 +127,34 @@ public class MixAndMatchLambdaIntegrationTest {
 
   @Test
   public void shouldAnonymizeTheInput() throws Exception {
-    List<String> inputValues = Arrays.asList("Hello, 1.2.3.4!", "foo 192.168.1.55 bar");
-    List<String> expectedValues = Arrays.asList("HELLO, 1.2.3.XXX!", "FOO 192.168.1.XXX BAR");
+    final List<String> inputValues = Arrays.asList("Hello, 1.2.3.4!", "foo 192.168.1.55 bar");
+    final List<String> expectedValues = Arrays.asList("HELLO, 1.2.3.XXX!", "FOO 192.168.1.XXX BAR");
 
     //
     // Step 1: Configure and start the processor topology.
     //
-    StreamsBuilder builder = new StreamsBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
-    Properties streamsConfiguration = new Properties();
+    final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "mix-and-match-lambda-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray().getClass().getName());
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-    KStream<byte[], String> input = builder.stream(inputTopic);
-    KStream<byte[], String> uppercasedAndAnonymized = input
+    final KStream<byte[], String> input = builder.stream(inputTopic);
+    final KStream<byte[], String> uppercasedAndAnonymized = input
         .mapValues(String::toUpperCase)
         .transform(AnonymizeIpAddressTransformer::new);
     uppercasedAndAnonymized.to(outputTopic);
 
-    KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();
 
     //
     // Step 2: Produce some input data to the input topic.
     //
-    Properties producerConfig = new Properties();
+    final Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
@@ -165,13 +165,13 @@ public class MixAndMatchLambdaIntegrationTest {
     //
     // Step 3: Verify the application's output data.
     //
-    Properties consumerConfig = new Properties();
+    final Properties consumerConfig = new Properties();
     consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "mix-and-match-lambda-integration-test-standard-consumer");
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
     consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    List<String> actualValues = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfig,
+    final List<String> actualValues = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfig,
         outputTopic, expectedValues.size());
     streams.close();
     assertThat(actualValues).isEqualTo(expectedValues);

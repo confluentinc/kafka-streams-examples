@@ -27,11 +27,11 @@ public class Schemas {
 
   public static class Topic<K, V> {
 
-    private String name;
-    private Serde<K> keySerde;
-    private Serde<V> valueSerde;
+    private final String name;
+    private final Serde<K> keySerde;
+    private final Serde<V> valueSerde;
 
-    Topic(String name, Serde<K> keySerde, Serde<V> valueSerde) {
+    Topic(final String name, final Serde<K> keySerde, final Serde<V> valueSerde) {
       this.name = name;
       this.keySerde = keySerde;
       this.valueSerde = valueSerde;
@@ -80,9 +80,9 @@ public class Schemas {
     }
   }
 
-  public static void configureSerdesWithSchemaRegistryUrl(String url) {
+  public static void configureSerdesWithSchemaRegistryUrl(final String url) {
     Topics.createTopics(); //wipe cached schema registry
-    for (Topic topic : Topics.ALL.values()) {
+    for (final Topic topic : Topics.ALL.values()) {
       configure(topic.keySerde(), url);
       configure(topic.valueSerde(), url);
     }
@@ -90,7 +90,7 @@ public class Schemas {
     schemaRegistryUrl = url;
   }
 
-  private static void configure(Serde serde, String url) {
+  private static void configure(final Serde serde, final String url) {
     if (serde instanceof SpecificAvroSerde) {
       serde.configure(Collections.singletonMap(SCHEMA_REGISTRY_URL_CONFIG, url), false);
     }

@@ -77,34 +77,34 @@ public class FanoutLambdaIntegrationTest {
 
   @Test
   public void shouldFanoutTheInput() throws Exception {
-    List<String> inputValues = Arrays.asList("Hello", "World");
-    List<String> expectedValuesForB = inputValues.stream().map(String::toUpperCase).collect(Collectors.toList());
-    List<String> expectedValuesForC = inputValues.stream().map(String::toLowerCase).collect(Collectors.toList());
+    final List<String> inputValues = Arrays.asList("Hello", "World");
+    final List<String> expectedValuesForB = inputValues.stream().map(String::toUpperCase).collect(Collectors.toList());
+    final List<String> expectedValuesForC = inputValues.stream().map(String::toLowerCase).collect(Collectors.toList());
 
     //
     // Step 1: Configure and start the processor topology.
     //
-    StreamsBuilder builder = new StreamsBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
-    Properties streamsConfiguration = new Properties();
+    final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "fanout-lambda-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-    KStream<byte[], String> stream1 = builder.stream(inputTopicA);
-    KStream<byte[], String> stream2 = stream1.mapValues(String::toUpperCase);
-    KStream<byte[], String> stream3 = stream1.mapValues(String::toLowerCase);
+    final KStream<byte[], String> stream1 = builder.stream(inputTopicA);
+    final KStream<byte[], String> stream2 = stream1.mapValues(String::toUpperCase);
+    final KStream<byte[], String> stream3 = stream1.mapValues(String::toLowerCase);
     stream2.to(outputTopicB);
     stream3.to(outputTopicC);
 
-    KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();
 
     //
     // Step 2: Produce some input data to the input topic.
     //
-    Properties producerConfig = new Properties();
+    final Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
@@ -117,24 +117,24 @@ public class FanoutLambdaIntegrationTest {
     //
 
     // Verify output topic B
-    Properties consumerConfigB = new Properties();
+    final Properties consumerConfigB = new Properties();
     consumerConfigB.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     consumerConfigB.put(ConsumerConfig.GROUP_ID_CONFIG, "fanout-lambda-integration-test-standard-consumer-topicB");
     consumerConfigB.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     consumerConfigB.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
     consumerConfigB.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    List<String> actualValuesForB = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfigB,
+    final List<String> actualValuesForB = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfigB,
         outputTopicB, inputValues.size());
     assertThat(actualValuesForB).isEqualTo(expectedValuesForB);
 
     // Verify output topic C
-    Properties consumerConfigC = new Properties();
+    final Properties consumerConfigC = new Properties();
     consumerConfigC.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     consumerConfigC.put(ConsumerConfig.GROUP_ID_CONFIG, "fanout-lambda-integration-test-standard-consumer-topicC");
     consumerConfigC.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     consumerConfigC.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
     consumerConfigC.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    List<String> actualValuesForC = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfigC,
+    final List<String> actualValuesForC = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfigC,
         outputTopicC, inputValues.size());
     streams.close();
     assertThat(actualValuesForC).isEqualTo(expectedValuesForC);
