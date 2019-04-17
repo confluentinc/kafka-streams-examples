@@ -23,6 +23,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.record.TimestampType;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
@@ -323,12 +324,12 @@ public class IntegrationTestUtils {
    * Since this call is specifically for a table, we collect the observed records into a {@link Map} from keys to values,
    * representing the latest observed value for each key.
    *
-   * @param topic Topic to consume from
+   * @param topic              Topic to consume from
    * @param topologyTestDriver The {@link TopologyTestDriver} to read the data records from
-   * @param keyDeserializer The {@link Deserializer} corresponding to the key type
+   * @param keyDeserializer    The {@link Deserializer} corresponding to the key type
    * @param valueDeserializer  The {@link Deserializer} corresponding to the value type
-   * @param <K> Key type of the data records
-   * @param <V> Value type of the data records
+   * @param <K>                Key type of the data records
+   * @param <V>                Value type of the data records
    * @return A {@link Map} representing the table constructed from the output topic.
    */
   static <K, V> Map<K, V> drainTableOutput(final String topic,
@@ -354,12 +355,12 @@ public class IntegrationTestUtils {
    * the expected number of records, and then hope that these are all the results from our test. Instead, we can
    * just read out <em>all</em> the processing results, for use with deterministic validations.
    *
-   * @param topic Topic to consume from
+   * @param topic              Topic to consume from
    * @param topologyTestDriver The {@link TopologyTestDriver} to read the data records from
-   * @param keyDeserializer The {@link Deserializer} corresponding to the key type
+   * @param keyDeserializer    The {@link Deserializer} corresponding to the key type
    * @param valueDeserializer  The {@link Deserializer} corresponding to the value type
-   * @param <K> Key type of the data records
-   * @param <V> Value type of the data records
+   * @param <K>                Key type of the data records
+   * @param <V>                Value type of the data records
    * @return A {@link List} of {@link KeyValue} pairs of results from the output topic, in the order they were produced.
    */
   static <K, V> List<KeyValue<K, V>> drainStreamOutput(final String topic,
@@ -397,19 +398,41 @@ public class IntegrationTestUtils {
                                                    final Serializer<V> valueSerializer) {
     for (final KeyValue<K, V> entity : records) {
       final ConsumerRecord<byte[], byte[]> consumerRecord = new ConsumerRecord<>(
-        topic,
-        0,
-        0,
-        0,
-        TimestampType.CREATE_TIME,
-        ConsumerRecord.NULL_CHECKSUM,
-        ConsumerRecord.NULL_SIZE,
-        ConsumerRecord.NULL_SIZE,
-        keySerializer.serialize(topic, entity.key),
-        valueSerializer.serialize(topic, entity.value)
+          topic,
+          0,
+          0,
+          0,
+          TimestampType.CREATE_TIME,
+          ConsumerRecord.NULL_CHECKSUM,
+          ConsumerRecord.NULL_SIZE,
+          ConsumerRecord.NULL_SIZE,
+          keySerializer.serialize(topic, entity.key),
+          valueSerializer.serialize(topic, entity.value)
       );
       topologyTestDriver.pipeInput(consumerRecord);
     }
+  }
+
+  /**
+   * Like {@link IntegrationTestUtils#produceValuesSynchronously(String, Collection, Properties)}, except for use with
+   * TopologyTestDriver tests, rather than "native" Kafka broker tests.
+   *
+   * @param topic              Kafka topic to write the data records to
+   * @param values             Message values to write to Kafka (keys will have type byte[] and be set to null)
+   * @param topologyTestDriver The {@link TopologyTestDriver} to send the data records to
+   * @param valueSerializer    The {@link Serializer} corresponding to the value type
+   * @param <V>                Value type of the data records
+   */
+  static <K, V> void produceValuesSynchronously(final String topic,
+                                                final List<V> values,
+                                                final TopologyTestDriver topologyTestDriver,
+                                                final Serializer<V> valueSerializer) {
+    final List<KeyValue<byte[], V>> keyedRecords =
+        values
+            .stream()
+            .map(value -> new KeyValue<byte[], V>(null, value))
+            .collect(Collectors.toList());
+    produceKeyValuesSynchronously(topic, keyedRecords, topologyTestDriver, new ByteArraySerializer(), valueSerializer);
   }
 
   /**
@@ -459,8 +482,9 @@ public class IntegrationTestUtils {
 
   /**
    * A Serializer/Deserializer/Serde implementation for use when you know the data is always null
+   *
    * @param <T> The type of the stream (you can parameterize this with any type,
-   *           since we throw an exception if you attempt to use it with non-null data)
+   *            since we throw an exception if you attempt to use it with non-null data)
    */
   static class NothingSerde<T> implements Serializer<T>, Deserializer<T>, Serde<T> {
 
