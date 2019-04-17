@@ -231,7 +231,7 @@ public class KafkaMusicExampleTest {
       try {
         songsStore = streams.store(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.keyValueStore());
         return songsStore.all().hasNext();
-      } catch (Exception e) {
+      } catch (final Exception e) {
         e.printStackTrace();
         return false;
       }
@@ -284,7 +284,7 @@ public class KafkaMusicExampleTest {
             new GenericType<List<SongPlayCountBean>>() {},
             0);
         return chart.size() == 5;
-      } catch (Exception e) {
+      } catch (final Exception e) {
         e.printStackTrace();
         return false;
       }

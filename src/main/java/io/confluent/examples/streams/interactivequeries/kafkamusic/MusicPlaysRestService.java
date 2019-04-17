@@ -167,7 +167,7 @@ public class MusicPlaysRestService {
   @GET()
   @Path("/song/{id}")
   @Produces(MediaType.APPLICATION_JSON)
-  public SongBean song(@PathParam("id") Long songId) {
+  public SongBean song(@PathParam("id") final Long songId) {
     final ReadOnlyKeyValueStore<Long, Song> songStore = streams.store(KafkaMusicExample.ALL_SONGS,
                                                                       QueryableStoreTypes.<Long, Song>keyValueStore());
     final Song song = songStore.get(songId);
@@ -198,7 +198,7 @@ public class MusicPlaysRestService {
   @GET()
   @Path("/instances/{storeName}")
   @Produces(MediaType.APPLICATION_JSON)
-  public List<HostStoreInfo> streamsMetadataForStore(@PathParam("storeName") String store) {
+  public List<HostStoreInfo> streamsMetadataForStore(@PathParam("storeName") final String store) {
     return metadataService.streamsMetadataForStore(store);
   }
 
@@ -207,18 +207,18 @@ public class MusicPlaysRestService {
    * @throws Exception
    */
   void start() throws Exception {
-    ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+    final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
     context.setContextPath("/");
 
     jettyServer = new Server(hostInfo.port());
     jettyServer.setHandler(context);
 
-    ResourceConfig rc = new ResourceConfig();
+    final ResourceConfig rc = new ResourceConfig();
     rc.register(this);
     rc.register(JacksonFeature.class);
 
-    ServletContainer sc = new ServletContainer(rc);
-    ServletHolder holder = new ServletHolder(sc);
+    final ServletContainer sc = new ServletContainer(rc);
+    final ServletHolder holder = new ServletHolder(sc);
     context.addServlet(holder, "/*");
 
     jettyServer.start();

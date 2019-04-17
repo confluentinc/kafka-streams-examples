@@ -75,7 +75,7 @@ public class UserCountsPerRegionLambdaIntegrationTest {
   @Test
   public void shouldCountUsersPerRegion() throws Exception {
     // Input: Region per user (multiple records allowed per user).
-    List<KeyValue<String, String>> userRegionRecords = Arrays.asList(
+    final List<KeyValue<String, String>> userRegionRecords = Arrays.asList(
         // This first record for Alice tells us that she is currently in Asia.
         new KeyValue<>("alice", "asia"),
         // First record for Bob.
@@ -88,7 +88,7 @@ public class UserCountsPerRegionLambdaIntegrationTest {
         new KeyValue<>("bob", "asia")
     );
 
-    List<KeyValue<String, Long>> expectedUsersPerRegion = Arrays.asList(
+    final List<KeyValue<String, Long>> expectedUsersPerRegion = Arrays.asList(
         new KeyValue<>("europe", 1L), // in the end, Alice is in europe
         new KeyValue<>("asia", 1L)    // in the end, Bob is in asia
     );
@@ -99,7 +99,7 @@ public class UserCountsPerRegionLambdaIntegrationTest {
     final Serde<String> stringSerde = Serdes.String();
     final Serde<Long> longSerde = Serdes.Long();
 
-    Properties streamsConfiguration = new Properties();
+    final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "user-regions-lambda-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
@@ -111,24 +111,25 @@ public class UserCountsPerRegionLambdaIntegrationTest {
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
-    KStreamBuilder builder = new KStreamBuilder();
+    final KStreamBuilder builder = new KStreamBuilder();
 
-    KTable<String, String> userRegionsTable = builder.table(stringSerde, stringSerde, inputTopic, "UserRegionsStore");
+    final KTable<String, String> userRegionsTable =
+      builder.table(stringSerde, stringSerde, inputTopic, "UserRegionsStore");
 
-    KTable<String, Long> usersPerRegionTable = userRegionsTable
+    final KTable<String, Long> usersPerRegionTable = userRegionsTable
         // no need to specify explicit serdes because the resulting key and value types match our default serde settings
         .groupBy((userId, region) -> KeyValue.pair(region, region))
         .count("UserCountsByRegion");
 
     usersPerRegionTable.to(stringSerde, longSerde, outputTopic);
 
-    KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
     streams.start();
 
     //
     // Step 2: Publish user-region information.
     //
-    Properties userRegionsProducerConfig = new Properties();
+    final Properties userRegionsProducerConfig = new Properties();
     userRegionsProducerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     userRegionsProducerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     userRegionsProducerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
@@ -139,14 +140,14 @@ public class UserCountsPerRegionLambdaIntegrationTest {
     //
     // Step 3: Verify the application's output data.
     //
-    Properties consumerConfig = new Properties();
+    final Properties consumerConfig = new Properties();
     consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "user-regions-lambda-integration-test-standard-consumer");
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
-    List<KeyValue<String, Long>> actualClicksPerRegion = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig,
-        outputTopic, expectedUsersPerRegion.size());
+    final List<KeyValue<String, Long>> actualClicksPerRegion =
+      IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig, outputTopic, expectedUsersPerRegion.size());
     streams.close();
     assertThat(actualClicksPerRegion).containsExactlyElementsOf(expectedUsersPerRegion);
   }
