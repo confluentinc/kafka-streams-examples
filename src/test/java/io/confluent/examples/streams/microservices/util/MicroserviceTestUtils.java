@@ -247,7 +247,7 @@ public class MicroserviceTestUtils {
     while (true) {
       try {
         return builder.get(genericType);
-      } catch (ServerErrorException exception) {
+      } catch (final ServerErrorException exception) {
         if (exception.getMessage().contains("504") && numberOfRetries-- > 0) {
           continue;
         }
@@ -262,7 +262,7 @@ public class MicroserviceTestUtils {
     while (true) {
       try {
         return builder.get(clazz);
-      } catch (ServerErrorException exception) {
+      } catch (final ServerErrorException exception) {
         if (exception.getMessage().contains("504") && numberOfRetries-- > 0) {
           continue;
         }
@@ -277,7 +277,7 @@ public class MicroserviceTestUtils {
     while (true) {
       try {
         return builder.post(entity);
-      } catch (ServerErrorException exception) {
+      } catch (final ServerErrorException exception) {
         if (exception.getMessage().contains("504") && numberOfRetries-- > 0) {
           continue;
         }
