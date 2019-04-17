@@ -46,7 +46,7 @@ import java.util.stream.IntStream;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.WikipediaFeedAvroExampleDriver
+ * java -cp target/kafka-streams-examples-5.2.1-standalone.jar io.confluent.examples.streams.WikipediaFeedAvroExampleDriver
  * }
  * </pre>
  *
