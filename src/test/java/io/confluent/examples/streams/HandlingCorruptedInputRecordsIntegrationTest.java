@@ -71,40 +71,40 @@ public class HandlingCorruptedInputRecordsIntegrationTest {
 
   @Test
   public void shouldIgnoreCorruptInputRecords() throws Exception {
-    List<Long> inputValues = Arrays.asList(1L, 2L, 3L);
-    List<Long> expectedValues = inputValues.stream().map(x -> 2 * x).collect(Collectors.toList());
+    final List<Long> inputValues = Arrays.asList(1L, 2L, 3L);
+    final List<Long> expectedValues = inputValues.stream().map(x -> 2 * x).collect(Collectors.toList());
 
     //
     // Step 1: Configure and start the processor topology.
     //
-    StreamsBuilder builder = new StreamsBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
-    Properties streamsConfiguration = new Properties();
+    final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "failure-handling-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray().getClass().getName());
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.ByteArray().getClass().getName());
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-    Serde<String> stringSerde = Serdes.String();
-    Serde<Long> longSerde = Serdes.Long();
+    final Serde<String> stringSerde = Serdes.String();
+    final Serde<Long> longSerde = Serdes.Long();
 
-    KStream<byte[], byte[]> input = builder.stream(inputTopic);
+    final KStream<byte[], byte[]> input = builder.stream(inputTopic);
 
     // Note how the returned stream is of type `KStream<String, Long>`.
-    KStream<String, Long> doubled = input.flatMap(
+    final KStream<String, Long> doubled = input.flatMap(
         (k, v) -> {
           try {
             // Attempt deserialization
-            String key = stringSerde.deserializer().deserialize("input-topic", k);
-            long value = longSerde.deserializer().deserialize("input-topic", v);
+            final String key = stringSerde.deserializer().deserialize("input-topic", k);
+            final long value = longSerde.deserializer().deserialize("input-topic", v);
 
             // Ok, the record is valid (not corrupted).  Let's take the
             // opportunity to also process the record in some way so that
             // we haven't paid the deserialization cost just for "poison pill"
             // checking.
             return Collections.singletonList(KeyValue.pair(key, 2 * value));
-          } catch (SerializationException e) {
+          } catch (final SerializationException e) {
             // Ignore/skip the corrupted record by catching the exception.
             // Optionally, we can log the fact that we did so:
             System.err.println("Could not deserialize record: " + e.getMessage());
@@ -116,13 +116,13 @@ public class HandlingCorruptedInputRecordsIntegrationTest {
     // Write the processing results (which was generated from valid records only) to Kafka.
     doubled.to(outputTopic, Produced.with(stringSerde, longSerde));
 
-    KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();
 
     //
     // Step 2: Produce some corrupt input data to the input topic.
     //
-    Properties producerConfigForCorruptRecords = new Properties();
+    final Properties producerConfigForCorruptRecords = new Properties();
     producerConfigForCorruptRecords.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     producerConfigForCorruptRecords.put(ProducerConfig.ACKS_CONFIG, "all");
     producerConfigForCorruptRecords.put(ProducerConfig.RETRIES_CONFIG, 0);
@@ -134,7 +134,7 @@ public class HandlingCorruptedInputRecordsIntegrationTest {
     //
     // Step 3: Produce some (valid) input data to the input topic.
     //
-    Properties producerConfig = new Properties();
+    final Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
@@ -145,13 +145,13 @@ public class HandlingCorruptedInputRecordsIntegrationTest {
     //
     // Step 4: Verify the application's output data.
     //
-    Properties consumerConfig = new Properties();
+    final Properties consumerConfig = new Properties();
     consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "map-function-lambda-integration-test-standard-consumer");
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
     consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
-    List<Long> actualValues = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfig,
+    final List<Long> actualValues = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfig,
         outputTopic, expectedValues.size());
     streams.close();
     assertThat(actualValues).isEqualTo(expectedValues);

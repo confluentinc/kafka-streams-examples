@@ -58,7 +58,7 @@ public class WordCountInteractiveQueriesRestService {
   private final KafkaStreams streams;
   private final MetadataService metadataService;
   private Server jettyServer;
-  private HostInfo hostInfo;
+  private final HostInfo hostInfo;
   private final Client client = ClientBuilder.newBuilder().register(JacksonFeature.class).build();
   private static final Logger log = LoggerFactory.getLogger(WordCountInteractiveQueriesRestService.class);
 
@@ -82,13 +82,13 @@ public class WordCountInteractiveQueriesRestService {
   public KeyValueBean byKey(@PathParam("storeName") final String storeName,
                         @PathParam("key") final String key) {
 
-    HostStoreInfo hostStoreInfo = streamsMetadataForStoreAndKey(storeName, key);
+    final HostStoreInfo hostStoreInfo = streamsMetadataForStoreAndKey(storeName, key);
     if (!thisHost(hostStoreInfo)){
        return fetchByKey(hostStoreInfo, "state/keyvalue/"+storeName+"/"+key);
     }
 
     // Lookup the KeyValueStore with the provided storeName
-    final ReadOnlyKeyValueStore<String, Long> store = streams.store(storeName, QueryableStoreTypes.<String, Long>keyValueStore());
+    final ReadOnlyKeyValueStore<String, Long> store = streams.store(storeName, QueryableStoreTypes.keyValueStore());
     if (store == null) {
       throw new NotFoundException();
     }
@@ -158,7 +158,7 @@ public class WordCountInteractiveQueriesRestService {
 
     // Lookup the WindowStore with the provided storeName
     final ReadOnlyWindowStore<String, Long> store = streams.store(storeName,
-                                                                  QueryableStoreTypes.<String, Long>windowStore());
+                                                                  QueryableStoreTypes.windowStore());
     if (store == null) {
       throw new NotFoundException();
     }
@@ -195,7 +195,7 @@ public class WordCountInteractiveQueriesRestService {
   @GET()
   @Path("/instances/{storeName}")
   @Produces(MediaType.APPLICATION_JSON)
-  public List<HostStoreInfo> streamsMetadataForStore(@PathParam("storeName") String store) {
+  public List<HostStoreInfo> streamsMetadataForStore(@PathParam("storeName") final String store) {
     return metadataService.streamsMetadataForStore(store);
   }
 
@@ -209,8 +209,8 @@ public class WordCountInteractiveQueriesRestService {
   @GET()
   @Path("/instance/{storeName}/{key}")
   @Produces(MediaType.APPLICATION_JSON)
-  public HostStoreInfo streamsMetadataForStoreAndKey(@PathParam("storeName") String store,
-                                                     @PathParam("key") String key) {
+  public HostStoreInfo streamsMetadataForStoreAndKey(@PathParam("storeName") final String store,
+                                                     @PathParam("key") final String key) {
     return metadataService.streamsMetadataForStoreAndKey(store, key, new StringSerializer());
   }
 
@@ -248,21 +248,21 @@ public class WordCountInteractiveQueriesRestService {
   /**
    * Start an embedded Jetty Server on the given port
    * @param port    port to run the Server on
-   * @throws Exception
+   * @throws Exception if jetty can't start
    */
   void start(final int port) throws Exception {
-    ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+    final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
     context.setContextPath("/");
 
     jettyServer = new Server();
     jettyServer.setHandler(context);
 
-    ResourceConfig rc = new ResourceConfig();
+    final ResourceConfig rc = new ResourceConfig();
     rc.register(this);
     rc.register(JacksonFeature.class);
 
-    ServletContainer sc = new ServletContainer(rc);
-    ServletHolder holder = new ServletHolder(sc);
+    final ServletContainer sc = new ServletContainer(rc);
+    final ServletHolder holder = new ServletHolder(sc);
     context.addServlet(holder, "/*");
     
     final ServerConnector connector = new ServerConnector(jettyServer);
@@ -282,7 +282,7 @@ public class WordCountInteractiveQueriesRestService {
 
   /**
    * Stop the Jetty Server
-   * @throws Exception
+   * @throws Exception if jetty can't stop
    */
   void stop() throws Exception {
     if (jettyServer != null) {

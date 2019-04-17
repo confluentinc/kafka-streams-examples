@@ -64,7 +64,7 @@ public class GlobalKTablesExampleDriver {
   private static final Random RANDOM = new Random();
   private static final int RECORDS_TO_GENERATE = 100;
 
-  public static void main(String[] args) {
+  public static void main(final String[] args) {
     final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
     final String schemaRegistryUrl = args.length > 1 ? args[1] : "http://localhost:8081";
     generateCustomers(bootstrapServers, schemaRegistryUrl, RECORDS_TO_GENERATE);
@@ -189,7 +189,7 @@ public class GlobalKTablesExampleDriver {
   }
 
   // Copied from org.apache.kafka.test.TestUtils
-  private static String randomString(int len) {
+  private static String randomString(final int len) {
     final StringBuilder b = new StringBuilder();
 
     for(int i = 0; i < len; ++i) {

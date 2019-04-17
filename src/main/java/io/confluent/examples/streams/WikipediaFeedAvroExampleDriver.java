@@ -60,7 +60,8 @@ public class WikipediaFeedAvroExampleDriver {
     consumeOutput(bootstrapServers, schemaRegistryUrl);
   }
 
-  private static void produceInputs(String bootstrapServers, String schemaRegistryUrl) throws IOException {
+  private static void produceInputs(final String bootstrapServers,
+                                    final String schemaRegistryUrl) {
     final String[] users = {"erica", "bob", "joe", "damian", "tania", "phil", "sam",
             "lauren", "joseph"};
 
@@ -83,7 +84,7 @@ public class WikipediaFeedAvroExampleDriver {
     producer.flush();
   }
 
-  private static void consumeOutput(String bootstrapServers, String schemaRegistryUrl) {
+  private static void consumeOutput(final String bootstrapServers, final String schemaRegistryUrl) {
     final Properties consumerProperties = new Properties();
     consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
