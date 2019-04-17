@@ -44,7 +44,7 @@ public class PriorityQueueSerde<T> implements Serde<PriorityQueue<T>> {
   }
 
   @Override
-  public void configure(Map<String, ?> configs, boolean isKey) {
+  public void configure(final Map<String, ?> configs, final boolean isKey) {
     inner.serializer().configure(configs, isKey);
     inner.deserializer().configure(configs, isKey);
   }
