@@ -76,7 +76,7 @@ public class StreamToTableJoinIntegrationTest {
     private final String region;
     private final long clicks;
 
-    public RegionWithClicks(String region, long clicks) {
+    public RegionWithClicks(final String region, final long clicks) {
       if (region == null || region.isEmpty()) {
         throw new IllegalArgumentException("region must be set");
       }
@@ -100,7 +100,7 @@ public class StreamToTableJoinIntegrationTest {
   @Test
   public void shouldCountClicksPerRegion() throws Exception {
     // Input 1: Clicks per user (multiple records allowed per user).
-    List<KeyValue<String, Long>> userClicks = Arrays.asList(
+    final List<KeyValue<String, Long>> userClicks = Arrays.asList(
         new KeyValue<>("alice", 13L),
         new KeyValue<>("bob", 4L),
         new KeyValue<>("chao", 25L),
@@ -112,7 +112,7 @@ public class StreamToTableJoinIntegrationTest {
     );
 
     // Input 2: Region per user (multiple records allowed per user).
-    List<KeyValue<String, String>> userRegions = Arrays.asList(
+    final List<KeyValue<String, String>> userRegions = Arrays.asList(
         new KeyValue<>("alice", "asia"),   /* Alice lived in Asia originally... */
         new KeyValue<>("bob", "americas"),
         new KeyValue<>("chao", "asia"),
@@ -122,7 +122,7 @@ public class StreamToTableJoinIntegrationTest {
         new KeyValue<>("fang", "asia")
     );
 
-    List<KeyValue<String, Long>> expectedClicksPerRegion = Arrays.asList(
+    final List<KeyValue<String, Long>> expectedClicksPerRegion = Arrays.asList(
         new KeyValue<>("americas", 101L),
         new KeyValue<>("europe", 109L),
         new KeyValue<>("asia", 124L)
@@ -134,7 +134,7 @@ public class StreamToTableJoinIntegrationTest {
     final Serde<String> stringSerde = Serdes.String();
     final Serde<Long> longSerde = Serdes.Long();
 
-    Properties streamsConfiguration = new Properties();
+    final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "stream-table-join-lambda-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
@@ -146,13 +146,13 @@ public class StreamToTableJoinIntegrationTest {
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
-    StreamsBuilder builder = new StreamsBuilder();
+    final StreamsBuilder builder = new StreamsBuilder();
 
     // This KStream contains information such as "alice" -> 13L.
     //
     // Because this is a KStream ("record stream"), multiple records for the same user will be
     // considered as separate click-count events, each of which will be added to the total count.
-    KStream<String, Long> userClicksStream = builder.stream(userClicksTopic, Consumed.with(stringSerde, longSerde));
+    final KStream<String, Long> userClicksStream = builder.stream(userClicksTopic, Consumed.with(stringSerde, longSerde));
 
     // This KTable contains information such as "alice" -> "europe".
     //
@@ -165,13 +165,13 @@ public class StreamToTableJoinIntegrationTest {
     // lived in "asia") because, at the time her first user-click record is being received and
     // subsequently processed in the `leftJoin`, the latest region update for "alice" is "europe"
     // (which overrides her previous region value of "asia").
-    KTable<String, String> userRegionsTable = builder.table(userRegionsTopic);
+    final KTable<String, String> userRegionsTable = builder.table(userRegionsTopic);
 
     // Compute the number of clicks per region, e.g. "europe" -> 13L.
     //
     // The resulting KTable is continuously being updated as new data records are arriving in the
     // input KStream `userClicksStream` and input KTable `userRegionsTable`.
-    KTable<String, Long> clicksPerRegion = userClicksStream
+    final KTable<String, Long> clicksPerRegion = userClicksStream
         // Join the stream against the table.
         //
         // Null values possible: In general, null values are possible for region (i.e. the value of
@@ -193,7 +193,7 @@ public class StreamToTableJoinIntegrationTest {
     // Write the (continuously updating) results to the output topic.
     clicksPerRegion.toStream().to(outputTopic, Produced.with(stringSerde, longSerde));
 
-    KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();
 
     //
@@ -202,7 +202,7 @@ public class StreamToTableJoinIntegrationTest {
     // To keep this code example simple and easier to understand/reason about, we publish all
     // user-region records before any user-click records (cf. step 3).  In practice though,
     // data records would typically be arriving concurrently in both input streams/topics.
-    Properties userRegionsProducerConfig = new Properties();
+    final Properties userRegionsProducerConfig = new Properties();
     userRegionsProducerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     userRegionsProducerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     userRegionsProducerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
@@ -213,7 +213,7 @@ public class StreamToTableJoinIntegrationTest {
     //
     // Step 3: Publish some user click events.
     //
-    Properties userClicksProducerConfig = new Properties();
+    final Properties userClicksProducerConfig = new Properties();
     userClicksProducerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     userClicksProducerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     userClicksProducerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
@@ -225,13 +225,13 @@ public class StreamToTableJoinIntegrationTest {
     //
     // Step 4: Verify the application's output data.
     //
-    Properties consumerConfig = new Properties();
+    final Properties consumerConfig = new Properties();
     consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "join-lambda-integration-test-standard-consumer");
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
-    List<KeyValue<String, Long>> actualClicksPerRegion = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig,
+    final List<KeyValue<String, Long>> actualClicksPerRegion = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig,
         outputTopic, expectedClicksPerRegion.size());
     streams.close();
     assertThat(actualClicksPerRegion).containsExactlyElementsOf(expectedClicksPerRegion);
