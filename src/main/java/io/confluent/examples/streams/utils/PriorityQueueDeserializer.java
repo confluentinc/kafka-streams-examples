@@ -35,12 +35,12 @@ public class PriorityQueueDeserializer<T> implements Deserializer<PriorityQueue<
     }
 
     @Override
-    public void configure(Map<String, ?> configs, boolean isKey) {
+    public void configure(final Map<String, ?> configs, final boolean isKey) {
         // do nothing
     }
 
     @Override
-    public PriorityQueue<T> deserialize(String s, byte[] bytes) {
+    public PriorityQueue<T> deserialize(final String s, final byte[] bytes) {
         if (bytes == null || bytes.length == 0) {
             return null;
         }
@@ -53,7 +53,7 @@ public class PriorityQueueDeserializer<T> implements Deserializer<PriorityQueue<
                 dataInputStream.read(valueBytes);
                 priorityQueue.add(valueDeserializer.deserialize(s, valueBytes));
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("Unable to deserialize PriorityQueue", e);
         }
         return priorityQueue;

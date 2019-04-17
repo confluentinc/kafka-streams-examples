@@ -56,20 +56,20 @@ public class ValidationsAggregatorService implements Service {
   private KafkaStreams streams;
 
   @Override
-  public void start(String bootstrapServers) {
+  public void start(final String bootstrapServers) {
     streams = aggregateOrderValidations(bootstrapServers, "/tmp/kafka-streams");
     streams.cleanUp(); //don't do this in prod as it clears your state stores
     streams.start();
     log.info("Started Service " + getClass().getSimpleName());
   }
 
-  private KafkaStreams aggregateOrderValidations(String bootstrapServers, String stateDir) {
+  private KafkaStreams aggregateOrderValidations(final String bootstrapServers, final String stateDir) {
     final int numberOfRules = 3; //TODO put into a KTable to make dynamically configurable
 
-    StreamsBuilder builder = new StreamsBuilder();
-    KStream<String, OrderValidation> validations = builder
+    final StreamsBuilder builder = new StreamsBuilder();
+    final KStream<String, OrderValidation> validations = builder
         .stream(ORDER_VALIDATIONS.name(), serdes1);
-    KStream<String, Order> orders = builder
+    final KStream<String, Order> orders = builder
         .stream(ORDERS.name(), serdes2)
         .filter((id, order) -> OrderState.CREATED.equals(order.getState()));
 
@@ -120,8 +120,8 @@ public class ValidationsAggregatorService implements Service {
     }
   }
 
-  public static void main(String[] args) throws Exception {
-    ValidationsAggregatorService service = new ValidationsAggregatorService();
+  public static void main(final String[] args) throws Exception {
+    final ValidationsAggregatorService service = new ValidationsAggregatorService();
     service.start(parseArgsAndConfigure(args));
     addShutdownHookAndBlock(service);
   }

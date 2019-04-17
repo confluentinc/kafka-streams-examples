@@ -38,12 +38,12 @@ public class EmailService implements Service {
   private Joined<String, Order, Payment> serdes4 = Joined
       .with(ORDERS.keySerde(), ORDERS.valueSerde(), PAYMENTS.valueSerde());
 
-  public EmailService(Emailer emailer) {
+  public EmailService(final Emailer emailer) {
     this.emailer = emailer;
   }
 
   @Override
-  public void start(String bootstrapServers) {
+  public void start(final String bootstrapServers) {
     streams = processStreams(bootstrapServers, "/tmp/kafka-streams");
     streams.cleanUp(); //don't do this in prod as it clears your state stores
     streams.start();
@@ -52,12 +52,13 @@ public class EmailService implements Service {
 
   private KafkaStreams processStreams(final String bootstrapServers, final String stateDir) {
 
-    KStreamBuilder builder = new KStreamBuilder();
+    final KStreamBuilder builder = new KStreamBuilder();
 
     //Create the streams/tables for the join
-    KStream<String, Order> orders = builder.stream(ORDERS.keySerde(), ORDERS.valueSerde(), ORDERS.name());
+    final KStream<String, Order> orders = builder.stream(ORDERS.keySerde(), ORDERS.valueSerde(), ORDERS.name());
     KStream<String, Payment> payments = builder.stream(PAYMENTS.keySerde(), PAYMENTS.valueSerde(), PAYMENTS.name());
-    GlobalKTable<Long, Customer> customers = builder.globalTable(CUSTOMERS.keySerde(), CUSTOMERS.valueSerde(), CUSTOMERS.name());
+    final GlobalKTable<Long, Customer> customers =
+      builder.globalTable(CUSTOMERS.keySerde(), CUSTOMERS.valueSerde(), CUSTOMERS.name());
 
     //Rekey payments to be by OrderId for the windowed join
     payments = payments.selectKey((s, payment) -> payment.getOrderId());
@@ -79,8 +80,8 @@ public class EmailService implements Service {
     return new KafkaStreams(builder, baseStreamsConfig(bootstrapServers, stateDir, APP_ID));
   }
 
-  public static void main(String[] args) throws Exception {
-    EmailService service = new EmailService(new LoggingEmailer());
+  public static void main(final String[] args) throws Exception {
+    final EmailService service = new EmailService(new LoggingEmailer());
     service.start(parseArgsAndConfigure(args));
     addShutdownHookAndBlock(service);
   }
@@ -88,7 +89,7 @@ public class EmailService implements Service {
   private static class LoggingEmailer implements Emailer {
 
     @Override
-    public void sendEmail(EmailTuple details) {
+    public void sendEmail(final EmailTuple details) {
       //In a real implementation we would do something a little more useful
       log.warn("Sending an email to: \nCustomer:%s\nOrder:%s\nPayment%s", details.customer,
           details.order, details.payment);
@@ -112,12 +113,12 @@ public class EmailService implements Service {
     public Payment payment;
     public Customer customer;
 
-    public EmailTuple(Order order, Payment payment) {
+    public EmailTuple(final Order order, final Payment payment) {
       this.order = order;
       this.payment = payment;
     }
 
-    EmailTuple setCustomer(Customer customer) {
+    EmailTuple setCustomer(final Customer customer) {
       this.customer = customer;
       return this;
     }

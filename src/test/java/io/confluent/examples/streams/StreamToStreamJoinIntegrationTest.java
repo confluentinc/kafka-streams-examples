@@ -65,20 +65,20 @@ public class StreamToStreamJoinIntegrationTest {
   @Test
   public void shouldJoinTwoStreams() throws Exception {
     // Input 1: Ad impressions
-    List<KeyValue<String, String>> inputAdImpressions = Arrays.asList(
+    final List<KeyValue<String, String>> inputAdImpressions = Arrays.asList(
         new KeyValue<>("car-advertisement", "shown"),
         new KeyValue<>("newspaper-advertisement", "shown"),
         new KeyValue<>("gadget-advertisement", "shown")
     );
 
     // Input 2: Ad clicks
-    List<KeyValue<String, String>> inputAdClicks = Arrays.asList(
+    final List<KeyValue<String, String>> inputAdClicks = Arrays.asList(
         new KeyValue<>("newspaper-advertisement", "clicked"),
         new KeyValue<>("gadget-advertisement", "clicked"),
         new KeyValue<>("newspaper-advertisement", "clicked")
     );
 
-    List<KeyValue<String, String>> expectedResults = Arrays.asList(
+    final List<KeyValue<String, String>> expectedResults = Arrays.asList(
         new KeyValue<>("car-advertisement", "shown/null"),
         new KeyValue<>("newspaper-advertisement", "shown/null"),
         new KeyValue<>("gadget-advertisement", "shown/null"),
@@ -92,7 +92,7 @@ public class StreamToStreamJoinIntegrationTest {
     //
     final Serde<String> stringSerde = Serdes.String();
 
-    Properties streamsConfiguration = new Properties();
+    final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "stream-stream-join-lambda-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
@@ -104,15 +104,15 @@ public class StreamToStreamJoinIntegrationTest {
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
-    StreamsBuilder builder = new StreamsBuilder();
-    KStream<String, String> alerts = builder.stream(adImpressionsTopic);
-    KStream<String, String> incidents = builder.stream(adClicksTopic);
+    final StreamsBuilder builder = new StreamsBuilder();
+    final KStream<String, String> alerts = builder.stream(adImpressionsTopic);
+    final KStream<String, String> incidents = builder.stream(adClicksTopic);
 
     // In this example, we opt to perform an OUTER JOIN between the two streams.  We picked this
     // join type to show how the Streams API will send further join updates downstream whenever,
     // for the same join key (e.g. "newspaper-advertisement"), we receive an update from either of
     // the two joined streams during the defined join window.
-    KStream<String, String> impressionsAndClicks = alerts.outerJoin(incidents,
+    final KStream<String, String> impressionsAndClicks = alerts.outerJoin(incidents,
         (impressionValue, clickValue) -> impressionValue + "/" + clickValue,
         // KStream-KStream joins are always windowed joins, hence we must provide a join window.
         JoinWindows.of(TimeUnit.SECONDS.toMillis(5)));
@@ -120,13 +120,13 @@ public class StreamToStreamJoinIntegrationTest {
     // Write the results to the output topic.
     impressionsAndClicks.to(outputTopic);
 
-    KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
     streams.start();
 
     //
     // Step 2: Publish ad impressions.
     //
-    Properties alertsProducerConfig = new Properties();
+    final Properties alertsProducerConfig = new Properties();
     alertsProducerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     alertsProducerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     alertsProducerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
@@ -137,7 +137,7 @@ public class StreamToStreamJoinIntegrationTest {
     //
     // Step 3: Publish ad clicks.
     //
-    Properties incidentsProducerConfig = new Properties();
+    final Properties incidentsProducerConfig = new Properties();
     incidentsProducerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     incidentsProducerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     incidentsProducerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
@@ -148,13 +148,13 @@ public class StreamToStreamJoinIntegrationTest {
     //
     // Step 4: Verify the application's output data.
     //
-    Properties consumerConfig = new Properties();
+    final Properties consumerConfig = new Properties();
     consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "stream-stream-join-lambda-integration-test-standard-consumer");
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    List<KeyValue<String, String>> actualResults = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig,
+    final List<KeyValue<String, String>> actualResults = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig,
         outputTopic, expectedResults.size());
     streams.close();
     assertThat(actualResults).containsExactlyElementsOf(expectedResults);

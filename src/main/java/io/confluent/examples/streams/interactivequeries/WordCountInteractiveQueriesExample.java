@@ -146,14 +146,14 @@ public class WordCountInteractiveQueriesExample {
   static final String TEXT_LINES_TOPIC = "TextLinesTopic";
   static final String DEFAULT_HOST = "localhost";
 
-  public static void main(String[] args) throws Exception {
+  public static void main(final String[] args) throws Exception {
     if (args.length == 0 || args.length > 2) {
       throw new IllegalArgumentException("usage: ... <portForRestEndPoint> [<bootstrap.servers> (optional)]");
     }
     final int port = Integer.valueOf(args[0]);
     final String bootstrapServers = args.length > 1 ? args[1] : "localhost:9092";
 
-    Properties streamsConfiguration = new Properties();
+    final Properties streamsConfiguration = new Properties();
     // Give the Streams application a unique name.  The name must be unique in the Kafka cluster
     // against which the application is run.
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "interactive-queries-example");
@@ -195,7 +195,7 @@ public class WordCountInteractiveQueriesExample {
       try {
         streams.close();
         restService.stop();
-      } catch (Exception e) {
+      } catch (final Exception e) {
         // ignored
       }
     }));
@@ -213,8 +213,8 @@ public class WordCountInteractiveQueriesExample {
 
   static KafkaStreams createStreams(final Properties streamsConfiguration) {
     final Serde<String> stringSerde = Serdes.String();
-    StreamsBuilder builder = new StreamsBuilder();
-    KStream<String, String>
+    final StreamsBuilder builder = new StreamsBuilder();
+    final KStream<String, String>
         textLines = builder.stream(TEXT_LINES_TOPIC, Consumed.with(Serdes.String(), Serdes.String()));
 
     final KGroupedStream<String, String> groupedByWord = textLines

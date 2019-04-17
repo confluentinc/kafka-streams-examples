@@ -180,7 +180,7 @@ public class KafkaMusicExample {
   private static final String DEFAULT_BOOTSTRAP_SERVERS = "localhost:9092";
   private static final String DEFAULT_SCHEMA_REGISTRY_URL = "http://localhost:8081";
 
-  public static void main(String[] args) throws Exception {
+  public static void main(final String[] args) throws Exception {
     if (args.length == 0 || args.length > 4) {
       throw new IllegalArgumentException("usage: ... <portForRestEndpoint> " +
           "[<bootstrap.servers> (optional, default: " + DEFAULT_BOOTSTRAP_SERVERS + ")] " +
@@ -227,7 +227,7 @@ public class KafkaMusicExample {
       try {
         restService.stop();
         streams.close();
-      } catch (Exception e) {
+      } catch (final Exception e) {
         // ignored
       }
     }));
@@ -266,14 +266,14 @@ public class KafkaMusicExample {
     // situations where the input topic was not pre-created before running the application because
     // the application will discover a newly created topic faster.  In production, you would
     // typically not change this parameter from its default.
-    String metadataMaxAgeMs = System.getProperty(ConsumerConfig.METADATA_MAX_AGE_CONFIG);
+    final String metadataMaxAgeMs = System.getProperty(ConsumerConfig.METADATA_MAX_AGE_CONFIG);
     if (metadataMaxAgeMs != null) {
       try {
-        int value = Integer.parseInt(metadataMaxAgeMs);
+        final int value = Integer.parseInt(metadataMaxAgeMs);
         streamsConfiguration.put(ConsumerConfig.METADATA_MAX_AGE_CONFIG, value);
         System.out.println("Set consumer configuration " + ConsumerConfig.METADATA_MAX_AGE_CONFIG +
             " to " + value);
-      } catch (NumberFormatException ignored) {
+      } catch (final NumberFormatException ignored) {
       }
     }
 
@@ -407,12 +407,12 @@ public class KafkaMusicExample {
               dataOutputStream =
               new DataOutputStream(out);
           try {
-            for (SongPlayCount songPlayCount : topFiveSongs) {
+            for (final SongPlayCount songPlayCount : topFiveSongs) {
                 dataOutputStream.writeLong(songPlayCount.getSongId());
                 dataOutputStream.writeLong(songPlayCount.getPlays());
             }
             dataOutputStream.flush();
-          } catch (IOException e) {
+          } catch (final IOException e) {
             throw new RuntimeException(e);
           }
             return out.toByteArray();
@@ -449,7 +449,7 @@ public class KafkaMusicExample {
               result.add(new SongPlayCount(dataInputStream.readLong(),
                                            dataInputStream.readLong()));
             }
-          } catch (IOException e) {
+          } catch (final IOException e) {
             throw new RuntimeException(e);
           }
           return result;
