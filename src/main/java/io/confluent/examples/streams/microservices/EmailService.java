@@ -36,7 +36,7 @@ public class EmailService implements Service {
   private KafkaStreams streams;
   private Emailer emailer;
 
-  public EmailService(Emailer emailer) {
+  public EmailService(final Emailer emailer) {
     this.emailer = emailer;
   }
 
@@ -82,8 +82,8 @@ public class EmailService implements Service {
     return new KafkaStreams(builder.build(), baseStreamsConfig(bootstrapServers, stateDir, SERVICE_APP_ID));
   }
 
-  public static void main(String[] args) throws Exception {
-    EmailService service = new EmailService(new LoggingEmailer());
+  public static void main(final String[] args) throws Exception {
+    final EmailService service = new EmailService(new LoggingEmailer());
     service.start(parseArgsAndConfigure(args), "/tmp/kafka-streams");
     addShutdownHookAndBlock(service);
   }
@@ -91,7 +91,7 @@ public class EmailService implements Service {
   private static class LoggingEmailer implements Emailer {
 
     @Override
-    public void sendEmail(EmailTuple details) {
+    public void sendEmail(final EmailTuple details) {
       //In a real implementation we would do something a little more useful
       log.warn("Sending an email to: \nCustomer:%s\nOrder:%s\nPayment%s", details.customer,
           details.order, details.payment);
@@ -115,12 +115,12 @@ public class EmailService implements Service {
     public Payment payment;
     public Customer customer;
 
-    public EmailTuple(Order order, Payment payment) {
+    public EmailTuple(final Order order, final Payment payment) {
       this.order = order;
       this.payment = payment;
     }
 
-    EmailTuple setCustomer(Customer customer) {
+    EmailTuple setCustomer(final Customer customer) {
       this.customer = customer;
       return this;
     }
