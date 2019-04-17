@@ -20,8 +20,12 @@ public class OrderBean {
 
   }
 
-  public OrderBean(String id, long customerId, OrderState state, Product product, int quantity,
-      double price) {
+  public OrderBean(final String id,
+                   final long customerId,
+                   final OrderState state,
+                   final Product product,
+                   final int quantity,
+                   final double price) {
     this.id = id;
     this.customerId = customerId;
     this.state = state;
@@ -54,12 +58,12 @@ public class OrderBean {
     return price;
   }
 
-  public void setId(String id) {
+  public void setId(final String id) {
     this.id = id;
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o) {
       return true;
     }
@@ -67,7 +71,7 @@ public class OrderBean {
       return false;
     }
 
-    OrderBean orderBean = (OrderBean) o;
+    final OrderBean orderBean = (OrderBean) o;
 
     if (this.customerId != orderBean.customerId) {
       return false;
@@ -103,7 +107,7 @@ public class OrderBean {
   @Override
   public int hashCode() {
     int result;
-    long temp;
+    final long temp;
     result = this.id != null ? this.id.hashCode() : 0;
     result = 31 * result + (int) (this.customerId ^ this.customerId >>> 32);
     result = 31 * result + (this.state != null ? this.state.hashCode() : 0);
@@ -114,7 +118,7 @@ public class OrderBean {
     return result;
   }
 
-  public static OrderBean toBean(Order order) {
+  public static OrderBean toBean(final Order order) {
     return new OrderBean(order.getId(),
         order.getCustomerId(),
         order.getState(),
@@ -123,7 +127,7 @@ public class OrderBean {
         order.getPrice());
   }
 
-  public static Order fromBean(OrderBean order) {
+  public static Order fromBean(final OrderBean order) {
     return new Order(order.getId(),
         order.getCustomerId(),
         order.getState(),

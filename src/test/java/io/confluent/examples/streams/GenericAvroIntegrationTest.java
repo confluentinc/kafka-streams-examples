@@ -64,20 +64,20 @@ public class GenericAvroIntegrationTest {
 
   @Test
   public void shouldRoundTripGenericAvroDataThroughKafka() throws Exception {
-    Schema schema = new Schema.Parser().parse(
+    final Schema schema = new Schema.Parser().parse(
         getClass().getResourceAsStream("/avro/io/confluent/examples/streams/wikifeed.avsc"));
-    GenericRecord record = new GenericData.Record(schema);
+    final GenericRecord record = new GenericData.Record(schema);
     record.put("user", "alice");
     record.put("is_new", true);
     record.put("content", "lorem ipsum");
-    List<GenericRecord> inputValues = Collections.singletonList(record);
+    final List<GenericRecord> inputValues = Collections.singletonList(record);
 
     //
     // Step 1: Configure and start the processor topology.
     //
-    KStreamBuilder builder = new KStreamBuilder();
+    final KStreamBuilder builder = new KStreamBuilder();
 
-    Properties streamsConfiguration = new Properties();
+    final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "generic-avro-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray().getClass().getName());
@@ -104,16 +104,16 @@ public class GenericAvroIntegrationTest {
     genericAvroSerde.configure(
         Collections.singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl()),
         isKeySerde);
-    KStream<String, GenericRecord> stream = builder.stream(inputTopic);
+    final KStream<String, GenericRecord> stream = builder.stream(inputTopic);
     stream.to(stringSerde, genericAvroSerde, outputTopic);
 
-    KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
+    final KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);
     streams.start();
 
     //
     // Step 2: Produce some input data to the input topic.
     //
-    Properties producerConfig = new Properties();
+    final Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
@@ -125,15 +125,15 @@ public class GenericAvroIntegrationTest {
     //
     // Step 3: Verify the application's output data.
     //
-    Properties consumerConfig = new Properties();
+    final Properties consumerConfig = new Properties();
     consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "generic-avro-integration-test-standard-consumer");
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
     consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
     consumerConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl());
-    List<GenericRecord> actualValues = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfig,
-        outputTopic, inputValues.size());
+    final List<GenericRecord> actualValues =
+      IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfig, outputTopic, inputValues.size());
     streams.close();
     assertEquals(inputValues, actualValues);
   }

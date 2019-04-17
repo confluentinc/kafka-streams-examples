@@ -69,7 +69,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
    *
    * @param brokerConfig Additional broker configuration settings.
    */
-  public EmbeddedSingleNodeKafkaCluster(Properties brokerConfig) {
+  public EmbeddedSingleNodeKafkaCluster(final Properties brokerConfig) {
     this.brokerConfig = new Properties();
     this.brokerConfig.putAll(brokerConfig);
   }
@@ -89,7 +89,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
         30000,
         JaasUtils.isZkSecurityEnabled());
 
-    Properties effectiveBrokerConfig = effectiveBrokerConfigFrom(brokerConfig, zookeeper);
+    final Properties effectiveBrokerConfig = effectiveBrokerConfigFrom(brokerConfig, zookeeper);
     log.debug("Starting a Kafka instance on port {} ...",
         effectiveBrokerConfig.getProperty(KafkaConfig$.MODULE$.PortProp()));
     broker = new KafkaEmbedded(effectiveBrokerConfig);
@@ -100,7 +100,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     // note: this following only goes to 3.3.x branches---don't merge into 4.x branches;
     // 4.x branches have a different fix to make SR access stable
     // this fix also requires to update pom.xml do depend on schema registry 3.3.2 (test artifact for unit tests only)
-    Properties schemaRegistryProps = new Properties();
+    final Properties schemaRegistryProps = new Properties();
     schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, KAFKASTORE_OPERATION_TIMEOUT_MS);
     schemaRegistryProps.put(SchemaRegistryConfig.DEBUG_CONFIG, KAFKASTORE_DEBUG);
     schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_INIT_TIMEOUT_CONFIG, KAFKASTORE_INIT_TIMEOUT);
@@ -110,8 +110,9 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     running = true;
   }
 
-  private Properties effectiveBrokerConfigFrom(Properties brokerConfig, ZooKeeperEmbedded zookeeper) {
-    Properties effectiveConfig = new Properties();
+  private Properties effectiveBrokerConfigFrom(final Properties brokerConfig,
+                                               final ZooKeeperEmbedded zookeeper) {
+    final Properties effectiveConfig = new Properties();
     effectiveConfig.putAll(brokerConfig);
     effectiveConfig.put(KafkaConfig$.MODULE$.ZkConnectProp(), zookeeper.connectString());
     effectiveConfig.put(KafkaConfig$.MODULE$.PortProp(), DEFAULT_BROKER_PORT);
@@ -144,7 +145,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
         if (schemaRegistry != null) {
           schemaRegistry.stop();
         }
-      } catch (Exception e) {
+      } catch (final Exception e) {
         throw new RuntimeException(e);
       }
       if (broker != null) {
@@ -154,7 +155,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
         if (zookeeper != null) {
           zookeeper.stop();
         }
-      } catch (IOException e) {
+      } catch (final IOException e) {
         throw new RuntimeException(e);
       }
     } finally {
@@ -196,7 +197,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
    *
    * @param topic The name of the topic.
    */
-  public void createTopic(String topic) {
+  public void createTopic(final String topic) {
     createTopic(topic, 1, 1, new Properties());
   }
 
@@ -207,7 +208,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
    * @param partitions  The number of partitions for this topic.
    * @param replication The replication factor for (the partitions of) this topic.
    */
-  public void createTopic(String topic, int partitions, int replication) {
+  public void createTopic(final String topic, final int partitions, final int replication) {
     createTopic(topic, partitions, replication, new Properties());
   }
 
@@ -219,10 +220,10 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
    * @param replication The replication factor for (partitions of) this topic.
    * @param topicConfig Additional topic-level configuration settings.
    */
-  public void createTopic(String topic,
-                          int partitions,
-                          int replication,
-                          Properties topicConfig) {
+  public void createTopic(final String topic,
+                          final int partitions,
+                          final int replication,
+                          final Properties topicConfig) {
     broker.createTopic(topic, partitions, replication, topicConfig);
   }
 
