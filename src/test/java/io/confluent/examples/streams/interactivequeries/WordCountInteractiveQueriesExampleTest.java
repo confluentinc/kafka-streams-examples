@@ -124,8 +124,8 @@ public class WordCountInteractiveQueriesExampleTest {
   }
 
   public static int randomFreeLocalPort() throws IOException {
-    ServerSocket s = new ServerSocket(0);
-    int port = s.getLocalPort();
+    final ServerSocket s = new ServerSocket(0);
+    final int port = s.getLocalPort();
     s.close();
     return port;
   }
@@ -174,7 +174,7 @@ public class WordCountInteractiveQueriesExampleTest {
         new HostStoreInfo("localhost", port, Sets.newHashSet("word-count", "windowed-word-count"))
       ));
     
-      Properties consumerConfig = new Properties();
+      final Properties consumerConfig = new Properties();
       consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
       consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
       consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
@@ -240,14 +240,14 @@ public class WordCountInteractiveQueriesExampleTest {
     }
   }
   
-  private void bindHostAndStartRestProxy(int port, String host) {
+  private void bindHostAndStartRestProxy(final int port, final String host) {
     int count = 0;
-    int maxTries = 3;
+    final int maxTries = 3;
     while (count <= maxTries) {
       try {
         // Starts the Rest Service on the provided host:port
         proxy = WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, port, host);
-      } catch (Exception ex) {
+      } catch (final Exception ex) {
         log.error("Could not start Rest Service due to: " + ex.toString());
       }
       count++;
@@ -300,7 +300,7 @@ public class WordCountInteractiveQueriesExampleTest {
         new HostStoreInfo("127.10.10.10", port, Sets.newHashSet("word-count", "windowed-word-count"))
       ));
     
-      Properties consumerConfig = new Properties();
+      final Properties consumerConfig = new Properties();
       consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
       consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
       consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
@@ -413,7 +413,7 @@ public class WordCountInteractiveQueriesExampleTest {
    * directly after KafkaStreams.start(), so it can take some time
    * for the group to stabilize and all stores/instances to be available
    */
-  private List<HostStoreInfo> fetchHostInfo(Invocation.Builder request) throws InterruptedException {
+  private List<HostStoreInfo> fetchHostInfo(final Invocation.Builder request) throws InterruptedException {
     List<HostStoreInfo> hostStoreInfo = getWithRetries(request, new GenericType<List<HostStoreInfo>>(){}, 5);
     final long until = System.currentTimeMillis() + 60000L;
     while (hostStoreInfo.isEmpty() ||
@@ -431,7 +431,7 @@ public class WordCountInteractiveQueriesExampleTest {
     while (!results.containsAll(expectedResults) && System.currentTimeMillis() < timeout) {
       try {
         results = getWithRetries(request, new GenericType<List<KeyValueBean>>() {}, 5);
-      } catch (NotFoundException e) {
+      } catch (final NotFoundException e) {
         //
       }
     }
@@ -443,7 +443,7 @@ public class WordCountInteractiveQueriesExampleTest {
                                         final int port,
                                         final String stateDir,
                                         final String host) throws IOException {
-    Properties streamsConfiguration = new Properties();
+    final Properties streamsConfiguration = new Properties();
     // Give the Streams application a unique name.  The name must be unique in the Kafka cluster
     // against which the application is run.
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "interactive-queries-wordcount-example");

@@ -65,7 +65,7 @@ public class ValidationsAggregatorServiceTest extends MicroserviceTestUtils {
     ordersService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
 
     //Then
-    List<KeyValue<String, Order>> finalOrders = MicroserviceTestUtils
+    final List<KeyValue<String, Order>> finalOrders = MicroserviceTestUtils
         .readKeyValues(Topics.ORDERS, 4, CLUSTER.bootstrapServers());
     assertThat(finalOrders.size()).isEqualTo(4);
 
