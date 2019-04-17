@@ -65,7 +65,7 @@ public class MicroserviceUtils {
                                              final String stateDir,
                                              final String appId,
                                              final boolean enableEOS) {
-    Properties config = new Properties();
+    final Properties config = new Properties();
     // Workaround for a known issue with RocksDB in environments where you have only 1 cpu core.
     config.put(StreamsConfig.ROCKSDB_CONFIG_SETTER_CLASS_CONFIG, CustomRocksDBConfig.class);
     config.put(StreamsConfig.APPLICATION_ID_CONFIG, appId);
