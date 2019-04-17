@@ -420,9 +420,56 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>8.18</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <!--
+                     This declaration merges with the one in the parent, rather
+                     than overriding it, so we need to disable the "validate" phase
+                     execution that the parent declares and declare our own
+                     during "test-compile".
+
+                     One reason for this is that avro codegen runs during compile,
+                     and while it's not strictly a precondition, it's
+                     confusing to address style violations while the IDE is telling you
+                     that some generated class doesn't exist. Test-compile is the first phase
+                     that's guaranteed to run after compile and before any unit or integration
+                     tests.
+
+                     Also, we want to disable the parent's configuration because it declares stuff
+                     we don't care about, like suppressions. (Honestly, it shouldn't)
+                     -->
+                    <execution>
+                        <id>validate</id>
+                        <phase>none</phase>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>test-compile</id>
+                        <phase>test-compile</phase>
+                        <configuration>
+                            <encoding>UTF-8</encoding>
+                            <consoleOutput>true</consoleOutput>
+                            <failsOnError>true</failsOnError>
+                            <failOnViolation>true</failOnViolation>
+                            <includeResources>false</includeResources>
+                            <includeTestResources>false</includeTestResources>
+                            <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                            <excludes>io/confluent/examples/streams/avro/**</excludes>
+                            <configLocation>checkstyle.xml</configLocation>
+                        </configuration>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

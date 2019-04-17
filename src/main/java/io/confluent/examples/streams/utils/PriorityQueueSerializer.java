@@ -35,12 +35,12 @@ public class PriorityQueueSerializer<T> implements Serializer<PriorityQueue<T>> 
         this.valueSerializer = valueSerializer;
     }
     @Override
-    public void configure(Map<String, ?> configs, boolean isKey) {
+    public void configure(final Map<String, ?> configs, final boolean isKey) {
         // do nothing
     }
 
     @Override
-    public byte[] serialize(String topic, PriorityQueue<T> queue) {
+    public byte[] serialize(final String topic, final PriorityQueue<T> queue) {
         final int size = queue.size();
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final DataOutputStream out = new DataOutputStream(baos);
@@ -53,7 +53,7 @@ public class PriorityQueueSerializer<T> implements Serializer<PriorityQueue<T>> 
                 out.write(bytes);
             }
             out.close();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("unable to serialize PriorityQueue", e);
         }
         return baos.toByteArray();
