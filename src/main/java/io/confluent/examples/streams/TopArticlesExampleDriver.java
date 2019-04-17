@@ -59,14 +59,15 @@ import java.util.stream.IntStream;
  */
 public class TopArticlesExampleDriver {
 
-  public static void main(String[] args) throws IOException {
+  public static void main(final String[] args) throws IOException {
     final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
     final String schemaRegistryUrl = args.length > 1 ? args[1] : "http://localhost:8081";
     produceInputs(bootstrapServers, schemaRegistryUrl);
     consumeOutput(bootstrapServers, schemaRegistryUrl);
   }
 
-  private static void produceInputs(String bootstrapServers, String schemaRegistryUrl) throws IOException {
+  private static void produceInputs(final String bootstrapServers,
+                                    final String schemaRegistryUrl) throws IOException {
     final String[] users = {"erica", "bob", "joe", "damian", "tania", "phil", "sam",
         "lauren", "joseph"};
     final String[] industries = {"engineering", "telco", "finance", "health", "science"};
@@ -85,7 +86,7 @@ public class TopArticlesExampleDriver {
         new GenericRecordBuilder(loadSchema("pageview.avsc"));
 
     final Random random = new Random();
-    for (String user : users) {
+    for (final String user : users) {
       pageViewBuilder.set("industry", industries[random.nextInt(industries.length)]);
       pageViewBuilder.set("flags", "ARTICLE");
       // For each user generate some page views
@@ -101,7 +102,7 @@ public class TopArticlesExampleDriver {
     producer.flush();
   }
 
-  private static void consumeOutput(String bootstrapServers, String schemaRegistryUrl) {
+  private static void consumeOutput(final String bootstrapServers, final String schemaRegistryUrl) {
     final Properties consumerProperties = new Properties();
     consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -118,16 +119,21 @@ public class TopArticlesExampleDriver {
 
     consumer.subscribe(Collections.singleton(TopArticlesLambdaExample.TOP_NEWS_PER_INDUSTRY_TOPIC));
     while (true) {
-      ConsumerRecords<Windowed<String>, String> consumerRecords = consumer.poll(Long.MAX_VALUE);
-      for (ConsumerRecord<Windowed<String>, String> consumerRecord : consumerRecords) {
+      final ConsumerRecords<Windowed<String>, String> consumerRecords = consumer.poll(Long.MAX_VALUE);
+      for (final ConsumerRecord<Windowed<String>, String> consumerRecord : consumerRecords) {
         System.out.println(consumerRecord.key().key() + "@" + consumerRecord.key().window().start() +  "=" + consumerRecord.value());
       }
     }
   }
 
-  static Schema loadSchema(String name) throws IOException {
-    try (InputStream input = TopArticlesLambdaExample.class.getClassLoader()
-        .getResourceAsStream("avro/io/confluent/examples/streams/" + name)) {
+  static Schema loadSchema(final String name) throws IOException {
+    try (
+        final InputStream input =
+            TopArticlesLambdaExample
+                .class
+                .getClassLoader()
+                .getResourceAsStream("avro/io/confluent/examples/streams/" + name)
+    ) {
       return new Schema.Parser().parse(input);
     }
   }
