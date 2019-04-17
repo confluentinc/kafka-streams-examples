@@ -37,7 +37,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
   private static final Logger log = LoggerFactory.getLogger(EndToEndTest.class);
   private static final String HOST = "localhost";
-  private List<Service> services = new ArrayList<>();
+  private final List<Service> services = new ArrayList<>();
   private OrderBean returnedBean;
   private long startTime;
   private Paths path;
@@ -45,11 +45,11 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
   @Test
   public void shouldCreateNewOrderAndGetBackValidatedOrder() {
-    OrderBean inputOrder = new OrderBean(id(1L), 2L, OrderState.CREATED, Product.JUMPERS, 1, 1d);
+    final OrderBean inputOrder = new OrderBean(id(1L), 2L, OrderState.CREATED, Product.JUMPERS, 1, 1d);
     client = getClient();
 
     //Add inventory required by the inventory service with enough items in stock to pass validation
-    List<KeyValue<Product, Integer>> inventory = asList(
+    final List<KeyValue<Product, Integer>> inventory = asList(
       new KeyValue<>(UNDERPANTS, 75),
       new KeyValue<>(JUMPERS, 10)
     );
@@ -57,7 +57,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
     //When we POST order and immediately GET on the returned location
     postWithRetries(client.target(path.urlPost()).request(APPLICATION_JSON_TYPE), Entity.json(inputOrder), 5);
-    Invocation.Builder builder = client
+    final Invocation.Builder builder = client
       .target(path.urlGetValidated(1))
       .queryParam("timeout", MIN)
       .request(APPLICATION_JSON_TYPE);
@@ -72,7 +72,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
     client = getClient();
 
     //Add inventory required by the inventory service
-    List<KeyValue<Product, Integer>> inventory = asList(
+    final List<KeyValue<Product, Integer>> inventory = asList(
       new KeyValue<>(UNDERPANTS, 75),
       new KeyValue<>(JUMPERS, 10)
     );
@@ -80,13 +80,13 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
     //Send ten orders in succession
     for (int i = 0; i < 10; i++) {
-      OrderBean inputOrder = new OrderBean(id(i), 2L, OrderState.CREATED, Product.JUMPERS, 1, 1d);
+      final OrderBean inputOrder = new OrderBean(id(i), 2L, OrderState.CREATED, Product.JUMPERS, 1, 1d);
 
       startTimer();
 
       //POST & GET order
       postWithRetries(client.target(path.urlPost()).request(APPLICATION_JSON_TYPE), Entity.json(inputOrder), 5);
-      Invocation.Builder builder = client
+      final Invocation.Builder builder = client
         .target(path.urlGetValidated(i))
         .queryParam("timeout", MIN)
         .request(APPLICATION_JSON_TYPE);
@@ -110,7 +110,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
     client = getClient();
 
     //Add inventory required by the inventory service
-    List<KeyValue<Product, Integer>> inventory = asList(
+    final List<KeyValue<Product, Integer>> inventory = asList(
       new KeyValue<>(UNDERPANTS, 75000),
       new KeyValue<>(JUMPERS, 0) //***nothing in stock***
     );
@@ -118,13 +118,13 @@ public class EndToEndTest extends MicroserviceTestUtils {
 
     //Send ten orders one after the other
     for (int i = 0; i < 10; i++) {
-      OrderBean inputOrder = new OrderBean(id(i), 2L, OrderState.CREATED, Product.JUMPERS, 1, 1d);
+      final OrderBean inputOrder = new OrderBean(id(i), 2L, OrderState.CREATED, Product.JUMPERS, 1, 1d);
 
       startTimer();
 
       //POST & GET order
       postWithRetries(client.target(path.urlPost()).request(APPLICATION_JSON_TYPE), Entity.json(inputOrder), 5);
-      Invocation.Builder builder = client
+      final Invocation.Builder builder = client
         .target(path.urlGetValidated(i))
         .queryParam("timeout", MIN)
         .request(APPLICATION_JSON_TYPE);

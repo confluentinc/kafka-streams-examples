@@ -99,7 +99,7 @@ public class GlobalKTablesExample {
   static final String PRODUCT_STORE = "product-store";
   static final String ENRICHED_ORDER_TOPIC = "enriched-order";
 
-  public static void main(String[] args) {
+  public static void main(final String[] args) {
     final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
     final String schemaRegistryUrl = args.length > 1 ? args[1] : "http://localhost:8081";
     final KafkaStreams
