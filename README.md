@@ -112,7 +112,7 @@ results (using the standard Kafka consumer client).
 | PassThrough                         | DSL, `stream()`, `to()`                     | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/PassThroughIntegrationTest.java) | |
 | PoisonPill                          | DSL, `flatMap()`                            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/HandlingCorruptedInputRecordsIntegrationTest.java) | | |
 | ProbabilisticCounting\*\*\*         | DSL, Processor API, custom state stores     | | | [Scala Example](src/test/scala/io/confluent/examples/streams/ProbabilisticCountingScalaIntegrationTest.scala) |
-| SessionWindows                      | DSL, windowed aggregation                   | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/SessionWindowsExampleTest.java) | |
+| SessionWindows                      | DSL, windowed aggregation, sessionization   | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/SessionWindowsExampleTest.java) | |
 | StatesStoresDSL                     | DSL, Processor API, Transformers            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/StateStoresInTheDSLIntegrationTest.java) | | |
 | StreamToStreamJoin                  | DSL, `join()` between KStream and KStream   | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/StreamToStreamJoinIntegrationTest.java) | |
 | StreamToTableJoin                   | DSL, `join()` between KStream and KTable    | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/StreamToTableJoinIntegrationTest.java) | [Scala Example](src/test/scala/io/confluent/examples/streams/StreamToTableJoinScalaIntegrationTest.scala) |
@@ -127,6 +127,28 @@ results (using the standard Kafka consumer client).
 ([CMSStore](src/main/scala/io/confluent/examples/streams/algebird/CMSStore.scala)) that is backed by a
 [Count-Min Sketch](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) data structure (with the CMS implementation
 of [Twitter Algebird](https://github.com/twitter/algebird)
+
+
+<a name="examples-docker"/>
+
+# Docker Example: Kafka Music demo application
+
+This containerized example launches:
+
+* Confluent's Kafka Music demo application for the Kafka Streams API, which makes use of
+  [Interactive Queries](http://docs.confluent.io/current/streams/developer-guide.html)
+* a single-node Apache Kafka cluster with a single-node ZooKeeper ensemble
+* a [Confluent Schema Registry](https://github.com/confluentinc/schema-registry) instance
+
+The Kafka Music application demonstrates how to build of a simple music charts application that continuously computes,
+in real-time, the latest charts such as latest Top 5 songs per music genre.  It exposes its latest processing results
+-- the latest charts -- via Kafka’s [Interactive Queries](http://docs.confluent.io/current/streams/developer-guide.html#interactive-queries)
+feature via a REST API.  The application's input data is in Avro format, hence the use of Confluent Schema Registry,
+and comes from two sources: a stream of play events (think: "song X was played") and a stream of song metadata ("song X
+was written by artist Y").
+
+You can find detailed documentation at
+https://docs.confluent.io/current/streams/kafka-streams-examples/docs/index.html.
 
 
 <a name="examples-docker"/>
