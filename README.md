@@ -59,7 +59,7 @@ There are three kinds of examples:
 
 Additional examples may be found under [src/main/](src/main/java/io/confluent/examples/streams/).
 
-| Name                        | Concepts used                                            | Java 8+ | Java 7+ | Scala |
+| Application Name            | Concepts used                                            | Java 8+ | Java 7+ | Scala |
 | --------------------------- | -------------------------------------------------------- | ------- | ------- | ----- |
 | WordCount                   | DSL, aggregation, stateful                               | [Java 8+ example](src/main/java/io/confluent/examples/streams/WordCountLambdaExample.java) | | [Scala Example](src/main/scala/io/confluent/examples/streams/WordCountScalaExample.scala) |
 | MapFunction                 | DSL, stateless transformations, `map()`                  | [Java 8+ example](src/main/java/io/confluent/examples/streams/MapFunctionLambdaExample.java) | | [Scala Example](src/main/scala/io/confluent/examples/streams/MapFunctionScalaExample.scala) |
@@ -96,6 +96,8 @@ clusters and the [Confluent Schema Registry](https://github.com/confluentinc/sch
 (using the standard Kafka producer client), process the data using Kafka Streams, and finally read and verify the output
 results (using the standard Kafka consumer client).
 
+Additional examples may be found under [src/test/](src/test/java/io/confluent/examples/streams/).
+
 > Tip: Run `mvn test` to launch the tests.
 
 | Integration Test Name               | Concepts used                               | Java 8+ | Java 7+ | Scala |
@@ -104,7 +106,7 @@ results (using the standard Kafka consumer client).
 | WordCountInteractiveQueries         | Interactive Queries, REST, RPC              | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/interactivequeries/WordCountInteractiveQueriesExampleTest.java) | |
 | CustomStreamTableJoin               | DSL, Processor API, Transformers            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/CustomStreamTableJoinIntegrationTest.java) | | |
 | EventDeduplication                  | DSL, Processor API, Transformers            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/EventDeduplicationLambdaIntegrationTest.java) | | |
-| GlobalKTable                        | DSL, global tables                          | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/GlobalKTablesExampleTest.java) | |
+| GlobalKTable                        | DSL, global state                           | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/GlobalKTablesExampleTest.java) | |
 | HandlingCorruptedInputRecords       | DSL, `flatMap()`                            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/HandlingCorruptedInputRecordsIntegrationTest.java) | | |
 | KafkaMusic (Interactive Queries)    | Interactive Queries, State Stores, REST API | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExampleTest.java) | |
 | MapFunction                         | DSL, stateless transformations, `map()`     | [Java 8+ Example](src/test/java/io/confluent/examples/streams/MapFunctionLambdaIntegrationTest.java) | | |
@@ -126,7 +128,7 @@ results (using the standard Kafka consumer client).
 \*\*\*demonstrates how to probabilistically count items in an input stream by implementing a custom state store
 ([CMSStore](src/main/scala/io/confluent/examples/streams/algebird/CMSStore.scala)) that is backed by a
 [Count-Min Sketch](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) data structure (with the CMS implementation
-of [Twitter Algebird](https://github.com/twitter/algebird)
+of [Twitter Algebird](https://github.com/twitter/algebird))
 
 
 <a name="examples-docker"/>
@@ -253,9 +255,14 @@ Also, each example states its exact requirements at the very top.
 ## Using IntelliJ or Eclipse
 
 If you are using an IDE and import the project you might end up with a "missing import / class not found" error.
-Some Avro classes are generated from schema files and the IDE does not generete those classes automatically.
-You can run `mvn -Dskip.tests=true compile` manually (c.f. the steps above) to resolve the error.
-If you are using Eclipse, you can also right-click on `pom.xml` file and choose `Run As` -> `Maven generate-sources`.
+Some Avro classes are generated from schema files and IDEs sometimes do not generate these classes automatically.
+To resolve this error, manually run:
+
+```shell
+$ mvn -Dskip.tests=true compile
+```
+
+If you are using Eclipse, you can also right-click on `pom.xml` file and choose _Run As > Maven generate-sources_.
 
 
 <a name="requirements-java"/>
@@ -288,11 +295,13 @@ If you are compiling with Java 9+, you'll need to have Scala version 2.12+ to be
 
 <a name="packaging-and-running"/>
 
-# Packaging and running the examples
+# Packaging and running the Application Examples
+
+The instructions in this section are only needed if you want to interactively test-drive the
+[application examples](#examples-apps) under [src/main/](src/main/).
 
 > **Tip:** If you only want to run the integration tests (`mvn test`), then you do not need to package or install
-> anything -- just run `mvn test`.  The instructions below are only needed if you want to interactively test-drive the
-> examples under [src/main/](src/main/).
+> anything -- just run `mvn test`. These tests launch embedded Kafka clusters.
 
 The first step is to install and run a Kafka cluster, which must consist of at least one Kafka broker as well as
 at least one ZooKeeper instance.  Some examples may also require a running instance of Confluent schema registry.
@@ -317,32 +326,26 @@ $ ./bin/schema-registry-start ./etc/schema-registry/schema-registry.properties
 # how to download Confluent Platform, how to stop the above three services, etc.
 ```
 
-> Tip:  You can also run `mvn test`, which executes the included integration tests.  These tests spawn embedded Kafka
-> clusters to showcase the Kafka Streams functionality end-to-end.  The benefit of the integration tests is that you
-> don't need to install and run a Kafka cluster yourself.
-
-If you want to run the examples against a Kafka cluster, you may want to create a standalone jar ("fat jar") of the
-Kafka Streams examples via:
+The next step is to create a standalone jar ("fat jar") of the [application examples](#examples-apps):
 
 ```shell
 # Create a standalone jar ("fat jar")
-#
-# Tip: You can also disable the test suite (e.g. to speed up the packaging
-#      or to lower JVM memory usage) if needed:
-#
-#     $ mvn -DskipTests=true clean package
-#
 $ mvn clean package
 
 # >>> Creates target/kafka-streams-examples-5.2.1-standalone.jar
-
 ```
 
-You can now run the example applications as follows:
+> Tip: If needed, you can disable the test suite during packaging, for example to speed up the packaging or to lower
+> JVM memory usage:
+>
+> ```shell
+> $ mvn -DskipTests=true clean package
+> ```
+
+You can now run the application examples as follows:
 
 ```shell
-# Run an example application from the standalone jar.
-# Here: `WordCountLambdaExample`
+# Run an example application from the standalone jar. Here: `WordCountLambdaExample`.
 $ java -cp target/kafka-streams-examples-5.2.1-standalone.jar \
        io.confluent.examples.streams.WordCountLambdaExample
 ```
@@ -357,14 +360,13 @@ If you want to turn on log4j while running your example application, you can edi
 [log4j.properties](src/main/resources/log4j.properties) file and then execute as follows:
 
 ```shell
-# Run an example application from the standalone jar.
-# Here: `WordCountLambdaExample`
+# Run an example application from the standalone jar. Here: `WordCountLambdaExample`
 $ java -cp target/kafka-streams-examples-5.2.1-standalone.jar \
        -Dlog4j.configuration=file:src/main/resources/log4j.properties \
        io.confluent.examples.streams.WordCountLambdaExample
 ```
 
-Keep in mind that the machine on which you run the command above must have access to the Kafka/ZK clusters you
+Keep in mind that the machine on which you run the command above must have access to the Kafka/ZooKeeper clusters you
 configured in the code examples.  By default, the code examples assume the Kafka cluster is accessible via
 `localhost:9092` (aka Kafka's ``bootstrap.servers`` parameter) and the ZooKeeper ensemble via `localhost:2181`.
 You can override the default ``bootstrap.servers`` parameter through a command line argument.
@@ -379,6 +381,7 @@ This project uses the standard maven lifecycle and commands such as:
 ```shell
 $ mvn compile # This also generates Java classes from the Avro schemas
 $ mvn test    # Runs unit and integration tests
+$ mvn package # Packages the application examples into a standalone jar
 ```
 
 
@@ -386,14 +389,14 @@ $ mvn test    # Runs unit and integration tests
 
 # Version Compatibility Matrix
 
-| Branch (this repo)                      | Apache Kafka      | Confluent Platform |
-| ----------------------------------------|-------------------|--------------------|
-| [5.2.1-post](../../../tree/5.2.1-post/) | 2.2.1             | 5.2.1              |
-| [5.1.0-post](../../../tree/5.1.0-post/) | 2.1.0             | 5.1.0              |
-| [5.0.0-post](../../../tree/5.0.0-post/) | 2.0.0             | 5.0.0              |
-| [4.1.0-post](../../../tree/4.1.0-post/) | 1.1.0(-cp1)       | 4.1.0              |
-| [4.0.0-post](../../../tree/4.4.0-post/) | 1.0.0(-cp1)       | 4.0.0              |
-| [3.3.0-post](../../../tree/3.3.0-post/) | 0.11.0.0(-cp1)    | 3.3.0              |
+| Branch (this repo)                      | Confluent Platform | Apache Kafka     |
+| ----------------------------------------|--------------------|-------------------|
+| [5.2.1-post](../../../tree/5.2.1-post/) | 5.2.1              | 2.2.1             |
+| [5.1.0-post](../../../tree/5.1.0-post/) | 5.1.0              | 2.1.0             |
+| [5.0.0-post](../../../tree/5.0.0-post/) | 5.0.0              | 2.0.0             |
+| [4.1.0-post](../../../tree/4.1.0-post/) | 4.1.0              | 1.1.0             |
+| [4.0.0-post](../../../tree/4.4.0-post/) | 4.0.0              | 1.0.0             |
+| [3.3.0-post](../../../tree/3.3.0-post/) | 3.3.0              | 0.11.0            |
 
 The `master` branch of this repository represents active development, and may require additional steps on your side to
 make it compile.  Check this README as well as [pom.xml](pom.xml) for any such information.
