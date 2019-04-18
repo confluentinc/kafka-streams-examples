@@ -56,7 +56,7 @@ import org.codehaus.jackson.map.ObjectMapper;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.2.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.JsonToAvroExample
+ * $ java -cp target/kafka-streams-examples-5.2.1-standalone.jar io.confluent.examples.streams.JsonToAvroExample
  * }
  * </pre>
  * 4) Write some input data to the source topics (e.g. via {@link JsonToAvroExampleDriver}). The
@@ -67,7 +67,7 @@ import org.codehaus.jackson.map.ObjectMapper;
  * {@code
  * # Here: Write input data using the example driver.  Once the driver has stopped generating data,
  * # you can terminate it via Ctrl-C.
- * $ java -cp target/kafka-streams-examples-5.2.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.JsonToAvroExampleDriver
+ * $ java -cp target/kafka-streams-examples-5.2.1-standalone.jar io.confluent.examples.streams.JsonToAvroExampleDriver
  * }
  * </pre>
  */

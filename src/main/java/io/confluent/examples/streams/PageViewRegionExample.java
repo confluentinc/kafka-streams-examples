@@ -79,7 +79,7 @@ import java.util.concurrent.TimeUnit;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.PageViewRegionLambdaExample
+ * $ java -cp target/kafka-streams-examples-5.2.1-standalone.jar io.confluent.examples.streams.PageViewRegionLambdaExample
  * }
  * </pre>
  * 4) Write some input data to the source topics (e.g. via {@link PageViewRegionExampleDriver}). The
@@ -89,7 +89,7 @@ import java.util.concurrent.TimeUnit;
  * {@code
  * # Here: Write input data using the example driver. Once the driver has stopped generating data,
  * # you can terminate it via `Ctrl-C`.
- * $ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.PageViewRegionExampleDriver
+ * $ java -cp target/kafka-streams-examples-5.2.1-standalone.jar io.confluent.examples.streams.PageViewRegionExampleDriver
  * }
  * </pre>
  * 5) Inspect the resulting data in the output topic, e.g. via {@code kafka-console-consumer}.

@@ -108,7 +108,7 @@ import java.util.TreeSet;
  *
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar \
+ * $ java -cp target/kafka-streams-examples-5.2.1-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExample 7070
  * }
  * </pre>
@@ -119,7 +119,7 @@ import java.util.TreeSet;
  *
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar \
+ * $ java -cp target/kafka-streams-examples-5.2.1-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExample 7071
  * }
  * </pre>
