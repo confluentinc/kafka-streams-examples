@@ -146,14 +146,14 @@ Running further Confluent demo applications for the Kafka Streams API
 
 The container named ``kafka-music-application``, which runs the Kafka Music demo application, actually contains all of
 Confluent's `Kafka Streams demo applications <https://github.com/confluentinc/kafka-streams-examples>`__.  The demo applications are
-packaged in the fat jar at ``/usr/share/java/kafka-streams-examples/kafka-streams-examples-5.2.1-standalone.jar`` inside this container.
+packaged in the fat jar at ``/usr/share/java/kafka-streams-examples/kafka-streams-examples-|release|-standalone.jar`` inside this container.
 This means you can easily run any of these applications from inside the container via a command similar to:
 
-.. sourcecode:: bash
+.. codewithvars:: bash
 
     # Example: Launch the WordCount demo application (inside the `kafka-music-application` container)
     $ docker-compose exec kafka-music-application \
-            java -cp /usr/share/java/kafka-streams-examples/kafka-streams-examples-5.2.1-standalone.jar \
+            java -cp /usr/share/java/kafka-streams-examples/kafka-streams-examples-|release|-standalone.jar \
             io.confluent.examples.streams.WordCountLambdaExample \
             kafka:29092
 
