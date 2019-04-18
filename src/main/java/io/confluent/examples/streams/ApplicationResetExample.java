@@ -59,7 +59,7 @@ import java.util.concurrent.CountDownLatch;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.ApplicationResetExample
+ * $ java -cp target/kafka-streams-examples-5.2.1-standalone.jar io.confluent.examples.streams.ApplicationResetExample
  * }
  * </pre>
  * 4) Write some input data to the source topic (e.g. via {@code kafka-console-producer}).
@@ -114,7 +114,7 @@ import java.util.concurrent.CountDownLatch;
  * Thus, restart the application via:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.ApplicationResetExample localhost:9092 --reset
+ * $ java -cp target/kafka-streams-examples-5.2.1-standalone.jar io.confluent.examples.streams.ApplicationResetExample localhost:9092 --reset
  * }</pre>
  * 9) If your console consumer (from step 5) is still running, you should see the same output data again.
  * If it was stopped and you restart it, if will print the result "twice".

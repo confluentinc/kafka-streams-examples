@@ -81,7 +81,7 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.TopArticlesLambdaExample
+ * $ java -cp target/kafka-streams-examples-5.2.1-standalone.jar io.confluent.examples.streams.TopArticlesLambdaExample
  * }
  * </pre>
  * 4) Write some input data to the source topics (e.g. via {@link TopArticlesExampleDriver}).
@@ -92,7 +92,7 @@ import java.util.Properties;
  * {@code
  * # Here: Write input data using the example driver.  Once the driver has stopped generating data,
  * # you can terminate it via Ctrl-C.
- * $ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.TopArticlesExampleDriver
+ * $ java -cp target/kafka-streams-examples-5.2.1-standalone.jar io.confluent.examples.streams.TopArticlesExampleDriver
  * }
  * </pre>
  */
