@@ -32,6 +32,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serdes;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -91,7 +92,7 @@ public class GlobalKTablesExampleDriver {
     consumer.subscribe(Collections.singleton(ENRICHED_ORDER_TOPIC));
     int received = 0;
     while(received < expected) {
-      final ConsumerRecords<Long, EnrichedOrder> records = consumer.poll(Long.MAX_VALUE);
+      final ConsumerRecords<Long, EnrichedOrder> records = consumer.poll(Duration.ofMillis(Long.MAX_VALUE));
       records.forEach(record -> System.out.println(record.value()));
       received += records.count();
     }

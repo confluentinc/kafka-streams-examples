@@ -32,10 +32,8 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.SessionWindows;
 import org.apache.kafka.streams.state.SessionStore;
 
-import java.util.Collections;
-import java.util.Map;
+import java.time.Duration;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Demonstrates counting user activity (play-events) into Session Windows
@@ -106,7 +104,7 @@ import java.util.concurrent.TimeUnit;
 public class SessionWindowsExample {
 
   static final String PLAY_EVENTS = "play-events";
-  static final Long INACTIVITY_GAP = TimeUnit.MINUTES.toMillis(30);
+  static final Duration INACTIVITY_GAP = Duration.ofMinutes(30);
   static final String PLAY_EVENTS_PER_SESSION = "play-events-per-session";
 
   public static void main(final String[] args) {
@@ -150,12 +148,11 @@ public class SessionWindowsExample {
     config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     // disable caching to see session merging
     config.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
+    // Where to find the Confluent schema registry instance(s). Will automatically be forwarded to all Serdes
+    config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
 
     // create and configure the SpecificAvroSerdes required in this example
     final SpecificAvroSerde<PlayEvent> playEventSerde = new SpecificAvroSerde<>();
-    final Map<String, String> serdeConfig = Collections.singletonMap(
-        AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
-    playEventSerde.configure(serdeConfig, false);
 
     final StreamsBuilder builder = new StreamsBuilder();
     builder.stream(PLAY_EVENTS, Consumed.with(Serdes.String(), playEventSerde))

@@ -15,7 +15,7 @@
  */
 package io.confluent.examples.streams
 
-import java.util.{Collections, Properties}
+import java.util.Properties
 
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
 import io.confluent.kafka.serializers.{AbstractKafkaAvroSerDeConfig, KafkaAvroDeserializer, KafkaAvroSerializer}
@@ -81,10 +81,7 @@ class GenericAvroScalaIntegrationTest extends AssertionsForJUnit {
 
     // Make an implicit serde available for GenericRecord, which is required for operations such as `to()` below.
     implicit val genericAvroSerde: Serde[GenericRecord] = {
-      val gas = new GenericAvroSerde
-      val isKeySerde: Boolean = false
-      gas.configure(Collections.singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, cluster.schemaRegistryUrl), isKeySerde)
-      gas
+      new GenericAvroSerde
     }
 
     // Write the input data as-is to the output topic.

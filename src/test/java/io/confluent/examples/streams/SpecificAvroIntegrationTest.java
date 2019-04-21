@@ -57,7 +57,7 @@ public class SpecificAvroIntegrationTest {
   private static final String outputTopic = "outputTopic";
 
   @BeforeClass
-  public static void startKafkaCluster() throws Exception {
+  public static void startKafkaCluster() {
     CLUSTER.createTopic(inputTopic);
     CLUSTER.createTopic(outputTopic);
   }
@@ -93,13 +93,6 @@ public class SpecificAvroIntegrationTest {
     // demonstrate how you can construct and configure a specific Avro serde manually.
     final Serde<String> stringSerde = Serdes.String();
     final Serde<WikiFeed> specificAvroSerde = new SpecificAvroSerde<>();
-    // Note how we must manually call `configure()` on this serde to configure the schema registry
-    // url.  This is different from the case of setting default serdes (see `streamsConfiguration`
-    // above), which will be auto-configured based on the `StreamsConfiguration` instance.
-    final boolean isKeySerde = false;
-    specificAvroSerde.configure(
-        Collections.singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl()),
-        isKeySerde);
     final KStream<String, WikiFeed> stream = builder.stream(inputTopic);
     stream.to(outputTopic, Produced.with(stringSerde, specificAvroSerde));
 

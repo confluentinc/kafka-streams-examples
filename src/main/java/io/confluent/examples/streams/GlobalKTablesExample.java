@@ -34,8 +34,6 @@ import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.KeyValueStore;
 
-import java.util.Collections;
-import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -137,22 +135,14 @@ public class GlobalKTablesExample {
     // Set to earliest so we don't miss any data that arrived in the topics before the process
     // started
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    // Where to find the Confluent schema registry instance(s). Will automatically be forwarded to all Serdes
+    streamsConfiguration.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
 
     // create and configure the SpecificAvroSerdes required in this example
     final SpecificAvroSerde<Order> orderSerde = new SpecificAvroSerde<>();
-    final Map<String, String> serdeConfig =
-        Collections.singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
-            schemaRegistryUrl);
-    orderSerde.configure(serdeConfig, false);
-
     final SpecificAvroSerde<Customer> customerSerde = new SpecificAvroSerde<>();
-    customerSerde.configure(serdeConfig, false);
-
     final SpecificAvroSerde<Product> productSerde = new SpecificAvroSerde<>();
-    productSerde.configure(serdeConfig, false);
-
     final SpecificAvroSerde<EnrichedOrder> enrichedOrdersSerde = new SpecificAvroSerde<>();
-    enrichedOrdersSerde.configure(serdeConfig, false);
 
     final StreamsBuilder builder = new StreamsBuilder();
 
