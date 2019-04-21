@@ -246,7 +246,7 @@ public class WordCountInteractiveQueriesExampleTest {
     while (count <= maxTries) {
       try {
         // Starts the Rest Service on the provided host:port
-        proxy = WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, port, host);
+        proxy = WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, host, port);
         break;
       } catch (final Exception ex) {
         log.error("Could not start Rest Service due to: " + ex.toString());
@@ -383,7 +383,7 @@ public class WordCountInteractiveQueriesExampleTest {
     });
     
     kafkaStreams.start();
-    proxy = WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, port, host);
+    proxy = WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, host, port);
   }
   
   @Test
@@ -402,11 +402,11 @@ public class WordCountInteractiveQueriesExampleTest {
     });
     
     kafkaStreams.start();
-    proxy = WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, port, host);
+    proxy = WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, host, port);
     expectedEx.expect(Exception.class);
     expectedEx.expectMessage("java.net.BindException: Address already in use");
     // Binding to same port again will raise BindException.
-    WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, port, host);
+    WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, host, port);
   }
 
   /**
