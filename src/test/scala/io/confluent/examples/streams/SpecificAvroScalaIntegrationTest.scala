@@ -15,7 +15,7 @@
  */
 package io.confluent.examples.streams
 
-import java.util.{Collections, Properties}
+import java.util.Properties
 
 import io.confluent.examples.streams.avro.WikiFeed
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
@@ -73,10 +73,7 @@ class SpecificAvroScalaIntegrationTest extends AssertionsForJUnit {
 
     // Make an implicit serde available for WikiFeed, which is required for operations such as `to()` below.
     implicit val specificAvroSerde: Serde[WikiFeed] = {
-      val sas = new SpecificAvroSerde[WikiFeed]
-      val isKeySerde: Boolean = false
-      sas.configure(Collections.singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, cluster.schemaRegistryUrl), isKeySerde)
-      sas
+      new SpecificAvroSerde[WikiFeed]
     }
 
     // Write the input data as-is to the output topic.

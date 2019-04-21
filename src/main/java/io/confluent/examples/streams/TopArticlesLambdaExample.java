@@ -40,9 +40,7 @@ import org.apache.kafka.streams.kstream.WindowedSerdes;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Properties;
 
@@ -143,7 +141,7 @@ public class TopArticlesLambdaExample {
       streamsConfiguration.put(StreamsConfig.CLIENT_ID_CONFIG, "top-articles-lambda-example-client");
     // Where to find Kafka broker(s).
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-    // Where to find the Confluent schema registry instance(s)
+    // Where to find the Confluent schema registry instance(s). Will automatically be forwarded to all Serdes
     streamsConfiguration.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
     // Specify default (de)serializers for record keys and for record values.
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
@@ -155,16 +153,8 @@ public class TopArticlesLambdaExample {
 
     // Serdes used in this example
     final Serde<String> stringSerde = Serdes.String();
-
-    final Map<String, String> serdeConfig = Collections.singletonMap(
-        AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
-
     final Serde<GenericRecord> keyAvroSerde = new GenericAvroSerde();
-    keyAvroSerde.configure(serdeConfig, true);
-
     final Serde<GenericRecord> valueAvroSerde = new GenericAvroSerde();
-    valueAvroSerde.configure(serdeConfig, false);
-
     final Serde<Windowed<String>> windowedStringSerde = WindowedSerdes.timeWindowedSerdeFrom(String.class);
 
     final StreamsBuilder builder = new StreamsBuilder();

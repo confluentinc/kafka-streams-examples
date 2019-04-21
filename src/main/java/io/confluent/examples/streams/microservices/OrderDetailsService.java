@@ -1,26 +1,10 @@
 package io.confluent.examples.streams.microservices;
 
-import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.FAIL;
-import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.PASS;
-import static io.confluent.examples.streams.avro.microservices.OrderValidationType.ORDER_DETAILS_CHECK;
-import static io.confluent.examples.streams.microservices.domain.Schemas.Topics;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
-import static java.util.Collections.singletonList;
-
 import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.OrderState;
 import io.confluent.examples.streams.avro.microservices.OrderValidation;
 import io.confluent.examples.streams.avro.microservices.OrderValidationResult;
-import io.confluent.examples.streams.microservices.util.MicroserviceUtils;
 import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
-
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -32,6 +16,22 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.FAIL;
+import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.PASS;
+import static io.confluent.examples.streams.avro.microservices.OrderValidationType.ORDER_DETAILS_CHECK;
+import static io.confluent.examples.streams.microservices.domain.Schemas.Topics;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.parseArgsAndConfigure;
+import static java.util.Collections.singletonList;
 
 /**
  * Validates the details of each order.
@@ -59,7 +59,9 @@ public class OrderDetailsService implements Service {
   private boolean eosEnabled = false;
 
   @Override
-  public void start(final String bootstrapServers, final String stateDir) {
+  public void start(final String bootstrapServers,
+                    final String stateDir,
+                    final String schemaRegistryUrl) {
     executorService.execute(() -> startService(bootstrapServers));
     running = true;
     log.info("Started Service " + getClass().getSimpleName());
@@ -188,8 +190,9 @@ public class OrderDetailsService implements Service {
   }
 
   public static void main(final String[] args) throws Exception {
+    final String[] parameters = parseArgsAndConfigure(args);
     final OrderDetailsService service = new OrderDetailsService();
-    service.start(MicroserviceUtils.parseArgsAndConfigure(args), "/tmp/kafka-streams");
+    service.start(parameters[0], "/tmp/kafka-streams", null);
     addShutdownHookAndBlock(service);
   }
 }

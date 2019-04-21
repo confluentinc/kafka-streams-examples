@@ -31,6 +31,7 @@ import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.baseStreamsConfig;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.parseArgsAndConfigure;
+import static io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
 
 
 /**
@@ -48,14 +49,18 @@ public class FraudService implements Service {
   private KafkaStreams streams;
 
   @Override
-  public void start(final String bootstrapServers, final String stateDir) {
-    streams = processStreams(bootstrapServers, stateDir);
+  public void start(final String bootstrapServers,
+                    final String stateDir,
+                    final String schemaRegistryUrl) {
+    streams = processStreams(bootstrapServers, stateDir, schemaRegistryUrl);
     streams.cleanUp(); //don't do this in prod as it clears your state stores
     streams.start();
     log.info("Started Service " + getClass().getSimpleName());
   }
 
-  private KafkaStreams processStreams(final String bootstrapServers, final String stateDir) {
+  private KafkaStreams processStreams(final String bootstrapServers,
+                                      final String stateDir,
+                                      final String schemaRegistryUrl) {
 
     //Latch onto instances of the orders and inventory topics
     final StreamsBuilder builder = new StreamsBuilder();
@@ -100,10 +105,11 @@ public class FraudService implements Service {
     //as caching in Kafka Streams will conflate subsequent updates for the same key. Disabling caching ensures
     //we get a complete "changelog" from the aggregate(...) step above (i.e. every input event will have a
     //corresponding output event.
-    final Properties props = baseStreamsConfig(bootstrapServers, stateDir, SERVICE_APP_ID);
-    props.setProperty(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, "0");
+    final Properties config = baseStreamsConfig(bootstrapServers, stateDir, SERVICE_APP_ID);
+    config.setProperty(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, "0");
+    config.put(SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
 
-    return new KafkaStreams(builder.build(), props);
+    return new KafkaStreams(builder.build(), config);
   }
 
   private OrderValue simpleMerge(final OrderValue a, final OrderValue b) {
@@ -111,8 +117,9 @@ public class FraudService implements Service {
   }
 
   public static void main(final String[] args) throws Exception {
+    final String[] parameters = parseArgsAndConfigure(args);
     final FraudService service = new FraudService();
-    service.start(parseArgsAndConfigure(args), "/tmp/kafka-streams");
+    service.start(parameters[0], "/tmp/kafka-streams", null);
     addShutdownHookAndBlock(service);
   }
 

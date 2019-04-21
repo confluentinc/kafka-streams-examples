@@ -63,7 +63,10 @@ public class EmailServiceTest extends MicroserviceTestUtils {
     send(Topics.PAYMENTS, Collections.singleton(new KeyValue<>(payment.getId(), payment)));
 
     //When
-    emailService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
+    emailService.start(
+      CLUSTER.bootstrapServers(),
+      TestUtils.tempDirectory().getPath(),
+      CLUSTER.schemaRegistryUrl());
 
     //Then
     TestUtils.waitForCondition(() -> complete, 60000L, "Email was never sent.");

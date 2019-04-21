@@ -1,5 +1,21 @@
 package io.confluent.examples.streams.microservices;
 
+import io.confluent.examples.streams.avro.microservices.Order;
+import io.confluent.examples.streams.avro.microservices.OrderValidation;
+import io.confluent.examples.streams.avro.microservices.OrderValidationResult;
+import io.confluent.examples.streams.avro.microservices.OrderValidationType;
+import io.confluent.examples.streams.microservices.domain.Schemas;
+import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
+import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
+import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.test.TestUtils;
+import org.junit.After;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static io.confluent.examples.streams.avro.microservices.OrderState.CREATED;
 import static io.confluent.examples.streams.avro.microservices.OrderState.FAILED;
 import static io.confluent.examples.streams.avro.microservices.OrderState.VALIDATED;
@@ -8,21 +24,6 @@ import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANT
 import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
-
-import io.confluent.examples.streams.avro.microservices.Order;
-import io.confluent.examples.streams.avro.microservices.OrderValidation;
-import io.confluent.examples.streams.avro.microservices.OrderValidationResult;
-import io.confluent.examples.streams.avro.microservices.OrderValidationType;
-import io.confluent.examples.streams.microservices.domain.Schemas;
-import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
-import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
-import java.util.List;
-import java.util.stream.Collectors;
-import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.test.TestUtils;
-import org.junit.After;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 public class ValidationsAggregatorServiceTest extends MicroserviceTestUtils {
 
@@ -62,7 +63,10 @@ public class ValidationsAggregatorServiceTest extends MicroserviceTestUtils {
     sendOrderValuations(ruleResults);
 
     //When
-    ordersService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
+    ordersService.start(
+      CLUSTER.bootstrapServers(),
+      TestUtils.tempDirectory().getPath(),
+      CLUSTER.schemaRegistryUrl());
 
     //Then
     final List<KeyValue<String, Order>> finalOrders = MicroserviceTestUtils

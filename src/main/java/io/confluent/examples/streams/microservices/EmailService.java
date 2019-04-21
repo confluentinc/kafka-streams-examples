@@ -1,18 +1,9 @@
 package io.confluent.examples.streams.microservices;
 
-import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.CUSTOMERS;
-import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS;
-import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS_ENRICHED;
-import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.PAYMENTS;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.baseStreamsConfig;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.parseArgsAndConfigure;
-
 import io.confluent.examples.streams.avro.microservices.Customer;
 import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.OrderEnriched;
 import io.confluent.examples.streams.avro.microservices.Payment;
-
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
@@ -25,6 +16,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.Properties;
+
+import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.CUSTOMERS;
+import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS;
+import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS_ENRICHED;
+import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.PAYMENTS;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.baseStreamsConfig;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.parseArgsAndConfigure;
+import static io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
 
 
 /**
@@ -45,14 +46,18 @@ public class EmailService implements Service {
   }
 
   @Override
-  public void start(final String bootstrapServers, final String stateDir) {
-    streams = processStreams(bootstrapServers, stateDir);
+  public void start(final String bootstrapServers,
+                    final String stateDir,
+                    final String schemaRegistryUrl) {
+    streams = processStreams(bootstrapServers, stateDir, schemaRegistryUrl);
     streams.cleanUp(); //don't do this in prod as it clears your state stores
     streams.start();
     log.info("Started Service " + SERVICE_APP_ID);
   }
 
-  private KafkaStreams processStreams(final String bootstrapServers, final String stateDir) {
+  private KafkaStreams processStreams(final String bootstrapServers,
+                                      final String stateDir,
+                                      final String schemaRegistryUrl) {
 
     final StreamsBuilder builder = new StreamsBuilder();
 
@@ -88,12 +93,16 @@ public class EmailService implements Service {
         //TopicNameExtractor to get the topic name (i.e., customerLevel) from the enriched order record being sent
         .to((orderId, orderEnriched, record) -> orderEnriched.getCustomerLevel(), Produced.with(ORDERS_ENRICHED.keySerde(), ORDERS_ENRICHED.valueSerde()));
 
-    return new KafkaStreams(builder.build(), baseStreamsConfig(bootstrapServers, stateDir, SERVICE_APP_ID));
+    final Properties config = baseStreamsConfig(bootstrapServers, stateDir, SERVICE_APP_ID);
+    config.put(SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
+
+    return new KafkaStreams(builder.build(), config);
   }
 
   public static void main(final String[] args) throws Exception {
+    final String[] parameters = parseArgsAndConfigure(args);
     final EmailService service = new EmailService(new LoggingEmailer());
-    service.start(parseArgsAndConfigure(args), "/tmp/kafka-streams");
+    service.start(parameters[0], "/tmp/kafka-streams", parameters[1]);
     addShutdownHookAndBlock(service);
   }
 

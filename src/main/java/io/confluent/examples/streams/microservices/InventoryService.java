@@ -1,5 +1,11 @@
 package io.confluent.examples.streams.microservices;
 
+import io.confluent.examples.streams.avro.microservices.Order;
+import io.confluent.examples.streams.avro.microservices.OrderState;
+import io.confluent.examples.streams.avro.microservices.OrderValidation;
+import io.confluent.examples.streams.avro.microservices.Product;
+import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
+import io.confluent.examples.streams.microservices.util.MicroserviceUtils;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
@@ -18,19 +24,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
-
-import io.confluent.examples.streams.avro.microservices.Order;
-import io.confluent.examples.streams.avro.microservices.OrderState;
-import io.confluent.examples.streams.avro.microservices.OrderValidation;
-import io.confluent.examples.streams.avro.microservices.Product;
-import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
-import io.confluent.examples.streams.microservices.util.MicroserviceUtils;
+import java.util.Properties;
 
 import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.FAIL;
 import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.PASS;
 import static io.confluent.examples.streams.avro.microservices.OrderValidationType.INVENTORY_CHECK;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.parseArgsAndConfigure;
+import static io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
 
 /**
  * This service validates incoming orders to ensure there is sufficient stock to
@@ -50,8 +51,10 @@ public class InventoryService implements Service {
   private KafkaStreams streams;
 
   @Override
-  public void start(final String bootstrapServers, final String stateDir) {
-    streams = processStreams(bootstrapServers, stateDir);
+  public void start(final String bootstrapServers,
+                    final String stateDir,
+                    final String schemaRegistryUrl) {
+    streams = processStreams(bootstrapServers, stateDir, schemaRegistryUrl);
     streams.cleanUp(); //don't do this in prod as it clears your state stores
     streams.start();
     log.info("Started Service " + getClass().getSimpleName());
@@ -64,7 +67,9 @@ public class InventoryService implements Service {
     }
   }
 
-  private KafkaStreams processStreams(final String bootstrapServers, final String stateDir) {
+  private KafkaStreams processStreams(final String bootstrapServers,
+                                      final String stateDir,
+                                      final String schemaRegistryUrl) {
 
     //Latch onto instances of the orders and inventory topics
     final StreamsBuilder builder = new StreamsBuilder();
@@ -96,8 +101,10 @@ public class InventoryService implements Service {
       .to(Topics.ORDER_VALIDATIONS.name(), Produced.with(Topics.ORDER_VALIDATIONS.keySerde(),
         Topics.ORDER_VALIDATIONS.valueSerde()));
 
-    return new KafkaStreams(builder.build(),
-      MicroserviceUtils.baseStreamsConfig(bootstrapServers, stateDir, SERVICE_APP_ID));
+    final Properties config = MicroserviceUtils.baseStreamsConfig(bootstrapServers, stateDir, SERVICE_APP_ID);
+    config.put(SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
+
+    return new KafkaStreams(builder.build(), config);
   }
 
   private static class InventoryValidator implements
@@ -145,8 +152,9 @@ public class InventoryService implements Service {
   }
 
   public static void main(final String[] args) throws Exception {
+    final String[] parameters = parseArgsAndConfigure(args);
     final InventoryService service = new InventoryService();
-    service.start(parseArgsAndConfigure(args), "/tmp/kafka-streams");
+    service.start(parameters[0], "/tmp/kafka-streams", null);
     addShutdownHookAndBlock(service);
   }
 }

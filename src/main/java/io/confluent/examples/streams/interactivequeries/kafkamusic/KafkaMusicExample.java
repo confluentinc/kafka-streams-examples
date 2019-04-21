@@ -44,7 +44,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -278,22 +277,14 @@ public class KafkaMusicExample {
       } catch (final NumberFormatException ignored) {
       }
     }
+    // Where to find the Confluent schema registry instance(s). Will automatically be forwarded to all Serdes
+    streamsConfiguration.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
 
     // create and configure the SpecificAvroSerdes required in this example
-    final Map<String, String> serdeConfig = Collections.singletonMap(
-        AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
-
     final SpecificAvroSerde<PlayEvent> playEventSerde = new SpecificAvroSerde<>();
-    playEventSerde.configure(serdeConfig, false);
-
     final SpecificAvroSerde<Song> keySongSerde = new SpecificAvroSerde<>();
-    keySongSerde.configure(serdeConfig, true);
-
     final SpecificAvroSerde<Song> valueSongSerde = new SpecificAvroSerde<>();
-    valueSongSerde.configure(serdeConfig, false);
-
     final SpecificAvroSerde<SongPlayCount> songPlayCountSerde = new SpecificAvroSerde<>();
-    songPlayCountSerde.configure(serdeConfig, false);
 
     final StreamsBuilder builder = new StreamsBuilder();
 

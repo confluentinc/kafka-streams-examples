@@ -34,7 +34,7 @@ public class MicroserviceUtils {
   private static final String DEFAULT_BOOTSTRAP_SERVERS = "localhost:9092";
   private static final String DEFAULT_SCHEMA_REGISTRY_URL = "http://localhost:8081";
 
-  public static String parseArgsAndConfigure(final String[] args) {
+  public static String[] parseArgsAndConfigure(final String[] args) {
     if (args.length > 2) {
       throw new IllegalArgumentException("usage: ... " +
           "[<bootstrap.servers> (optional, default: " + DEFAULT_BOOTSTRAP_SERVERS + ")] " +
@@ -46,7 +46,7 @@ public class MicroserviceUtils {
     log.info("Connecting to Kafka cluster via bootstrap servers " + bootstrapServers);
     log.info("Connecting to Confluent schema registry at " + schemaRegistryUrl);
     Schemas.configureSerdesWithSchemaRegistryUrl(schemaRegistryUrl);
-    return bootstrapServers;
+    return new String[]{bootstrapServers,schemaRegistryUrl};
   }
 
   public static Properties baseStreamsConfig(final String bootstrapServers,

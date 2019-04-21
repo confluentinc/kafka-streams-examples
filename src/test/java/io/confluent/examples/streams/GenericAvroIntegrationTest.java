@@ -98,13 +98,6 @@ public class GenericAvroIntegrationTest {
     // demonstrate how you can construct and configure a generic Avro serde manually.
     final Serde<String> stringSerde = Serdes.String();
     final Serde<GenericRecord> genericAvroSerde = new GenericAvroSerde();
-    // Note how we must manually call `configure()` on this serde to configure the schema registry
-    // url.  This is different from the case of setting default serdes (see `streamsConfiguration`
-    // above), which will be auto-configured based on the `StreamsConfiguration` instance.
-    final boolean isKeySerde = false;
-    genericAvroSerde.configure(
-        Collections.singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl()),
-        isKeySerde);
     final KStream<String, GenericRecord> stream = builder.stream(inputTopic);
     stream.to(outputTopic, Produced.with(stringSerde, genericAvroSerde));
 
