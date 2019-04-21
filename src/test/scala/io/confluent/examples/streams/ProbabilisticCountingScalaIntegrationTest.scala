@@ -23,6 +23,7 @@ import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
+import org.apache.kafka.streams.kstream.Transformer
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream.KStream
 import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
