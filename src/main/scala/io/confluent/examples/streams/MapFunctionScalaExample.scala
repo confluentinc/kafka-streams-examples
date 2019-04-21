@@ -17,7 +17,6 @@ package io.confluent.examples.streams
 
 import java.time.Duration
 import java.util.Properties
-import java.util.concurrent.TimeUnit
 
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream._

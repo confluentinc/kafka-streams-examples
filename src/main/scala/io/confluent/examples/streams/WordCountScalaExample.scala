@@ -2,9 +2,7 @@ package io.confluent.examples.streams
 
 import java.time.Duration
 import java.util.Properties
-import java.util.concurrent.TimeUnit
 
-import io.confluent.examples.streams.MapFunctionScalaExample.streams
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream._
 import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
