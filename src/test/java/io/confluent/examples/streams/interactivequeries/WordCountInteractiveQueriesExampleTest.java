@@ -247,6 +247,7 @@ public class WordCountInteractiveQueriesExampleTest {
       try {
         // Starts the Rest Service on the provided host:port
         proxy = WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, port, host);
+        break;
       } catch (final Exception ex) {
         log.error("Could not start Rest Service due to: " + ex.toString());
       }
