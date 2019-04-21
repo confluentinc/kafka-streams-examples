@@ -48,7 +48,7 @@ import java.util.Properties;
  */
 public class SessionWindowsExampleDriver {
 
-  private static final int NUM_RECORDS_SENT = 8;
+  public static final int NUM_RECORDS_SENT = 8;
 
   public static void main(final String[] args) {
     final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
@@ -72,7 +72,7 @@ public class SessionWindowsExampleDriver {
                                                                                    playEventSerializer);
 
     final long start = System.currentTimeMillis();
-    final long billEvenTime = start + SessionWindowsExample.INACTIVITY_GAP.toMillis() / 10;
+    final long billEvenTime = start + SessionWindowsExample.INACTIVITY_GAP / 10;
     // create three sessions with different times
     playEventProducer.send(new ProducerRecord<>(SessionWindowsExample.PLAY_EVENTS,
                                                 null,
@@ -87,41 +87,41 @@ public class SessionWindowsExampleDriver {
                                                 new PlayEvent(2L, 10L)));
     playEventProducer.send(new ProducerRecord<>(SessionWindowsExample.PLAY_EVENTS,
                                                 null,
-                                                start + SessionWindowsExample.INACTIVITY_GAP.toMillis() / 5,
+                                                start + SessionWindowsExample.INACTIVITY_GAP / 5,
                                                 "sarah",
                                                 new PlayEvent(2L, 10L)));
 
     // out-of-order event for jo that is outside inactivity gap so will create a new session
     playEventProducer.send(new ProducerRecord<>(SessionWindowsExample.PLAY_EVENTS,
                                                 null,
-                                                start + SessionWindowsExample.INACTIVITY_GAP.toMillis() + 1,
+                                                start + SessionWindowsExample.INACTIVITY_GAP + 1,
                                                 "jo",
                                                 new PlayEvent(1L, 10L)));
     // extend current session for bill
     playEventProducer.send(new ProducerRecord<>(SessionWindowsExample.PLAY_EVENTS,
                                                 null,
-                                                start + SessionWindowsExample.INACTIVITY_GAP.toMillis(),
+                                                start + SessionWindowsExample.INACTIVITY_GAP,
                                                 "bill",
                                                 new PlayEvent(2L, 10L)));
 
     // new session for sarah
     playEventProducer.send(new ProducerRecord<>(SessionWindowsExample.PLAY_EVENTS,
                                                 null,
-                                                start + 2 * SessionWindowsExample.INACTIVITY_GAP.toMillis(),
+                                                start + 2 * SessionWindowsExample.INACTIVITY_GAP,
                                                 "sarah",
                                                 new PlayEvent(2L, 10L)));
 
     // send earlier event for jo that will merge the 2 previous sessions
     playEventProducer.send(new ProducerRecord<>(SessionWindowsExample.PLAY_EVENTS,
                                                 null,
-                                                start + SessionWindowsExample.INACTIVITY_GAP.toMillis() / 2,
+                                                start + SessionWindowsExample.INACTIVITY_GAP / 2,
                                                 "jo",
                                                 new PlayEvent(1L, 10L)));
 
     // new session for bill
     playEventProducer.send(new ProducerRecord<>(SessionWindowsExample.PLAY_EVENTS,
                                                 null,
-                                                start + 3 * SessionWindowsExample.INACTIVITY_GAP.toMillis(),
+                                                start + 3 * SessionWindowsExample.INACTIVITY_GAP,
                                                 "bill",
                                                 new PlayEvent(2L, 10L)));
 
@@ -129,8 +129,8 @@ public class SessionWindowsExampleDriver {
     // new session for sarah
     playEventProducer.send(new ProducerRecord<>(SessionWindowsExample.PLAY_EVENTS,
                                                 null,
-                                                start + 2 * SessionWindowsExample.INACTIVITY_GAP.toMillis() +
-                                                SessionWindowsExample.INACTIVITY_GAP.toMillis() / 5,
+                                                start + 2 * SessionWindowsExample.INACTIVITY_GAP +
+                                                SessionWindowsExample.INACTIVITY_GAP / 5,
                                                 "sarah",
                                                 new PlayEvent(2L, 10L)));
 

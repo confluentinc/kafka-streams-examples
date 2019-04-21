@@ -76,10 +76,8 @@ public class Schemas {
       ORDERS_ENRICHED = new Topic<>("orders-enriched", Serdes.String(), new SpecificAvroSerde<>());
       PAYMENTS = new Topic<>("payments", Serdes.String(), new SpecificAvroSerde<>());
       CUSTOMERS = new Topic<>("customers", Serdes.Long(), new SpecificAvroSerde<>());
-      ORDER_VALIDATIONS = new Topic<>("order-validations", Serdes.String(),
-          new SpecificAvroSerde<>());
-      WAREHOUSE_INVENTORY = new Topic<>("warehouse-inventory", new ProductTypeSerde(),
-          Serdes.Integer());
+      ORDER_VALIDATIONS = new Topic<>("order-validations", Serdes.String(), new SpecificAvroSerde<>());
+      WAREHOUSE_INVENTORY = new Topic<>("warehouse-inventory", new ProductTypeSerde(), Serdes.Integer());
       ORDER_VALUE_SERDE = new SpecificAvroSerde<>();
     }
   }
