@@ -97,7 +97,7 @@ public class KafkaMusicExampleTest {
     final InputStream inputStream = KafkaMusicExample.class.getClassLoader().getResourceAsStream(SONGFILENAME);
     final InputStreamReader streamReader = new InputStreamReader(inputStream, UTF_8);
     try (final BufferedReader br = new BufferedReader(streamReader)) {
-      String line = null;
+      String line;
       while ((line = br.readLine()) != null) {
         final String[] values = line.split(",");
         final Song newSong = new Song(Long.parseLong(values[0]), values[1], values[2], values[3], values[4]);
@@ -165,6 +165,7 @@ public class KafkaMusicExampleTest {
       try {
         // Starts the Rest Service on the provided host:port
         restProxy = KafkaMusicExample.startRestProxy(streams, new HostInfo(host, appServerPort));
+        break;
       } catch (final Exception ex) {
         log.error("Could not start Rest Service due to: " + ex.toString());
       }
