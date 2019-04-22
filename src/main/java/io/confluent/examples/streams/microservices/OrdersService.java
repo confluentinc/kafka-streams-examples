@@ -1,30 +1,30 @@
 package io.confluent.examples.streams.microservices;
 
+import io.confluent.examples.streams.avro.microservices.Order;
+import io.confluent.examples.streams.avro.microservices.OrderState;
+import io.confluent.examples.streams.interactivequeries.HostStoreInfo;
+import io.confluent.examples.streams.interactivequeries.MetadataService;
+import io.confluent.examples.streams.microservices.domain.Schemas;
+import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
+import io.confluent.examples.streams.microservices.util.Paths;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.errors.InvalidStateStoreException;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Predicate;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
-import org.apache.kafka.streams.StreamsConfig;
-
 import org.eclipse.jetty.server.Server;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ManagedAsync;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -41,14 +41,11 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
-import io.confluent.examples.streams.avro.microservices.Order;
-import io.confluent.examples.streams.avro.microservices.OrderState;
-import io.confluent.examples.streams.interactivequeries.HostStoreInfo;
-import io.confluent.examples.streams.interactivequeries.MetadataService;
-import io.confluent.examples.streams.microservices.domain.Schemas;
-import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
-import io.confluent.examples.streams.microservices.util.Paths;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS;
 import static io.confluent.examples.streams.microservices.domain.beans.OrderBean.fromBean;
@@ -58,6 +55,7 @@ import static io.confluent.examples.streams.microservices.util.MicroserviceUtils
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.setTimeout;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.startJetty;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.startProducer;
+import static io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
 import static org.apache.kafka.streams.state.StreamsMetadata.NOT_AVAILABLE;
 
 /**
@@ -310,28 +308,27 @@ public class OrdersService implements Service {
 
   @SuppressWarnings("unchecked")
   @Override
-  public void start(final String bootstrapServers, final String stateDir) {
+  public void start(final String bootstrapServers,
+                    final String stateDir,
+                    final String schemaRegistryUrl) {
     jettyServer = startJetty(port, this);
     port = jettyServer.getURI().getPort(); // update port, in case port was zero
     producer = startProducer(bootstrapServers, ORDERS);
-    streams = startKStreams(bootstrapServers);
+    streams = startKStreams(bootstrapServers, schemaRegistryUrl);
     log.info("Started Service " + getClass().getSimpleName());
   }
 
-  private KafkaStreams startKStreams(final String bootstrapServers) {
-    final KafkaStreams streams = new KafkaStreams(
-        createOrdersMaterializedView().build(),
-        config(bootstrapServers));
+  private KafkaStreams startKStreams(final String bootstrapServers,
+                                     final String schemaRegistryUrl) {
+    final Properties config = baseStreamsConfig(bootstrapServers, "/tmp/kafka-streams", SERVICE_APP_ID);
+    config.put(StreamsConfig.APPLICATION_SERVER_CONFIG, host + ":" + port);
+    config.put(SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
+
+    final KafkaStreams streams = new KafkaStreams(createOrdersMaterializedView().build(), config);
     metadataService = new MetadataService(streams);
     streams.cleanUp(); //don't do this in prod as it clears your state stores
     streams.start();
     return streams;
-  }
-
-  private Properties config(final String bootstrapServers) {
-    final Properties props = baseStreamsConfig(bootstrapServers, "/tmp/kafka-streams", SERVICE_APP_ID);
-    props.put(StreamsConfig.APPLICATION_SERVER_CONFIG, host + ":" + port);
-    return props;
   }
 
   @Override
@@ -384,7 +381,6 @@ public class OrdersService implements Service {
   }
 
   public static void main(final String[] args) throws Exception {
-
     final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
     final String schemaRegistryUrl = args.length > 1 ? args[1] : "http://localhost:8081";
     final String restHostname = args.length > 2 ? args[2] : "localhost";
@@ -392,7 +388,7 @@ public class OrdersService implements Service {
 
     Schemas.configureSerdesWithSchemaRegistryUrl(schemaRegistryUrl);
     final OrdersService service = new OrdersService(restHostname, restPort == null ? 0 : Integer.valueOf(restPort));
-    service.start(bootstrapServers, "/tmp/kafka-streams");
+    service.start(bootstrapServers, "/tmp/kafka-streams", schemaRegistryUrl);
     addShutdownHookAndBlock(service);
   }
 }

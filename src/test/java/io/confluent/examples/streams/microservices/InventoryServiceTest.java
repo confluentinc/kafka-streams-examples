@@ -1,13 +1,5 @@
 package io.confluent.examples.streams.microservices;
 
-import static io.confluent.examples.streams.avro.microservices.OrderState.CREATED;
-import static io.confluent.examples.streams.avro.microservices.Product.JUMPERS;
-import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
-import static io.confluent.examples.streams.microservices.domain.Schemas.Topics;
-import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
-import static java.util.Arrays.asList;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import io.confluent.examples.streams.IntegrationTestUtils;
 import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.OrderValidation;
@@ -17,8 +9,6 @@ import io.confluent.examples.streams.avro.microservices.Product;
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
-import java.util.List;
-import java.util.Properties;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -28,6 +18,17 @@ import org.apache.kafka.test.TestUtils;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.List;
+import java.util.Properties;
+
+import static io.confluent.examples.streams.avro.microservices.OrderState.CREATED;
+import static io.confluent.examples.streams.avro.microservices.Product.JUMPERS;
+import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
+import static io.confluent.examples.streams.microservices.domain.Schemas.Topics;
+import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
+import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class InventoryServiceTest extends MicroserviceTestUtils {
 
@@ -65,7 +66,10 @@ public class InventoryServiceTest extends MicroserviceTestUtils {
     sendOrders(orders);
 
     //When
-    inventoryService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
+    inventoryService.start(
+      CLUSTER.bootstrapServers(),
+      TestUtils.tempDirectory().getPath(),
+      CLUSTER.schemaRegistryUrl());
 
     //Then the final order for Jumpers should have been 'rejected' as it's out of stock
     expected = asList(

@@ -62,7 +62,10 @@ public class FraudServiceTest extends MicroserviceTestUtils {
     sendOrders(orders);
 
     //When
-    fraudService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
+    fraudService.start(
+      CLUSTER.bootstrapServers(),
+      TestUtils.tempDirectory().getPath(),
+      CLUSTER.schemaRegistryUrl());
 
     //Then there should be failures for the two orders that push customers over their limit.
     final List<OrderValidation> expected = asList(

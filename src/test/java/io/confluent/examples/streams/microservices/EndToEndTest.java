@@ -175,10 +175,16 @@ public class EndToEndTest extends MicroserviceTestUtils {
     services.add(new ValidationsAggregatorService());
 
     tailAllTopicsToConsole(CLUSTER.bootstrapServers());
-    services.forEach(s -> s.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath()));
+    services.forEach(s -> s.start(
+      CLUSTER.bootstrapServers(),
+      TestUtils.tempDirectory().getPath(),
+      CLUSTER.schemaRegistryUrl()));
 
     final OrdersService ordersService = new OrdersService(HOST, 0);
-    ordersService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
+    ordersService.start(
+      CLUSTER.bootstrapServers(),
+      TestUtils.tempDirectory().getPath(),
+      CLUSTER.schemaRegistryUrl());
     path = new Paths("localhost", ordersService.port());
     services.add(ordersService);
   }

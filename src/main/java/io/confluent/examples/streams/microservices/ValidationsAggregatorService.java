@@ -1,15 +1,5 @@
 package io.confluent.examples.streams.microservices;
 
-import static io.confluent.examples.streams.avro.microservices.Order.newBuilder;
-import static io.confluent.examples.streams.avro.microservices.OrderState.VALIDATED;
-import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.FAIL;
-import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.PASS;
-import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS;
-import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDER_VALIDATIONS;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.baseStreamsConfig;
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.parseArgsAndConfigure;
-
 import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.OrderState;
 import io.confluent.examples.streams.avro.microservices.OrderValidation;
@@ -28,6 +18,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.Properties;
+
+import static io.confluent.examples.streams.avro.microservices.Order.newBuilder;
+import static io.confluent.examples.streams.avro.microservices.OrderState.VALIDATED;
+import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.FAIL;
+import static io.confluent.examples.streams.avro.microservices.OrderValidationResult.PASS;
+import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDERS;
+import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.ORDER_VALIDATIONS;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.addShutdownHookAndBlock;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.baseStreamsConfig;
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.parseArgsAndConfigure;
+import static io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
 
 
 /**
@@ -57,16 +59,18 @@ public class ValidationsAggregatorService implements Service {
   private KafkaStreams streams;
 
   @Override
-  public void start(final String bootstrapServers, final String stateDir) {
-    streams = aggregateOrderValidations(bootstrapServers, stateDir);
+  public void start(final String bootstrapServers,
+                    final String stateDir,
+                    final String schemaRegistryUrl) {
+    streams = aggregateOrderValidations(bootstrapServers, stateDir, schemaRegistryUrl);
     streams.cleanUp(); //don't do this in prod as it clears your state stores
     streams.start();
     log.info("Started Service " + getClass().getSimpleName());
   }
 
-  private KafkaStreams aggregateOrderValidations(
-      final String bootstrapServers,
-      final String stateDir) {
+  private KafkaStreams aggregateOrderValidations(final String bootstrapServers,
+                                                 final String stateDir,
+                                                 final String schemaRegistryUrl) {
     final int numberOfRules = 3; //TODO put into a KTable to make dynamically configurable
 
     final StreamsBuilder builder = new StreamsBuilder();
@@ -112,8 +116,10 @@ public class ValidationsAggregatorService implements Service {
         //Push the validated order into the orders topic
         .toStream().to(ORDERS.name(), Produced.with(ORDERS.keySerde(), ORDERS.valueSerde()));
 
-    return new KafkaStreams(builder.build(),
-        baseStreamsConfig(bootstrapServers, stateDir, SERVICE_APP_ID));
+    final Properties config = baseStreamsConfig(bootstrapServers, stateDir, SERVICE_APP_ID);
+    config.put(SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
+
+    return new KafkaStreams(builder.build(), config);
   }
 
   @Override
@@ -124,9 +130,9 @@ public class ValidationsAggregatorService implements Service {
   }
 
   public static void main(final String[] args) throws Exception {
-    final String bootstrapServers = parseArgsAndConfigure(args);
+    final String[] parameters = parseArgsAndConfigure(args);
     final ValidationsAggregatorService service = new ValidationsAggregatorService();
-    service.start(bootstrapServers, "/tmp/kafka-streams");
+    service.start(parameters[0], "/tmp/kafka-streams", null);
     addShutdownHookAndBlock(service);
   }
 }
