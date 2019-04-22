@@ -111,6 +111,8 @@ public class IntegrationTestUtils {
   }
 
   /**
+   * Send the records to the topic, and wait until the writes are acknowledged.
+   *
    * @param topic          Kafka topic to write the data records to
    * @param records        Data records to write to Kafka
    * @param producerConfig Kafka producer configuration
@@ -212,7 +214,7 @@ public class IntegrationTestUtils {
 
   /**
    * Waits until the named store is queryable and, once it is, returns a reference to the store.
-   *
+   * <p>
    * Caveat: This is a point in time view and it may change due to partition reassignment.
    * That is, the returned store may still not be queryable in case a rebalancing is happening or
    * happened around the same time.  This caveat is acceptable for testing purposes when only a
@@ -279,14 +281,31 @@ public class IntegrationTestUtils {
         30000,
         "Expected values not found in WindowStore"); }
 
-  static <K, V> Map<K, V> drainTableOutput(final String outputTopic,
+  /**
+   * Similar to {@link IntegrationTestUtils#waitUntilMinKeyValueRecordsReceived(Properties, String, int)}, except for
+   * use with {@link TopologyTestDriver} tests. Because the test driver is synchronous, we don't need to poll for
+   * the expected number of records, and then hope that these are all the results from our test. Instead, we can
+   * just read out <em>all</em> the processing results, for use with deterministic validations.
+   * <p>
+   * Since this call is specifically for a table, we collect the observed records into a {@link Map} from keys to values,
+   * representing the latest observed value for each key.
+   *
+   * @param topic Topic to consume from
+   * @param topologyTestDriver The {@link TopologyTestDriver} to read the data records from
+   * @param keyDeserializer The {@link Deserializer} corresponding to the key type
+   * @param valueDeserializer  The {@link Deserializer} corresponding to the value type
+   * @param <K> Key type of the data records
+   * @param <V> Value type of the data records
+   * @return A {@link Map} representing the table constructed from the output topic.
+   */
+  static <K, V> Map<K, V> drainTableOutput(final String topic,
                                            final TopologyTestDriver topologyTestDriver,
                                            final Deserializer<K> keyDeserializer,
                                            final Deserializer<V> valueDeserializer) {
 
     final Map<K, V> results = new LinkedHashMap<>();
     while (true) {
-      final ProducerRecord<K, V> record = topologyTestDriver.readOutput(outputTopic, keyDeserializer, valueDeserializer);
+      final ProducerRecord<K, V> record = topologyTestDriver.readOutput(topic, keyDeserializer, valueDeserializer);
       if (record == null) {
         break;
       } else {
@@ -296,24 +315,37 @@ public class IntegrationTestUtils {
     return results;
   }
 
-  static <K, V> void produceKeyValuesSynchronously(final String inputTopic,
-                                                   final List<KeyValue<K, V>> entities,
+  /**
+   * Like {@link IntegrationTestUtils#produceKeyValuesSynchronously(String, Collection, Properties)}, except for use
+   * with TopologyTestDriver tests, rather than "native" Kafka broker tests.
+   *
+   * @param topic              Kafka topic to write the data records to
+   * @param records            Data records to write to Kafka
+   * @param topologyTestDriver The {@link TopologyTestDriver} to send the data records to
+   * @param keySerializer      The {@link Serializer} corresponding to the key type
+   * @param valueSerializer    The {@link Serializer} corresponding to the value type
+   * @param <K>                Key type of the data records
+   * @param <V>                Value type of the data records
+   */
+  static <K, V> void produceKeyValuesSynchronously(final String topic,
+                                                   final List<KeyValue<K, V>> records,
                                                    final TopologyTestDriver topologyTestDriver,
                                                    final Serializer<K> keySerializer,
                                                    final Serializer<V> valueSerializer) {
-    for (final KeyValue<K, V> entity : entities) {
-      topologyTestDriver.pipeInput(new ConsumerRecord<>(
-        inputTopic,
+    for (final KeyValue<K, V> entity : records) {
+      final ConsumerRecord<byte[], byte[]> consumerRecord = new ConsumerRecord<>(
+        topic,
         0,
         0,
         0,
         TimestampType.CREATE_TIME,
-        -1,
-        -1,
-        -1,
-        keySerializer.serialize(inputTopic, entity.key),
-        valueSerializer.serialize(inputTopic, entity.value)
-      ));
+        ConsumerRecord.NULL_CHECKSUM,
+        ConsumerRecord.NULL_SIZE,
+        ConsumerRecord.NULL_SIZE,
+        keySerializer.serialize(topic, entity.key),
+        valueSerializer.serialize(topic, entity.value)
+      );
+      topologyTestDriver.pipeInput(consumerRecord);
     }
   }
 
@@ -355,7 +387,7 @@ public class IntegrationTestUtils {
    */
   @SafeVarargs
   static <K, V> Map<K, V> mkMap(final Map.Entry<K, V>... entries) {
-    final LinkedHashMap<K, V> result = new LinkedHashMap<>();
+    final Map<K, V> result = new LinkedHashMap<>();
     for (final Map.Entry<K, V> entry : entries) {
       result.put(entry.getKey(), entry.getValue());
     }
