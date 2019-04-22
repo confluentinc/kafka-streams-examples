@@ -154,7 +154,8 @@ public class KafkaMusicExampleTest {
 
   private void createStreams(final String host) throws Exception {
     appServerPort = ExampleTestUtils.randomFreeLocalPort();
-    streams = KafkaMusicExample.createChartsStreams(CLUSTER.bootstrapServers(),
+    streams = KafkaMusicExample.createChartsStreams(
+        CLUSTER.bootstrapServers(),
         CLUSTER.schemaRegistryUrl(),
         appServerPort,
         TestUtils.tempDirectory().getPath(),
