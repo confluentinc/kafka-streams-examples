@@ -100,9 +100,9 @@ Additional examples may be found under [src/test/](src/test/java/io/confluent/ex
 
 > Tip: Run `mvn test` to launch the tests.
 
-| Integration Test Name               | Concepts used                               | Java 8+ | Java 7+ | Scala |
+| Test Name                           | Concepts used                               | Java 8+ | Java 7+ | Scala |
 | ----------------------------------- | ------------------------------------------- | ------- | ------- | ----- |
-| WordCount                           | DSL, aggregation, stateful                  | [Java 8+ Example](src/test/java/io/confluent/examples/streams/WordCountLambdaIntegrationTest.java) | | [Scala Example](src/test/scala/io/confluent/examples/streams/WordCountScalaIntegrationTest.scala) |
+| WordCount                           | DSL, aggregation, stateful                  | [Java 8+ Example](src/test/java/io/confluent/examples/streams/WordCountLambdaExampleTest.java) | | [Scala Example](src/test/scala/io/confluent/examples/streams/WordCountScalaIntegrationTest.scala) |
 | WordCountInteractiveQueries         | Interactive Queries, REST, RPC              | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/interactivequeries/WordCountInteractiveQueriesExampleTest.java) | |
 | CustomStreamTableJoin               | DSL, Processor API, Transformers            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/CustomStreamTableJoinIntegrationTest.java) | | |
 | EventDeduplication                  | DSL, Processor API, Transformers            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/EventDeduplicationLambdaIntegrationTest.java) | | |
