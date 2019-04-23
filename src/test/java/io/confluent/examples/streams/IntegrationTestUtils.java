@@ -24,6 +24,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.record.TimestampType;
 import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
@@ -36,6 +37,7 @@ import org.apache.kafka.streams.state.WindowStoreIterator;
 import org.apache.kafka.test.TestUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -423,5 +425,57 @@ public class IntegrationTestUtils {
       result.put(entry.getKey(), entry.getValue());
     }
     return result;
+  }
+
+  /**
+   * A Serializer/Deserializer/Serde implementation for use when you know the data is always null
+   * @param <T> The type of the stream (you can parameterize this with any type,
+   *           since we throw an exception if you attempt to use it with non-null data)
+   */
+  static class NothingSerde<T> implements Serializer<T>, Deserializer<T>, Serde<T> {
+
+    private final boolean strict;
+
+    NothingSerde(final boolean strict) {
+      this.strict = strict;
+    }
+
+    @Override
+    public void configure(final Map<String, ?> map, final boolean b) {
+
+    }
+
+    @Override
+    public T deserialize(final String s, final byte[] bytes) {
+      if (strict && bytes != null) {
+        throw new IllegalArgumentException("Expected [" + Arrays.toString(bytes) + "] to be null.");
+      } else {
+        return null;
+      }
+    }
+
+    @Override
+    public byte[] serialize(final String s, final T t) {
+      if (strict && t != null) {
+        throw new IllegalArgumentException("Expected [" + t + "] to be null.");
+      } else {
+        return null;
+      }
+    }
+
+    @Override
+    public void close() {
+
+    }
+
+    @Override
+    public Serializer<T> serializer() {
+      return this;
+    }
+
+    @Override
+    public Deserializer<T> deserializer() {
+      return this;
+    }
   }
 }
