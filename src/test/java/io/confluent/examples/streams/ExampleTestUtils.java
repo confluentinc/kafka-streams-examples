@@ -16,10 +16,10 @@ public class ExampleTestUtils {
     public static String randomValidHost() {
         final Random r = new Random();
 
-//        if (r.nextFloat() < 0.1) {
+        if (r.nextFloat() < 0.1) {
             return "localhost";
-//        } else {
-//            return "127." + r.nextInt(10) + "." + r.nextInt(10) + "." + r.nextInt(256);
-//        }
+        } else {
+            return "127." + r.nextInt(10) + "." + r.nextInt(10) + "." + r.nextInt(256);
+        }
     }
 }
