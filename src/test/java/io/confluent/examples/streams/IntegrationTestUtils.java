@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -316,6 +317,36 @@ public class IntegrationTestUtils {
   }
 
   /**
+   * Similar to {@link IntegrationTestUtils#waitUntilMinKeyValueRecordsReceived(Properties, String, int)}, except for
+   * use with {@link TopologyTestDriver} tests. Because the test driver is synchronous, we don't need to poll for
+   * the expected number of records, and then hope that these are all the results from our test. Instead, we can
+   * just read out <em>all</em> the processing results, for use with deterministic validations.
+   *
+   * @param topic Topic to consume from
+   * @param topologyTestDriver The {@link TopologyTestDriver} to read the data records from
+   * @param keyDeserializer The {@link Deserializer} corresponding to the key type
+   * @param valueDeserializer  The {@link Deserializer} corresponding to the value type
+   * @param <K> Key type of the data records
+   * @param <V> Value type of the data records
+   * @return A {@link List} of {@link KeyValue} pairs of results from the output topic, in the order they were produced.
+   */
+  static <K, V> List<KeyValue<K, V>> drainStreamOutput(final String topic,
+                                                       final TopologyTestDriver topologyTestDriver,
+                                                       final Deserializer<K> keyDeserializer,
+                                                       final Deserializer<V> valueDeserializer) {
+    final List<KeyValue<K, V>> results = new LinkedList<>();
+    while (true) {
+      final ProducerRecord<K, V> record = topologyTestDriver.readOutput(topic, keyDeserializer, valueDeserializer);
+      if (record == null) {
+        break;
+      } else {
+        results.add(new KeyValue<>(record.key(), record.value()));
+      }
+    }
+    return results;
+  }
+
+  /**
    * Like {@link IntegrationTestUtils#produceKeyValuesSynchronously(String, Collection, Properties)}, except for use
    * with TopologyTestDriver tests, rather than "native" Kafka broker tests.
    *
@@ -393,5 +424,4 @@ public class IntegrationTestUtils {
     }
     return result;
   }
-
 }
