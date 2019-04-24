@@ -20,17 +20,12 @@ import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.apache.kafka.common.serialization.IntegerSerializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.TopologyTestDriver;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.test.TestUtils;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -45,19 +40,23 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class SumLambdaIntegrationTest {
 
-  private static String inputTopic = "inputTopic";
-  private static String outputTopic = "outputTopic";
+  private static String inputTopic = SumLambdaExample.NUMBERS_TOPIC;
+  private static String outputTopic = SumLambdaExample.SUM_OF_ODD_NUMBERS_TOPIC;
 
   @Test
   public void shouldSumEvenNumbers() throws Exception {
     final List<Integer> inputValues = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-    final List<Integer> expectedValues = Collections.singletonList(30);
+    final List<KeyValue<Integer, Integer>> expectedValues = Arrays.asList(
+      new KeyValue<>(1, 1),
+      new KeyValue<>(1, 4),
+      new KeyValue<>(1, 9),
+      new KeyValue<>(1, 16),
+      new KeyValue<>(1, 25)
+    );
 
     //
     // Step 1: Configure and start the processor topology.
     //
-    final StreamsBuilder builder = new StreamsBuilder();
-
     final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "sum-lambda-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config");
@@ -70,16 +69,8 @@ public class SumLambdaIntegrationTest {
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
-    final KStream<Void, Integer> input = builder.stream(inputTopic);
-    final KTable<Integer, Integer> sumOfOddNumbers = input
-        .filter((k, v) -> v % 2 == 0)
-        .selectKey((k, v) -> 1)
-        // no need to specify explicit serdes because the resulting key and value types match our default serde settings
-        .groupByKey()
-        .reduce((v1, v2) -> v1 + v2);
-    sumOfOddNumbers.toStream().to(outputTopic);
-
-    final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration);
+    final TopologyTestDriver topologyTestDriver =
+      new TopologyTestDriver(SumLambdaExample.getTopology(), streamsConfiguration);
 
     //
     // Step 2: Produce some input data to the input topic.
@@ -88,20 +79,20 @@ public class SumLambdaIntegrationTest {
       inputTopic,
       inputValues.stream().map(i -> new KeyValue<Void, Integer>(null, i)).collect(Collectors.toList()),
       topologyTestDriver,
-      new IntegrationTestUtils.NothingSerde<>(true),
+      new IntegrationTestUtils.NothingSerde<>(),
       new IntegerSerializer()
     );
 
     //
     // Step 3: Verify the application's output data.
     //
-    final Collection<Integer> actualValues = IntegrationTestUtils.drainTableOutput(
+    final List<KeyValue<Integer, Integer>> actualValues = IntegrationTestUtils.drainStreamOutput(
       outputTopic,
       topologyTestDriver,
       new IntegerDeserializer(),
       new IntegerDeserializer()
-    ).values();
-    assertThat(actualValues).containsExactlyElementsOf(expectedValues);
+    );
+    assertThat(actualValues).isEqualTo(expectedValues);
   }
 
 }

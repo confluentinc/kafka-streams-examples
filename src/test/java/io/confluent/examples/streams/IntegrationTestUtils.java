@@ -434,20 +434,14 @@ public class IntegrationTestUtils {
    */
   static class NothingSerde<T> implements Serializer<T>, Deserializer<T>, Serde<T> {
 
-    private final boolean strict;
-
-    NothingSerde(final boolean strict) {
-      this.strict = strict;
-    }
-
     @Override
-    public void configure(final Map<String, ?> map, final boolean b) {
+    public void configure(final Map<String, ?> configuration, final boolean isKey) {
 
     }
 
     @Override
-    public T deserialize(final String s, final byte[] bytes) {
-      if (strict && bytes != null) {
+    public T deserialize(final String topic, final byte[] bytes) {
+      if (bytes != null) {
         throw new IllegalArgumentException("Expected [" + Arrays.toString(bytes) + "] to be null.");
       } else {
         return null;
@@ -455,9 +449,9 @@ public class IntegrationTestUtils {
     }
 
     @Override
-    public byte[] serialize(final String s, final T t) {
-      if (strict && t != null) {
-        throw new IllegalArgumentException("Expected [" + t + "] to be null.");
+    public byte[] serialize(final String topic, final T data) {
+      if (data != null) {
+        throw new IllegalArgumentException("Expected [" + data + "] to be null.");
       } else {
         return null;
       }

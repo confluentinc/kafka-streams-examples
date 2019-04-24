@@ -115,9 +115,7 @@ public class TableToTableJoinIntegrationTest {
         .toStream()
         .to(outputTopic, Produced.with(Serdes.String(), Serdes.String()));
 
-
     final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration);
-
 
     //
     // Step 2: Publish user regions.
