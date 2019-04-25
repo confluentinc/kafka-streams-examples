@@ -1,5 +1,8 @@
 package io.confluent.examples.streams.microservices.domain;
 
+import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.ProductTypeSerde;
+import static io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
+
 import io.confluent.examples.streams.avro.microservices.Customer;
 import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.OrderValidation;
@@ -7,15 +10,12 @@ import io.confluent.examples.streams.avro.microservices.OrderValue;
 import io.confluent.examples.streams.avro.microservices.Payment;
 import io.confluent.examples.streams.avro.microservices.Product;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
-import org.apache.kafka.common.serialization.Serde;
-import org.apache.kafka.common.serialization.Serdes;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.ProductTypeSerde;
-import static io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
+import org.apache.kafka.common.serialization.Serde;
+import org.apache.kafka.common.serialization.Serdes;
 
 /**
  * A utility class that represents Topics and their various Serializers/Deserializers in a
