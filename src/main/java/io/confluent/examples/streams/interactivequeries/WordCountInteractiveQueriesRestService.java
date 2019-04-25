@@ -81,7 +81,7 @@ public class WordCountInteractiveQueriesRestService {
   @Path("/keyvalue/{storeName}/{key}")
   @Produces(MediaType.APPLICATION_JSON)
   public KeyValueBean byKey(@PathParam("storeName") final String storeName,
-                        @PathParam("key") final String key) {
+                            @PathParam("key") final String key) {
 
     final HostStoreInfo hostStoreInfo = streamsMetadataForStoreAndKey(storeName, key);
     if (!thisHost(hostStoreInfo)){
