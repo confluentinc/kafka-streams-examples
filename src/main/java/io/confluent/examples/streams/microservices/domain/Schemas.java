@@ -10,6 +10,7 @@ import io.confluent.examples.streams.avro.microservices.OrderValue;
 import io.confluent.examples.streams.avro.microservices.Payment;
 import io.confluent.examples.streams.avro.microservices.Product;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -72,10 +73,8 @@ public class Schemas {
       ORDERS = new Topic<>("orders", Serdes.String(), new SpecificAvroSerde<Order>());
       PAYMENTS = new Topic<>("payments", Serdes.String(), new SpecificAvroSerde<Payment>());
       CUSTOMERS = new Topic<>("customers", Serdes.Long(), new SpecificAvroSerde<Customer>());
-      ORDER_VALIDATIONS = new Topic<>("order-validations", Serdes.String(),
-          new SpecificAvroSerde<OrderValidation>());
-      WAREHOUSE_INVENTORY = new Topic<>("warehouse-inventory", new ProductTypeSerde(),
-          Serdes.Integer());
+      ORDER_VALIDATIONS = new Topic<>("order-validations", Serdes.String(), new SpecificAvroSerde<OrderValidation>());
+      WAREHOUSE_INVENTORY = new Topic<>("warehouse-inventory", new ProductTypeSerde(), Serdes.Integer());
       ORDER_VALUE_SERDE = new SpecificAvroSerde<>();
     }
   }
