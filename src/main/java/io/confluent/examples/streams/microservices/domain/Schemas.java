@@ -70,10 +70,10 @@ public class Schemas {
     }
 
     private static void createTopics() {
-      ORDERS = new Topic<>("orders", Serdes.String(), new SpecificAvroSerde<Order>());
-      PAYMENTS = new Topic<>("payments", Serdes.String(), new SpecificAvroSerde<Payment>());
-      CUSTOMERS = new Topic<>("customers", Serdes.Long(), new SpecificAvroSerde<Customer>());
-      ORDER_VALIDATIONS = new Topic<>("order-validations", Serdes.String(), new SpecificAvroSerde<OrderValidation>());
+      ORDERS = new Topic<>("orders", Serdes.String(), new SpecificAvroSerde<>());
+      PAYMENTS = new Topic<>("payments", Serdes.String(), new SpecificAvroSerde<>());
+      CUSTOMERS = new Topic<>("customers", Serdes.Long(), new SpecificAvroSerde<>());
+      ORDER_VALIDATIONS = new Topic<>("order-validations", Serdes.String(), new SpecificAvroSerde<>());
       WAREHOUSE_INVENTORY = new Topic<>("warehouse-inventory", new ProductTypeSerde(), Serdes.Integer());
       ORDER_VALUE_SERDE = new SpecificAvroSerde<>();
     }
