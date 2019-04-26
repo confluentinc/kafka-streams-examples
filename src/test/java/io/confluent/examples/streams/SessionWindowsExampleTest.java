@@ -117,7 +117,7 @@ public class SessionWindowsExampleTest {
     // also look in the store to find the same session
     final ReadOnlySessionStore<String, Long>
         playEventsPerSession =
-        streams.store(SessionWindowsExample.PLAY_EVENTS_PER_SESSION, QueryableStoreTypes.<String, Long>sessionStore());
+        streams.store(SessionWindowsExample.PLAY_EVENTS_PER_SESSION, QueryableStoreTypes.sessionStore());
 
     final KeyValue<Windowed<String>, Long> next = fetchSessionsFromLocalStore(userId, playEventsPerSession).get(0);
     assertThat(next.key, equalTo(new Windowed<>(userId, new SessionWindow(start, start))));
