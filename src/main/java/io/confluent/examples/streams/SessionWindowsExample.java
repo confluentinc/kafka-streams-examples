@@ -32,10 +32,10 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.SessionWindows;
 import org.apache.kafka.streams.state.SessionStore;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Demonstrates counting user activity (play-events) into Session Windows
@@ -106,7 +106,7 @@ import java.util.concurrent.TimeUnit;
 public class SessionWindowsExample {
 
   static final String PLAY_EVENTS = "play-events";
-  static final Long INACTIVITY_GAP = TimeUnit.MINUTES.toMillis(30);
+  static final Duration INACTIVITY_GAP = Duration.ofMinutes(30);
   static final String PLAY_EVENTS_PER_SESSION = "play-events-per-session";
 
   public static void main(final String[] args) {
