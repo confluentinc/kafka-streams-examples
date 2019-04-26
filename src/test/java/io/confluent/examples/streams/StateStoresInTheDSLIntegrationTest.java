@@ -15,18 +15,15 @@
  */
 package io.confluent.examples.streams;
 
-import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.Transformer;
@@ -36,50 +33,40 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.apache.kafka.test.TestUtils;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * End-to-end integration test that shows how to use state stores in the Kafka Streams DSL.
- *
+ * <p>
  * Don't pay too much attention to the output data of the application (or to the output data of the
  * Transformer).  What we want to showcase here is the technical interaction between state stores
  * and the Kafka Streams DSL, at the example of {@link KStream#transform(TransformerSupplier,
  * String...)}.  What the application is actually computing is of secondary concern.
- *
+ * <p>
  * Note: This example works with Java 8+ only.
  */
 public class StateStoresInTheDSLIntegrationTest {
 
-  @ClassRule
-  public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
-
   private static final String inputTopic = "inputTopic";
   private static final String outputTopic = "outputTopic";
-
-  @BeforeClass
-  public static void startKafkaCluster() throws Exception {
-    CLUSTER.createTopic(inputTopic);
-    CLUSTER.createTopic(outputTopic);
-  }
 
   /**
    * Returns a transformer that computes running, ever-incrementing word counts.
    */
   private static final class WordCountTransformerSupplier
-      implements TransformerSupplier<byte[], String, KeyValue<String, Long>> {
+    implements TransformerSupplier<byte[], String, KeyValue<String, Long>> {
 
     final private String stateStoreName;
 
-    public WordCountTransformerSupplier(final String stateStoreName) {
+    WordCountTransformerSupplier(final String stateStoreName) {
       this.stateStoreName = stateStoreName;
     }
 
@@ -117,22 +104,22 @@ public class StateStoresInTheDSLIntegrationTest {
   }
 
   @Test
-  public void shouldAllowStateStoreAccessFromDSL() throws Exception {
+  public void shouldAllowStateStoreAccessFromDSL() {
     final List<String> inputValues = Arrays.asList(
-        "foo",
-        "bar",
-        "foo",
-        "quux",
-        "bar",
-        "foo");
+      "foo",
+      "bar",
+      "foo",
+      "quux",
+      "bar",
+      "foo");
 
     final List<KeyValue<String, Long>> expectedRecords = Arrays.asList(
-        new KeyValue<>("foo", 1L),
-        new KeyValue<>("bar", 1L),
-        new KeyValue<>("foo", 2L),
-        new KeyValue<>("quux", 1L),
-        new KeyValue<>("bar", 2L),
-        new KeyValue<>("foo", 3L)
+      new KeyValue<>("foo", 1L),
+      new KeyValue<>("bar", 1L),
+      new KeyValue<>("foo", 2L),
+      new KeyValue<>("quux", 1L),
+      new KeyValue<>("bar", 2L),
+      new KeyValue<>("foo", 3L)
     );
 
     //
@@ -142,7 +129,7 @@ public class StateStoresInTheDSLIntegrationTest {
 
     final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "state-store-dsl-lambda-integration-test");
-    streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+    streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config");
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray().getClass().getName());
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -150,14 +137,11 @@ public class StateStoresInTheDSLIntegrationTest {
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
     // Create a state store manually.
-    final StoreBuilder<KeyValueStore<String, Long>> wordCountsStore =
-        Stores
-            .keyValueStoreBuilder(
-                Stores.persistentKeyValueStore("WordCountsStore"),
-                Serdes.String(),
-                Serdes.Long()
-            )
-            .withCachingEnabled();
+    final StoreBuilder<KeyValueStore<String, Long>> wordCountsStore = Stores.keyValueStoreBuilder(
+      Stores.persistentKeyValueStore("WordCountsStore"),
+      Serdes.String(),
+      Serdes.Long())
+      .withCachingEnabled();
 
     // Important (1 of 2): You must add the state store to the topology, otherwise your application
     // will fail at run-time (because the state store is referred to in `transform()` below.
@@ -174,39 +158,32 @@ public class StateStoresInTheDSLIntegrationTest {
     // (within the transformer) because `ProcessorContext#getStateStore("WordCountsStore")` will
     // return `null`.
     final KStream<String, Long> wordCounts =
-        words.transform(new WordCountTransformerSupplier(wordCountsStore.name()), wordCountsStore.name());
+      words.transform(new WordCountTransformerSupplier(wordCountsStore.name()), wordCountsStore.name());
 
     wordCounts.to(outputTopic, Produced.with(Serdes.String(), Serdes.Long()));
 
-    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
-    streams.start();
+    final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration);
 
     //
     // Step 2: Produce some input data to the input topic.
     //
-    final Properties producerConfig = new Properties();
-    producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-    producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
-    producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
-    producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    IntegrationTestUtils.produceValuesSynchronously(inputTopic, inputValues, producerConfig);
+    IntegrationTestUtils.produceKeyValuesSynchronously(
+      inputTopic,
+      inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
+      topologyTestDriver,
+      new IntegrationTestUtils.NothingSerde<>(),
+      new StringSerializer()
+    );
 
     //
     // Step 3: Verify the application's output data.
     //
-    final Properties consumerConfig = new Properties();
-    consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "state-store-dsl-lambda-integration-test-standard-consumer");
-    consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
-    final List<KeyValue<String, Long>> actualValues = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(
-        consumerConfig,
-        outputTopic,
-        expectedRecords.size()
+    final List<KeyValue<String, Long>> actualValues = IntegrationTestUtils.drainStreamOutput(
+      outputTopic,
+      topologyTestDriver,
+      new StringDeserializer(),
+      new LongDeserializer()
     );
-    streams.close();
     assertThat(actualValues).isEqualTo(expectedRecords);
   }
 
