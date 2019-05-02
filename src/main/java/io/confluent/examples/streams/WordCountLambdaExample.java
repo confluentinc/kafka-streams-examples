@@ -15,7 +15,6 @@
  */
 package io.confluent.examples.streams;
 
-import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -114,22 +113,20 @@ public class WordCountLambdaExample {
   static final String inputTopic = "streams-plaintext-input";
   static final String outputTopic = "streams-wordcount-output";
 
+  /**
+   * The Streams application as a whole can be launched like any normal Java application that has a `main()` method.
+   */
   public static void main(final String[] args) {
     final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
 
-    //Populate Stream Configuration
+    // Configure the Streams application.
     final Properties streamsConfiguration = getStreamsConfiguration(bootstrapServers);
 
-    // In the subsequent lines we define the processing topology of the Streams application.
+    // Define the processing topology of the Streams application.
     final StreamsBuilder builder = new StreamsBuilder();
-
-    //Create Actual Stream Processing pipeline
     createWordCountStream(builder);
-
-    // Now that we have finished the definition of the processing topology we can actually run
-    // it via `start()`.  The Streams application as a whole can be launched just like any
-    // normal Java application that has a `main()` method.
     final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
+
     // Always (and unconditionally) clean local state prior to starting the processing topology.
     // We opt for this unconditional call here because this will make it easier for you to play around with the example
     // when resetting the application for doing a re-run (via the Application Reset Tool,
@@ -141,16 +138,21 @@ public class WordCountLambdaExample {
     // is truly needed, i.e., only under certain conditions (e.g., the presence of a command line flag for your app).
     // See `ApplicationResetExample.java` for a production-like example.
     streams.cleanUp();
+
+    // Now run the processing topology via `start()` to begin processing its input data.
     streams.start();
 
-    // Add shutdown hook to respond to SIGTERM and gracefully close Kafka Streams
+    // Add shutdown hook to respond to SIGTERM and gracefully close the Streams application.
     Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
   }
 
   /**
-   * Populate Stream Configuration.
+   * Configure the Streams application.
    *
-   * @param bootstrapServers Kafka Cluster address
+   * Various Kafka Streams related settings are defined here such as the location of the target Kafka cluster to use.
+   * Additionally, you could also define Kafka Producer and Kafka Consumer settings when needed.
+   *
+   * @param bootstrapServers Kafka cluster address
    * @return Properties getStreamsConfiguration
    */
   static Properties getStreamsConfiguration(final String bootstrapServers) {
@@ -167,30 +169,20 @@ public class WordCountLambdaExample {
     // Records should be flushed every 10 seconds. This is less than the default
     // in order to keep this example interactive.
     streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 10 * 1000);
-    // For illustrative purposes we disable record caches
+    // For illustrative purposes we disable record caches.
     streamsConfiguration.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
     return streamsConfiguration;
   }
 
   /**
-   * Create Actual Stream Processing pipeline for Word Count.
+   * Define the processing topology for Word Count.
    *
-   * @param builder StreamBuilder to use
+   * @param builder StreamsBuilder to use
    */
   static void createWordCountStream(final StreamsBuilder builder) {
-    // Set up serializers and deserializers, which we will use for overriding the default serdes
-    // specified above.
-    final Serde<String> stringSerde = Serdes.String();
-    final Serde<Long> longSerde = Serdes.Long();
-
     // Construct a `KStream` from the input topic "streams-plaintext-input", where message values
     // represent lines of text (for the sake of this example, we ignore whatever may be stored
-    // in the message keys).
-    //
-    // Note: We could also just call `builder.stream("streams-plaintext-input")` if we wanted to leverage
-    // the default serdes specified in the Streams configuration above, because these defaults
-    // match what's in the actual topic.  However we explicitly set the deserializers in the
-    // call to `stream()` below in order to show how that's done, too.
+    // in the message keys).  The default key and value serdes will be used.
     final KStream<String, String> textLines = builder.stream(inputTopic);
 
     final Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
@@ -200,18 +192,16 @@ public class WordCountLambdaExample {
       // values, i.e. we can ignore whatever data is in the record keys and thus invoke
       // `flatMapValues()` instead of the more generic `flatMap()`.
       .flatMapValues(value -> Arrays.asList(pattern.split(value.toLowerCase())))
+      // Group the split data by word so that we can subsequently count the occurrences per word.
+      // This step re-keys (re-partitions) the input data, with the new record key being the words.
+      // Note: No need to specify explicit serdes because the resulting key and value types
+      // (String and String) match the application's default serdes.
+      .groupBy((keyIgnored, word) -> word)
       // Count the occurrences of each word (record key).
-      //
-      // This will change the stream type from `KStream<String, String>` to `KTable<String, Long>`
-      // (word -> count).  In the `count` operation we must provide a name for the resulting KTable,
-      // which will be used to name e.g. its associated state store and changelog topic.
-      //
-      // Note: no need to specify explicit serdes because the resulting key and value types match our default serde settings
-      .groupBy((key, word) -> word)
       .count();
 
     // Write the `KTable<String, Long>` to the output topic.
-    wordCounts.toStream().to(outputTopic, Produced.with(stringSerde, longSerde));
+    wordCounts.toStream().to(outputTopic, Produced.with(Serdes.String(), Serdes.Long()));
   }
 
 }
