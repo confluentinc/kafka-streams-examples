@@ -203,8 +203,7 @@ public class WordCountLambdaExample {
       // Count the occurrences of each word (record key).
       //
       // This will change the stream type from `KStream<String, String>` to `KTable<String, Long>`
-      // (word -> count).  In the `count` operation we must provide a name for the resulting KTable,
-      // which will be used to name e.g. its associated state store and changelog topic.
+      // (word -> count).
       //
       // Note: no need to specify explicit serdes because the resulting key and value types match our default serde settings
       .groupBy((key, word) -> word)
