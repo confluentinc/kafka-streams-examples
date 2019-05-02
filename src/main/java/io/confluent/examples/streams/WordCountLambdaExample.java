@@ -178,11 +178,6 @@ public class WordCountLambdaExample {
    * @param builder StreamBuilder to use
    */
   static void createWordCountStream(final StreamsBuilder builder) {
-    // Set up serializers and deserializers, which we will use for overriding the default serdes
-    // specified above.
-    final Serde<String> stringSerde = Serdes.String();
-    final Serde<Long> longSerde = Serdes.Long();
-
     // Construct a `KStream` from the input topic "streams-plaintext-input", where message values
     // represent lines of text (for the sake of this example, we ignore whatever may be stored
     // in the message keys).
@@ -210,7 +205,7 @@ public class WordCountLambdaExample {
       .count();
 
     // Write the `KTable<String, Long>` to the output topic.
-    wordCounts.toStream().to(outputTopic, Produced.with(stringSerde, longSerde));
+    wordCounts.toStream().to(outputTopic, Produced.with(Serdes.String(), Serdes.Long()));
   }
 
 }
