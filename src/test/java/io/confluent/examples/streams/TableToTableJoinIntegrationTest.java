@@ -155,5 +155,4 @@ public class TableToTableJoinIntegrationTest {
       topologyTestDriver.close();
     }
   }
-
 }
