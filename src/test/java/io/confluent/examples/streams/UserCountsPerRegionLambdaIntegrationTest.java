@@ -115,7 +115,6 @@ public class UserCountsPerRegionLambdaIntegrationTest {
       //
       // Step 2: Publish user-region information.
       //
-
       IntegrationTestUtils.produceKeyValuesSynchronously(
         inputTopic,
         userRegionRecords,
