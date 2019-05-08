@@ -76,8 +76,8 @@ public class FanoutLambdaIntegrationTest {
     final String outputTopicB = "B";
     final String outputTopicC = "C";
     final KStream<byte[], String> stream1 = builder.stream(inputTopicA);
-    final KStream<byte[], String> stream2 = stream1.mapValues(((ValueMapper<String, String>) String::toUpperCase));
-    final KStream<byte[], String> stream3 = stream1.mapValues((ValueMapper<String, String>) String::toLowerCase);
+    final KStream<byte[], String> stream2 = stream1.mapValues(s -> s.toUpperCase());
+    final KStream<byte[], String> stream3 = stream1.mapValues(s -> s.toLowerCase());
     stream2.to(outputTopicB);
     stream3.to(outputTopicC);
 

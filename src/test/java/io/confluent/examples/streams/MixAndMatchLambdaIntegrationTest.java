@@ -128,7 +128,7 @@ public class MixAndMatchLambdaIntegrationTest {
 
     final KStream<byte[], String> input = builder.stream(inputTopic);
     final KStream<byte[], String> uppercasedAndAnonymized = input
-      .mapValues((ValueMapper<String, String>) String::toUpperCase)
+      .mapValues(s -> s.toUpperCase())
       .transform(AnonymizeIpAddressTransformer::new);
     uppercasedAndAnonymized.to(outputTopic);
 

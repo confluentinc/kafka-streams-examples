@@ -59,7 +59,7 @@ public class MapFunctionLambdaIntegrationTest {
     final String inputTopic = "inputTopic";
     final String outputTopic = "outputTopic";
     final KStream<byte[], String> input = builder.stream(inputTopic);
-    final KStream<byte[], String> uppercased = input.mapValues((ValueMapper<String, String>) String::toUpperCase);
+    final KStream<byte[], String> uppercased = input.mapValues(s -> s.toUpperCase());
     uppercased.to(outputTopic);
 
     final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration);
