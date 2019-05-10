@@ -22,8 +22,13 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.record.TimestampType;
+import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.Serde;
+import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.errors.InvalidStateStoreException;
 import org.apache.kafka.streams.state.QueryableStoreType;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
@@ -32,8 +37,11 @@ import org.apache.kafka.streams.state.WindowStoreIterator;
 import org.apache.kafka.test.TestUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -108,7 +116,8 @@ public class IntegrationTestUtils {
   }
 
   /**
-   * Write a collection of KeyValueWithTimestamp pairs, with explicitly defined timestamps, to Kafka.
+   * Write a collection of KeyValueWithTimestamp pairs, with explicitly defined timestamps, to Kafka
+   * and wait until the writes are acknowledged.
    *
    * @param topic          Kafka topic to write the data records to
    * @param records        Data records to write to Kafka
@@ -237,7 +246,7 @@ public class IntegrationTestUtils {
 
   /**
    * Waits until the named store is queryable and, once it is, returns a reference to the store.
-   *
+   * <p>
    * Caveat: This is a point in time view and it may change due to partition reassignment.
    * That is, the returned store may still not be queryable in case a rebalancing is happening or
    * happened around the same time.  This caveat is acceptable for testing purposes when only a
@@ -305,4 +314,192 @@ public class IntegrationTestUtils {
         "Expected values not found in WindowStore");
   }
 
+  /**
+   * Similar to {@link IntegrationTestUtils#waitUntilMinKeyValueRecordsReceived(Properties, String, int)}, except for
+   * use with {@link TopologyTestDriver} tests. Because the test driver is synchronous, we don't need to poll for
+   * the expected number of records, and then hope that these are all the results from our test. Instead, we can
+   * just read out <em>all</em> the processing results, for use with deterministic validations.
+   * <p>
+   * Since this call is specifically for a table, we collect the observed records into a {@link Map} from keys to values,
+   * representing the latest observed value for each key.
+   *
+   * @param topic Topic to consume from
+   * @param topologyTestDriver The {@link TopologyTestDriver} to read the data records from
+   * @param keyDeserializer The {@link Deserializer} corresponding to the key type
+   * @param valueDeserializer  The {@link Deserializer} corresponding to the value type
+   * @param <K> Key type of the data records
+   * @param <V> Value type of the data records
+   * @return A {@link Map} representing the table constructed from the output topic.
+   */
+  static <K, V> Map<K, V> drainTableOutput(final String topic,
+                                           final TopologyTestDriver topologyTestDriver,
+                                           final Deserializer<K> keyDeserializer,
+                                           final Deserializer<V> valueDeserializer) {
+
+    final Map<K, V> results = new LinkedHashMap<>();
+    while (true) {
+      final ProducerRecord<K, V> record = topologyTestDriver.readOutput(topic, keyDeserializer, valueDeserializer);
+      if (record == null) {
+        break;
+      } else {
+        results.put(record.key(), record.value());
+      }
+    }
+    return results;
+  }
+
+  /**
+   * Similar to {@link IntegrationTestUtils#waitUntilMinKeyValueRecordsReceived(Properties, String, int)}, except for
+   * use with {@link TopologyTestDriver} tests. Because the test driver is synchronous, we don't need to poll for
+   * the expected number of records, and then hope that these are all the results from our test. Instead, we can
+   * just read out <em>all</em> the processing results, for use with deterministic validations.
+   *
+   * @param topic Topic to consume from
+   * @param topologyTestDriver The {@link TopologyTestDriver} to read the data records from
+   * @param keyDeserializer The {@link Deserializer} corresponding to the key type
+   * @param valueDeserializer  The {@link Deserializer} corresponding to the value type
+   * @param <K> Key type of the data records
+   * @param <V> Value type of the data records
+   * @return A {@link List} of {@link KeyValue} pairs of results from the output topic, in the order they were produced.
+   */
+  static <K, V> List<KeyValue<K, V>> drainStreamOutput(final String topic,
+                                                       final TopologyTestDriver topologyTestDriver,
+                                                       final Deserializer<K> keyDeserializer,
+                                                       final Deserializer<V> valueDeserializer) {
+    final List<KeyValue<K, V>> results = new LinkedList<>();
+    while (true) {
+      final ProducerRecord<K, V> record = topologyTestDriver.readOutput(topic, keyDeserializer, valueDeserializer);
+      if (record == null) {
+        break;
+      } else {
+        results.add(new KeyValue<>(record.key(), record.value()));
+      }
+    }
+    return results;
+  }
+
+  /**
+   * Like {@link IntegrationTestUtils#produceKeyValuesSynchronously(String, Collection, Properties)}, except for use
+   * with TopologyTestDriver tests, rather than "native" Kafka broker tests.
+   *
+   * @param topic              Kafka topic to write the data records to
+   * @param records            Data records to write to Kafka
+   * @param topologyTestDriver The {@link TopologyTestDriver} to send the data records to
+   * @param keySerializer      The {@link Serializer} corresponding to the key type
+   * @param valueSerializer    The {@link Serializer} corresponding to the value type
+   * @param <K>                Key type of the data records
+   * @param <V>                Value type of the data records
+   */
+  static <K, V> void produceKeyValuesSynchronously(final String topic,
+                                                   final List<KeyValue<K, V>> records,
+                                                   final TopologyTestDriver topologyTestDriver,
+                                                   final Serializer<K> keySerializer,
+                                                   final Serializer<V> valueSerializer) {
+    for (final KeyValue<K, V> entity : records) {
+      final ConsumerRecord<byte[], byte[]> consumerRecord = new ConsumerRecord<>(
+        topic,
+        0,
+        0,
+        0,
+        TimestampType.CREATE_TIME,
+        ConsumerRecord.NULL_CHECKSUM,
+        ConsumerRecord.NULL_SIZE,
+        ConsumerRecord.NULL_SIZE,
+        keySerializer.serialize(topic, entity.key),
+        valueSerializer.serialize(topic, entity.value)
+      );
+      topologyTestDriver.pipeInput(consumerRecord);
+    }
+  }
+
+  /**
+   * Creates a map entry (for use with {@link IntegrationTestUtils#mkMap(java.util.Map.Entry[])})
+   *
+   * @param k   The key
+   * @param v   The value
+   * @param <K> The key type
+   * @param <V> The value type
+   * @return An entry
+   */
+  static <K, V> Map.Entry<K, V> mkEntry(final K k, final V v) {
+    return new Map.Entry<K, V>() {
+      @Override
+      public K getKey() {
+        return k;
+      }
+
+      @Override
+      public V getValue() {
+        return v;
+      }
+
+      @Override
+      public V setValue(final V value) {
+        throw new UnsupportedOperationException();
+      }
+    };
+  }
+
+  /**
+   * Creates a map from a sequence of entries
+   *
+   * @param entries The entries to map
+   * @param <K>     The key type
+   * @param <V>     The value type
+   * @return A map
+   */
+  @SafeVarargs
+  static <K, V> Map<K, V> mkMap(final Map.Entry<K, V>... entries) {
+    final Map<K, V> result = new LinkedHashMap<>();
+    for (final Map.Entry<K, V> entry : entries) {
+      result.put(entry.getKey(), entry.getValue());
+    }
+    return result;
+  }
+
+  /**
+   * A Serializer/Deserializer/Serde implementation for use when you know the data is always null
+   * @param <T> The type of the stream (you can parameterize this with any type,
+   *           since we throw an exception if you attempt to use it with non-null data)
+   */
+  static class NothingSerde<T> implements Serializer<T>, Deserializer<T>, Serde<T> {
+
+    @Override
+    public void configure(final Map<String, ?> configuration, final boolean isKey) {
+
+    }
+
+    @Override
+    public T deserialize(final String topic, final byte[] bytes) {
+      if (bytes != null) {
+        throw new IllegalArgumentException("Expected [" + Arrays.toString(bytes) + "] to be null.");
+      } else {
+        return null;
+      }
+    }
+
+    @Override
+    public byte[] serialize(final String topic, final T data) {
+      if (data != null) {
+        throw new IllegalArgumentException("Expected [" + data + "] to be null.");
+      } else {
+        return null;
+      }
+    }
+
+    @Override
+    public void close() {
+
+    }
+
+    @Override
+    public Serializer<T> serializer() {
+      return this;
+    }
+
+    @Override
+    public Deserializer<T> deserializer() {
+      return this;
+    }
+  }
 }

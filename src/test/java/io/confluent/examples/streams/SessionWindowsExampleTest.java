@@ -117,14 +117,14 @@ public class SessionWindowsExampleTest {
     // also look in the store to find the same session
     final ReadOnlySessionStore<String, Long>
         playEventsPerSession =
-        streams.store(SessionWindowsExample.PLAY_EVENTS_PER_SESSION, QueryableStoreTypes.<String, Long>sessionStore());
+        streams.store(SessionWindowsExample.PLAY_EVENTS_PER_SESSION, QueryableStoreTypes.sessionStore());
 
     final KeyValue<Windowed<String>, Long> next = fetchSessionsFromLocalStore(userId, playEventsPerSession).get(0);
     assertThat(next.key, equalTo(new Windowed<>(userId, new SessionWindow(start, start))));
     assertThat(next.value, equalTo(1L));
 
     // send another event that is after the inactivity gap, so we have 2 independent sessions
-    final long secondSessionStart = start + SessionWindowsExample.INACTIVITY_GAP + 1;
+    final long secondSessionStart = start + SessionWindowsExample.INACTIVITY_GAP.toMillis() + 1;
     playEventProducer.send(new ProducerRecord<>(SessionWindowsExample.PLAY_EVENTS,
                                                 null,
                                                 secondSessionStart,
@@ -146,7 +146,7 @@ public class SessionWindowsExampleTest {
                                               KeyValue.pair(new Windowed<>(userId, new SessionWindow(secondSessionStart, secondSessionStart)),1L))));
 
     // create an event between the two sessions to demonstrate merging
-    final long mergeTime = start + SessionWindowsExample.INACTIVITY_GAP / 2;
+    final long mergeTime = start + SessionWindowsExample.INACTIVITY_GAP.toMillis() / 2;
     playEventProducer.send(new ProducerRecord<>(SessionWindowsExample.PLAY_EVENTS,
                                                 null,
                                                 mergeTime,
