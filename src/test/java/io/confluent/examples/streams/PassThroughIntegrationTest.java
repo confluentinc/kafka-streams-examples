@@ -59,39 +59,38 @@ public class PassThroughIntegrationTest {
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config");
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-    streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
     // Write the input data as-is to the output topic.
     builder.stream(inputTopic).to(outputTopic);
 
-    final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration);
-
-    //
-    // Step 2: Produce some input data to the input topic.
-    //
-    IntegrationTestUtils.produceKeyValuesSynchronously(
-      inputTopic,
-      inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
-      topologyTestDriver,
-      new IntegrationTestUtils.NothingSerde<>(),
-      new StringSerializer()
-    );
-
-    //
-    // Step 3: Verify the application's output data.
-    //
-    final List<String> actualValues =
-      IntegrationTestUtils.drainStreamOutput(
-        outputTopic,
+    try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
+      //
+      // Step 2: Produce some input data to the input topic.
+      //
+      IntegrationTestUtils.produceKeyValuesSynchronously(
+        inputTopic,
+        inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
         topologyTestDriver,
         new IntegrationTestUtils.NothingSerde<>(),
-        new StringDeserializer()
-      )
-        .stream()
-        .map(kv -> kv.value)
-        .collect(Collectors.toList());
+        new StringSerializer()
+      );
 
-    assertThat(actualValues).isEqualTo(inputValues);
+      //
+      // Step 3: Verify the application's output data.
+      //
+      final List<String> actualValues =
+        IntegrationTestUtils.drainStreamOutput(
+          outputTopic,
+          topologyTestDriver,
+          new IntegrationTestUtils.NothingSerde<>(),
+          new StringDeserializer()
+        )
+          .stream()
+          .map(kv -> kv.value)
+          .collect(Collectors.toList());
+
+      assertThat(actualValues).isEqualTo(inputValues);
+    }
   }
 
 }
