@@ -15,7 +15,6 @@
  */
 package io.confluent.examples.streams;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.apache.kafka.common.serialization.IntegerSerializer;
 import org.apache.kafka.common.serialization.Serdes;
@@ -40,11 +39,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class SumLambdaIntegrationTest {
 
-  private static String inputTopic = SumLambdaExample.NUMBERS_TOPIC;
-  private static String outputTopic = SumLambdaExample.SUM_OF_ODD_NUMBERS_TOPIC;
-
   @Test
-  public void shouldSumEvenNumbers() throws Exception {
+  public void shouldSumEvenNumbers() {
     final List<Integer> inputValues = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
     final List<KeyValue<Integer, Integer>> expectedValues = Arrays.asList(
       new KeyValue<>(1, 1),
@@ -62,37 +58,37 @@ public class SumLambdaIntegrationTest {
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config");
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.Integer().getClass().getName());
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.Integer().getClass().getName());
-    // The commit interval for flushing records to state stores and downstream must be lower than
-    // this integration test's timeout (30 secs) to ensure we observe the expected processing results.
-    streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 10 * 1000);
-    streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
     final TopologyTestDriver topologyTestDriver =
       new TopologyTestDriver(SumLambdaExample.getTopology(), streamsConfiguration);
 
-    //
-    // Step 2: Produce some input data to the input topic.
-    //
-    IntegrationTestUtils.produceKeyValuesSynchronously(
-      inputTopic,
-      inputValues.stream().map(i -> new KeyValue<Void, Integer>(null, i)).collect(Collectors.toList()),
-      topologyTestDriver,
-      new IntegrationTestUtils.NothingSerde<>(),
-      new IntegerSerializer()
-    );
+    try {
+      //
+      // Step 2: Produce some input data to the input topic.
+      //
+      IntegrationTestUtils.produceKeyValuesSynchronously(
+        SumLambdaExample.NUMBERS_TOPIC,
+        inputValues.stream().map(i -> new KeyValue<Void, Integer>(null, i)).collect(Collectors.toList()),
+        topologyTestDriver,
+        new IntegrationTestUtils.NothingSerde<>(),
+        new IntegerSerializer()
+      );
 
-    //
-    // Step 3: Verify the application's output data.
-    //
-    final List<KeyValue<Integer, Integer>> actualValues = IntegrationTestUtils.drainStreamOutput(
-      outputTopic,
-      topologyTestDriver,
-      new IntegerDeserializer(),
-      new IntegerDeserializer()
-    );
-    assertThat(actualValues).isEqualTo(expectedValues);
+      //
+      // Step 3: Verify the application's output data.
+      //
+      final List<KeyValue<Integer, Integer>> actualValues = IntegrationTestUtils.drainStreamOutput(
+        SumLambdaExample.SUM_OF_ODD_NUMBERS_TOPIC,
+        topologyTestDriver,
+        new IntegerDeserializer(),
+        new IntegerDeserializer()
+      );
+      assertThat(actualValues).isEqualTo(expectedValues);
+    } finally {
+      topologyTestDriver.close();
+    }
   }
 
 }
