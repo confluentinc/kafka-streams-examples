@@ -15,63 +15,50 @@
  */
 package io.confluent.examples.streams;
 
-import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.TimeWindows;
-import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.ReadOnlyWindowStore;
+import org.apache.kafka.streams.state.WindowStore;
 import org.apache.kafka.test.TestUtils;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Demonstrates how to validate an application's expected state through interactive queries.
- *
+ * <p>
  * Note: This example uses lambda expressions and thus works with Java 8+ only.
  */
 public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
-
-  @ClassRule
-  public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
-
-  private static final String inputTopic = "inputTopic";
-
-  @BeforeClass
-  public static void startKafkaCluster() {
-    CLUSTER.createTopic(inputTopic);
-  }
 
   @Test
   public void shouldComputeMaxValuePerKey() throws Exception {
     // A user may be listed multiple times.
     final List<KeyValue<String, Long>> inputUserClicks = Arrays.asList(
-        new KeyValue<>("alice", 13L),
-        new KeyValue<>("bob", 4L),
-        new KeyValue<>("chao", 25L),
-        new KeyValue<>("bob", 19L),
-        new KeyValue<>("chao", 56L),
-        new KeyValue<>("alice", 78L),
-        new KeyValue<>("alice", 40L),
-        new KeyValue<>("bob", 3L)
+      new KeyValue<>("alice", 13L),
+      new KeyValue<>("bob", 4L),
+      new KeyValue<>("chao", 25L),
+      new KeyValue<>("bob", 19L),
+      new KeyValue<>("chao", 56L),
+      new KeyValue<>("alice", 78L),
+      new KeyValue<>("alice", 40L),
+      new KeyValue<>("bob", 3L)
     );
 
     final Map<String, Long> expectedMaxClicksPerUser = new HashMap<String, Long>() {
@@ -89,7 +76,7 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
 
     final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "validating-with-interactive-queries-integration-test");
-    streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+    streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config");
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.Long().getClass().getName());
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -99,50 +86,51 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
+    final String inputTopic = "inputTopic";
+
     final KStream<String, Long> input = builder.stream(inputTopic);
 
     // rolling MAX() aggregation
     final String maxStore = "max-store";
     input.groupByKey().aggregate(
-        () -> Long.MIN_VALUE,
-        (aggKey, value, aggregate) -> Math.max(value, aggregate),
-        Materialized.as(maxStore)
+      () -> Long.MIN_VALUE,
+      (aggKey, value, aggregate) -> Math.max(value, aggregate),
+      Materialized.as(maxStore)
     );
 
     // windowed MAX() aggregation
     final String maxWindowStore = "max-window-store";
     input.groupByKey()
-        .windowedBy(TimeWindows.of(TimeUnit.MINUTES.toMillis(1L)).until(TimeUnit.MINUTES.toMillis(5L)))
-        .aggregate(
-            () -> Long.MIN_VALUE,
-            (aggKey, value, aggregate) -> Math.max(value, aggregate),
-            Materialized.as(maxWindowStore));
+      .windowedBy(TimeWindows.of(Duration.ofMinutes(1L)).grace(Duration.ZERO))
+      .aggregate(
+        () -> Long.MIN_VALUE,
+        (aggKey, value, aggregate) -> Math.max(value, aggregate),
+        Materialized.<String, Long, WindowStore<Bytes, byte[]>>as(maxWindowStore).withRetention(Duration.ofMinutes(5L)));
 
-    final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
-    streams.start();
+    try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
+      //
+      // Step 2: Produce some input data to the input topic.
+      //
+      IntegrationTestUtils.produceKeyValuesSynchronously(
+        inputTopic,
+        inputUserClicks,
+        topologyTestDriver,
+        new StringSerializer(),
+        new LongSerializer()
+      );
 
-    //
-    // Step 2: Produce some input data to the input topic.
-    //
-    final Properties producerConfig = new Properties();
-    producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-    producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
-    producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
-    IntegrationTestUtils.produceKeyValuesSynchronously(inputTopic, inputUserClicks, producerConfig);
+      //
+      // Step 3: Validate the application's state by interactively querying its state stores.
+      //
+      final ReadOnlyKeyValueStore<String, Long> keyValueStore =
+        topologyTestDriver.getKeyValueStore(maxStore);
 
-    //
-    // Step 3: Validate the application's state by interactively querying its state stores.
-    //
-    final ReadOnlyKeyValueStore<String, Long> keyValueStore =
-        IntegrationTestUtils.waitUntilStoreIsQueryable(maxStore, QueryableStoreTypes.keyValueStore(), streams);
-    final ReadOnlyWindowStore<String, Long> windowStore =
-        IntegrationTestUtils.waitUntilStoreIsQueryable(maxWindowStore, QueryableStoreTypes.windowStore(), streams);
+      final ReadOnlyWindowStore<String, Long> windowStore =
+        topologyTestDriver.getWindowStore(maxWindowStore);
 
-    IntegrationTestUtils.assertThatKeyValueStoreContains(keyValueStore, expectedMaxClicksPerUser);
-    IntegrationTestUtils.assertThatOldestWindowContains(windowStore, expectedMaxClicksPerUser);
-    streams.close();
+      IntegrationTestUtils.assertThatKeyValueStoreContains(keyValueStore, expectedMaxClicksPerUser);
+      IntegrationTestUtils.assertThatOldestWindowContains(windowStore, expectedMaxClicksPerUser);
+    }
   }
 
 }
