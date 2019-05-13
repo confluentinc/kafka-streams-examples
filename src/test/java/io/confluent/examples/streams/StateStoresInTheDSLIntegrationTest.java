@@ -135,7 +135,6 @@ public class StateStoresInTheDSLIntegrationTest {
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config");
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray().getClass().getName());
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-    streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
@@ -167,27 +166,31 @@ public class StateStoresInTheDSLIntegrationTest {
 
     final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration);
 
-    //
-    // Step 2: Produce some input data to the input topic.
-    //
-    IntegrationTestUtils.produceKeyValuesSynchronously(
-      inputTopic,
-      inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
-      topologyTestDriver,
-      new IntegrationTestUtils.NothingSerde<>(),
-      new StringSerializer()
-    );
+    try {
+      //
+      // Step 2: Produce some input data to the input topic.
+      //
+      IntegrationTestUtils.produceKeyValuesSynchronously(
+        inputTopic,
+        inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
+        topologyTestDriver,
+        new IntegrationTestUtils.NothingSerde<>(),
+        new StringSerializer()
+      );
 
-    //
-    // Step 3: Verify the application's output data.
-    //
-    final List<KeyValue<String, Long>> actualValues = IntegrationTestUtils.drainStreamOutput(
-      outputTopic,
-      topologyTestDriver,
-      new StringDeserializer(),
-      new LongDeserializer()
-    );
-    assertThat(actualValues).isEqualTo(expectedRecords);
+      //
+      // Step 3: Verify the application's output data.
+      //
+      final List<KeyValue<String, Long>> actualValues = IntegrationTestUtils.drainStreamOutput(
+        outputTopic,
+        topologyTestDriver,
+        new StringDeserializer(),
+        new LongDeserializer()
+      );
+      assertThat(actualValues).isEqualTo(expectedRecords);
+    } finally {
+      topologyTestDriver.close();
+    }
   }
 
 }
