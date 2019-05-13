@@ -15,7 +15,6 @@
  */
 package io.confluent.examples.streams;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.Serde;
@@ -65,7 +64,7 @@ public class StreamToTableJoinIntegrationTest {
     private final String region;
     private final long clicks;
 
-    public RegionWithClicks(final String region, final long clicks) {
+    RegionWithClicks(final String region, final long clicks) {
       if (region == null || region.isEmpty()) {
         throw new IllegalArgumentException("region must be set");
       }
@@ -76,11 +75,11 @@ public class StreamToTableJoinIntegrationTest {
       this.clicks = clicks;
     }
 
-    public String getRegion() {
+    String getRegion() {
       return region;
     }
 
-    public long getClicks() {
+    long getClicks() {
       return clicks;
     }
 
@@ -90,25 +89,25 @@ public class StreamToTableJoinIntegrationTest {
   public void shouldCountClicksPerRegion() {
     // Input 1: Clicks per user (multiple records allowed per user).
     final List<KeyValue<String, Long>> userClicks = Arrays.asList(
-        new KeyValue<>("alice", 13L),
-        new KeyValue<>("bob", 4L),
-        new KeyValue<>("chao", 25L),
-        new KeyValue<>("bob", 19L),
-        new KeyValue<>("dave", 56L),
-        new KeyValue<>("eve", 78L),
-        new KeyValue<>("alice", 40L),
-        new KeyValue<>("fang", 99L)
+      new KeyValue<>("alice", 13L),
+      new KeyValue<>("bob", 4L),
+      new KeyValue<>("chao", 25L),
+      new KeyValue<>("bob", 19L),
+      new KeyValue<>("dave", 56L),
+      new KeyValue<>("eve", 78L),
+      new KeyValue<>("alice", 40L),
+      new KeyValue<>("fang", 99L)
     );
 
     // Input 2: Region per user (multiple records allowed per user).
     final List<KeyValue<String, String>> userRegions = Arrays.asList(
-        new KeyValue<>("alice", "asia"),   /* Alice lived in Asia originally... */
-        new KeyValue<>("bob", "americas"),
-        new KeyValue<>("chao", "asia"),
-        new KeyValue<>("dave", "europe"),
-        new KeyValue<>("alice", "europe"), /* ...but moved to Europe some time later. */
-        new KeyValue<>("eve", "americas"),
-        new KeyValue<>("fang", "asia")
+      new KeyValue<>("alice", "asia"),   /* Alice lived in Asia originally... */
+      new KeyValue<>("bob", "americas"),
+      new KeyValue<>("chao", "asia"),
+      new KeyValue<>("dave", "europe"),
+      new KeyValue<>("alice", "europe"), /* ...but moved to Europe some time later. */
+      new KeyValue<>("eve", "americas"),
+      new KeyValue<>("fang", "asia")
     );
 
     final Map<String, Long> expectedClicksPerRegion = mkMap(
@@ -128,10 +127,6 @@ public class StreamToTableJoinIntegrationTest {
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config");
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-    // The commit interval for flushing records to state stores and downstream must be lower than
-    // this integration test's timeout (30 secs) to ensure we observe the expected processing results.
-    streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 10 * 1000);
-    streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
@@ -177,48 +172,48 @@ public class StreamToTableJoinIntegrationTest {
         .map((user, regionWithClicks) -> new KeyValue<>(regionWithClicks.getRegion(), regionWithClicks.getClicks()))
         // Compute the total per region by summing the individual click counts per region.
         .groupByKey(Grouped.with(stringSerde, longSerde))
-        .reduce((firstClicks, secondClicks) -> firstClicks + secondClicks);
+        .reduce(Long::sum);
 
     // Write the (continuously updating) results to the output topic.
     clicksPerRegion.toStream().to(outputTopic, Produced.with(stringSerde, longSerde));
 
-    final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration);
-
-    //
-    // Step 2: Publish user-region information.
-    //
-    // To keep this code example simple and easier to understand/reason about, we publish all
-    // user-region records before any user-click records (cf. step 3).  In practice though,
-    // data records would typically be arriving concurrently in both input streams/topics.
-    IntegrationTestUtils.produceKeyValuesSynchronously(
-      userRegionsTopic,
-      userRegions,
-      topologyTestDriver,
-      new StringSerializer(),
-      new StringSerializer()
-    );
-
-    //
-    // Step 3: Publish some user click events.
-    //
-    IntegrationTestUtils.produceKeyValuesSynchronously(
-      userClicksTopic,
-      userClicks,
-      topologyTestDriver,
-      new StringSerializer(),
-      new LongSerializer());
-
-    //
-    // Step 4: Verify the application's output data.
-    //
-    final Map<String, Long> actualClicksPerRegion =
-      IntegrationTestUtils.drainTableOutput(
-        outputTopic,
+    try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
+      //
+      // Step 2: Publish user-region information.
+      //
+      // To keep this code example simple and easier to understand/reason about, we publish all
+      // user-region records before any user-click records (cf. step 3).  In practice though,
+      // data records would typically be arriving concurrently in both input streams/topics.
+      IntegrationTestUtils.produceKeyValuesSynchronously(
+        userRegionsTopic,
+        userRegions,
         topologyTestDriver,
-        new StringDeserializer(),
-        new LongDeserializer()
+        new StringSerializer(),
+        new StringSerializer()
       );
-    assertThat(actualClicksPerRegion).isEqualTo(expectedClicksPerRegion);
+
+      //
+      // Step 3: Publish some user click events.
+      //
+      IntegrationTestUtils.produceKeyValuesSynchronously(
+        userClicksTopic,
+        userClicks,
+        topologyTestDriver,
+        new StringSerializer(),
+        new LongSerializer());
+
+      //
+      // Step 4: Verify the application's output data.
+      //
+      final Map<String, Long> actualClicksPerRegion =
+        IntegrationTestUtils.drainTableOutput(
+          outputTopic,
+          topologyTestDriver,
+          new StringDeserializer(),
+          new LongDeserializer()
+        );
+      assertThat(actualClicksPerRegion).isEqualTo(expectedClicksPerRegion);
+    }
   }
 
 }
