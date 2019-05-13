@@ -9,7 +9,7 @@ import org.apache.kafka.streams.processor.ProcessorContext
   * estimate.
   */
 class ProbabilisticCounter(val cmsStoreName: String)
-    extends Transformer[Array[Byte], String, KeyValue[String, Long]] {
+    extends Transformer[String, String, KeyValue[String, Long]] {
 
   private var cmsState: CMSStore[String] = _
   private var processorContext: ProcessorContext = _
@@ -19,7 +19,7 @@ class ProbabilisticCounter(val cmsStoreName: String)
     cmsState = this.processorContext.getStateStore(cmsStoreName).asInstanceOf[CMSStore[String]]
   }
 
-  override def transform(key: Array[Byte], value: String): KeyValue[String, Long] = {
+  override def transform(key: String, value: String): KeyValue[String, Long] = {
     // Count the record value, think: "+ 1"
     cmsState.put(value, this.processorContext.timestamp())
 
