@@ -9,12 +9,24 @@ import java.util.Map;
 
 public class MockGenericAvroSerializer implements Serializer<GenericRecord> {
   private KafkaAvroSerializer inner;
+  private final boolean constructedWithClient;
+
+  MockGenericAvroSerializer() {
+    constructedWithClient = false;
+  }
+
+  MockGenericAvroSerializer(final MockSchemaRegistryClient mockSchemaRegistryClient) {
+    inner = new KafkaAvroSerializer(mockSchemaRegistryClient);
+    constructedWithClient = true;
+  }
 
   @Override
   public void configure(final Map<String, ?> configs, final boolean isKey) {
-    final MockSchemaRegistryClient mockSchemaRegistryClient =
-      (MockSchemaRegistryClient) configs.get("mock.schema.registry.client");
-    inner = new KafkaAvroSerializer(mockSchemaRegistryClient);
+    if (!constructedWithClient) {
+      final MockSchemaRegistryClient mockSchemaRegistryClient =
+        (MockSchemaRegistryClient) configs.get("mock.schema.registry.client");
+      inner = new KafkaAvroSerializer(mockSchemaRegistryClient);
+    }
     inner.configure(configs, isKey);
   }
 

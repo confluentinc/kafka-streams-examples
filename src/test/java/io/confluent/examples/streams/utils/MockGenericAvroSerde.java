@@ -1,5 +1,6 @@
 package io.confluent.examples.streams.utils;
 
+import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
@@ -14,6 +15,11 @@ public class MockGenericAvroSerde implements Serde<GenericRecord> {
   public MockGenericAvroSerde() {
     serializer = new MockGenericAvroSerializer();
     deserializer = new MockGenericAvroDeserializer();
+  }
+
+  public MockGenericAvroSerde(final MockSchemaRegistryClient mockSchemaRegistryClient) {
+    serializer = new MockGenericAvroSerializer(mockSchemaRegistryClient);
+    deserializer = new MockGenericAvroDeserializer(mockSchemaRegistryClient);
   }
 
   @Override
