@@ -16,11 +16,9 @@
 package io.confluent.examples.streams;
 
 import org.apache.kafka.common.serialization.LongDeserializer;
-import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.TopologyTestDriver;
@@ -34,16 +32,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static io.confluent.examples.streams.IntegrationTestUtils.mkEntry;
 import static io.confluent.examples.streams.IntegrationTestUtils.mkMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * End-to-end integration test based on {@link WordCountLambdaExample}, using an embedded Kafka
- * cluster.
+ * End-to-end integration test based on {@link WordCountLambdaExample}, using TopologyTestDriver.
  * <p>
  * See {@link WordCountLambdaExample} for further documentation.
  * <p>
@@ -59,78 +56,69 @@ public class WordCountLambdaIntegrationTest {
   @Test
   public void shouldCountWords() {
     final List<String> inputValues = Arrays.asList(
-      "Hello Kafka Streams",
-      "All streams lead to Kafka",
-      "Join Kafka Summit",
-      "И теперь пошли русские слова"
+        "Hello Kafka Streams",
+        "All streams lead to Kafka",
+        "Join Kafka Summit",
+        "И теперь пошли русские слова"
     );
     final Map<String, Long> expectedWordCounts = mkMap(
-      mkEntry("hello", 1L),
-      mkEntry("all", 1L),
-      mkEntry("streams", 2L),
-      mkEntry("lead", 1L),
-      mkEntry("to", 1L),
-      mkEntry("join", 1L),
-      mkEntry("kafka", 3L),
-      mkEntry("summit", 1L),
-      mkEntry("и", 1L),
-      mkEntry("теперь", 1L),
-      mkEntry("пошли", 1L),
-      mkEntry("русские", 1L),
-      mkEntry("слова", 1L)
+        mkEntry("hello", 1L),
+        mkEntry("all", 1L),
+        mkEntry("streams", 2L),
+        mkEntry("lead", 1L),
+        mkEntry("to", 1L),
+        mkEntry("join", 1L),
+        mkEntry("kafka", 3L),
+        mkEntry("summit", 1L),
+        mkEntry("и", 1L),
+        mkEntry("теперь", 1L),
+        mkEntry("пошли", 1L),
+        mkEntry("русские", 1L),
+        mkEntry("слова", 1L)
     );
 
-    //
-    // Step 1: Configure and start the processor topology.
-    //
-    final Serde<String> stringSerde = Serdes.String();
-    final Serde<Long> longSerde = Serdes.Long();
+    // Step 1: Create the topology and its configuration
+    final StreamsBuilder builder = createTopology();
+    final Properties streamsConfiguration = createTopologyConfiguration();
+
+    try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
+      // Step 2: Write the input
+      IntegrationTestUtils.produceValuesSynchronously(
+          inputTopic, inputValues, topologyTestDriver, new StringSerializer());
+
+      // Step 3: Validate the output
+      final Map<String, Long> actualWordCounts = IntegrationTestUtils.drainTableOutput(
+          outputTopic, topologyTestDriver, new StringDeserializer(), new LongDeserializer());
+      assertThat(actualWordCounts).isEqualTo(expectedWordCounts);
+    }
+  }
+
+  private StreamsBuilder createTopology() {
+    final StreamsBuilder builder = new StreamsBuilder();
+    final KStream<String, String> textLines = builder.stream(inputTopic);
+    final Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
+    final KTable<String, Long> wordCounts = textLines
+        .flatMapValues(value -> Arrays.asList(pattern.split(value.toLowerCase())))
+        // no need to specify explicit serdes because the resulting key and value types match our default serde settings
+        .groupBy((key, word) -> word)
+        .count();
+    wordCounts.toStream().to(outputTopic, Produced.with(Serdes.String(), Serdes.Long()));
+    return builder;
+  }
+
+  private Properties createTopologyConfiguration() {
 
     final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "wordcount-lambda-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config");
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+    // The commit interval for flushing records to state stores and downstream must be lower than
+    // this integration test's timeout (30 secs) to ensure we observe the expected processing results.
+    streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, TimeUnit.SECONDS.toMillis(10));
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
-
-    final StreamsBuilder builder = new StreamsBuilder();
-
-    final KStream<String, String> textLines = builder.stream(inputTopic);
-
-    final Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
-
-    final KTable<String, Long> wordCounts = textLines
-      .flatMapValues(value -> Arrays.asList(pattern.split(value.toLowerCase())))
-      // no need to specify explicit serdes because the resulting key and value types match our default serde settings
-      .groupBy((key, word) -> word)
-      .count();
-
-    wordCounts.toStream().to(outputTopic, Produced.with(stringSerde, longSerde));
-
-    try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
-      //
-      // Step 2: Produce some input data to the input topic.
-      //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringSerializer()
-      );
-
-      //
-      // Step 3: Verify the application's output data.
-      //
-      final Map<String, Long> actualWordCounts = IntegrationTestUtils.drainTableOutput(
-        outputTopic,
-        topologyTestDriver,
-        new StringDeserializer(),
-        new LongDeserializer()
-      );
-      assertThat(actualWordCounts).isEqualTo(expectedWordCounts);
-    }
+    return streamsConfiguration;
   }
 
 }
