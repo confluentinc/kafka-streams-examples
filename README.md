@@ -14,7 +14,8 @@ Table of Contents
 * [Available examples](#available-examples)
     * [Examples: Runnable Applications](#examples-apps)
     * [Examples: Unit Tests](#examples-unit-tests)
-    * [Examples: Integration Tests](#examples-integration-tests)
+    * [Examples: Integration Tests with TopologyTestDriver](#examples-integration-tests-with-topologytestdriver)
+    * [Examples: Integration Tests with Embedded Kafka Cluster](#examples-integration-tests-with-embedded-kafka-cluster)
     * [Docker Example: Kafka Music demo application](#examples-docker)
 * [Requirements](#requirements)
     * [Apache Kafka](#requirements-kafka)
@@ -45,10 +46,13 @@ There are three kinds of examples:
   [Packaging and running the examples](#packaging-and-running).  Each example also states its exact requirements and
   instructions at the very top.
 * **Examples under [src/test/](src/test/)**: These examples should test applications under [src/main/](src/main/).
-  Unit Tests with TopologyTestDriver test the stream logic without external system dependencies.
-  The integration tests use an embedded Kafka
-  clusters, feed input data to them (using the standard Kafka producer client), process the data using Kafka Streams,
-  and finally read and verify the output results (using the standard Kafka consumer client).
+  [Integration tests with TopologyTestDriver](#examples-integration-tests-with-topologytestdriver)
+  test the stream logic without external system dependencies.
+  Additionally, some integration tests may need to use an
+  [embedded Kafka cluster](#examples-integration-tests-with-embedded-kafka-cluster)
+  (including Zookeeper and optional components such as Confluent Schema Registry), feed input data to them (using the
+  standard Kafka producer client), process the data using Kafka Streams, and finally read and verify the output results 
+  (using the standard Kafka consumer client).
   These examples are also a good starting point to learn how to implement your own end-to-end integration tests.
 * **Ready-to-run Docker Examples**: These examples are already built and containerized.
 
@@ -80,7 +84,19 @@ Additional examples may be found under [src/main/](src/main/java/io/confluent/ex
 
 ## Examples: Unit Tests
 
-The stream processing of Kafka Streams can be **unit tested** with the `TopologyTestDriver` from the
+The stream processing of Kafka Streams applications using the Processor API can be **unit tested** with the
+[MockProcessorContext](https://docs.confluent.io/current/streams/developer-guide/test-streams.html#unit-testing-for-processors)
+from the `org.apache.kafka:kafka-streams-test-utils` artifact (see the documentation at
+[Unit Testing for Processors](https://docs.confluent.io/current/streams/developer-guide/test-streams.html#unit-testing-for-processors))
+
+See the integration test examples further below for additional options of testing.
+
+
+<a name="examples-integration-tests-with-topologytestdriver"/>
+
+## Examples: Integration Tests with `TopologyTestDriver`
+
+The stream processing of Kafka Streams can be **integration tested** with the `TopologyTestDriver` from the
 `org.apache.kafka:kafka-streams-test-utils` artifact (see the documentation at
 [Testing Streams Code](https://docs.confluent.io/current/streams/developer-guide/test-streams.html)).
 The test driver allows you to write sample input into your processing topology and validate its output.
@@ -116,12 +132,24 @@ Additional examples may be found under [src/test/java](src/test/java/io/confluen
 of [Twitter Algebird](https://github.com/twitter/algebird))
 
 
-<a name="examples-integration-tests"/>
+<a name="examples-integration-tests-with-embedded-kafka-cluster"/>
 
-## Examples: Integration Tests
+## Examples: Integration Tests with Embedded Kafka Cluster
 
-We also provide several **integration tests**, which demonstrate end-to-end data pipelines.  Here, we spawn embedded Kafka
-clusters and the [Confluent Schema Registry](https://github.com/confluentinc/schema-registry), feed input data to them
+> Unless there is a specific reason, we recommend using the
+> [TopologyTestDriver](#examples-integration-tests-with-topologytestdriver)
+> to integration-test your applications because your tests will be simpler to implement and faster in execution.
+>
+> Specific reasons to use embedded Kafka clusters include:
+>
+> * Tests that require Confluent Schema Registry for working with Avro data. `TopologyTestDriver` cannot integrate
+>   with Confluent Schema Registry yet.
+> * Tests that require handling of timestamps exactly like a "real" setup, e.g. when testing custom joins.  Still,
+>   we recommend to try with `TopologyTestDriver` first (many join examples in this repository do not need to use
+>   embedded Kafka clusters, for example).
+
+Another option for **integration-testing** is to spawn embedded Kafka clusters as well as optional components such as
+the [Confluent Schema Registry](https://github.com/confluentinc/schema-registry), feed input data to them
 (using the standard Kafka producer client), process the data using Kafka Streams, and finally read and verify the output
 results (using the standard Kafka consumer client).
 
