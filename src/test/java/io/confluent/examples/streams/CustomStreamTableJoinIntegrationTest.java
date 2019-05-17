@@ -280,8 +280,10 @@ public class CustomStreamTableJoinIntegrationTest {
       //
       // Step 3: Verify the application's output data.
       //
-      final List<KeyValue<String, Long>> actualRecords = readOutputDataFromJoinedStream(expectedOutputRecords.size());
+      final List<KeyValue<String, Pair<Double, Long>>> actualRecords =
+          readOutputDataFromJoinedStream(expectedOutputRecords.size());
       assertThat(actualRecords).isEqualTo(expectedOutputRecords);
+      assertThat(actualRecords).containsExactlyElementsOf(expectedOutputRecords);
     }
   }
 
@@ -533,7 +535,7 @@ public class CustomStreamTableJoinIntegrationTest {
         inputTopicForTable, inputTableRecords, producerConfigTable);
   }
 
-  private List<KeyValue<String, Long>> readOutputDataFromJoinedStream(final int numExpectedRecords)
+  private List<KeyValue<String, Pair<Double, Long>>> readOutputDataFromJoinedStream(final int numExpectedRecords)
       throws InterruptedException {
     final Properties consumerConfig = new Properties();
     consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
