@@ -129,11 +129,10 @@ public class MixAndMatchLambdaIntegrationTest {
       //
       // Step 2: Produce some input data to the input topic.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
+      IntegrationTestUtils.produceValuesSynchronously(
         inputTopic,
-        inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
+        inputValues,
         topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
         new StringSerializer()
       );
 

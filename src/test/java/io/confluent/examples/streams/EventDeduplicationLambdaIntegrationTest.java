@@ -140,9 +140,9 @@ public class EventDeduplicationLambdaIntegrationTest {
     private boolean isDuplicate(final E eventId) {
       final long eventTime = context.timestamp();
       final WindowStoreIterator<Long> timeIterator = eventIdStore.fetch(
-        eventId,
-        eventTime - leftDurationMs,
-        eventTime + rightDurationMs);
+          eventId,
+          eventTime - leftDurationMs,
+          eventTime + rightDurationMs);
       final boolean isDuplicate = timeIterator.hasNext();
       timeIterator.close();
       return isDuplicate;
@@ -170,7 +170,7 @@ public class EventDeduplicationLambdaIntegrationTest {
     final String secondId = UUID.randomUUID().toString();
     final String thirdId = UUID.randomUUID().toString();
     final List<String> inputValues = Arrays.asList(firstId, secondId, firstId, firstId, secondId, thirdId,
-                                                   thirdId, firstId, secondId);
+        thirdId, firstId, secondId);
     final List<String> expectedValues = Arrays.asList(firstId, secondId, thirdId);
 
     //
@@ -198,14 +198,12 @@ public class EventDeduplicationLambdaIntegrationTest {
     // and thus just use the window size as retention time
     final Duration retentionPeriod = windowSize;
 
-    final StoreBuilder<WindowStore<String, Long>> dedupStoreBuilder = Stores.windowStoreBuilder(
-            Stores.persistentWindowStore(storeName,
-                                         retentionPeriod,
-                                         windowSize,
-                                         false
-            ),
+    final StoreBuilder<WindowStore<String, Long>> dedupStoreBuilder =
+        Stores.windowStoreBuilder(
+            Stores.persistentWindowStore(storeName, retentionPeriod, windowSize, false),
             Serdes.String(),
-            Serdes.Long());
+            Serdes.Long()
+        );
 
     builder.addStateStore(dedupStoreBuilder);
 
@@ -225,22 +223,21 @@ public class EventDeduplicationLambdaIntegrationTest {
       //
       // Step 2: Produce some input data to the input topic.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringSerializer()
+      IntegrationTestUtils.produceValuesSynchronously(
+          inputTopic,
+          inputValues,
+          topologyTestDriver,
+          new StringSerializer()
       );
 
       //
       // Step 3: Verify the application's output data.
       //
       final List<String> actualValues = IntegrationTestUtils.drainStreamOutput(
-        outputTopic,
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringDeserializer()
+          outputTopic,
+          topologyTestDriver,
+          new IntegrationTestUtils.NothingSerde<>(),
+          new StringDeserializer()
       ).stream().map(kv -> kv.value).collect(Collectors.toList());
       assertThat(actualValues).containsExactlyElementsOf(expectedValues);
     }

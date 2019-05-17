@@ -66,11 +66,10 @@ public class SumLambdaIntegrationTest {
       //
       // Step 2: Produce some input data to the input topic.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
+      IntegrationTestUtils.produceValuesSynchronously(
         SumLambdaExample.NUMBERS_TOPIC,
-        inputValues.stream().map(i -> new KeyValue<Void, Integer>(null, i)).collect(Collectors.toList()),
+        inputValues,
         topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
         new IntegerSerializer()
       );
 

@@ -15,11 +15,9 @@
  */
 package io.confluent.examples.streams;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.TopologyTestDriver;
@@ -67,11 +65,10 @@ public class PassThroughIntegrationTest {
       //
       // Step 2: Produce some input data to the input topic.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
+      IntegrationTestUtils.produceValuesSynchronously(
         inputTopic,
-        inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
+        inputValues,
         topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
         new StringSerializer()
       );
 
@@ -84,11 +81,7 @@ public class PassThroughIntegrationTest {
           topologyTestDriver,
           new IntegrationTestUtils.NothingSerde<>(),
           new StringDeserializer()
-        )
-          .stream()
-          .map(kv -> kv.value)
-          .collect(Collectors.toList());
-
+        ).stream().map(kv -> kv.value).collect(Collectors.toList());
       assertThat(actualValues).isEqualTo(inputValues);
     }
   }

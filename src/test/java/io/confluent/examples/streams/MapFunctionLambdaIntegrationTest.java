@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * End-to-end integration test based on MapFunctionLambdaExample, using an embedded Kafka cluster.
+ * End-to-end integration test based on MapFunctionLambdaExample, using TopologyTestDriver.
  * <p>
  * Note: This example uses lambda expressions and thus works with Java 8+ only.
  */
@@ -65,13 +65,13 @@ public class MapFunctionLambdaIntegrationTest {
       //
       // Step 2: Produce some input data to the input topic.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
+      IntegrationTestUtils.produceValuesSynchronously(
         inputTopic,
-        inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
+        inputValues,
         topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
         new StringSerializer()
       );
+
       //
       // Step 3: Verify the application's output data.
       //
