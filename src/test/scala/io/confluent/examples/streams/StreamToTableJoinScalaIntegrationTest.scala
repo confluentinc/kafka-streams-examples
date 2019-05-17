@@ -17,12 +17,10 @@ package io.confluent.examples.streams
 
 import java.util.Properties
 
-import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream.{KStream, KTable}
 import org.apache.kafka.streams.{KeyValue, StreamsConfig, TopologyTestDriver}
 import org.apache.kafka.test.TestUtils
-import org.assertj.core.api.Assertions.assertThat
 import org.junit._
 import org.scalatest.junit.AssertionsForJUnit
 
@@ -116,22 +114,22 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
     // The resulting KTable is continuously being updated as new data records are arriving in the
     // input KStream `userClicksStream` and input KTable `userRegionsTable`.
     val userClicksJoinRegion: KStream[String, (String, Long)] = userClicksStream
-      // Join the stream against the table.
-      //
-      // Null values possible: In general, null values are possible for region (i.e. the value of
-      // the KTable we are joining against) so we must guard against that (here: by setting the
-      // fallback region "UNKNOWN").  In this specific example this is not really needed because
-      // we know, based on the test setup, that all users have appropriate region entries at the
-      // time we perform the join.
-      .leftJoin(userRegionsTable)((clicks, region) => (if (region == null) "UNKNOWN" else region, clicks))
+        // Join the stream against the table.
+        //
+        // Null values possible: In general, null values are possible for region (i.e. the value of
+        // the KTable we are joining against) so we must guard against that (here: by setting the
+        // fallback region "UNKNOWN").  In this specific example this is not really needed because
+        // we know, based on the test setup, that all users have appropriate region entries at the
+        // time we perform the join.
+        .leftJoin(userRegionsTable)((clicks, region) => (if (region == null) "UNKNOWN" else region, clicks))
 
     val clicksByRegion: KStream[String, Long] = userClicksJoinRegion
-      .map { case (_, (region, clicks)) => (region, clicks) }
+        .map { case (_, (region, clicks)) => (region, clicks) }
 
     val clicksPerRegion: KTable[String, Long] = clicksByRegion
-      // Compute the total per region by summing the individual click counts per region.
-      .groupByKey
-      .reduce(_ + _)
+        // Compute the total per region by summing the individual click counts per region.
+        .groupByKey
+        .reduce(_ + _)
 
     // Write the (continuously updating) results to the output topic.
     clicksPerRegion.toStream.to(outputTopic)
@@ -145,37 +143,22 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
       // To keep this code example simple and easier to understand/reason about, we publish all
       // user-region records before any user-click records (cf. step 3).  In practice though,
       // data records would typically be arriving concurrently in both input streams/topics.
-      import collection.JavaConverters._
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        userRegionsTopic,
-        userRegions.asJava,
-        topologyTestDriver,
-        new StringSerializer,
-        new StringSerializer
-      )
+      import IntegrationTestScalaUtils._
+      IntegrationTestScalaUtils.produceKeyValuesSynchronously[String, String](
+        userRegionsTopic, userRegions, topologyTestDriver)
 
       //
       // Step 3: Publish some user click events.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        userClicksTopic,
-        userClicks.map(kv => new KeyValue(kv.key, kv.value.asInstanceOf[java.lang.Long])).asJava,
-        topologyTestDriver,
-        new StringSerializer,
-        new LongSerializer
-      )
+      IntegrationTestScalaUtils.produceKeyValuesSynchronously[String, Long](
+        userClicksTopic, userClicks, topologyTestDriver)
 
       //
       // Step 4: Verify the application's output data.
       //
-      val actualClicksPerRegion =
-        IntegrationTestUtils.drainTableOutput(
-          outputTopic,
-          topologyTestDriver,
-          new StringDeserializer,
-          new LongDeserializer
-        )
-      assertThat(actualClicksPerRegion).isEqualTo(expectedClicksPerRegion.asJava)
+      val actualClicksPerRegion: Map[String, Long] =
+      IntegrationTestScalaUtils.drainTableOutput[String, Long](outputTopic, topologyTestDriver)
+      assert(actualClicksPerRegion === expectedClicksPerRegion)
     } finally {
       topologyTestDriver.close()
     }

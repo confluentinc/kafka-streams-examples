@@ -15,12 +15,9 @@
  */
 package io.confluent.examples.streams
 
-import java.util
 import java.util.Properties
-import java.util.concurrent.TimeUnit
 
 import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream.{KStream, KTable}
 import org.apache.kafka.streams.{StreamsConfig, TopologyTestDriver}
@@ -62,14 +59,12 @@ class AggregateScalaTest extends AssertionsForJUnit {
     val topologyTestDriver: TopologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)
     try {
       // Step 2: Write the input
-      import collection.JavaConverters._
-      IntegrationTestUtils.produceValuesSynchronously(
-        inputTopic, inputValues.asJava, topologyTestDriver, new StringSerializer)
+      import IntegrationTestScalaUtils._
+      IntegrationTestScalaUtils.produceValuesSynchronously(inputTopic, inputValues, topologyTestDriver)
 
       // Step 3: Validate the output
-      val actualOutput: util.Map[String, java.lang.Long] = IntegrationTestUtils.drainTableOutput(
-        outputTopic, topologyTestDriver, new StringDeserializer, new LongDeserializer)
-      assert(actualOutput.asScala === expectedOutput)
+      val actualOutput = IntegrationTestScalaUtils.drainTableOutput[String, Long](outputTopic, topologyTestDriver)
+      assert(actualOutput === expectedOutput)
     } finally {
       topologyTestDriver.close()
     }
@@ -94,9 +89,6 @@ class AggregateScalaTest extends AssertionsForJUnit {
     p.put(StreamsConfig.APPLICATION_ID_CONFIG, "aggregate-scala-test")
     p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy-config")
     p.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
-    // The commit interval for flushing records to state stores and downstream must be lower than
-    // this integration test's timeout (30 secs) to ensure we observe the expected processing results.
-    p.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, TimeUnit.SECONDS.toMillis(10).toString)
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     p.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory.getAbsolutePath)
     p

@@ -16,34 +16,21 @@
 package io.confluent.examples.streams
 
 import java.util.Properties
-import java.util.concurrent.TimeUnit
 
-import io.confluent.examples.streams.IntegrationTestUtils.NothingSerde
-import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams.scala.ImplicitConversions._
 import org.apache.kafka.streams.scala.Serdes._
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream.{KStream, KTable}
-import org.apache.kafka.streams.{KeyValue, StreamsConfig, TopologyTestDriver}
+import org.apache.kafka.streams.{StreamsConfig, TopologyTestDriver}
 import org.apache.kafka.test.TestUtils
-import org.assertj.core.api.Assertions.assertThat
 import org.junit._
 import org.scalatest.junit.AssertionsForJUnit
 
-import scala.collection.JavaConverters._
-
 /**
-  * End-to-end integration test based on [[WordCountLambdaExample]], using an embedded Kafka cluster.
+  * End-to-end integration test based on [[WordCountLambdaExample]], using TopologyTestDriver.
   *
   * See [[WordCountLambdaExample]] for further documentation.
-  *
   * See [[WordCountLambdaIntegrationTest]] for the equivalent Java example.
-  *
-  * Note: We intentionally use JUnit4 (wrapped by ScalaTest) for implementing this Scala integration
-  * test so it is easier to compare this Scala code with the equivalent Java code at
-  * StreamToTableJoinIntegrationTest.  One difference is that, to simplify the Scala/Junit integration, we
-  * switched from BeforeClass (which must be `static`) to Before as well as from @ClassRule (which
-  * must be `static` and `public`) to a workaround combination of `@Rule def` and a `private val`.
   */
 class WordCountScalaIntegrationTest extends AssertionsForJUnit {
 
@@ -76,18 +63,12 @@ class WordCountScalaIntegrationTest extends AssertionsForJUnit {
     val topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)
     try {
       // Step 2: Write the input
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        inputTextLines.map(v => new KeyValue(null, v)).asJava,
-        topologyTestDriver,
-        new NothingSerde[Null],
-        new StringSerializer
-      )
+      import IntegrationTestScalaUtils._
+      IntegrationTestScalaUtils.produceValuesSynchronously[String](inputTopic, inputTextLines, topologyTestDriver)
 
       // Step 3: Validate the output
-      val actualWordCounts = IntegrationTestUtils.drainTableOutput(
-        outputTopic, topologyTestDriver, new StringDeserializer, new LongDeserializer)
-      assertThat(actualWordCounts).isEqualTo(expectedWordCounts.asJava)
+      val actualWordCounts = IntegrationTestScalaUtils.drainTableOutput[String, Long](outputTopic, topologyTestDriver)
+      assert(actualWordCounts === expectedWordCounts)
     } finally {
       topologyTestDriver.close()
     }
@@ -108,9 +89,6 @@ class WordCountScalaIntegrationTest extends AssertionsForJUnit {
     val p = new Properties()
     p.put(StreamsConfig.APPLICATION_ID_CONFIG, "wordcount-scala-integration-test")
     p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config")
-    // The commit interval for flushing records to state stores and downstream must be lower than
-    // this integration test's timeout (30 secs) to ensure we observe the expected processing results.
-    p.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, TimeUnit.SECONDS.toMillis(10).toString)
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     p.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory.getAbsolutePath)
     p
