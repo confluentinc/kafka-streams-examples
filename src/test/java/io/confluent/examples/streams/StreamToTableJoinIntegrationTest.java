@@ -46,9 +46,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * End-to-end integration test that demonstrates how to perform a join between a KStream and a
  * KTable (think: KStream.leftJoin(KTable)), i.e. an example of a stateful computation.
  *
- * See StreamToTableJoinScalaIntegrationTest for the equivalent Scala example.
- *
  * Note: This example uses lambda expressions and thus works with Java 8+ only.
+ *
+ * See {@link StreamToTableJoinScalaIntegrationTest} for the equivalent Scala example.
  */
 public class StreamToTableJoinIntegrationTest {
 

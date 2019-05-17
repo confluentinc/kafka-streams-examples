@@ -28,7 +28,7 @@ import org.scalatest.junit.AssertionsForJUnit
   * End-to-end integration test that demonstrates how to perform a join between a KStream and a
   * KTable (think: KStream.leftJoin(KTable)), i.e. an example of a stateful computation.
   *
-  * See StreamToTableJoinIntegrationTest for the equivalent Java example.
+  * See [[StreamToTableJoinIntegrationTest]] for the equivalent Java example.
   *
   * Note: We intentionally use JUnit4 (wrapped by ScalaTest) for implementing this Scala integration
   * test so it is easier to compare this Scala code with the equivalent Java code at
