@@ -72,6 +72,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * Note: This example works with Java 8+ only.
  *
+ * TODO (and note for maintainers): This test can be migrated to use the TopologyTestDriver of Kafka Streams only once
+ * the driver is handling timestamps exactly like a "real" setup does. Until then, this test must use an embedded
+ * Kafka cluster.
+ *
  * EXAMPLE DESCRIPTION
  * ===================
  * Specifically, this example implements a stream-table LEFT join where both (1) the stream side triggers a join output
