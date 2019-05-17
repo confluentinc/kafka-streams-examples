@@ -103,6 +103,7 @@ Additional examples may be found under [src/test/java](src/test/java/io/confluen
 | StreamToStreamJoin                  | DSL, `join()` between KStream and KStream   | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/StreamToStreamJoinIntegrationTest.java) | |
 | StreamToTableJoin                   | DSL, `join()` between KStream and KTable    | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/StreamToTableJoinIntegrationTest.java) | [Scala Example](src/test/scala/io/confluent/examples/streams/StreamToTableJoinScalaIntegrationTest.scala) |
 | Sum                                 | DSL, aggregation, stateful, `reduce()`      | [Java 8+ Example](src/test/java/io/confluent/examples/streams/SumLambdaIntegrationTest.java) | | |
+| Table Re-Keying                     | DSL, re-key / re-partition a KTable         | [Java 8+ Example](src/test/java/io/confluent/examples/streams/TableRekeyingTest.java) | | |
 | TableToTableJoin                    | DSL, `join()` between KTable and KTable     | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/TableToTableJoinIntegrationTest.java) | |
 | UserCountsPerRegion                 | DSL, aggregation, stateful, `count()`       | [Java 8+ Example](src/test/java/io/confluent/examples/streams/UserCountsPerRegionLambdaIntegrationTest.java) | | |
 | ValidateStateWithInteractiveQueries | Interactive Queries for validating state    | | [Java 8+ Example](src/test/java/io/confluent/examples/streams/ValidateStateWithInteractiveQueriesLambdaIntegrationTest.java) | | |
