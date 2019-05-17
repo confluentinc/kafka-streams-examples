@@ -16,6 +16,7 @@
 package io.confluent.examples.streams
 
 import java.util.Properties
+import java.util.concurrent.TimeUnit
 
 import io.confluent.examples.streams.IntegrationTestUtils.NothingSerde
 import org.apache.kafka.common.serialization._
@@ -25,9 +26,9 @@ import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream.{KStream, KTable}
 import org.apache.kafka.streams.{KeyValue, StreamsConfig, TopologyTestDriver}
 import org.apache.kafka.test.TestUtils
+import org.assertj.core.api.Assertions.assertThat
 import org.junit._
 import org.scalatest.junit.AssertionsForJUnit
-import org.assertj.core.api.Assertions.assertThat
 
 import scala.collection.JavaConverters._
 
@@ -68,36 +69,13 @@ class WordCountScalaIntegrationTest extends AssertionsForJUnit {
       ("summit", 1L)
     )
 
-    //
-    // Step 1: Configure and start the processor topology.
-    //
-    val streamsConfiguration: Properties = {
-      val p = new Properties()
-      p.put(StreamsConfig.APPLICATION_ID_CONFIG, "wordcount-scala-integration-test")
-      p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config")
-      // Use a temporary directory for storing state, which will be automatically removed after the test.
-      p.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory.getAbsolutePath)
-      p
-    }
-
-    val builder = new StreamsBuilder
-
-    val textLines: KStream[Array[Byte], String] = builder.stream[Array[Byte], String](inputTopic)
-
-    val wordCounts: KTable[String, Long] = textLines
-      .flatMapValues(value => value.toLowerCase.split("\\W+"))
-      .groupBy((_, word) => word)
-      .count()
-
-    wordCounts.toStream.to(outputTopic)
-
+    // Step 1: Create the topology and its configuration
+    val builder: StreamsBuilder = createTopology()
+    val streamsConfiguration = createTopologyConfiguration()
 
     val topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)
-
     try {
-      //
-      // Step 2: Publish some input text lines.
-      //
+      // Step 2: Write the input
       IntegrationTestUtils.produceKeyValuesSynchronously(
         inputTopic,
         inputTextLines.map(v => new KeyValue(null, v)).asJava,
@@ -106,15 +84,36 @@ class WordCountScalaIntegrationTest extends AssertionsForJUnit {
         new StringSerializer
       )
 
-      //
-      // Step 3: Verify the application's output data.
-      //
-      val actualWordCounts =
-      IntegrationTestUtils.drainTableOutput(outputTopic, topologyTestDriver, new StringDeserializer, new LongDeserializer)
+      // Step 3: Validate the output
+      val actualWordCounts = IntegrationTestUtils.drainTableOutput(
+        outputTopic, topologyTestDriver, new StringDeserializer, new LongDeserializer)
       assertThat(actualWordCounts).isEqualTo(expectedWordCounts.asJava)
     } finally {
       topologyTestDriver.close()
     }
+  }
+
+  def createTopology(): StreamsBuilder = {
+    val builder = new StreamsBuilder
+    val textLines: KStream[Array[Byte], String] = builder.stream[Array[Byte], String](inputTopic)
+    val wordCounts: KTable[String, Long] = textLines
+        .flatMapValues(value => value.toLowerCase.split("\\W+"))
+        .groupBy((_, word) => word)
+        .count()
+    wordCounts.toStream.to(outputTopic)
+    builder
+  }
+
+  def createTopologyConfiguration(): Properties = {
+    val p = new Properties()
+    p.put(StreamsConfig.APPLICATION_ID_CONFIG, "wordcount-scala-integration-test")
+    p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config")
+    // The commit interval for flushing records to state stores and downstream must be lower than
+    // this integration test's timeout (30 secs) to ensure we observe the expected processing results.
+    p.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, TimeUnit.SECONDS.toMillis(10).toString)
+    // Use a temporary directory for storing state, which will be automatically removed after the test.
+    p.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory.getAbsolutePath)
+    p
   }
 
 }
