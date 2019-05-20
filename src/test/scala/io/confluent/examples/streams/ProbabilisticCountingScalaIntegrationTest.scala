@@ -18,7 +18,7 @@ package io.confluent.examples.streams
 import java.util
 import java.util.Properties
 
-import io.confluent.examples.streams.algebird.{CMSStore, CMSStoreBuilder, ProbabilisticCounter}
+import io.confluent.examples.streams.algebird.{CMSStoreBuilder, ProbabilisticCounter}
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams.scala.ImplicitConversions._
 import org.apache.kafka.streams.scala.Serdes._
@@ -32,8 +32,8 @@ import org.scalatest.junit.AssertionsForJUnit
 /**
   * End-to-end integration test that demonstrates how to probabilistically count items in an input stream.
   *
-  * This example uses a custom state store implementation, [[CMSStore]], that is backed by a
-  * Count-Min Sketch data structure.  The algorithm is WordCount.
+  * This example uses a custom state store implementation, [[io.confluent.examples.streams.algebird.CMSStore]],
+  * that is backed by a Count-Min Sketch data structure.  The algorithm is WordCount.
   */
 class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
 
