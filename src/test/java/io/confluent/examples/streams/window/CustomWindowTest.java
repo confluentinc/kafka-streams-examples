@@ -55,7 +55,7 @@ public class CustomWindowTest {
                 new MyEvent(1, ZonedDateTime.of(2019, 1, 1, 16, 29, 0, 0, zone)),
                 new MyEvent(2, ZonedDateTime.of(2019, 1, 1, 16, 30, 0, 0, zone)),
                 new MyEvent(7, ZonedDateTime.of(2019, 1, 1, 16, 31, 0, 0, zone)),
-                new MyEvent(7, ZonedDateTime.now())
+                dummyEventToForceSuppression()
         );
         final List<ExpectedResult> expectedValues = Arrays.asList(
                 new ExpectedResult(1,
@@ -72,7 +72,7 @@ public class CustomWindowTest {
                 new MyEvent(1, ZonedDateTime.of(2019, 1, 1, 16, 29, 0, 0, zone)),
                 new MyEvent(2, ZonedDateTime.of(2019, 1, 1, 16, 30, 0, 0, zone)),
                 new MyEvent(7, ZonedDateTime.of(2019, 1, 1, 18, 31, 0, 0, zone)),
-                new MyEvent(7, ZonedDateTime.now())
+                dummyEventToForceSuppression()
         );
         final List<ExpectedResult> expectedValues = Arrays.asList(
                 new ExpectedResult(1,
@@ -98,7 +98,7 @@ public class CustomWindowTest {
                 new MyEvent(40, ZonedDateTime.of(2019, 1, 1, 18, 31, 0, 0, zone)),
                 //this late arrival event should be ignored as it happens after a message that was outside of grace period 18h (end of window) + 30min (grace period)
                 new MyEvent(42, ZonedDateTime.of(2019, 1, 1, 16, 35, 0, 0, zone)),
-                new MyEvent(7, ZonedDateTime.now())
+                dummyEventToForceSuppression()
         );
 
         final List<ExpectedResult> expectedValues = Arrays.asList(
@@ -125,7 +125,7 @@ public class CustomWindowTest {
                 new MyEvent(1, ZonedDateTime.of(2019, 3, 31, 1, 39, 0, 0, zone)),
                 new MyEvent(2, ZonedDateTime.of(2019, 3, 31, 2, 0, 0, 0, zone)),
                 new MyEvent(7, ZonedDateTime.of(2019, 3, 31, 2, 10, 0, 0, zone)),
-                new MyEvent(7, ZonedDateTime.now())
+                dummyEventToForceSuppression()
         );
         final List<ExpectedResult> expectedValues = Arrays.asList(
                 new ExpectedResult(1,
@@ -154,7 +154,7 @@ public class CustomWindowTest {
                 new MyEvent(1, ZonedDateTime.of(2019, 3, 31, 1, 39, 0, 0, zoneWithDST)),
                 new MyEvent(2, ZonedDateTime.of(2019, 3, 31, 2, 0, 0, 0, zoneWithDST)),
                 new MyEvent(7, ZonedDateTime.of(2019, 3, 31, 2, 10, 0, 0, zoneWithDST)),
-                new MyEvent(7, ZonedDateTime.now())
+                dummyEventToForceSuppression()
         );
         final List<ExpectedResult> expectedValues = Arrays.asList(
                 new ExpectedResult(1,
@@ -261,4 +261,10 @@ public class CustomWindowTest {
         testDriver.pipeInput(records);
     }
 
+    /** Generates an event after window end + grace period to trigger flush everything through suppression
+     @see KTable#suppress(Suppressed)
+    */
+    private MyEvent dummyEventToForceSuppression() {
+        return new MyEvent(7, ZonedDateTime.now());
+    }
 }
