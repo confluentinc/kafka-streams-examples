@@ -25,6 +25,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.kstream.internals.TimeWindow;
@@ -46,6 +47,7 @@ public class CustomWindowTest {
     private static final String inputTopic = "inputTopic";
     private static final String outputTopic = "outputTopic";
     private static final ZoneId zone = ZoneOffset.UTC;
+    private static final int windowStartHour = 18;
 
     @Test
     public void shouldSumNumbersOnSameDay() {
@@ -61,7 +63,7 @@ public class CustomWindowTest {
                         ZonedDateTime.of(2018, 12, 31, 18, 0, 0, 0, zone),
                         ZonedDateTime.of(2019, 1, 1, 18, 0, 0, 0, zone))
         );
-        kafkaStreamsMagic(inputValues, expectedValues, zone);
+        verify(inputValues, expectedValues, zone);
     }
 
     @Test
@@ -82,7 +84,7 @@ public class CustomWindowTest {
                         ZonedDateTime.of(2019, 1, 1, 18, 0, 0, 0, zone),
                         ZonedDateTime.of(2019, 1, 2, 18, 0, 0, 0, zone))
         );
-        kafkaStreamsMagic(inputValues, expectedValues, zone);
+        verify(inputValues, expectedValues, zone);
     }
 
     @Test
@@ -109,7 +111,7 @@ public class CustomWindowTest {
                         ZonedDateTime.of(2019, 1, 1, 18, 0, 0, 0, zone),
                         ZonedDateTime.of(2019, 1, 2, 18, 0, 0, 0, zone))
         );
-        kafkaStreamsMagic(inputValues, expectedValues, zone);
+        verify(inputValues, expectedValues, zone);
     }
 
     // Daylight savings time tests
@@ -135,7 +137,7 @@ public class CustomWindowTest {
                         ZonedDateTime.of(2019, 3, 30, 18, 0, 0, 0, zone),
                         ZonedDateTime.of(2019, 3, 31, 18, 0, 0, 0, zone))
         );
-        kafkaStreamsMagic(inputValues, expectedValues, zone);
+        verify(inputValues, expectedValues, zone);
     }
 
     @Test
@@ -169,11 +171,10 @@ public class CustomWindowTest {
                         //Suggestion: By serializing both start and end of window, we could support more complex cases with non fixed time window and address daylight savings on daily windows.
                         ZonedDateTime.of(2019, 3, 31, 19, 0, 0, 0, zoneWithDST))
         );
-        kafkaStreamsMagic(inputValues, expectedValues, zoneWithDST);
+        verify(inputValues, expectedValues, zoneWithDST);
     }
 
-    private void kafkaStreamsMagic(List<MyEvent> inputValues, List<ExpectedResult> expectedValues, ZoneId zoneId) {
-        final StreamsBuilder builder = new StreamsBuilder();
+    private void verify(List<MyEvent> inputValues, List<ExpectedResult> expectedValues, ZoneId zoneId) {
 
         final Properties streamsConfiguration = new Properties();
         streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "sum-lambda-integration-test");
@@ -187,24 +188,33 @@ public class CustomWindowTest {
         // Use a temporary directory for storing state, which will be automatically removed after the test.
         streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
-        final KStream<String, Integer> input = builder.stream(inputTopic);
-        final KTable<Windowed<Integer>, Integer> sumOfOddNumbers = input
-                .selectKey((k, v) -> 1)
-                .groupByKey()
-                .windowedBy(new DailyTimeWindows(zoneId, Duration.ofMinutes(30)))
-                // A simple sum of value
-                .reduce((v1, v2) -> v1 + v2, Materialized.with(Serdes.Integer(), Serdes.Integer()))
-                // We only care about final result
-                .suppress(Suppressed.untilWindowCloses(Suppressed.BufferConfig.unbounded()));
-        sumOfOddNumbers.toStream().print(Printed.toSysOut());
-        sumOfOddNumbers.toStream().to(outputTopic, Produced.with(WindowedSerdes.timeWindowedSerdeFrom(Integer.class), Serdes.Integer()));
+        Topology topology = buildKafkaStreamTopology(zoneId);
 
-        TopologyTestDriver testDriver = new TopologyTestDriver(builder.build(), streamsConfiguration);
+        TopologyTestDriver testDriver = new TopologyTestDriver(topology, streamsConfiguration);
 
         injectFakeData(inputValues, testDriver);
         verifyResults(expectedValues, testDriver);
 
         testDriver.close();
+    }
+
+    private Topology buildKafkaStreamTopology(ZoneId zoneId) {
+        final StreamsBuilder builder = new StreamsBuilder();
+
+        final KStream<String, Integer> input = builder.stream(inputTopic);
+        final KStream<Windowed<Integer>, Integer> sumOfOddNumbers = input
+                .selectKey((k, v) -> 1)
+                .groupByKey()
+                .windowedBy(new DailyTimeWindows(zoneId, windowStartHour, Duration.ofMinutes(30)))
+                // A simple sum of value
+                .reduce((v1, v2) -> v1 + v2, Materialized.with(Serdes.Integer(), Serdes.Integer()))
+                // We only care about final result
+                .suppress(Suppressed.untilWindowCloses(Suppressed.BufferConfig.unbounded()))
+                .toStream();
+        sumOfOddNumbers.print(Printed.toSysOut());
+        sumOfOddNumbers.to(outputTopic, Produced.with(WindowedSerdes.timeWindowedSerdeFrom(Integer.class), Serdes.Integer()));
+        return builder.build();
+
     }
 
     private class MyEvent {

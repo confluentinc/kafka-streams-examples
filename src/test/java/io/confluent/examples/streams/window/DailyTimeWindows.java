@@ -26,15 +26,17 @@ import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-//Implementation of a daily custom window starting at 6pm with a given timezone
+//Implementation of a daily custom window starting at given hour (like daily windows starting at 6pm) with a given timezone
 public class DailyTimeWindows extends Windows<TimeWindow> {
 
     private final ZoneId zoneId;
-    private long grace;
+    private final long grace;
+    private final int startHour;
 
-    public DailyTimeWindows(ZoneId zoneId, Duration grace) {
+    public DailyTimeWindows(ZoneId zoneId, int startHour, Duration grace) {
         this.zoneId = zoneId;
         this.grace = grace.toMillis();
+        this.startHour = startHour;
     }
 
     @Override
@@ -42,7 +44,7 @@ public class DailyTimeWindows extends Windows<TimeWindow> {
         Instant instant = Instant.ofEpochMilli(timestamp);
 
         ZonedDateTime zonedDateTime = instant.atZone(zoneId);
-        ZonedDateTime startTime = zonedDateTime.getHour() >= 18 ? zonedDateTime.truncatedTo(ChronoUnit.DAYS).withHour(18) : zonedDateTime.truncatedTo(ChronoUnit.DAYS).minusDays(1).withHour(18);
+        ZonedDateTime startTime = zonedDateTime.getHour() >= startHour ? zonedDateTime.truncatedTo(ChronoUnit.DAYS).withHour(startHour) : zonedDateTime.truncatedTo(ChronoUnit.DAYS).minusDays(1).withHour(startHour);
         ZonedDateTime endTime = startTime.plusDays(1);
 
         final Map<Long, TimeWindow> windows = new LinkedHashMap<>();
