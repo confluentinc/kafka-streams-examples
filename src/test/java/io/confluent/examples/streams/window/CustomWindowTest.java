@@ -155,7 +155,7 @@ public class CustomWindowTest {
         //This test illustrate problems with daylight savings
         //Some timezone have daylight savings time (DST) resulting in two days in year that have either 23 or 25 hours.
         //Kafka streams currently support only fixed period for the moment.
-        ZoneId zoneWithDST = ZoneId.of("Europe/Paris");
+        final ZoneId zoneWithDST = ZoneId.of("Europe/Paris");
 
         final List<MyEvent> inputValues = Arrays.asList(
                 new MyEvent(1, ZonedDateTime.of(2019, 3, 30, 1, 39, 0, 0, zoneWithDST)),
@@ -184,7 +184,7 @@ public class CustomWindowTest {
         verify(inputValues, expectedValues, zoneWithDST);
     }
 
-    private void verify(List<MyEvent> inputValues, List<ExpectedResult> expectedValues, ZoneId zoneId) {
+    private void verify(final List<MyEvent> inputValues, final List<ExpectedResult> expectedValues, final ZoneId zoneId) {
 
         final Properties streamsConfiguration = new Properties();
         streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "sum-lambda-integration-test");
@@ -198,9 +198,9 @@ public class CustomWindowTest {
         // Use a temporary directory for storing state, which will be automatically removed after the test.
         streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
-        Topology topology = buildKafkaStreamTopology(zoneId);
+        final Topology topology = buildKafkaStreamTopology(zoneId);
 
-        TopologyTestDriver testDriver = new TopologyTestDriver(topology, streamsConfiguration);
+        final TopologyTestDriver testDriver = new TopologyTestDriver(topology, streamsConfiguration);
 
         injectFakeData(inputValues, testDriver);
         verifyResults(expectedValues, testDriver);
@@ -208,7 +208,7 @@ public class CustomWindowTest {
         testDriver.close();
     }
 
-    private Topology buildKafkaStreamTopology(ZoneId zoneId) {
+    private Topology buildKafkaStreamTopology(final ZoneId zoneId) {
         final StreamsBuilder builder = new StreamsBuilder();
 
         final KStream<String, Integer> input = builder.stream(inputTopic);
@@ -231,7 +231,7 @@ public class CustomWindowTest {
         Integer value;
         ZonedDateTime timestamp;
 
-        public MyEvent(Integer value, ZonedDateTime timestamp) {
+        public MyEvent(final Integer value, final ZonedDateTime timestamp) {
             this.value = value;
             this.timestamp = timestamp;
         }
@@ -243,7 +243,7 @@ public class CustomWindowTest {
         ZonedDateTime start;
         ZonedDateTime end;
 
-        public ExpectedResult(Integer key, Integer value, ZonedDateTime start, ZonedDateTime end) {
+        public ExpectedResult(final Integer key, final Integer value, final ZonedDateTime start, final ZonedDateTime end) {
             this.key = key;
             this.value = value;
             this.start = start;
@@ -255,17 +255,17 @@ public class CustomWindowTest {
         }
     }
 
-    private void verifyResults(List<ExpectedResult> expectedValues, TopologyTestDriver testDriver) {
-        for (ExpectedResult expectedValue : expectedValues) {
-            ProducerRecord<Windowed<Integer>, Integer> results = testDriver.readOutput(outputTopic, new TimeWindowedDeserializer(new IntegerDeserializer(), Duration.ofDays(1).toMillis()), new IntegerDeserializer());
+    private void verifyResults(final List<ExpectedResult> expectedValues, final TopologyTestDriver testDriver) {
+        for (final ExpectedResult expectedValue : expectedValues) {
+            final ProducerRecord<Windowed<Integer>, Integer> results = testDriver.readOutput(outputTopic, new TimeWindowedDeserializer(new IntegerDeserializer(), Duration.ofDays(1).toMillis()), new IntegerDeserializer());
             OutputVerifier.compareKeyValue(results, expectedValue.toWindowed(), expectedValue.value);
 
         }
     }
 
-    private void injectFakeData(List<MyEvent> inputValues, TopologyTestDriver testDriver) {
-        ConsumerRecordFactory<String, Integer> factory = new ConsumerRecordFactory<>(inputTopic, new StringSerializer(), new IntegerSerializer());
-        List<ConsumerRecord<byte[], byte[]>> records = inputValues.stream()
+    private void injectFakeData(final List<MyEvent> inputValues, final TopologyTestDriver testDriver) {
+        final ConsumerRecordFactory<String, Integer> factory = new ConsumerRecordFactory<>(inputTopic, new StringSerializer(), new IntegerSerializer());
+        final List<ConsumerRecord<byte[], byte[]>> records = inputValues.stream()
                 .map(e -> factory.create(inputTopic, null, e.value, new RecordHeaders(), e.timestamp.toInstant().toEpochMilli()))
                 .collect(Collectors.toList());
         testDriver.pipeInput(records);

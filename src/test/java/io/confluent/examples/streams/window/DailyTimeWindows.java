@@ -33,19 +33,19 @@ public class DailyTimeWindows extends Windows<TimeWindow> {
     private final long grace;
     private final int startHour;
 
-    public DailyTimeWindows(ZoneId zoneId, int startHour, Duration grace) {
+    public DailyTimeWindows(final ZoneId zoneId, final int startHour, final Duration grace) {
         this.zoneId = zoneId;
         this.grace = grace.toMillis();
         this.startHour = startHour;
     }
 
     @Override
-    public Map<Long, TimeWindow> windowsFor(long timestamp) {
-        Instant instant = Instant.ofEpochMilli(timestamp);
+    public Map<Long, TimeWindow> windowsFor(final long timestamp) {
+        final Instant instant = Instant.ofEpochMilli(timestamp);
 
-        ZonedDateTime zonedDateTime = instant.atZone(zoneId);
-        ZonedDateTime startTime = zonedDateTime.getHour() >= startHour ? zonedDateTime.truncatedTo(ChronoUnit.DAYS).withHour(startHour) : zonedDateTime.truncatedTo(ChronoUnit.DAYS).minusDays(1).withHour(startHour);
-        ZonedDateTime endTime = startTime.plusDays(1);
+        final ZonedDateTime zonedDateTime = instant.atZone(zoneId);
+        final ZonedDateTime startTime = zonedDateTime.getHour() >= startHour ? zonedDateTime.truncatedTo(ChronoUnit.DAYS).withHour(startHour) : zonedDateTime.truncatedTo(ChronoUnit.DAYS).minusDays(1).withHour(startHour);
+        final ZonedDateTime endTime = startTime.plusDays(1);
 
         final Map<Long, TimeWindow> windows = new LinkedHashMap<>();
         windows.put(toEpochMilli(startTime), new TimeWindow(toEpochMilli(startTime), toEpochMilli(endTime)));
@@ -72,7 +72,7 @@ public class DailyTimeWindows extends Windows<TimeWindow> {
         return grace;
     }
 
-    private long toEpochMilli(ZonedDateTime zonedDateTime) {
+    private long toEpochMilli(final ZonedDateTime zonedDateTime) {
         return zonedDateTime.toInstant().toEpochMilli();
     }
 }
