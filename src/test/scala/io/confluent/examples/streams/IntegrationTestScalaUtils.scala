@@ -19,6 +19,11 @@ import org.apache.kafka.common.serialization.{Deserializer, Serde, Serializer, S
 import org.apache.kafka.streams.kstream.{Windowed, WindowedSerdes}
 import org.apache.kafka.streams.{KeyValue, TopologyTestDriver}
 
+/**
+  * Makes the use of [[IntegrationTestUtils]] from Scala more convenient by providing implicit serializers and
+  * deserializers. For example, it saves you from distinguishing between Scala's [[Int]] and Java's [[Integer]] when
+  * reading from or writing to Kafka.
+  */
 object IntegrationTestScalaUtils {
 
   implicit def StringSerializer: Serializer[String] = JSerdes.String().serializer()

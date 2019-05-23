@@ -63,6 +63,7 @@ public class AggregateTest {
         "stream", "all", "the", "things", "hi", "world", "kafka", "streams", "streaming"
     );
 
+    // We want to compute the sum of the length of words (values) by the first letter (new key) of words.
     final Map<String, Long> expectedOutput = new HashMap<>();
     expectedOutput.put("a", 3L);
     expectedOutput.put("t", 9L);
@@ -82,8 +83,7 @@ public class AggregateTest {
       // Step 3: Validate the output
       final Map<String, Long> actualOutput = IntegrationTestUtils.drainTableOutput(
           outputTopic, testDriver, new StringDeserializer(), new LongDeserializer());
-      assertThat(actualOutput).hasSameSizeAs(expectedOutput);
-      assertThat(actualOutput).containsAllEntriesOf(expectedOutput);
+      assertThat(actualOutput).isEqualTo(expectedOutput);
     }
   }
 
@@ -91,9 +91,11 @@ public class AggregateTest {
     final StreamsBuilder builder = new StreamsBuilder();
     final KStream<byte[], String> input = builder.stream(inputTopic, Consumed.with(Serdes.ByteArray(), Serdes.String()));
     final KTable<String, Long> aggregated = input
+        // We set the new key of a word (value) to the word's first letter.
         .groupBy(
             (key, value) -> (value != null && value.length() > 0) ? value.substring(0, 1).toLowerCase() : "",
             Grouped.with(Serdes.String(), Serdes.String()))
+        // For each first letter (key), we compute the sum of the word lengths.
         .aggregate(
             () -> 0L,
             (aggKey, newValue, aggValue) -> aggValue + newValue.length(),
@@ -107,7 +109,6 @@ public class AggregateTest {
     final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "aggregate-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config");
-    streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
     return streamsConfiguration;

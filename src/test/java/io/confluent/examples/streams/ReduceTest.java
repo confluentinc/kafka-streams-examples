@@ -15,7 +15,6 @@
  */
 package io.confluent.examples.streams;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.apache.kafka.common.serialization.IntegerSerializer;
 import org.apache.kafka.common.serialization.Serdes;
@@ -69,6 +68,7 @@ public class ReduceTest {
         new KeyValue<>(123, "streams")
     );
 
+    // For each record key, we want to concatenate the record values.
     final Map<Integer, String> expectedOutput = new HashMap<>();
     expectedOutput.put(456, "stream all the things");
     expectedOutput.put(123, "hello world kafka streams");
@@ -94,7 +94,11 @@ public class ReduceTest {
     final StreamsBuilder builder = new StreamsBuilder();
     final KStream<Integer, String> input = builder.stream(inputTopic, Consumed.with(Serdes.Integer(), Serdes.String()));
     final KTable<Integer, String> concatenated =
-        input.groupByKey(Grouped.with(Serdes.Integer(), Serdes.String())).reduce((v1, v2) -> v1 + " " + v2);
+        input
+            // Group the records based on the existing key of records.
+            .groupByKey(Grouped.with(Serdes.Integer(), Serdes.String()))
+            // For each key, concatenate the record values.
+            .reduce((v1, v2) -> v1 + " " + v2);
     concatenated.toStream().to(outputTopic, Produced.with(Serdes.Integer(), Serdes.String()));
     return builder;
   }
@@ -103,7 +107,6 @@ public class ReduceTest {
     final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "reduce-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config");
-    streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
     return streamsConfiguration;

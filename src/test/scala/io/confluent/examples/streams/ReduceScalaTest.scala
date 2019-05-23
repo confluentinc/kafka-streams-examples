@@ -17,7 +17,6 @@ package io.confluent.examples.streams
 
 import java.util.Properties
 
-import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream.{KStream, KTable}
 import org.apache.kafka.streams.{KeyValue, StreamsConfig, TopologyTestDriver}
@@ -54,6 +53,7 @@ class ReduceScalaTest extends AssertionsForJUnit {
       (123, "streams")
     )
 
+    // For each record key, we want to concatenate the record values.
     val expectedOutput: Map[Int, String] = Map(
       456 -> "stream all the things",
       123 -> "hello world kafka streams"
@@ -80,7 +80,12 @@ class ReduceScalaTest extends AssertionsForJUnit {
   def createTopology(): StreamsBuilder = {
     val builder = new StreamsBuilder
     val input: KStream[Int, String] = builder.stream[Int, String](inputTopic)
-    val concatenated: KTable[Int, String] = input.groupByKey.reduce((v1, v2) => v1 + " " + v2)
+    val concatenated: KTable[Int, String] =
+      input
+          // Group the records based on the existing key of records.
+          .groupByKey
+          // For each key, concatenate the record values.
+          .reduce((v1, v2) => v1 + " " + v2)
     concatenated.toStream.to(outputTopic)
     builder
   }
@@ -89,7 +94,6 @@ class ReduceScalaTest extends AssertionsForJUnit {
     val p = new Properties()
     p.put(StreamsConfig.APPLICATION_ID_CONFIG, "reduce-scala-test")
     p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config")
-    p.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     p.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory.getAbsolutePath)
     p

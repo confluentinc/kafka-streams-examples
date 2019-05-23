@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * End-to-end integration test based on MapFunctionLambdaExample, using TopologyTestDriver.
+ * Test based on MapFunctionLambdaExample, using TopologyTestDriver.
  * <p>
  * Note: This example uses lambda expressions and thus works with Java 8+ only.
  */

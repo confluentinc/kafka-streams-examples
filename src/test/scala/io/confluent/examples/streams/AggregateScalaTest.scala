@@ -17,7 +17,6 @@ package io.confluent.examples.streams
 
 import java.util.Properties
 
-import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream.{KStream, KTable}
 import org.apache.kafka.streams.{StreamsConfig, TopologyTestDriver}
@@ -43,6 +42,7 @@ class AggregateScalaTest extends AssertionsForJUnit {
     val inputValues: Seq[String] =
       Seq("stream", "all", "the", "things", "hi", "world", "kafka", "streams", "streaming")
 
+    // We want to compute the sum of the length of words (values) by the first letter (new key) of words.
     val expectedOutput: Map[String, Long] = Map(
       "a" -> 3L,
       "t" -> 9L,
@@ -74,11 +74,13 @@ class AggregateScalaTest extends AssertionsForJUnit {
     val builder = new StreamsBuilder
     val input: KStream[Array[Byte], String] = builder.stream[Array[Byte], String](inputTopic)
     val aggregated: KTable[String, Long] = input
+        // We set the new key of a word (value) to the word's first letter.
         .groupBy(
-          (key: Array[Byte], value: String) => Option(value) match {
-            case Some(s) if s.nonEmpty => s.head.toString
-            case _ => ""
-          })
+      (key: Array[Byte], value: String) => Option(value) match {
+        case Some(s) if s.nonEmpty => s.head.toString
+        case _ => ""
+      })
+        // For each first letter (key), we compute the sum of the word lengths.
         .aggregate(0L)((aggKey: String, newValue: String, aggValue: Long) => aggValue + newValue.length)
     aggregated.toStream.to(outputTopic)
     builder
@@ -88,7 +90,6 @@ class AggregateScalaTest extends AssertionsForJUnit {
     val p = new Properties()
     p.put(StreamsConfig.APPLICATION_ID_CONFIG, "aggregate-scala-test")
     p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy-config")
-    p.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     p.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory.getAbsolutePath)
     p
