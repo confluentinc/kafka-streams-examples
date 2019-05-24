@@ -7,11 +7,14 @@ import io.confluent.examples.streams.interactivequeries.MetadataService;
 import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
 import io.confluent.examples.streams.microservices.util.Paths;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.KafkaStreams.State;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.errors.InvalidStateStoreException;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
@@ -322,7 +325,22 @@ public class OrdersService implements Service {
         config(bootstrapServers));
     metadataService = new MetadataService(streams);
     streams.cleanUp(); //don't do this in prod as it clears your state stores
+    final CountDownLatch startLatch = new CountDownLatch(1);
+    streams.setStateListener((newState, oldState) -> {
+      if (newState == State.RUNNING && oldState == State.REBALANCING) {
+        startLatch.countDown();
+      }
+
+    });
     streams.start();
+
+    try {
+      if (!startLatch.await(60, TimeUnit.SECONDS)) {
+        throw new RuntimeException("Streams never finished rebalancing on startup");
+      }
+    } catch (final InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
     return streams;
   }
 
