@@ -5,9 +5,13 @@ import io.confluent.examples.streams.avro.microservices.OrderState;
 import io.confluent.examples.streams.avro.microservices.OrderValidation;
 import io.confluent.examples.streams.avro.microservices.OrderValue;
 import io.confluent.examples.streams.microservices.domain.Schemas;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.KafkaStreams.State;
+
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Grouped;
@@ -51,7 +55,23 @@ public class FraudService implements Service {
   public void start(final String bootstrapServers, final String stateDir) {
     streams = processStreams(bootstrapServers, stateDir);
     streams.cleanUp(); //don't do this in prod as it clears your state stores
+    final CountDownLatch startLatch = new CountDownLatch(1);
+    streams.setStateListener((newState, oldState) -> {
+      if (newState == State.RUNNING && oldState == State.REBALANCING) {
+        startLatch.countDown();
+      }
+
+    });
     streams.start();
+
+    try {
+      if (!startLatch.await(60, TimeUnit.SECONDS)) {
+        throw new RuntimeException("Streams never finished rebalancing on startup");
+      }
+    } catch (final InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+
     log.info("Started Service " + getClass().getSimpleName());
   }
 
