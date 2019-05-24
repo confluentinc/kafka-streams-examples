@@ -99,7 +99,7 @@ public class AggregateTest {
         .aggregate(
             () -> 0L,
             (aggKey, newValue, aggValue) -> aggValue + newValue.length(),
-            Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("agg-store").withValueSerde(Serdes.Long())
+            Materialized.with(Serdes.String(), Serdes.Long())
         );
     aggregated.toStream().to(outputTopic, Produced.with(Serdes.String(), Serdes.Long()));
     return builder;
