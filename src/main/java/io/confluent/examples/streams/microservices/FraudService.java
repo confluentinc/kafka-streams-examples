@@ -58,11 +58,9 @@ public class FraudService implements Service {
 
     });
     streams.start();
-    final boolean rebalanceCompleted;
 
     try {
-      rebalanceCompleted = startLatch.await(60, TimeUnit.SECONDS);
-      if (!rebalanceCompleted) {
+      if (!startLatch.await(60, TimeUnit.SECONDS)) {
         throw new RuntimeException("Streams never finished rebalancing on startup");
       }
     } catch (final InterruptedException e) {
