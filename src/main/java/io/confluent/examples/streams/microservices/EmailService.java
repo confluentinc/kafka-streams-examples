@@ -11,7 +11,11 @@ import static io.confluent.examples.streams.microservices.util.MicroserviceUtils
 import io.confluent.examples.streams.avro.microservices.Customer;
 import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.Payment;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.KafkaStreams.State;
+import org.apache.kafka.streams.KafkaStreams.StateListener;
 import org.apache.kafka.streams.kstream.GlobalKTable;
 import org.apache.kafka.streams.kstream.JoinWindows;
 import org.apache.kafka.streams.kstream.KStream;
@@ -40,7 +44,21 @@ public class EmailService implements Service {
   public void start(final String bootstrapServers) {
     streams = processStreams(bootstrapServers, "/tmp/kafka-streams");
     streams.cleanUp(); //don't do this in prod as it clears your state stores
+    final CountDownLatch startLatch = new CountDownLatch(1);
+    streams.setStateListener((newState, oldState) -> {
+      if (newState == State.RUNNING && oldState == State.REBALANCING) {
+        startLatch.countDown();
+      }
+
+    });
     streams.start();
+    try {
+      if (!startLatch.await(60, TimeUnit.SECONDS)) {
+        throw new RuntimeException("Streams never finished rebalancing on startup");
+      }
+    } catch (final InterruptedException e) {
+       Thread.currentThread().interrupt();
+    }
     log.info("Started Service " + APP_ID);
   }
 
