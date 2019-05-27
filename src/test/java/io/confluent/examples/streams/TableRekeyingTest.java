@@ -34,9 +34,12 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
+import io.confluent.examples.streams.utils.ListSerde;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,9 +52,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TableRekeyingTest {
 
   private static final String inputTopic = "inputTopic";
-  private static final String outputTopic1 = "outputTopic1";
-  private static final String outputTopic2 = "outputTopic2";
-  private static final String outputTopic3 = "outputTopic3";
+  private static final String outputTopic = "outputTopic";
 
   @Test
   public void shouldRekeyTheTable() {
@@ -66,9 +67,7 @@ public class TableRekeyingTest {
     );
 
     final Map<String, Integer> expectedOutput = new HashMap<>();
-    expectedOutput.put("kafka", 123);
-    expectedOutput.put("stream", 456); // Note how, for key "stream", the value is 456 and not 123.
-    expectedOutput.put("table", 456);
+    expectedOutput.put("stream", 123);
     expectedOutput.put("duality", 456);
     // Note how there isn't any entry for the original key 789.
 
@@ -82,21 +81,9 @@ public class TableRekeyingTest {
           inputTopic, inputRecords, topologyTestDriver, new IntegerSerializer(), new StringSerializer());
 
       // Step 3: Validate the output
-
-      // Variant 1
-      final Map<String, Integer> actualOutput1 = IntegrationTestUtils.drainTableOutput(
-          outputTopic1, topologyTestDriver, new StringDeserializer(), new IntegerDeserializer());
-      assertThat(actualOutput1).isEqualTo(expectedOutput);
-
-      // Variant 2
-      final Map<String, Integer> actualOutput2 = IntegrationTestUtils.drainTableOutput(
-          outputTopic2, topologyTestDriver, new StringDeserializer(), new IntegerDeserializer());
-      assertThat(actualOutput2).isEqualTo(expectedOutput);
-
-      // Variant 3
-      final Map<String, Integer> actualOutput3 = IntegrationTestUtils.drainTableOutput(
-          outputTopic3, topologyTestDriver, new StringDeserializer(), new IntegerDeserializer());
-      assertThat(actualOutput3).isEqualTo(expectedOutput);
+      final Map<String, Integer> actualOutput = IntegrationTestUtils.drainTableOutput(
+          outputTopic, topologyTestDriver, new StringDeserializer(), new IntegerDeserializer());
+      assertThat(actualOutput).isEqualTo(expectedOutput);
     }
   }
 
@@ -104,45 +91,33 @@ public class TableRekeyingTest {
     final StreamsBuilder builder = new StreamsBuilder();
     final KTable<Integer, String> table = builder.table(inputTopic, Consumed.with(Serdes.Integer(), Serdes.String()));
 
-    // Variant 1
-    final KTable<String, Integer> rekeyedTable1 = table
-        .groupBy(
-            (key, value) -> KeyValue.pair(value, key),
-            Grouped.with(Serdes.String(), Serdes.Integer()))
-        .reduce(
-            (aggValue, newValue) -> newValue, /* adder */
-            (aggValue, oldValue) -> oldValue  /* subtractor */);
-    rekeyedTable1.toStream().to(outputTopic1, Produced.with(Serdes.String(), Serdes.Integer()));
-
-    // Variant 2
-    final KTable<String, Integer> rekeyedTable2 = table
+    final KTable<String, Integer> rekeyedTable = table
         .groupBy(
             (key, value) -> KeyValue.pair(value, key),
             Grouped.with(Serdes.String(), Serdes.Integer()))
         .aggregate(
-            () -> 0,
-            (aggKey, newValue, aggValue) -> newValue, /* adder */
-            (aggKey, oldValue, aggValue) -> oldValue, /* subtractor */
-            Materialized.with(Serdes.String(), Serdes.Integer())
-        );
-    rekeyedTable2.toStream().to(outputTopic2, Produced.with(Serdes.String(), Serdes.Integer()));
-
-    // Variant 3
-    final KTable<String, Integer> rekeyedTable3 =
-        table
-            .toStream()
-            .map((key, value) -> KeyValue.pair(value, key))
-            .groupByKey(Grouped.with(Serdes.String(), Serdes.Integer()))
-            // Dummy aggregation
-            .reduce((aggValue, newValue) -> newValue);
-    rekeyedTable3.toStream().to(outputTopic3, Produced.with(Serdes.String(), Serdes.Integer()));
+            LinkedList::new,
+            /* adder */
+            (aggKey, newValue, aggValue) -> {
+              aggValue.add(newValue);
+              return aggValue;
+            },
+            /* subtractor */
+            (aggKey, newValue, aggValue) -> {
+              aggValue.remove(aggValue.size() - 1);
+              return aggValue;
+            },
+            Materialized.with(Serdes.String(), new ListSerde<>(Serdes.Integer()))
+        )
+        .mapValues(xs -> xs.size() > 0 ? xs.get(xs.size() - 1) : null);
+    rekeyedTable.toStream().to(outputTopic, Produced.with(Serdes.String(), Serdes.Integer()));
 
     return builder;
   }
 
   private Properties createTopologyConfiguration() {
     final Properties streamsConfiguration = new Properties();
-    streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "reduce-test");
+    streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "table-rekeying-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config");
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
