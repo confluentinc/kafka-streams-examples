@@ -44,7 +44,7 @@ public class ListSerializer<T> implements Serializer<List<T>> {
     try (final ByteArrayOutputStream baos = new ByteArrayOutputStream();
          final DataOutputStream out = new DataOutputStream(baos)) {
       out.writeInt(xs.size());
-      for (T x : xs) {
+      for (final T x : xs) {
         final byte[] serialized = serializer.serialize(topic, x);
         writeElement(out, serialized);
       }

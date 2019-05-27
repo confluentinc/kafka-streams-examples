@@ -339,10 +339,17 @@ public class IntegrationTestUtils {
     final Map<K, V> results = new LinkedHashMap<>();
     while (true) {
       final ProducerRecord<K, V> record = topologyTestDriver.readOutput(topic, keyDeserializer, valueDeserializer);
-      if (record == null) {
+      // Tables ignore records with null keys.
+      if (record == null || record.key() == null) {
         break;
       } else {
-        results.put(record.key(), record.value());
+        // For tables, a null-valued record represents a "DELETE" or tombstone for the corresponding key.
+        if (record.value() == null) {
+          results.remove(record.key());
+        }
+        else {
+          results.put(record.key(), record.value());
+        }
       }
     }
     return results;
