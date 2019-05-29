@@ -42,6 +42,7 @@ import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
+import org.apache.kafka.streams.state.ValueAndTimestamp;
 import org.apache.kafka.test.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -319,14 +320,14 @@ public class CustomStreamTableJoinIntegrationTest {
       return new Transformer<String, Double, KeyValue<String, Pair<Double, Long>>>() {
 
         private KeyValueStore<String, Pair<Double, Instant>> streamBufferStore;
-        private KeyValueStore<String, Long> tableStore;
+        private KeyValueStore<String, ValueAndTimestamp<Long>> tableStore;
         private ProcessorContext context;
 
         @SuppressWarnings("unchecked")
         @Override
         public void init(final ProcessorContext context) {
           streamBufferStore = (KeyValueStore<String, Pair<Double, Instant>>) context.getStateStore(streamBufferStoreName);
-          tableStore = (KeyValueStore<String, Long>) context.getStateStore(tableStoreName);
+          tableStore = (KeyValueStore<String, ValueAndTimestamp<Long>>) context.getStateStore(tableStoreName);
           this.context = context;
           this.context.schedule(frequencyToCheckForExpiredWaitTimes, PunctuationType.STREAM_TIME, this::punctuate);
         }
@@ -361,9 +362,9 @@ public class CustomStreamTableJoinIntegrationTest {
         private KeyValue<String, Pair<Double, Long>> sendFullJoinRecordOrWaitForTableSide(final String key,
                                                                                           final Double value,
                                                                                           final long streamRecordTimestamp) {
-          final Long tableValue = tableStore.get(key);
+          final ValueAndTimestamp<Long> tableValue = tableStore.get(key);
           if (tableValue != null) {
-            final KeyValue<String, Pair<Double, Long>> joinRecord = KeyValue.pair(key, new Pair<>(value, tableValue));
+            final KeyValue<String, Pair<Double, Long>> joinRecord = KeyValue.pair(key, new Pair<>(value, tableValue.value()));
             LOG.info("Table data available for key {}, sending fully populated join message {}", key, joinRecord);
             return joinRecord;
           } else {
