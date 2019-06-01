@@ -254,7 +254,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     public boolean conditionMet() {
       //TODO once KAFKA-6098 is fixed use AdminClient to verify topics have been deleted
       final Set<String> allTopics = new HashSet<>(
-          JavaConverters.seqAsJavaListConverter(broker.kafkaServer().zkClient().getAllTopicsInCluster()).asJava());
+          JavaConverters.setAsJavaSetConverter(broker.kafkaServer().zkClient().getAllTopicsInCluster()).asJava());
       return !allTopics.removeAll(deletedTopics);
     }
   }
