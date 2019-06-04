@@ -56,7 +56,7 @@ public class WikipediaFeedAvroLambdaExampleTest {
   private KafkaStreams streams;
 
   @BeforeClass
-  public static void createTopics() {
+  public static void createTopics() throws InterruptedException {
     CLUSTER.createTopic(WikipediaFeedAvroExample.WIKIPEDIA_FEED);
     CLUSTER.createTopic(WikipediaFeedAvroExample.WIKIPEDIA_STATS);
   }
