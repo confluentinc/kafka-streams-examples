@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Runs an in-memory, "embedded" Kafka cluster with 1 ZooKeeper instance, 1 Kafka broker, and 1
@@ -216,7 +217,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
                           final int partitions,
                           final short replication,
                           final Map<String, String> topicConfig) throws InterruptedException {
-    createTopic(30000L, topic, partitions, replication, topicConfig);
+    createTopic(60000L, topic, partitions, replication, topicConfig);
   }
 
   /**
@@ -273,9 +274,13 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     @Override
     public boolean conditionMet() {
       //TODO once KAFKA-6098 is fixed use AdminClient to verify topics have been deleted
-      final Set<String> allTopics = new HashSet<>(
+      final Set<String> allTopicsFromZk = new HashSet<>(
           JavaConverters.seqAsJavaListConverter(broker.kafkaServer().zkClient().getAllTopicsInCluster()).asJava());
-      return !allTopics.removeAll(deletedTopics);
+
+      final Set<String> allTopicsFromBrokerCache = new HashSet<>(
+          JavaConverters.seqAsJavaListConverter(broker.kafkaServer().metadataCache().getAllTopics().toSeq()).asJava());
+
+      return !allTopicsFromZk.removeAll(deletedTopics) && !allTopicsFromBrokerCache.removeAll(deletedTopics);
     }
   }
 
@@ -289,9 +294,8 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     @Override
     public boolean conditionMet() {
       //TODO once KAFKA-6098 is fixed use AdminClient to verify topics have been deleted
-      final Set<String> allTopics = new HashSet<>(
-          JavaConverters.seqAsJavaListConverter(broker.kafkaServer().zkClient().getAllTopicsInCluster()).asJava());
-      return !allTopics.contains(createdTopic);
+      return broker.kafkaServer().zkClient().getAllTopicsInCluster().contains(createdTopic) &&
+          broker.kafkaServer().metadataCache().contains(createdTopic);
     }
   }
 
