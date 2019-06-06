@@ -57,7 +57,7 @@ public class SpecificAvroIntegrationTest {
   private static final String outputTopic = "outputTopic";
 
   @BeforeClass
-  public static void startKafkaCluster() {
+  public static void startKafkaCluster() throws InterruptedException {
     CLUSTER.createTopic(inputTopic);
     CLUSTER.createTopic(outputTopic);
   }
