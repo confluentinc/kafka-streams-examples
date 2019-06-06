@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Runs an in-memory, "embedded" Kafka cluster with 1 ZooKeeper instance, 1 Kafka broker, and 1
@@ -189,7 +190,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
    *
    * @param topic The name of the topic.
    */
-  public void createTopic(final String topic) {
+  public void createTopic(final String topic) throws InterruptedException {
     createTopic(topic, 1, (short) 1, Collections.emptyMap());
   }
 
@@ -200,7 +201,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
    * @param partitions  The number of partitions for this topic.
    * @param replication The replication factor for (the partitions of) this topic.
    */
-  public void createTopic(final String topic, final int partitions, final short replication) {
+  public void createTopic(final String topic, final int partitions, final short replication) throws InterruptedException {
     createTopic(topic, partitions, replication, Collections.emptyMap());
   }
 
@@ -215,8 +216,28 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
   public void createTopic(final String topic,
                           final int partitions,
                           final short replication,
-                          final Map<String, String> topicConfig) {
+                          final Map<String, String> topicConfig) throws InterruptedException {
+    createTopic(60000L, topic, partitions, replication, topicConfig);
+  }
+
+  /**
+   * Creates a Kafka topic with the given parameters and blocks until all topics got created.
+   *
+   * @param topic       The name of the topic.
+   * @param partitions  The number of partitions for this topic.
+   * @param replication The replication factor for (partitions of) this topic.
+   * @param topicConfig Additional topic-level configuration settings.
+   */
+  public void createTopic(final long timeoutMs,
+                          final String topic,
+                          final int partitions,
+                          final short replication,
+                          final Map<String, String> topicConfig) throws InterruptedException {
     broker.createTopic(topic, partitions, replication, topicConfig);
+
+    if (timeoutMs > 0) {
+      TestUtils.waitForCondition(new TopicCreatedCondition(topic), timeoutMs, "Topics not created after " + timeoutMs + " milli seconds.");
+    }
   }
 
   /**
@@ -253,9 +274,28 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     @Override
     public boolean conditionMet() {
       //TODO once KAFKA-6098 is fixed use AdminClient to verify topics have been deleted
-      final Set<String> allTopics = new HashSet<>(
+      final Set<String> allTopicsFromZk = new HashSet<>(
           JavaConverters.seqAsJavaListConverter(broker.kafkaServer().zkClient().getAllTopicsInCluster()).asJava());
-      return !allTopics.removeAll(deletedTopics);
+
+      final Set<String> allTopicsFromBrokerCache = new HashSet<>(
+          JavaConverters.seqAsJavaListConverter(broker.kafkaServer().metadataCache().getAllTopics().toSeq()).asJava());
+
+      return !allTopicsFromZk.removeAll(deletedTopics) && !allTopicsFromBrokerCache.removeAll(deletedTopics);
+    }
+  }
+
+  private final class TopicCreatedCondition implements TestCondition {
+    final String createdTopic;
+
+    private TopicCreatedCondition(final String topic) {
+      createdTopic = topic;
+    }
+
+    @Override
+    public boolean conditionMet() {
+      //TODO once KAFKA-6098 is fixed use AdminClient to verify topics have been deleted
+      return broker.kafkaServer().zkClient().getAllTopicsInCluster().contains(createdTopic) &&
+          broker.kafkaServer().metadataCache().contains(createdTopic);
     }
   }
 

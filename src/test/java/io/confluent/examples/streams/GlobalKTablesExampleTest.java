@@ -56,7 +56,7 @@ public class GlobalKTablesExampleTest {
   private KafkaStreams streamInstanceTwo;
 
   @BeforeClass
-  public static void createTopics() {
+  public static void createTopics() throws InterruptedException {
     CLUSTER.createTopic(ORDER_TOPIC, 4, (short) 1);
     CLUSTER.createTopic(CUSTOMER_TOPIC, 3, (short) 1);
     CLUSTER.createTopic(PRODUCT_TOPIC, 2, (short) 1);

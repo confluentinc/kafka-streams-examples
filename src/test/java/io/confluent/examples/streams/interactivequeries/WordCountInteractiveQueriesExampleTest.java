@@ -52,6 +52,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExample.DEFAULT_HOST;
 import static io.confluent.examples.streams.microservices.util.MicroserviceTestUtils.getWithRetries;
 import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.fail;
@@ -125,7 +126,7 @@ public class WordCountInteractiveQueriesExampleTest {
   }
   @Test
   public void shouldDemonstrateInteractiveQueries() throws Exception {
-    final String host = ExampleTestUtils.randomValidHost();
+    final String host = DEFAULT_HOST;
     final int port = ExampleTestUtils.randomFreeLocalPort();
     final String baseUrl = "http://" + host + ":" + port + "/state";
 
