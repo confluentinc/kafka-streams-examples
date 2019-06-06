@@ -180,7 +180,7 @@ public class CustomStreamTableJoinIntegrationTest {
   private static final String tableStoreName = "table-store";
 
   @BeforeClass
-  public static void startKafkaCluster() {
+  public static void startKafkaCluster() throws InterruptedException {
     CLUSTER.createTopic(inputTopicForStream);
     CLUSTER.createTopic(inputTopicForTable);
     CLUSTER.createTopic(outputTopic);
