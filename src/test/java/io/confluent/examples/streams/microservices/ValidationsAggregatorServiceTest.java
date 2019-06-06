@@ -32,7 +32,7 @@ public class ValidationsAggregatorServiceTest extends MicroserviceTestUtils {
 
 
   @BeforeClass
-  public static void startKafkaCluster() {
+  public static void startKafkaCluster() throws InterruptedException {
     CLUSTER.createTopic(Topics.ORDERS.name());
     CLUSTER.createTopic(Topics.ORDER_VALIDATIONS.name());
     Schemas.configureSerdesWithSchemaRegistryUrl(CLUSTER.schemaRegistryUrl());

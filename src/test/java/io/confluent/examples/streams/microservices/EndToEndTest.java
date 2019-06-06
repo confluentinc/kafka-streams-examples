@@ -33,13 +33,13 @@ import static io.confluent.examples.streams.microservices.domain.beans.OrderId.i
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.Assert.fail;
 
 public class EndToEndTest extends MicroserviceTestUtils {
 
   private static final Logger log = LoggerFactory.getLogger(EndToEndTest.class);
   private static final String HOST = "localhost";
   private final List<Service> services = new ArrayList<>();
-  private static int restPort;
   private OrderBean returnedBean;
   private long startTime;
   private Paths path;
@@ -166,7 +166,14 @@ public class EndToEndTest extends MicroserviceTestUtils {
       CLUSTER.start();
     }
 
-    Topics.ALL.keySet().forEach(CLUSTER::createTopic);
+    Topics.ALL.keySet().forEach(topic -> {
+      try {
+        CLUSTER.createTopic(topic);
+      } catch (final InterruptedException e) {
+        fail("Cannot create topics in time");
+      }
+    });
+
     Schemas.configureSerdesWithSchemaRegistryUrl(CLUSTER.schemaRegistryUrl());
 
     services.add(new FraudService());

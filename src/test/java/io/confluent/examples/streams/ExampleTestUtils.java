@@ -12,14 +12,4 @@ public class ExampleTestUtils {
         s.close();
         return port;
     }
-
-    public static String randomValidHost() {
-        final Random r = new Random();
-
-        if (r.nextFloat() < 0.1) {
-            return "localhost";
-        } else {
-            return "127." + r.nextInt(10) + "." + r.nextInt(10) + "." + r.nextInt(256);
-        }
-    }
 }

@@ -55,7 +55,7 @@ public class SessionWindowsExampleTest {
   private KafkaStreams streams;
 
   @BeforeClass
-  public static void createTopics() {
+  public static void createTopics() throws InterruptedException {
     CLUSTER.createTopic(SessionWindowsExample.PLAY_EVENTS);
     CLUSTER.createTopic(SessionWindowsExample.PLAY_EVENTS_PER_SESSION);
   }

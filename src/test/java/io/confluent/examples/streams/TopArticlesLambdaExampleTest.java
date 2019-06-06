@@ -62,7 +62,7 @@ public class TopArticlesLambdaExampleTest {
   private KafkaStreams streams;
 
   @BeforeClass
-  public static void createTopics() {
+  public static void createTopics() throws InterruptedException {
     CLUSTER.createTopic(TopArticlesLambdaExample.TOP_NEWS_PER_INDUSTRY_TOPIC);
     CLUSTER.createTopic(TopArticlesLambdaExample.PAGE_VIEWS);
   }
