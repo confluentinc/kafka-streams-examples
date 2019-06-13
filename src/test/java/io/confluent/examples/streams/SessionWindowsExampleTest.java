@@ -16,8 +16,6 @@
 package io.confluent.examples.streams;
 
 import io.confluent.examples.streams.avro.PlayEvent;
-import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
-import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.testutil.MockSchemaRegistry;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
@@ -46,23 +44,20 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class SessionWindowsExampleTest {
 
-  // Create a mocked schema registry for our serdes to use
-  public static class TestSchemaRegistry implements MockSchemaRegistry {
-    private static final SchemaRegistryClient CLIENT = new MockSchemaRegistryClient();
+  // A mocked schema registry for our serdes to use
+  private static final String SCHEMA_REGISTRY_SCOPE = SessionWindowsExampleTest.class.getName();
 
-    @Override
-    public SchemaRegistryClient client() {
-      return CLIENT;
-    }
-  }
 
   private TopologyTestDriver streams;
   private final Map<String, String> AVRO_SERDE_CONFIG = Collections.singletonMap(
-    AbstractKafkaAvroSerDeConfig.MOCK_SCHEMA_REGISTRY_CONFIG, TestSchemaRegistry.class.getName()
+    AbstractKafkaAvroSerDeConfig.MOCK_SCHEMA_REGISTRY_CONFIG, SCHEMA_REGISTRY_SCOPE
   );
 
   @Before
   public void createStreams() {
+    // cleaning up beforehand just in case there's another test with the same scope.
+    MockSchemaRegistry.dropScope(SCHEMA_REGISTRY_SCOPE);
+
     streams = new TopologyTestDriver(
       SessionWindowsExample.buildTopology(AVRO_SERDE_CONFIG),
       SessionWindowsExample.streamsConfig("dummy", TestUtils.tempDirectory().getPath())
@@ -72,6 +67,7 @@ public class SessionWindowsExampleTest {
   @After
   public void closeStreams() {
     streams.close();
+    MockSchemaRegistry.dropScope(SCHEMA_REGISTRY_SCOPE);
   }
 
   @Test

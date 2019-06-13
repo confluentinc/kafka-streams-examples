@@ -36,6 +36,7 @@ import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.StreamsMetadata;
 import org.apache.kafka.test.TestUtils;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -75,15 +76,8 @@ public class KafkaMusicExampleTest {
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
 
-  // Create a mocked schema registry for our serdes to use
-  public static class KafkaMusicExampleTestSchemaRegistry implements MockSchemaRegistry {
-    private static final SchemaRegistryClient CLIENT = new MockSchemaRegistryClient();
-
-    @Override
-    public SchemaRegistryClient client() {
-      return CLIENT;
-    }
-  }
+  // A mocked schema registry for our serdes to use
+  private static final String SCHEMA_REGISTRY_SCOPE = KafkaMusicExample.class.getName();
 
   private static final int MAX_WAIT_MS = 30000;
   private KafkaStreams streams;
@@ -94,6 +88,9 @@ public class KafkaMusicExampleTest {
 
   @BeforeClass
   public static void createTopicsAndProduceDataToInputTopics() throws Exception {
+    // cleaning up beforehand just in case there's another test with the same scope.
+    MockSchemaRegistry.dropScope(SCHEMA_REGISTRY_SCOPE);
+
     CLUSTER.createTopic(KafkaMusicExample.PLAY_EVENTS);
     CLUSTER.createTopic(KafkaMusicExample.SONG_FEED);
     // these topics initialized just to avoid some rebalances.
@@ -124,7 +121,7 @@ public class KafkaMusicExampleTest {
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
 
     final Map<String, String> serdeConfig = Collections.singletonMap(
-        AbstractKafkaAvroSerDeConfig.MOCK_SCHEMA_REGISTRY_CONFIG, KafkaMusicExampleTestSchemaRegistry.class.getName()
+        AbstractKafkaAvroSerDeConfig.MOCK_SCHEMA_REGISTRY_CONFIG, SCHEMA_REGISTRY_SCOPE
     );
     final SpecificAvroSerializer<PlayEvent> playEventSerializer = new SpecificAvroSerializer<>();
     playEventSerializer.configure(serdeConfig, false);
@@ -166,11 +163,16 @@ public class KafkaMusicExampleTest {
     playEventProducer.close();
   }
 
+  @AfterClass
+  public static void cleanup() {
+    MockSchemaRegistry.dropScope(SCHEMA_REGISTRY_SCOPE);
+  }
+
   private void createStreams(final String host) throws Exception {
     appServerPort = randomFreeLocalPort();
 
     final Map<String, String> serdeConfig = Collections.singletonMap(
-      AbstractKafkaAvroSerDeConfig.MOCK_SCHEMA_REGISTRY_CONFIG, KafkaMusicExampleTestSchemaRegistry.class.getName()
+      AbstractKafkaAvroSerDeConfig.MOCK_SCHEMA_REGISTRY_CONFIG, SCHEMA_REGISTRY_SCOPE
     );
     streams = new KafkaStreams(
       KafkaMusicExample.buildTopology(serdeConfig),
