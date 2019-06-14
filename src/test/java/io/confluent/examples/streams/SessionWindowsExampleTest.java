@@ -50,7 +50,7 @@ public class SessionWindowsExampleTest {
 
   private TopologyTestDriver streams;
   private final Map<String, String> AVRO_SERDE_CONFIG = Collections.singletonMap(
-    AbstractKafkaAvroSerDeConfig.MOCK_SCHEMA_REGISTRY_SCOPE_CONFIG, SCHEMA_REGISTRY_SCOPE
+    AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "mock://" + SCHEMA_REGISTRY_SCOPE
   );
 
   @Before

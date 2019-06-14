@@ -118,7 +118,7 @@ public class KafkaMusicExampleTest {
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
 
     final Map<String, String> serdeConfig = Collections.singletonMap(
-        AbstractKafkaAvroSerDeConfig.MOCK_SCHEMA_REGISTRY_SCOPE_CONFIG, SCHEMA_REGISTRY_SCOPE
+        AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "mock://" + SCHEMA_REGISTRY_SCOPE
     );
     final SpecificAvroSerializer<PlayEvent> playEventSerializer = new SpecificAvroSerializer<>();
     playEventSerializer.configure(serdeConfig, false);
@@ -169,7 +169,7 @@ public class KafkaMusicExampleTest {
     appServerPort = randomFreeLocalPort();
 
     final Map<String, String> serdeConfig = Collections.singletonMap(
-      AbstractKafkaAvroSerDeConfig.MOCK_SCHEMA_REGISTRY_SCOPE_CONFIG, SCHEMA_REGISTRY_SCOPE
+      AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "mock://" + SCHEMA_REGISTRY_SCOPE
     );
     streams = new KafkaStreams(
       KafkaMusicExample.buildTopology(serdeConfig),
