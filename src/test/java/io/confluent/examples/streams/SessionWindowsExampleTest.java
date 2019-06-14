@@ -50,14 +50,11 @@ public class SessionWindowsExampleTest {
 
   private TopologyTestDriver streams;
   private final Map<String, String> AVRO_SERDE_CONFIG = Collections.singletonMap(
-    AbstractKafkaAvroSerDeConfig.MOCK_SCHEMA_REGISTRY_CONFIG, SCHEMA_REGISTRY_SCOPE
+    AbstractKafkaAvroSerDeConfig.MOCK_SCHEMA_REGISTRY_SCOPE_CONFIG, SCHEMA_REGISTRY_SCOPE
   );
 
   @Before
   public void createStreams() {
-    // cleaning up beforehand just in case there's another test with the same scope.
-    MockSchemaRegistry.dropScope(SCHEMA_REGISTRY_SCOPE);
-
     streams = new TopologyTestDriver(
       SessionWindowsExample.buildTopology(AVRO_SERDE_CONFIG),
       SessionWindowsExample.streamsConfig("dummy", TestUtils.tempDirectory().getPath())

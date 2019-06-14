@@ -88,9 +88,6 @@ public class KafkaMusicExampleTest {
 
   @BeforeClass
   public static void createTopicsAndProduceDataToInputTopics() throws Exception {
-    // cleaning up beforehand just in case there's another test with the same scope.
-    MockSchemaRegistry.dropScope(SCHEMA_REGISTRY_SCOPE);
-
     CLUSTER.createTopic(KafkaMusicExample.PLAY_EVENTS);
     CLUSTER.createTopic(KafkaMusicExample.SONG_FEED);
     // these topics initialized just to avoid some rebalances.
@@ -121,7 +118,7 @@ public class KafkaMusicExampleTest {
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
 
     final Map<String, String> serdeConfig = Collections.singletonMap(
-        AbstractKafkaAvroSerDeConfig.MOCK_SCHEMA_REGISTRY_CONFIG, SCHEMA_REGISTRY_SCOPE
+        AbstractKafkaAvroSerDeConfig.MOCK_SCHEMA_REGISTRY_SCOPE_CONFIG, SCHEMA_REGISTRY_SCOPE
     );
     final SpecificAvroSerializer<PlayEvent> playEventSerializer = new SpecificAvroSerializer<>();
     playEventSerializer.configure(serdeConfig, false);
@@ -172,7 +169,7 @@ public class KafkaMusicExampleTest {
     appServerPort = randomFreeLocalPort();
 
     final Map<String, String> serdeConfig = Collections.singletonMap(
-      AbstractKafkaAvroSerDeConfig.MOCK_SCHEMA_REGISTRY_CONFIG, SCHEMA_REGISTRY_SCOPE
+      AbstractKafkaAvroSerDeConfig.MOCK_SCHEMA_REGISTRY_SCOPE_CONFIG, SCHEMA_REGISTRY_SCOPE
     );
     streams = new KafkaStreams(
       KafkaMusicExample.buildTopology(serdeConfig),
