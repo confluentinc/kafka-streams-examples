@@ -46,11 +46,12 @@ public class SessionWindowsExampleTest {
 
   // A mocked schema registry for our serdes to use
   private static final String SCHEMA_REGISTRY_SCOPE = SessionWindowsExampleTest.class.getName();
+  private static final String MOCK_SCHEMA_REGISTRY_URL = "mock://" + SCHEMA_REGISTRY_SCOPE;
 
 
   private TopologyTestDriver streams;
   private final Map<String, String> AVRO_SERDE_CONFIG = Collections.singletonMap(
-    AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "mock://" + SCHEMA_REGISTRY_SCOPE
+    AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, MOCK_SCHEMA_REGISTRY_URL
   );
 
   @Before

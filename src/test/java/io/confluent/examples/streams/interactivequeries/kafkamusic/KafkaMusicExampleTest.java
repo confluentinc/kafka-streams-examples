@@ -78,6 +78,7 @@ public class KafkaMusicExampleTest {
 
   // A mocked schema registry for our serdes to use
   private static final String SCHEMA_REGISTRY_SCOPE = KafkaMusicExample.class.getName();
+  private static final String MOCK_SCHEMA_REGISTRY_URL = "mock://" + SCHEMA_REGISTRY_SCOPE;
 
   private static final int MAX_WAIT_MS = 30000;
   private KafkaStreams streams;
@@ -118,7 +119,7 @@ public class KafkaMusicExampleTest {
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
 
     final Map<String, String> serdeConfig = Collections.singletonMap(
-        AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "mock://" + SCHEMA_REGISTRY_SCOPE
+        AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, MOCK_SCHEMA_REGISTRY_URL
     );
     final SpecificAvroSerializer<PlayEvent> playEventSerializer = new SpecificAvroSerializer<>();
     playEventSerializer.configure(serdeConfig, false);
@@ -169,7 +170,7 @@ public class KafkaMusicExampleTest {
     appServerPort = randomFreeLocalPort();
 
     final Map<String, String> serdeConfig = Collections.singletonMap(
-      AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "mock://" + SCHEMA_REGISTRY_SCOPE
+      AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, MOCK_SCHEMA_REGISTRY_URL
     );
     streams = new KafkaStreams(
       KafkaMusicExample.buildTopology(serdeConfig),
