@@ -19,6 +19,9 @@ import io.confluent.examples.streams.avro.PlayEvent;
 import io.confluent.examples.streams.avro.Song;
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
+import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.testutil.MockSchemaRegistry;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -33,6 +36,7 @@ import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.StreamsMetadata;
 import org.apache.kafka.test.TestUtils;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -71,13 +75,18 @@ public class KafkaMusicExampleTest {
 
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
+
+  // A mocked schema registry for our serdes to use
+  private static final String SCHEMA_REGISTRY_SCOPE = KafkaMusicExample.class.getName();
+  private static final String MOCK_SCHEMA_REGISTRY_URL = "mock://" + SCHEMA_REGISTRY_SCOPE;
+
   private static final int MAX_WAIT_MS = 30000;
   private KafkaStreams streams;
   private MusicPlaysRestService restProxy;
   private int appServerPort;
   private static final List<Song> songs = new ArrayList<>();
   private static final Logger log = LoggerFactory.getLogger(KafkaMusicExampleTest.class);
-  
+
   @BeforeClass
   public static void createTopicsAndProduceDataToInputTopics() throws Exception {
     CLUSTER.createTopic(KafkaMusicExample.PLAY_EVENTS);
@@ -108,10 +117,10 @@ public class KafkaMusicExampleTest {
     // Produce sample data to the input topic before the tests starts.
     final Properties props = new Properties();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-  
+
     final Map<String, String> serdeConfig = Collections.singletonMap(
-        AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl());
-  
+        AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, MOCK_SCHEMA_REGISTRY_URL
+    );
     final SpecificAvroSerializer<PlayEvent> playEventSerializer = new SpecificAvroSerializer<>();
     playEventSerializer.configure(serdeConfig, false);
   
@@ -152,13 +161,26 @@ public class KafkaMusicExampleTest {
     playEventProducer.close();
   }
 
+  @AfterClass
+  public static void cleanup() {
+    MockSchemaRegistry.dropScope(SCHEMA_REGISTRY_SCOPE);
+  }
+
   private void createStreams(final String host) throws Exception {
     appServerPort = randomFreeLocalPort();
-    streams = KafkaMusicExample.createChartsStreams(CLUSTER.bootstrapServers(),
-                                                    CLUSTER.schemaRegistryUrl(),
-                                                    appServerPort,
-                                                    TestUtils.tempDirectory().getPath(),
-                                                    host);
+
+    final Map<String, String> serdeConfig = Collections.singletonMap(
+      AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, MOCK_SCHEMA_REGISTRY_URL
+    );
+    streams = new KafkaStreams(
+      KafkaMusicExample.buildTopology(serdeConfig),
+      KafkaMusicExample.streamsConfig(
+        CLUSTER.bootstrapServers(),
+        appServerPort,
+        TestUtils.tempDirectory().getPath(),
+        host
+      )
+    );
     int count = 0;
     final int maxTries = 3;
     while (count <= maxTries) {

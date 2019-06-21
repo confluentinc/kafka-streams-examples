@@ -31,6 +31,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
@@ -44,12 +45,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeSet;
+
+import static java.util.Collections.singletonMap;
 
 /**
  * Demonstrates how to locate and query state stores (Interactive Queries).
@@ -197,11 +199,10 @@ public class KafkaMusicExample {
     System.out.println("Connecting to Confluent schema registry at " + schemaRegistryUrl);
     System.out.println("REST endpoint at http://" + restEndpointHostname + ":" + restEndpointPort);
 
-    final KafkaStreams streams = createChartsStreams(bootstrapServers,
-                                                     schemaRegistryUrl,
-                                                     restEndpointPort,
-                                                     "/tmp/kafka-streams",
-                                                     restEndpointHostname);
+    final KafkaStreams streams = new KafkaStreams(
+      buildTopology(singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl)),
+      streamsConfig(bootstrapServers, restEndpointPort, "/tmp/kafka-streams", restEndpointHostname)
+    );
 
     // Always (and unconditionally) clean local state prior to starting the processing topology.
     // We opt for this unconditional call here because this will make it easier for you to play around with the example
@@ -242,11 +243,10 @@ public class KafkaMusicExample {
     return interactiveQueriesRestService;
   }
 
-  static KafkaStreams createChartsStreams(final String bootstrapServers,
-                                          final String schemaRegistryUrl,
-                                          final int applicationServerPort,
-                                          final String stateDir,
-                                          final String host) {
+  static Properties streamsConfig(final String bootstrapServers,
+                                  final int applicationServerPort,
+                                  final String stateDir,
+                                  final String host) {
     final Properties streamsConfiguration = new Properties();
     // Give the Streams application a unique name.  The name must be unique in the Kafka cluster
     // against which the application is run.
@@ -278,10 +278,11 @@ public class KafkaMusicExample {
       } catch (final NumberFormatException ignored) {
       }
     }
+    return streamsConfiguration;
+  }
 
+  static Topology buildTopology(final Map<String, String> serdeConfig) {
     // create and configure the SpecificAvroSerdes required in this example
-    final Map<String, String> serdeConfig = Collections.singletonMap(
-        AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
 
     final SpecificAvroSerde<PlayEvent> playEventSerde = new SpecificAvroSerde<>();
     playEventSerde.configure(serdeConfig, false);
@@ -376,8 +377,7 @@ public class KafkaMusicExample {
                 .withValueSerde(topFiveSerde)
         );
 
-    return new KafkaStreams(builder.build(), streamsConfiguration);
-
+    return builder.build();
   }
 
   /**
