@@ -25,6 +25,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Grouped;
 import org.apache.kafka.streams.kstream.Materialized;
@@ -33,9 +34,10 @@ import org.apache.kafka.streams.kstream.SessionWindows;
 import org.apache.kafka.streams.state.SessionStore;
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
+
+import static java.util.Collections.singletonMap;
 
 /**
  * Demonstrates counting user activity (play-events) into Session Windows
@@ -112,9 +114,10 @@ public class SessionWindowsExample {
   public static void main(final String[] args) {
     final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
     final String schemaRegistryUrl = args.length > 1 ? args[1] : "http://localhost:8081";
-    final KafkaStreams streams = createStreams(bootstrapServers,
-                                               schemaRegistryUrl,
-                                               "/tmp/kafka-streams");
+    final KafkaStreams streams = new KafkaStreams(
+      buildTopology(singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl)),
+      streamsConfig(bootstrapServers, "/tmp/kafka-streams")
+    );
 
     // Always (and unconditionally) clean local state prior to starting the processing topology.
     // We opt for this unconditional call here because this will make it easier for you to play around with the example
@@ -134,9 +137,7 @@ public class SessionWindowsExample {
     Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
   }
 
-  static KafkaStreams createStreams(final String bootstrapServers,
-                                    final String schemaRegistryUrl,
-                                    final String stateDir) {
+  static Properties streamsConfig(final String bootstrapServers, final String stateDir) {
     final Properties config = new Properties();
     // Give the Streams application a unique name.  The name must be unique in the Kafka cluster
     // against which the application is run.
@@ -150,11 +151,12 @@ public class SessionWindowsExample {
     config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     // disable caching to see session merging
     config.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
+    return config;
+  }
 
+  static Topology buildTopology(final Map<String, String> serdeConfig) {
     // create and configure the SpecificAvroSerdes required in this example
     final SpecificAvroSerde<PlayEvent> playEventSerde = new SpecificAvroSerde<>();
-    final Map<String, String> serdeConfig = Collections.singletonMap(
-        AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
     playEventSerde.configure(serdeConfig, false);
 
     final StreamsBuilder builder = new StreamsBuilder();
@@ -174,7 +176,7 @@ public class SessionWindowsExample {
         // write to play-events-per-session topic
         .to(PLAY_EVENTS_PER_SESSION, Produced.with(Serdes.String(), Serdes.Long()));
 
-    return new KafkaStreams(builder.build(), config);
+    return builder.build();
   }
 
 }
