@@ -332,7 +332,7 @@ The next step is to create a standalone jar ("fat jar") of the [application exam
 # Create a standalone jar ("fat jar")
 $ mvn clean package
 
-# >>> Creates target/kafka-streams-examples-5.2.2-SNAPSHOT-standalone.jar
+# >>> Creates target/kafka-streams-examples-5.2.3-SNAPSHOT-standalone.jar
 ```
 
 > Tip: If needed, you can disable the test suite during packaging, for example to speed up the packaging or to lower
@@ -346,7 +346,7 @@ You can now run the application examples as follows:
 
 ```shell
 # Run an example application from the standalone jar. Here: `WordCountLambdaExample`
-$ java -cp target/kafka-streams-examples-5.2.2-SNAPSHOT-standalone.jar \
+$ java -cp target/kafka-streams-examples-5.2.3-SNAPSHOT-standalone.jar \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
 
@@ -361,7 +361,7 @@ If you want to turn on log4j while running your example application, you can edi
 
 ```shell
 # Run an example application from the standalone jar. Here: `WordCountLambdaExample`
-$ java -cp target/kafka-streams-examples-5.2.2-SNAPSHOT-standalone.jar \
+$ java -cp target/kafka-streams-examples-5.2.3-SNAPSHOT-standalone.jar \
   -Dlog4j.configuration=file:src/main/resources/log4j.properties \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
@@ -391,7 +391,8 @@ $ mvn package # Packages the application examples into a standalone jar
 
 | Branch (this repo)                      | Confluent Platform | Apache Kafka      |
 | ----------------------------------------|--------------------|-------------------|
-| [5.2.x](../../../tree/5.2.x/)\*         | 5.2.2-SNAPSHOT     | 2.2.1-SNAPSHOT    |
+| [5.2.x](../../../tree/5.2.x/)\*         | 5.2.3-SNAPSHOT     | 2.2.2-SNAPSHOT    |
+| [5.2.2-post](../../../tree/5.2.2-post/) | 5.2.2              | 2.2.1             |
 | [5.2.1-post](../../../tree/5.2.1-post/) | 5.2.1              | 2.2.1             |
 | [5.1.0-post](../../../tree/5.1.0-post/) | 5.1.0              | 2.1.0             |
 | [5.0.0-post](../../../tree/5.0.0-post/) | 5.0.0              | 2.0.0             |
@@ -399,7 +400,7 @@ $ mvn package # Packages the application examples into a standalone jar
 | [4.0.0-post](../../../tree/4.4.0-post/) | 4.0.0              | 1.0.0             |
 | [3.3.0-post](../../../tree/3.3.0-post/) | 3.3.0              | 0.11.0            |
 
-\*You must manually build the `2.2` version of Apache Kafka and the `5.2.x` version of Confluent Platform.  See instructions above.
+\*You must manually build the `2.2.2` version of Apache Kafka and the `5.2.x` version of Confluent Platform.  See instructions above.
 
 The `master` branch of this repository represents active development, and may require additional steps on your side to
 make it compile.  Check this README as well as [pom.xml](pom.xml) for any such information.
