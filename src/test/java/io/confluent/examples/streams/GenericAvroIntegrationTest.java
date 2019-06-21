@@ -15,11 +15,12 @@
  */
 package io.confluent.examples.streams;
 
-import io.confluent.examples.streams.utils.MockGenericAvroSerde;
-import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.testutil.MockSchemaRegistry;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
+import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
@@ -48,18 +49,24 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class GenericAvroIntegrationTest {
 
+  // A mocked schema registry for our serdes to use
+  private static final String SCHEMA_REGISTRY_SCOPE = GenericAvroIntegrationTest.class.getName();
+  private static final String MOCK_SCHEMA_REGISTRY_URL = "mock://" + SCHEMA_REGISTRY_SCOPE;
+
+
   private static String inputTopic = "inputTopic";
   private static String outputTopic = "outputTopic";
 
   @Test
   public void shouldRoundTripGenericAvroDataThroughKafka() throws Exception {
-    final MockSchemaRegistryClient mockSchemaRegistryClient = new MockSchemaRegistryClient();
 
     final Schema schema = new Schema.Parser().parse(
       getClass().getResourceAsStream("/avro/io/confluent/examples/streams/wikifeed.avsc")
     );
 
-    mockSchemaRegistryClient.register("inputTopic-value", schema);
+    final SchemaRegistryClient schemaRegistryClient = MockSchemaRegistry.getClientForScope(SCHEMA_REGISTRY_SCOPE);
+
+    schemaRegistryClient.register("inputTopic-value", schema);
 
     final GenericRecord record = new GenericData.Record(schema);
     record.put("user", "alice");
@@ -76,9 +83,8 @@ public class GenericAvroIntegrationTest {
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "generic-avro-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config");
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray().getClass().getName());
-    streamsConfiguration.put("mock.schema.registry.client", mockSchemaRegistryClient);
-    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, MockGenericAvroSerde.class);
-    streamsConfiguration.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "dummy config");
+    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, GenericAvroSerde.class);
+    streamsConfiguration.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, MOCK_SCHEMA_REGISTRY_URL);
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
     // Write the input data as-is to the output topic.
@@ -92,12 +98,12 @@ public class GenericAvroIntegrationTest {
     // However, in the code below we intentionally override the default serdes in `to()` to
     // demonstrate how you can construct and configure a generic Avro serde manually.
     final Serde<String> stringSerde = Serdes.String();
-    final Serde<GenericRecord> genericAvroSerde = new MockGenericAvroSerde(mockSchemaRegistryClient);
-    // Note how we must manually call `configure()` on this serde to configure the schema registry
-    // url.  This is different from the case of setting default serdes (see `streamsConfiguration`
+    final Serde<GenericRecord> genericAvroSerde = new GenericAvroSerde();
+    // Note how we must manually call `configure()` on this serde to configure the schema registry.
+    // This is different from the case of setting default serdes (see `streamsConfiguration`
     // above), which will be auto-configured based on the `StreamsConfiguration` instance.
     genericAvroSerde.configure(
-      Collections.singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "dummy config"),
+      Collections.singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, MOCK_SCHEMA_REGISTRY_URL),
       /*isKey*/ false);
     final KStream<String, GenericRecord> stream = builder.stream(inputTopic);
     stream.to(outputTopic, Produced.with(stringSerde, genericAvroSerde));
@@ -115,7 +121,7 @@ public class GenericAvroIntegrationTest {
         inputValues.stream().map(v -> new KeyValue<>(null, (Object) v)).collect(Collectors.toList()),
         topologyTestDriver,
         new IntegrationTestUtils.NothingSerde<>(),
-        new KafkaAvroSerializer(mockSchemaRegistryClient)
+        new KafkaAvroSerializer(schemaRegistryClient)
       );
 
       //
@@ -125,11 +131,12 @@ public class GenericAvroIntegrationTest {
         outputTopic,
         topologyTestDriver,
         new IntegrationTestUtils.NothingSerde<>(),
-        new KafkaAvroDeserializer(mockSchemaRegistryClient)
+        new KafkaAvroDeserializer(schemaRegistryClient)
       ).stream().map(kv -> (GenericRecord) kv.value).collect(Collectors.toList());
       assertThat(actualValues).isEqualTo(inputValues);
     } finally {
       topologyTestDriver.close();
+      MockSchemaRegistry.dropScope(SCHEMA_REGISTRY_SCOPE);
     }
   }
 
