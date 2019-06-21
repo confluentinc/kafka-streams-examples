@@ -365,12 +365,35 @@ public class IntegrationTestUtils {
                                                    final TopologyTestDriver topologyTestDriver,
                                                    final Serializer<K> keySerializer,
                                                    final Serializer<V> valueSerializer) {
+    final int timestamp = 0;
+    produceKeyValuesSynchronously(topic, records, topologyTestDriver, keySerializer, valueSerializer, timestamp);
+  }
+
+  /**
+   * Like {@link IntegrationTestUtils#produceKeyValuesSynchronously(String, Collection, Properties)}, except for use
+   * with TopologyTestDriver tests, rather than "native" Kafka broker tests.
+   *
+   * @param topic              Kafka topic to write the data records to
+   * @param records            Data records to write to Kafka
+   * @param topologyTestDriver The {@link TopologyTestDriver} to send the data records to
+   * @param keySerializer      The {@link Serializer} corresponding to the key type
+   * @param valueSerializer    The {@link Serializer} corresponding to the value type
+   * @param timestamp          The timestamp to use for the produced records
+   * @param <K>                Key type of the data records
+   * @param <V>                Value type of the data records
+   */
+  static <K, V> void produceKeyValuesSynchronously(final String topic,
+                                                   final List<KeyValue<K, V>> records,
+                                                   final TopologyTestDriver topologyTestDriver,
+                                                   final Serializer<K> keySerializer,
+                                                   final Serializer<V> valueSerializer,
+                                                   final long timestamp) {
     for (final KeyValue<K, V> entity : records) {
       final ConsumerRecord<byte[], byte[]> consumerRecord = new ConsumerRecord<>(
         topic,
         0,
         0,
-        0,
+        timestamp,
         TimestampType.CREATE_TIME,
         ConsumerRecord.NULL_CHECKSUM,
         ConsumerRecord.NULL_SIZE,
