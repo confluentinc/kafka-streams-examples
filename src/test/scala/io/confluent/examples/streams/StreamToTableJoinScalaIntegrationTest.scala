@@ -17,14 +17,12 @@ package io.confluent.examples.streams
 
 import java.util.Properties
 
-import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
-import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream.{KStream, KTable}
-import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
+import org.apache.kafka.streams.{KeyValue, StreamsConfig, TopologyTestDriver}
 import org.apache.kafka.test.TestUtils
+import org.assertj.core.api.Assertions.assertThat
 import org.junit._
 import org.scalatest.junit.AssertionsForJUnit
 
@@ -42,23 +40,12 @@ import org.scalatest.junit.AssertionsForJUnit
   */
 class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
 
-  import org.apache.kafka.streams.scala.Serdes._
   import org.apache.kafka.streams.scala.ImplicitConversions._
-
-  private val privateCluster: EmbeddedSingleNodeKafkaCluster = new EmbeddedSingleNodeKafkaCluster
-
-  @Rule def cluster: EmbeddedSingleNodeKafkaCluster = privateCluster
+  import org.apache.kafka.streams.scala.Serdes._
 
   private val userClicksTopic = "user-clicks"
   private val userRegionsTopic = "user-regions"
   private val outputTopic = "output-topic"
-
-  @Before
-  def startKafkaCluster() {
-    cluster.createTopic(userClicksTopic)
-    cluster.createTopic(userRegionsTopic)
-    cluster.createTopic(outputTopic)
-  }
 
   @Test
   def shouldCountClicksPerRegion() {
@@ -85,7 +72,7 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
       ("fang", "asia")
     )
 
-    val expectedClicksPerRegion: Seq[KeyValue[String, Long]] = Seq(
+    val expectedClicksPerRegion: Map[String, Long] = Map(
       ("americas", 101L),
       ("europe", 109L),
       ("asia", 124L)
@@ -97,11 +84,7 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
     val streamsConfiguration: Properties = {
       val p = new Properties()
       p.put(StreamsConfig.APPLICATION_ID_CONFIG, "stream-table-join-scala-integration-test")
-      p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
-      // The commit interval for flushing records to state stores and downstream must be lower than
-      // this integration test's timeout (30 secs) to ensure we observe the expected processing results.
-      p.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, "10000")
-      p.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+      p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config")
       // Use a temporary directory for storing state, which will be automatically removed after the test.
       p.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory.getAbsolutePath)
       p
@@ -153,57 +136,49 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
     // Write the (continuously updating) results to the output topic.
     clicksPerRegion.toStream.to(outputTopic)
 
-    val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
-    streams.start()
+    val topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)
 
-    //
-    // Step 2: Publish user-region information.
-    //
-    // To keep this code example simple and easier to understand/reason about, we publish all
-    // user-region records before any user-click records (cf. step 3).  In practice though,
-    // data records would typically be arriving concurrently in both input streams/topics.
-    val userRegionsProducerConfig: Properties = {
-      val p = new Properties()
-      p.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
-      p.put(ProducerConfig.ACKS_CONFIG, "all")
-      p.put(ProducerConfig.RETRIES_CONFIG, "0")
-      p.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
-      p.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
-      p
-    }
-    import collection.JavaConverters._
-    IntegrationTestUtils.produceKeyValuesSynchronously(userRegionsTopic, userRegions.asJava, userRegionsProducerConfig)
+    try {
+      //
+      // Step 2: Publish user-region information.
+      //
+      // To keep this code example simple and easier to understand/reason about, we publish all
+      // user-region records before any user-click records (cf. step 3).  In practice though,
+      // data records would typically be arriving concurrently in both input streams/topics.
+      import collection.JavaConverters._
+      IntegrationTestUtils.produceKeyValuesSynchronously(
+        userRegionsTopic,
+        userRegions.asJava,
+        topologyTestDriver,
+        new StringSerializer,
+        new StringSerializer
+      )
 
-    //
-    // Step 3: Publish some user click events.
-    //
-    val userClicksProducerConfig: Properties = {
-      val p = new Properties()
-      p.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
-      p.put(ProducerConfig.ACKS_CONFIG, "all")
-      p.put(ProducerConfig.RETRIES_CONFIG, "0")
-      p.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
-      p.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[LongSerializer])
-      p
-    }
-    IntegrationTestUtils.produceKeyValuesSynchronously(userClicksTopic, userClicks.asJava, userClicksProducerConfig)
+      //
+      // Step 3: Publish some user click events.
+      //
+      IntegrationTestUtils.produceKeyValuesSynchronously(
+        userClicksTopic,
+        userClicks.map(kv => new KeyValue(kv.key, kv.value.asInstanceOf[java.lang.Long])).asJava,
+        topologyTestDriver,
+        new StringSerializer,
+        new LongSerializer
+      )
 
-    //
-    // Step 4: Verify the application's output data.
-    //
-    val consumerConfig = {
-      val p = new Properties()
-      p.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
-      p.put(ConsumerConfig.GROUP_ID_CONFIG, "join-scala-integration-test-standard-consumer")
-      p.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
-      p.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer])
-      p.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, classOf[LongDeserializer])
-      p
+      //
+      // Step 4: Verify the application's output data.
+      //
+      val actualClicksPerRegion =
+        IntegrationTestUtils.drainTableOutput(
+          outputTopic,
+          topologyTestDriver,
+          new StringDeserializer,
+          new LongDeserializer
+        )
+      assertThat(actualClicksPerRegion).isEqualTo(expectedClicksPerRegion.asJava)
+    } finally {
+      topologyTestDriver.close()
     }
-    val actualClicksPerRegion: java.util.List[KeyValue[String, Long]] = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig,
-      outputTopic, expectedClicksPerRegion.size)
-    streams.close()
-    assert(actualClicksPerRegion === expectedClicksPerRegion.asJava)
   }
 
 }

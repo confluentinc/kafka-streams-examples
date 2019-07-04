@@ -24,6 +24,7 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.TopologyTestDriver;
+import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.test.TestUtils;
@@ -33,54 +34,50 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static io.confluent.examples.streams.IntegrationTestUtils.mkEntry;
 import static io.confluent.examples.streams.IntegrationTestUtils.mkMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * End-to-end integration test that demonstrates how aggregations on a KTable produce the expected
- * results even though new data is continuously arriving in the KTable's input topic in Kafka.
+ * End-to-end integration test based on {@link WordCountLambdaExample}, using an embedded Kafka
+ * cluster.
  * <p>
- * The use case we implement is to continuously compute user counts per region based on location
- * updates that are sent to a Kafka topic.  What we want to achieve is to always have the
- * latest and correct user counts per region even as users keep moving between regions while our
- * stream processing application is running (imagine, for example, that we are tracking passengers
- * on air planes).  More concretely,  whenever a new messages arrives in the Kafka input topic that
- * indicates a user moved to a new region, we want the effect of 1) reducing the user's previous
- * region by 1 count and 2) increasing the user's new region by 1 count.
+ * See {@link WordCountLambdaExample} for further documentation.
  * <p>
- * You could use the code below, for example, to create a real-time heat map of the world where
- * colors denote the current number of users in each area of the world.
- * <p>
- * This example is related but not equivalent to {@link UserRegionLambdaExample}.
+ * See {@link WordCountScalaIntegrationTest} for the equivalent Scala example.
  * <p>
  * Note: This example uses lambda expressions and thus works with Java 8+ only.
  */
-public class UserCountsPerRegionLambdaIntegrationTest {
-  private static final String inputTopic = "input-topic";
-  private static final String outputTopic = "output-topic";
+public class WordCountLambdaIntegrationTest {
+
+  private static final String inputTopic = "inputTopic";
+  private static final String outputTopic = "outputTopic";
 
   @Test
-  public void shouldCountUsersPerRegion() {
-    // Input: Region per user (multiple records allowed per user).
-    final List<KeyValue<String, String>> userRegionRecords = Arrays.asList(
-
-      // This first record for Alice tells us that she is currently in Asia.
-      new KeyValue<>("alice", "asia"),
-      // First record for Bob.
-      new KeyValue<>("bob", "europe"),
-      // This second record for Alice tells us that her latest location is Europe.  Combining the
-      // information in this record with the previous record for Alice, we know that she has moved
-      // from Asia to Europe;  in other words, it's a location update for Alice.
-      new KeyValue<>("alice", "europe"),
-      // Second record for Bob, who moved from Europe to Asia (i.e. the opposite direction of Alice).
-      new KeyValue<>("bob", "asia")
+  public void shouldCountWords() {
+    final List<String> inputValues = Arrays.asList(
+      "Hello Kafka Streams",
+      "All streams lead to Kafka",
+      "Join Kafka Summit",
+      "И теперь пошли русские слова"
     );
-
-    final Map<String, Long> expectedUsersPerRegion = mkMap(
-      mkEntry("europe", 1L), // in the end, Alice is in europe
-      mkEntry("asia", 1L)    // in the end, Bob is in asia
+    final Map<String, Long> expectedWordCounts = mkMap(
+      mkEntry("hello", 1L),
+      mkEntry("all", 1L),
+      mkEntry("streams", 2L),
+      mkEntry("lead", 1L),
+      mkEntry("to", 1L),
+      mkEntry("join", 1L),
+      mkEntry("kafka", 3L),
+      mkEntry("summit", 1L),
+      mkEntry("и", 1L),
+      mkEntry("теперь", 1L),
+      mkEntry("пошли", 1L),
+      mkEntry("русские", 1L),
+      mkEntry("слова", 1L)
     );
 
     //
@@ -90,7 +87,7 @@ public class UserCountsPerRegionLambdaIntegrationTest {
     final Serde<Long> longSerde = Serdes.Long();
 
     final Properties streamsConfiguration = new Properties();
-    streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "user-regions-lambda-integration-test");
+    streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "wordcount-lambda-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config");
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
@@ -99,39 +96,40 @@ public class UserCountsPerRegionLambdaIntegrationTest {
 
     final StreamsBuilder builder = new StreamsBuilder();
 
-    final KTable<String, String> userRegionsTable = builder.table(inputTopic);
+    final KStream<String, String> textLines = builder.stream(inputTopic);
 
-    final KTable<String, Long> usersPerRegionTable = userRegionsTable
+    final Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
 
+    final KTable<String, Long> wordCounts = textLines
+      .flatMapValues(value -> Arrays.asList(pattern.split(value.toLowerCase())))
       // no need to specify explicit serdes because the resulting key and value types match our default serde settings
-      .groupBy((userId, region) -> KeyValue.pair(region, region))
+      .groupBy((key, word) -> word)
       .count();
 
-    usersPerRegionTable.toStream().to(outputTopic, Produced.with(stringSerde, longSerde));
+    wordCounts.toStream().to(outputTopic, Produced.with(stringSerde, longSerde));
 
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
       //
-      // Step 2: Publish user-region information.
+      // Step 2: Produce some input data to the input topic.
       //
       IntegrationTestUtils.produceKeyValuesSynchronously(
         inputTopic,
-        userRegionRecords,
+        inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
         topologyTestDriver,
-        new StringSerializer(),
+        new IntegrationTestUtils.NothingSerde<>(),
         new StringSerializer()
       );
 
       //
       // Step 3: Verify the application's output data.
       //
-
-      final Map<String, Long> actualClicksPerRegion = IntegrationTestUtils.drainTableOutput(
+      final Map<String, Long> actualWordCounts = IntegrationTestUtils.drainTableOutput(
         outputTopic,
         topologyTestDriver,
         new StringDeserializer(),
         new LongDeserializer()
       );
-      assertThat(actualClicksPerRegion).isEqualTo(expectedUsersPerRegion);
+      assertThat(actualWordCounts).isEqualTo(expectedWordCounts);
     }
   }
 
