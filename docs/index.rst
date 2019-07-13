@@ -55,7 +55,7 @@ Ready now?  Let's start!
 
 Clone the Confluent Docker Images repository:
 
-  .. codewithvars:: bash
+  .. sourcecode:: bash
 
     # Clone the git repository
     $ git clone https://github.com/confluentinc/kafka-streams-examples.git
@@ -63,8 +63,8 @@ Clone the Confluent Docker Images repository:
     # Change into the directory for this tutorial
     $ cd kafka-streams-examples/
 
-    # Switch to the `|release|-post` branch
-    $ git checkout |release|-post
+    # Switch to the `3.3.0-post` branch
+    $ git checkout 3.3.0-post
 
 Now we can launch the Kafka Music demo application including the services it depends on such as Kafka.
 
