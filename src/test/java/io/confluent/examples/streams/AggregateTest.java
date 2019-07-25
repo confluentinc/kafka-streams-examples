@@ -46,6 +46,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * only certain field(s) in the input.
  *
  * Note: This example uses lambda expressions and thus works with Java 8+ only.
+ *
+ * See {@link AggregateScalaTest} for the equivalent Scala example.
  */
 public class AggregateTest {
 
