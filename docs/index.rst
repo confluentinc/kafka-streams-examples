@@ -56,7 +56,7 @@ Ready now?  Let's start!
 
 Clone the Confluent Docker Images repository:
 
-  .. codewithcars:: bash
+  .. codewithvars:: bash
 
     # Clone the git repository
     $ git clone https://github.com/confluentinc/kafka-streams-examples.git
