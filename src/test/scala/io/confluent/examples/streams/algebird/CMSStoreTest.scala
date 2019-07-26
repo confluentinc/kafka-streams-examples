@@ -30,7 +30,7 @@ import org.apache.kafka.test.{InternalMockProcessorContext, NoOpRecordCollector,
 import org.assertj.core.api.Assertions.assertThat
 import org.junit._
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 
 class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
 
