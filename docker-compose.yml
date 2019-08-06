@@ -130,7 +130,7 @@ services:
       STREAMS_BOOTSTRAP_SERVERS: kafka:29092
       STREAMS_SCHEMA_REGISTRY_HOST: schema-registry
       STREAMS_SCHEMA_REGISTRY_PORT: 8081
-      KAFKA_MUSIC_APP_REST_HOST: 0.0.0.0
+      KAFKA_MUSIC_APP_REST_HOST: kafka-music-application
       KAFKA_MUSIC_APP_REST_PORT: 7070
     extra_hosts:
       - "moby:127.0.0.1"
