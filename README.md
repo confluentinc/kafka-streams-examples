@@ -182,7 +182,7 @@ https://docs.confluent.io/current/streams/kafka-streams-examples/docs/index.html
 
 # Examples: Event Streaming Platform
 
-For additional examples that showcase Kafka Streams applications end-to-end in an event streaming platform, please refer to the [examples GitHub repository](https://github.com/confluentinc/examples).
+For additional examples that showcase Kafka Streams applications within an event streaming platform, please refer to the [examples GitHub repository](https://github.com/confluentinc/examples).
 
 
 <a name="requirements"/>
