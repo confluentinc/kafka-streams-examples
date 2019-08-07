@@ -16,7 +16,7 @@ Table of Contents
     * [Examples: Unit Tests](#examples-unit-tests)
     * [Examples: Integration Tests](#examples-integration-tests)
     * [Docker Example: Kafka Music demo application](#examples-docker)
-    * [Examples: Event Streaming Platform](#event-streaming-platform)
+    * [Examples: Event Streaming Platform](#examples-event-streaming-platform)
 * [Requirements](#requirements)
     * [Apache Kafka](#requirements-kafka)
     * [Confluent Platform](#requirements-confluent-platform)
