@@ -16,6 +16,7 @@ Table of Contents
     * [Examples: Unit Tests](#examples-unit-tests)
     * [Examples: Integration Tests](#examples-integration-tests)
     * [Docker Example: Kafka Music demo application](#examples-docker)
+    * [Examples: Event Streaming Platform](#examples-event-streaming-platform)
 * [Requirements](#requirements)
     * [Apache Kafka](#requirements-kafka)
     * [Confluent Platform](#requirements-confluent-platform)
@@ -175,6 +176,13 @@ was written by artist Y").
 
 You can find detailed documentation at
 https://docs.confluent.io/current/streams/kafka-streams-examples/docs/index.html.
+
+
+<a name="event-streaming-platform"/>
+
+# Examples: Event Streaming Platform
+
+For additional examples that showcase Kafka Streams applications within an event streaming platform, please refer to the [examples GitHub repository](https://github.com/confluentinc/examples).
 
 
 <a name="requirements"/>
