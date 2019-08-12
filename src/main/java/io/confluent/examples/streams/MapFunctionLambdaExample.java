@@ -60,7 +60,7 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.2.1-standalone.jar io.confluent.examples.streams.MapFunctionLambdaExample
+ * $ java -cp target/kafka-streams-examples-5.2.3-beta190812232812-standalone.jar io.confluent.examples.streams.MapFunctionLambdaExample
  * }
  * </pre>
  * 4) Write some input data to the source topic (e.g. via {@code kafka-console-producer}). The already
