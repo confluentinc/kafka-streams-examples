@@ -114,7 +114,7 @@ public class MicroserviceTestUtils {
         actualValues.add(KeyValue.pair(record.key(), record.value()));
       }
       return actualValues.size() == numberToRead;
-    }, 20000, "Timed out reading orders.");
+    }, 40000, "Timed out reading orders.");
     consumer.close();
     return actualValues;
   }
