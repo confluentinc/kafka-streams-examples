@@ -22,26 +22,18 @@ import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.kstream.TransformerSupplier;
-import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
-import org.apache.kafka.streams.kstream.ValueTransformerWithKeySupplier;
 import org.apache.kafka.streams.processor.ProcessorContext;
-import org.apache.kafka.streams.processor.PunctuationType;
-import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
-import org.apache.kafka.streams.state.StoreBuilder;
-import org.apache.kafka.streams.state.Stores;
 import org.apache.kafka.test.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -49,8 +41,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -59,7 +49,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
-import io.confluent.examples.streams.utils.InstantSerde;
 import io.confluent.examples.streams.utils.KeyValueWithTimestamp;
 import io.confluent.examples.streams.utils.Pair;
 import io.confluent.examples.streams.utils.PairOfDoubleAndLongDeserializer;
@@ -188,27 +177,25 @@ public class CustomStreamTableJoinIntegrationTest {
 
   @Test
   public void shouldTriggerStreamTableJoinFromTable() throws Exception {
-    final Duration maxAllowedJoinWindow = Duration.ofSeconds(5);
-
     final List<KeyValueWithTimestamp<String, Double>> inputStreamRecords = Arrays.asList(
         new KeyValueWithTimestamp<>("alice", 999.99, TimeUnit.MILLISECONDS.toMillis(10)),
         new KeyValueWithTimestamp<>("bobby", 222.22, TimeUnit.MILLISECONDS.toMillis(15)),
         new KeyValueWithTimestamp<>("alice", 555.55, TimeUnit.MILLISECONDS.toMillis(30)),
-        new KeyValueWithTimestamp<>("alice", 666.66, TimeUnit.MILLISECONDS.toMillis(40))
+        new KeyValueWithTimestamp<>("alice", 666.66, TimeUnit.MILLISECONDS.toMillis(40)),
+        new KeyValueWithTimestamp<>("bobby", 111.11, TimeUnit.MILLISECONDS.toMillis(60))
     );
 
     final List<KeyValueWithTimestamp<String, Long>> inputTableRecords = Arrays.asList(
         new KeyValueWithTimestamp<>("alice", 1L, TimeUnit.MILLISECONDS.toMillis(20)),
         new KeyValueWithTimestamp<>("alice", 2L, TimeUnit.MILLISECONDS.toMillis(39)),
-        new KeyValueWithTimestamp<>("bobby", 8L,
-            maxAllowedJoinWindow.plus(Duration.ofSeconds(1)).toMillis())
+        new KeyValueWithTimestamp<>("bobby", 8L, TimeUnit.MILLISECONDS.toMillis(50))
     );
 
     final List<KeyValue<String, Pair<Double, Long>>> expectedOutputRecords = Arrays.asList(
-        new KeyValue<>("alice", new Pair<>(999.99, 1L)),
+        new KeyValue<>("alice", new Pair<>(999.99, null)),
+        new KeyValue<>("bobby", new Pair<>(222.22, null)),
         new KeyValue<>("alice", new Pair<>(555.55, 1L)),
-        new KeyValue<>("alice", new Pair<>(666.66, 2L)),
-        new KeyValue<>("bobby", new Pair<>(222.22, null))
+        new KeyValue<>("alice", new Pair<>(666.66, 2L))
     );
 
     //
@@ -222,6 +209,7 @@ public class CustomStreamTableJoinIntegrationTest {
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
+    streamsConfiguration.put(StreamsConfig.MAX_TASK_IDLE_MS_CONFIG, 5000);
 
     // Read the input data.
     final KStream<String, Double> stream = builder.stream(inputTopicForStream, Consumed.with(Serdes.String(), Serdes.Double()));
@@ -231,7 +219,6 @@ public class CustomStreamTableJoinIntegrationTest {
     final KStream<String, Pair<Double, Long>> joined =
         stream.transform(
             new StreamTableJoinStreamSideLogic(
-                maxAllowedJoinWindow,
                 tableStoreName),
             tableStoreName);
 
@@ -286,12 +273,9 @@ public class CustomStreamTableJoinIntegrationTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(StreamTableJoinStreamSideLogic.class);
 
-    private final Duration approxMaxWaitTimePerRecordForTableData;
     private final String tableStoreName;
 
-    StreamTableJoinStreamSideLogic(final Duration maxAllowedJoinWindow,
-                                   final String tableStoreName) {
-      this.approxMaxWaitTimePerRecordForTableData = maxAllowedJoinWindow;
+    StreamTableJoinStreamSideLogic(final String tableStoreName) {
       this.tableStoreName = tableStoreName;
     }
 
@@ -305,19 +289,18 @@ public class CustomStreamTableJoinIntegrationTest {
         @SuppressWarnings("unchecked")
         @Override
         public void init(final ProcessorContext context) {
-          tableStore = (KeyValueStore<String, ValueAnd>) context.getStateStore(tableStoreName);
+          tableStore = (KeyValueStore<String, Long>) context.getStateStore(tableStoreName);
           this.context = context;
         }
 
         @Override
         public KeyValue<String, Pair<Double, Long>> transform(final String key, final Double value) {
           LOG.info("Received stream record ({}, {}) with timestamp {}", key, value, context.timestamp());
-          return sendFullJoinRecordOrWaitForTableSide(key, value, context.timestamp());
+          return sendFullJoinRecordOrWaitForTableSide(key, value);
         }
 
         private KeyValue<String, Pair<Double, Long>> sendFullJoinRecordOrWaitForTableSide(final String key,
-                                                                                          final Double value,
-                                                                                          final long streamRecordTimestamp) {
+                                                                                          final Double value) {
           final Long tableValue = tableStore.get(key);
           if (tableValue != null) {
             final KeyValue<String, Pair<Double, Long>> joinRecord = KeyValue.pair(key, new Pair<>(value, tableValue));
@@ -325,14 +308,8 @@ public class CustomStreamTableJoinIntegrationTest {
             return joinRecord;
           } else {
             LOG.info("Table data unavailable for key {}, sending the join result as null", key, key, value);
-            return KeyValue.pair(key, null);
+            return KeyValue.pair(key, new Pair<>(value, null));
           }
-        }
-
-        private boolean withinAcceptableBounds(final Instant streamRecordTimestamp,
-                                               final Instant tableRecordTimestamp) {
-          return Duration.between(streamRecordTimestamp, tableRecordTimestamp)
-              .compareTo(approxMaxWaitTimePerRecordForTableData) <= 0;
         }
 
         @Override
