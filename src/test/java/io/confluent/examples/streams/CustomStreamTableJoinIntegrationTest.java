@@ -54,6 +54,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -268,8 +269,24 @@ public class CustomStreamTableJoinIntegrationTest {
     joined.to(outputTopic, Produced.with(Serdes.String(), new PairSerde<>(Serdes.Double(), Serdes.Long())));
 
     try (final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration)) {
+      final CountDownLatch startLatch = new CountDownLatch(1);
+      streams.setStateListener((newState, oldState) -> {
+        if (newState == KafkaStreams.State.RUNNING && oldState != KafkaStreams.State.RUNNING) {
+          startLatch.countDown();
+        }
+
+      });
+
       // Start the topology.
       streams.start();
+
+      try {
+        if (!startLatch.await(60, TimeUnit.SECONDS)) {
+          throw new RuntimeException("Streams never finished rebalancing on startup");
+        }
+      } catch (final InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
 
       //
       // Step 2: Produce some input data to the input topics.
