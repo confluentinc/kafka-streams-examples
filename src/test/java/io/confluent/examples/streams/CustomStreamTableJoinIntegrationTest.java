@@ -195,7 +195,8 @@ public class CustomStreamTableJoinIntegrationTest {
         new KeyValue<>("alice", new Pair<>(999.99, null)),
         new KeyValue<>("bobby", new Pair<>(222.22, null)),
         new KeyValue<>("alice", new Pair<>(555.55, 1L)),
-        new KeyValue<>("alice", new Pair<>(666.66, 2L))
+        new KeyValue<>("alice", new Pair<>(666.66, 2L)),
+        new KeyValue<>("bobby", new Pair<>(111.11, 8L))
     );
 
     //
