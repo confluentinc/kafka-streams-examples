@@ -135,7 +135,7 @@ public class WordCountInteractiveQueriesExampleTest {
 
     final CountDownLatch startupLatch = new CountDownLatch(1);
     kafkaStreams.setStateListener((newState, oldState) -> {
-      if (newState == KafkaStreams.State.RUNNING && oldState == KafkaStreams.State.REBALANCING) {
+      if (newState == KafkaStreams.State.RUNNING && oldState != KafkaStreams.State.RUNNING) {
         startupLatch.countDown();
       }
     });
@@ -262,7 +262,7 @@ public class WordCountInteractiveQueriesExampleTest {
     
     final CountDownLatch startupLatch = new CountDownLatch(1);
     kafkaStreams.setStateListener((newState, oldState) -> {
-      if (newState == KafkaStreams.State.RUNNING && oldState == KafkaStreams.State.REBALANCING) {
+      if (newState == KafkaStreams.State.RUNNING && oldState != KafkaStreams.State.RUNNING) {
         startupLatch.countDown();
       }
     });
@@ -281,7 +281,7 @@ public class WordCountInteractiveQueriesExampleTest {
     
     final CountDownLatch startupLatch = new CountDownLatch(1);
     kafkaStreams.setStateListener((newState, oldState) -> {
-      if (newState == KafkaStreams.State.RUNNING && oldState == KafkaStreams.State.REBALANCING) {
+      if (newState == KafkaStreams.State.RUNNING && oldState != KafkaStreams.State.RUNNING) {
         startupLatch.countDown();
       }
     });
