@@ -156,28 +156,6 @@ You can find detailed documentation at
 https://docs.confluent.io/current/streams/kafka-streams-examples/docs/index.html.
 
 
-<a name="examples-docker"/>
-
-# Docker Example: Kafka Music demo application
-
-This containerized example launches:
-
-* Confluent's Kafka Music demo application for the Kafka Streams API, which makes use of
-  [Interactive Queries](http://docs.confluent.io/current/streams/developer-guide.html)
-* a single-node Apache Kafka cluster with a single-node ZooKeeper ensemble
-* a [Confluent Schema Registry](https://github.com/confluentinc/schema-registry) instance
-
-The Kafka Music application demonstrates how to build of a simple music charts application that continuously computes,
-in real-time, the latest charts such as latest Top 5 songs per music genre.  It exposes its latest processing results
--- the latest charts -- via Kafka’s [Interactive Queries](http://docs.confluent.io/current/streams/developer-guide.html#interactive-queries)
-feature via a REST API.  The application's input data is in Avro format, hence the use of Confluent Schema Registry,
-and comes from two sources: a stream of play events (think: "song X was played") and a stream of song metadata ("song X
-was written by artist Y").
-
-You can find detailed documentation at
-https://docs.confluent.io/current/streams/kafka-streams-examples/docs/index.html.
-
-
 <a name="event-streaming-platform"/>
 
 # Examples: Event Streaming Platform
