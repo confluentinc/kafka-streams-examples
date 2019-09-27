@@ -131,7 +131,7 @@ public class GenericAvroIntegrationTest {
         outputTopic,
         topologyTestDriver,
         new IntegrationTestUtils.NothingSerde<>(),
-        new KafkaAvroDeserializer(schemaRegistryClient)
+        new KafkaAvroDeserializer<>(schemaRegistryClient)
       ).stream().map(kv -> (GenericRecord) kv.value).collect(Collectors.toList());
       assertThat(actualValues).isEqualTo(inputValues);
     } finally {
