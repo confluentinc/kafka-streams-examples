@@ -21,7 +21,7 @@ import org.apache.kafka.common.serialization.Serde
 import org.assertj.core.api.Assertions.assertThat
 import org.junit._
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 
 class TopCMSSerdeTest extends AssertionsForJUnit with MockitoSugar {
 
