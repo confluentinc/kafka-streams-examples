@@ -72,6 +72,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * Note: This example works with Java 8+ only.
  *
+ * TODO (and note for maintainers): This test can be migrated to use the TopologyTestDriver of Kafka Streams only once
+ * the driver is handling timestamps exactly like a "real" setup does. Until then, this test must use an embedded
+ * Kafka cluster.
+ *
  * EXAMPLE DESCRIPTION
  * ===================
  * Specifically, this example implements a stream-table LEFT join where both (1) the stream side triggers a join output
@@ -280,8 +284,9 @@ public class CustomStreamTableJoinIntegrationTest {
       //
       // Step 3: Verify the application's output data.
       //
-      final List<KeyValue<String, Long>> actualRecords = readOutputDataFromJoinedStream(expectedOutputRecords.size());
-      assertThat(actualRecords).isEqualTo(expectedOutputRecords);
+      final List<KeyValue<String, Pair<Double, Long>>> actualRecords =
+          readOutputDataFromJoinedStream(expectedOutputRecords.size());
+      assertThat(actualRecords).containsExactlyElementsOf(expectedOutputRecords);
     }
   }
 
@@ -533,7 +538,7 @@ public class CustomStreamTableJoinIntegrationTest {
         inputTopicForTable, inputTableRecords, producerConfigTable);
   }
 
-  private List<KeyValue<String, Long>> readOutputDataFromJoinedStream(final int numExpectedRecords)
+  private List<KeyValue<String, Pair<Double, Long>>> readOutputDataFromJoinedStream(final int numExpectedRecords)
       throws InterruptedException {
     final Properties consumerConfig = new Properties();
     consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
