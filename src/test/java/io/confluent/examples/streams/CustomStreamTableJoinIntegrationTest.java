@@ -286,7 +286,6 @@ public class CustomStreamTableJoinIntegrationTest {
       //
       final List<KeyValue<String, Pair<Double, Long>>> actualRecords =
           readOutputDataFromJoinedStream(expectedOutputRecords.size());
-      assertThat(actualRecords).isEqualTo(expectedOutputRecords);
       assertThat(actualRecords).containsExactlyElementsOf(expectedOutputRecords);
     }
   }
