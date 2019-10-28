@@ -103,8 +103,8 @@ public class TableToTableJoinIntegrationTest {
 
     final String storeName = "joined-store";
     userRegions.join(userLastLogins,
-      (regionValue, lastLoginValue) -> regionValue + "/" + lastLoginValue,
-      Materialized.as(storeName))
+                     (regionValue, lastLoginValue) -> regionValue + "/" + lastLoginValue,
+                     Materialized.as(storeName))
       .toStream()
       .to(outputTopic, Produced.with(Serdes.String(), Serdes.String()));
 
@@ -112,34 +112,25 @@ public class TableToTableJoinIntegrationTest {
       //
       // Step 2: Publish user regions.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        userRegionTopic,
-        userRegionRecords,
-        topologyTestDriver,
-        new StringSerializer(),
-        new StringSerializer()
-      );
+      topologyTestDriver.createInputTopic(userRegionTopic,
+                                          new StringSerializer(),
+                                          new StringSerializer())
+        .pipeKeyValueList(userRegionRecords);
 
       //
       // Step 3: Publish user's last login timestamps.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        userLastLoginTopic,
-        userLastLoginRecords,
-        topologyTestDriver,
-        new StringSerializer(),
-        new LongSerializer()
-      );
+      topologyTestDriver.createInputTopic(userLastLoginTopic,
+                                          new StringSerializer(),
+                                          new LongSerializer())
+        .pipeKeyValueList(userLastLoginRecords);
 
       //
       // Step 4: Verify the application's output data.
       //
-      final List<KeyValue<String, String>> actualResults = IntegrationTestUtils.drainStreamOutput(
-        outputTopic,
-        topologyTestDriver,
-        new StringDeserializer(),
-        new StringDeserializer()
-      );
+      final List<KeyValue<String, String>> actualResults = topologyTestDriver
+        .createOutputTopic(outputTopic, new StringDeserializer(), new StringDeserializer())
+        .readKeyValuesToList();
 
       // Verify the (local) state store of the joined table.
       // For a comprehensive demonstration of interactive queries please refer to KafkaMusicExample.

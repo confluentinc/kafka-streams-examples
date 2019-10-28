@@ -15,7 +15,6 @@
  */
 package io.confluent.examples.streams;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -39,7 +38,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -136,10 +134,11 @@ public class StateStoresInTheDSLIntegrationTest {
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
     // Create a state store manually.
-    final StoreBuilder<KeyValueStore<String, Long>> wordCountsStore = Stores.keyValueStoreBuilder(
-      Stores.persistentKeyValueStore("WordCountsStore"),
-      Serdes.String(),
-      Serdes.Long())
+    final StoreBuilder<KeyValueStore<String, Long>> wordCountsStore = Stores
+      .keyValueStoreBuilder(
+        Stores.persistentKeyValueStore("WordCountsStore"),
+        Serdes.String(),
+        Serdes.Long())
       .withCachingEnabled();
 
     // Important (1 of 2): You must add the state store to the topology, otherwise your application
@@ -165,23 +164,17 @@ public class StateStoresInTheDSLIntegrationTest {
       //
       // Step 2: Produce some input data to the input topic.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringSerializer()
-      );
+      topologyTestDriver.createInputTopic(inputTopic,
+                                          new IntegrationTestUtils.NothingSerde<>(),
+                                          new StringSerializer())
+        .pipeValueList(inputValues);
 
       //
       // Step 3: Verify the application's output data.
       //
-      final List<KeyValue<String, Long>> actualValues = IntegrationTestUtils.drainStreamOutput(
-        outputTopic,
-        topologyTestDriver,
-        new StringDeserializer(),
-        new LongDeserializer()
-      );
+      final List<KeyValue<String, Long>> actualValues = topologyTestDriver
+        .createOutputTopic(outputTopic, new StringDeserializer(), new LongDeserializer())
+        .readKeyValuesToList();
       assertThat(actualValues).isEqualTo(expectedRecords);
     }
   }

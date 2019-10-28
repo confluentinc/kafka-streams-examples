@@ -23,8 +23,8 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.JoinWindows;
-import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.StreamJoined;
 import org.apache.kafka.test.TestUtils;
 import org.junit.Test;
 
@@ -99,7 +99,7 @@ public class StreamToStreamJoinIntegrationTest {
       // In this specific example, we don't need to define join serdes explicitly because the key, left value, and
       // right value are all of type String, which matches our default serdes configured for the application.  However,
       // we want to showcase the use of `Joined.with(...)` in case your code needs a different type setup.
-      Joined.with(
+      StreamJoined.with(
         Serdes.String(), /* key */
         Serdes.String(), /* left value */
         Serdes.String()  /* right value */
@@ -113,37 +113,26 @@ public class StreamToStreamJoinIntegrationTest {
       //
       // Step 2: Publish ad impressions.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        adImpressionsTopic,
-        inputAdImpressions,
-        topologyTestDriver,
-        new StringSerializer(),
-        new StringSerializer()
-      );
+      topologyTestDriver.createInputTopic(adImpressionsTopic,
+                                          new StringSerializer(),
+                                          new StringSerializer())
+        .pipeKeyValueList(inputAdImpressions);
 
       //
       // Step 3: Publish ad clicks.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        adClicksTopic,
-        inputAdClicks,
-        topologyTestDriver,
-        new StringSerializer(),
-        new StringSerializer()
-      );
+      topologyTestDriver.createInputTopic(adClicksTopic,
+                                          new StringSerializer(),
+                                          new StringSerializer())
+        .pipeKeyValueList(inputAdClicks);
 
       //
       // Step 4: Verify the application's output data.
       //
-      final List<KeyValue<String, String>> actualResults =
-        IntegrationTestUtils.drainStreamOutput(
-          outputTopic,
-          topologyTestDriver,
-          new StringDeserializer(),
-          new StringDeserializer()
-        );
+      final List<KeyValue<String, String>> actualResults = topologyTestDriver
+        .createOutputTopic(outputTopic, new StringDeserializer(), new StringDeserializer())
+        .readKeyValuesToList();
       assertThat(actualResults).containsExactlyElementsOf(expectedResults);
     }
   }
-
 }

@@ -113,24 +113,20 @@ public class UserCountsPerRegionLambdaIntegrationTest {
       //
       // Step 2: Publish user-region information.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        userRegionRecords,
-        topologyTestDriver,
-        new StringSerializer(),
-        new StringSerializer()
-      );
+      topologyTestDriver.createInputTopic(inputTopic,
+                                          new StringSerializer(),
+                                          new StringSerializer())
+        .pipeKeyValueList(userRegionRecords);
 
       //
       // Step 3: Verify the application's output data.
       //
 
-      final Map<String, Long> actualClicksPerRegion = IntegrationTestUtils.drainTableOutput(
-        outputTopic,
-        topologyTestDriver,
-        new StringDeserializer(),
-        new LongDeserializer()
-      );
+      final Map<String, Long> actualClicksPerRegion = topologyTestDriver
+        .createOutputTopic(outputTopic,
+                           new StringDeserializer(),
+                           new LongDeserializer())
+        .readKeyValuesToMap();
       assertThat(actualClicksPerRegion).isEqualTo(expectedUsersPerRegion);
     }
   }

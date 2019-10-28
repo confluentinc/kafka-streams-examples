@@ -156,23 +156,23 @@ public class StreamToTableJoinIntegrationTest {
     // The resulting KTable is continuously being updated as new data records are arriving in the
     // input KStream `userClicksStream` and input KTable `userRegionsTable`.
     final KTable<String, Long> clicksPerRegion = userClicksStream
-        // Join the stream against the table.
-        //
-        // Null values possible: In general, null values are possible for region (i.e. the value of
-        // the KTable we are joining against) so we must guard against that (here: by setting the
-        // fallback region "UNKNOWN").  In this specific example this is not really needed because
-        // we know, based on the test setup, that all users have appropriate region entries at the
-        // time we perform the join.
-        //
-        // Also, we need to return a tuple of (region, clicks) for each user.  But because Java does
-        // not support tuples out-of-the-box, we must use a custom class `RegionWithClicks` to
-        // achieve the same effect.
-        .leftJoin(userRegionsTable, (clicks, region) -> new RegionWithClicks(region == null ? "UNKNOWN" : region, clicks))
-        // Change the stream from <user> -> <region, clicks> to <region> -> <clicks>
-        .map((user, regionWithClicks) -> new KeyValue<>(regionWithClicks.getRegion(), regionWithClicks.getClicks()))
-        // Compute the total per region by summing the individual click counts per region.
-        .groupByKey(Grouped.with(stringSerde, longSerde))
-        .reduce(Long::sum);
+      // Join the stream against the table.
+      //
+      // Null values possible: In general, null values are possible for region (i.e. the value of
+      // the KTable we are joining against) so we must guard against that (here: by setting the
+      // fallback region "UNKNOWN").  In this specific example this is not really needed because
+      // we know, based on the test setup, that all users have appropriate region entries at the
+      // time we perform the join.
+      //
+      // Also, we need to return a tuple of (region, clicks) for each user.  But because Java does
+      // not support tuples out-of-the-box, we must use a custom class `RegionWithClicks` to
+      // achieve the same effect.
+      .leftJoin(userRegionsTable, (clicks, region) -> new RegionWithClicks(region == null ? "UNKNOWN" : region, clicks))
+      // Change the stream from <user> -> <region, clicks> to <region> -> <clicks>
+      .map((user, regionWithClicks) -> new KeyValue<>(regionWithClicks.getRegion(), regionWithClicks.getClicks()))
+      // Compute the total per region by summing the individual click counts per region.
+      .groupByKey(Grouped.with(stringSerde, longSerde))
+      .reduce(Long::sum);
 
     // Write the (continuously updating) results to the output topic.
     clicksPerRegion.toStream().to(outputTopic, Produced.with(stringSerde, longSerde));
@@ -184,34 +184,27 @@ public class StreamToTableJoinIntegrationTest {
       // To keep this code example simple and easier to understand/reason about, we publish all
       // user-region records before any user-click records (cf. step 3).  In practice though,
       // data records would typically be arriving concurrently in both input streams/topics.
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        userRegionsTopic,
-        userRegions,
-        topologyTestDriver,
-        new StringSerializer(),
-        new StringSerializer()
-      );
+      topologyTestDriver.createInputTopic(userRegionsTopic,
+                                          new StringSerializer(),
+                                          new StringSerializer())
+        .pipeKeyValueList(userRegions);
 
       //
       // Step 3: Publish some user click events.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        userClicksTopic,
-        userClicks,
-        topologyTestDriver,
-        new StringSerializer(),
-        new LongSerializer());
+      topologyTestDriver.createInputTopic(userClicksTopic,
+                                          new StringSerializer(),
+                                          new LongSerializer())
+        .pipeKeyValueList(userClicks);
 
       //
       // Step 4: Verify the application's output data.
       //
-      final Map<String, Long> actualClicksPerRegion =
-        IntegrationTestUtils.drainTableOutput(
-          outputTopic,
-          topologyTestDriver,
-          new StringDeserializer(),
-          new LongDeserializer()
-        );
+      final Map<String, Long> actualClicksPerRegion = topologyTestDriver
+        .createOutputTopic(outputTopic,
+                           new StringDeserializer(),
+                           new LongDeserializer())
+        .readKeyValuesToMap();
       assertThat(actualClicksPerRegion).isEqualTo(expectedClicksPerRegion);
     }
   }

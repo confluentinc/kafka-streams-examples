@@ -79,12 +79,13 @@ public class ReduceTest {
 
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
       // Step 2: Write the input
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic, inputRecords, topologyTestDriver, new IntegerSerializer(), new StringSerializer());
+      topologyTestDriver.createInputTopic(inputTopic, new IntegerSerializer(), new StringSerializer())
+        .pipeKeyValueList(inputRecords);
 
       // Step 3: Validate the output
-      final Map<Integer, String> actualOutput = IntegrationTestUtils.drainTableOutput(
-        outputTopic, topologyTestDriver, new IntegerDeserializer(), new StringDeserializer());
+      final Map<Integer, String> actualOutput = topologyTestDriver
+        .createOutputTopic(outputTopic, new IntegerDeserializer(), new StringDeserializer())
+        .readKeyValuesToMap();
       assertThat(actualOutput).hasSameSizeAs(expectedOutput);
       assertThat(actualOutput).containsAllEntriesOf(expectedOutput);
     }

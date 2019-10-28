@@ -27,7 +27,6 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.TopologyTestDriver;
@@ -38,7 +37,6 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -72,7 +70,7 @@ public class GenericAvroIntegrationTest {
     record.put("user", "alice");
     record.put("is_new", true);
     record.put("content", "lorem ipsum");
-    final List<GenericRecord> inputValues = Collections.singletonList(record);
+    final List<Object> inputValues = Collections.singletonList(record);
 
     //
     // Step 1: Configure and start the processor topology.
@@ -112,27 +110,22 @@ public class GenericAvroIntegrationTest {
     final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration);
 
     try {
-
       //
       // Step 2: Produce some input data to the input topic.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        inputValues.stream().map(v -> new KeyValue<>(null, (Object) v)).collect(Collectors.toList()),
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new KafkaAvroSerializer(schemaRegistryClient)
-      );
+      topologyTestDriver.createInputTopic(inputTopic,
+                                          new IntegrationTestUtils.NothingSerde<>(),
+                                          new KafkaAvroSerializer(schemaRegistryClient))
+        .pipeValueList(inputValues);
 
       //
       // Step 3: Verify the application's output data.
       //
-      final List<GenericRecord> actualValues = IntegrationTestUtils.drainStreamOutput(
-        outputTopic,
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new KafkaAvroDeserializer(schemaRegistryClient)
-      ).stream().map(kv -> (GenericRecord) kv.value).collect(Collectors.toList());
+      final List<Object> actualValues = topologyTestDriver
+        .createOutputTopic(outputTopic,
+                           new IntegrationTestUtils.NothingSerde<>(),
+                           new KafkaAvroDeserializer(schemaRegistryClient))
+        .readValuesToList();
       assertThat(actualValues).isEqualTo(inputValues);
     } finally {
       topologyTestDriver.close();

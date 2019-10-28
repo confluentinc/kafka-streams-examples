@@ -111,13 +111,10 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
       //
       // Step 2: Produce some input data to the input topic.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        inputUserClicks,
-        topologyTestDriver,
-        new StringSerializer(),
-        new LongSerializer()
-      );
+      topologyTestDriver.createInputTopic(inputTopic,
+                                          new StringSerializer(),
+                                          new LongSerializer())
+        .pipeKeyValueList(inputUserClicks);
 
       //
       // Step 3: Validate the application's state by interactively querying its state stores.

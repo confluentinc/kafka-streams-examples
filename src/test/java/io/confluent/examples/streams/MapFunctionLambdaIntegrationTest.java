@@ -23,6 +23,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.ValueMapper;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -58,29 +59,26 @@ public class MapFunctionLambdaIntegrationTest {
     final String inputTopic = "inputTopic";
     final String outputTopic = "outputTopic";
     final KStream<byte[], String> input = builder.stream(inputTopic);
-    final KStream<byte[], String> uppercased = input.mapValues(s -> s.toUpperCase());
+    final KStream<byte[], String> uppercased = input.mapValues((ValueMapper<String, String>) String::toUpperCase);
     uppercased.to(outputTopic);
 
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
       //
       // Step 2: Produce some input data to the input topic.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringSerializer()
-      );
+      topologyTestDriver.createInputTopic(inputTopic,
+                                          new IntegrationTestUtils.NothingSerde<>(),
+                                          new StringSerializer())
+        .pipeValueList(inputValues);
+
       //
       // Step 3: Verify the application's output data.
       //
-      final List<String> actualValues = IntegrationTestUtils.drainStreamOutput(
-        outputTopic,
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringDeserializer()
-      ).stream().map(kv -> kv.value).collect(Collectors.toList());
+      final List<String> actualValues = topologyTestDriver
+        .createOutputTopic(outputTopic,
+                           new IntegrationTestUtils.NothingSerde<>(),
+                           new StringDeserializer())
+        .readValuesToList();
       assertThat(actualValues).isEqualTo(expectedValues);
     }
   }

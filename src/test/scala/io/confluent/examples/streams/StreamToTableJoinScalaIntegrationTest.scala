@@ -146,35 +146,23 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
       // user-region records before any user-click records (cf. step 3).  In practice though,
       // data records would typically be arriving concurrently in both input streams/topics.
       import collection.JavaConverters._
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        userRegionsTopic,
-        userRegions.asJava,
-        topologyTestDriver,
-        new StringSerializer,
-        new StringSerializer
-      )
+      topologyTestDriver.createInputTopic(userRegionsTopic,
+                                          new StringSerializer,
+                                          new StringSerializer)
+        .pipeKeyValueList(userRegions.asJava)
 
       //
       // Step 3: Publish some user click events.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        userClicksTopic,
-        userClicks.map(kv => new KeyValue(kv.key, kv.value.asInstanceOf[java.lang.Long])).asJava,
-        topologyTestDriver,
-        new StringSerializer,
-        new LongSerializer
-      )
+      topologyTestDriver.createInputTopic(userClicksTopic, new StringSerializer, new LongSerializer)
+        .pipeKeyValueList(userClicks.map(kv => new KeyValue(kv.key, kv.value.asInstanceOf[java.lang.Long])).asJava)
 
       //
       // Step 4: Verify the application's output data.
       //
-      val actualClicksPerRegion =
-        IntegrationTestUtils.drainTableOutput(
-          outputTopic,
-          topologyTestDriver,
-          new StringDeserializer,
-          new LongDeserializer
-        )
+      val actualClicksPerRegion = topologyTestDriver
+        .createOutputTopic(outputTopic, new StringDeserializer, new LongDeserializer)
+        .readKeyValuesToMap()
       assertThat(actualClicksPerRegion).isEqualTo(expectedClicksPerRegion.asJava)
     } finally {
       topologyTestDriver.close()

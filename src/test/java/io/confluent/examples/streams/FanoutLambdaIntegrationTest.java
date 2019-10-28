@@ -84,34 +84,29 @@ public class FanoutLambdaIntegrationTest {
       //
       // Step 2: Produce some input data to the input topic.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopicA,
-        inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringSerializer()
-      );
+      topologyTestDriver.createInputTopic(inputTopicA,
+                                          new IntegrationTestUtils.NothingSerde<>(),
+                                          new StringSerializer())
+        .pipeValueList(inputValues);
 
       //
       // Step 3: Verify the application's output data.
       //
 
       // Verify output topic B
-      final List<String> actualValuesForB = IntegrationTestUtils.drainStreamOutput(
-        outputTopicB,
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringDeserializer()
-      ).stream().map(kv -> kv.value).collect(Collectors.toList());
+      final List<String> actualValuesForB = topologyTestDriver
+        .createOutputTopic(outputTopicB,
+                           new IntegrationTestUtils.NothingSerde<>(),
+                           new StringDeserializer())
+        .readValuesToList();
       assertThat(actualValuesForB).isEqualTo(expectedValuesForB);
 
       // Verify output topic C
-      final List<String> actualValuesForC = IntegrationTestUtils.drainStreamOutput(
-        outputTopicC,
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringDeserializer()
-      ).stream().map(kv -> kv.value).collect(Collectors.toList());
+      final List<String> actualValuesForC = topologyTestDriver
+        .createOutputTopic(outputTopicC,
+                           new IntegrationTestUtils.NothingSerde<>(),
+                           new StringDeserializer())
+        .readValuesToList();
       assertThat(actualValuesForC).isEqualTo(expectedValuesForC);
     }
   }

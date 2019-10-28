@@ -112,23 +112,17 @@ public class WordCountLambdaIntegrationTest {
       //
       // Step 2: Produce some input data to the input topic.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringSerializer()
-      );
+      topologyTestDriver.createInputTopic(inputTopic,
+                                          new IntegrationTestUtils.NothingSerde<>(),
+                                          new StringSerializer())
+        .pipeValueList(inputValues);
 
       //
       // Step 3: Verify the application's output data.
       //
-      final Map<String, Long> actualWordCounts = IntegrationTestUtils.drainTableOutput(
-        outputTopic,
-        topologyTestDriver,
-        new StringDeserializer(),
-        new LongDeserializer()
-      );
+      final Map<String, Long> actualWordCounts = topologyTestDriver
+        .createOutputTopic(outputTopic, new StringDeserializer(), new LongDeserializer())
+        .readKeyValuesToMap();
       assertThat(actualWordCounts).isEqualTo(expectedWordCounts);
     }
   }

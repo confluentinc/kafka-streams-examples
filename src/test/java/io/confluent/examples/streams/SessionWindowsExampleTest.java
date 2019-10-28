@@ -48,14 +48,14 @@ public class SessionWindowsExampleTest {
   private static final String SCHEMA_REGISTRY_SCOPE = SessionWindowsExampleTest.class.getName();
   private static final String MOCK_SCHEMA_REGISTRY_URL = "mock://" + SCHEMA_REGISTRY_SCOPE;
 
-  private TopologyTestDriver streams;
+  private TopologyTestDriver topologyTestDriver;
   private final Map<String, String> AVRO_SERDE_CONFIG = Collections.singletonMap(
     AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, MOCK_SCHEMA_REGISTRY_URL
   );
 
   @Before
   public void createStreams() {
-    streams = new TopologyTestDriver(
+    topologyTestDriver = new TopologyTestDriver(
       SessionWindowsExample.buildTopology(AVRO_SERDE_CONFIG),
       SessionWindowsExample.streamsConfig("dummy", TestUtils.tempDirectory().getPath())
     );
@@ -63,42 +63,35 @@ public class SessionWindowsExampleTest {
 
   @After
   public void closeStreams() {
-    streams.close();
+    topologyTestDriver.close();
     MockSchemaRegistry.dropScope(SCHEMA_REGISTRY_SCOPE);
   }
 
   @Test
-  public void shouldCountPlayEventsBySession() throws Exception {
+  public void shouldCountPlayEventsBySession() {
     final SpecificAvroSerializer<PlayEvent> playEventSerializer = new SpecificAvroSerializer<>();
     playEventSerializer.configure(AVRO_SERDE_CONFIG, false);
 
     final long start = System.currentTimeMillis();
 
     final String userId = "erica";
-    IntegrationTestUtils.produceKeyValuesSynchronously(
-      SessionWindowsExample.PLAY_EVENTS,
-      Collections.singletonList(
-        new KeyValue<>(userId, new PlayEvent(1L, 10L))
-      ),
-      streams,
-      new StringSerializer(),
-      playEventSerializer,
-      start
-    );
+    topologyTestDriver.createInputTopic(SessionWindowsExample.PLAY_EVENTS,
+                                        new StringSerializer(),
+                                        playEventSerializer)
+      .pipeInput(userId, new PlayEvent(1L, 10L), start);
 
-    final List<KeyValue<String, Long>> firstSession = IntegrationTestUtils.drainStreamOutput(
-      SessionWindowsExample.PLAY_EVENTS_PER_SESSION,
-      streams,
-      new StringDeserializer(),
-      new LongDeserializer()
-    );
+    final List<KeyValue<String, Long>> firstSession = topologyTestDriver
+      .createOutputTopic(SessionWindowsExample.PLAY_EVENTS_PER_SESSION,
+                         new StringDeserializer(),
+                         new LongDeserializer())
+      .readKeyValuesToList();
 
     // should have a session for erica with start and end time the same
     assertThat(firstSession.get(0), equalTo(KeyValue.pair(userId + "@" +start+"->"+start, 1L)));
 
     // also look in the store to find the same session
     final ReadOnlySessionStore<String, Long> playEventsPerSession =
-      streams.getSessionStore(SessionWindowsExample.PLAY_EVENTS_PER_SESSION);
+      topologyTestDriver.getSessionStore(SessionWindowsExample.PLAY_EVENTS_PER_SESSION);
 
     final KeyValue<Windowed<String>, Long> next = fetchSessionsFromLocalStore(userId, playEventsPerSession).get(0);
     assertThat(next.key, equalTo(new Windowed<>(userId, new SessionWindow(start, start))));
@@ -107,23 +100,16 @@ public class SessionWindowsExampleTest {
     // send another event that is after the inactivity gap, so we have 2 independent sessions
     final long secondSessionStart = start + SessionWindowsExample.INACTIVITY_GAP.toMillis() + 1;
 
-    IntegrationTestUtils.produceKeyValuesSynchronously(
-      SessionWindowsExample.PLAY_EVENTS,
-      Collections.singletonList(
-        new KeyValue<>(userId, new PlayEvent(2L, 10L))
-      ),
-      streams,
-      new StringSerializer(),
-      playEventSerializer,
-      secondSessionStart
-    );
+    topologyTestDriver.createInputTopic(SessionWindowsExample.PLAY_EVENTS,
+                                        new StringSerializer(),
+                                        playEventSerializer)
+      .pipeInput(userId, new PlayEvent(2L, 10L), secondSessionStart);
 
-    final List<KeyValue<String, Long>> secondSession = IntegrationTestUtils.drainStreamOutput(
-      SessionWindowsExample.PLAY_EVENTS_PER_SESSION,
-      streams,
-      new StringDeserializer(),
-      new LongDeserializer()
-    );
+    final List<KeyValue<String, Long>> secondSession = topologyTestDriver
+      .createOutputTopic(SessionWindowsExample.PLAY_EVENTS_PER_SESSION,
+                         new StringDeserializer(),
+                         new LongDeserializer())
+      .readKeyValuesToList();
 
     // should have created a new session
     assertThat(secondSession.get(0), equalTo(KeyValue.pair(userId + "@" + secondSessionStart + "->" + secondSessionStart,
@@ -137,24 +123,17 @@ public class SessionWindowsExampleTest {
     // create an event between the two sessions to demonstrate merging
     final long mergeTime = start + SessionWindowsExample.INACTIVITY_GAP.toMillis() / 2;
 
-    IntegrationTestUtils.produceKeyValuesSynchronously(
-      SessionWindowsExample.PLAY_EVENTS,
-      Collections.singletonList(
-        new KeyValue<>(userId, new PlayEvent(3L, 10L))
-      ),
-      streams,
-      new StringSerializer(),
-      playEventSerializer,
-      mergeTime
-    );
+    topologyTestDriver.createInputTopic(SessionWindowsExample.PLAY_EVENTS,
+                                        new StringSerializer(),
+                                        playEventSerializer)
+      .pipeInput(userId, new PlayEvent(3L, 10L), mergeTime);
 
 
-    final List<KeyValue<String, Long>> merged = IntegrationTestUtils.drainStreamOutput(
-      SessionWindowsExample.PLAY_EVENTS_PER_SESSION,
-      streams,
-      new StringDeserializer(),
-      new LongDeserializer()
-    );
+    final List<KeyValue<String, Long>> merged = topologyTestDriver
+      .createOutputTopic(SessionWindowsExample.PLAY_EVENTS_PER_SESSION,
+                         new StringDeserializer(),
+                         new LongDeserializer())
+      .readKeyValuesToList();
     // should have merged all sessions into one and sent tombstones for the sessions that were
     // merged
     assertThat(merged, equalTo(Arrays.asList(KeyValue.pair(userId + "@" +start+"->"+start, null),

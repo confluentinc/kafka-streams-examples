@@ -75,11 +75,15 @@ public class AggregateTest {
 
     try (final TopologyTestDriver testDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
       // Step 2: Write the input
-      IntegrationTestUtils.produceValuesSynchronously(inputTopic, inputValues, testDriver, new StringSerializer());
+      testDriver.createInputTopic(inputTopic,
+                                  new IntegrationTestUtils.NothingSerde<>(),
+                                  new StringSerializer())
+        .pipeValueList(inputValues);
 
       // Step 3: Validate the output
-      final Map<String, Long> actualOutput = IntegrationTestUtils.drainTableOutput(
-        outputTopic, testDriver, new StringDeserializer(), new LongDeserializer());
+      final Map<String, Long> actualOutput = testDriver
+        .createOutputTopic(outputTopic, new StringDeserializer(), new LongDeserializer())
+        .readKeyValuesToMap();
       assertThat(actualOutput).isEqualTo(expectedOutput);
     }
   }

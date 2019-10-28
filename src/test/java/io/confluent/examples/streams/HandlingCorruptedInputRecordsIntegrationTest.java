@@ -104,34 +104,27 @@ public class HandlingCorruptedInputRecordsIntegrationTest {
       //
       // Step 2: Produce some corrupt input data to the input topic.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        Collections.singletonList(new KeyValue<>(null, "corrupt")),
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringSerializer()
-      );
+      topologyTestDriver.createInputTopic(inputTopic,
+                                          new IntegrationTestUtils.NothingSerde<>(),
+                                          new StringSerializer())
+        .pipeInput("corrupt");
 
       //
       // Step 3: Produce some (valid) input data to the input topic.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new LongSerializer()
-      );
+      topologyTestDriver.createInputTopic(inputTopic,
+                                          new IntegrationTestUtils.NothingSerde<>(),
+                                          new LongSerializer())
+        .pipeValueList(inputValues);
 
       //
       // Step 4: Verify the application's output data.
       //
-      final List<Long> actualValues = IntegrationTestUtils.drainStreamOutput(
-        outputTopic,
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new LongDeserializer()
-      ).stream().map(kv -> kv.value).collect(Collectors.toList());
+      final List<Long> actualValues = topologyTestDriver
+        .createOutputTopic(outputTopic,
+                           new IntegrationTestUtils.NothingSerde<>(),
+                           new LongDeserializer())
+        .readValuesToList();
       assertThat(actualValues).isEqualTo(expectedValues);
     }
   }

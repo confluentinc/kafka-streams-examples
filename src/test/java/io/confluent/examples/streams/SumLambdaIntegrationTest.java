@@ -66,23 +66,19 @@ public class SumLambdaIntegrationTest {
       //
       // Step 2: Produce some input data to the input topic.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        SumLambdaExample.NUMBERS_TOPIC,
-        inputValues.stream().map(i -> new KeyValue<Void, Integer>(null, i)).collect(Collectors.toList()),
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new IntegerSerializer()
-      );
+      topologyTestDriver.createInputTopic(SumLambdaExample.NUMBERS_TOPIC,
+                                          new IntegrationTestUtils.NothingSerde<>(),
+                                          new IntegerSerializer())
+        .pipeValueList(inputValues);
 
       //
       // Step 3: Verify the application's output data.
       //
-      final List<KeyValue<Integer, Integer>> actualValues = IntegrationTestUtils.drainStreamOutput(
-        SumLambdaExample.SUM_OF_ODD_NUMBERS_TOPIC,
-        topologyTestDriver,
-        new IntegerDeserializer(),
-        new IntegerDeserializer()
-      );
+      final List<KeyValue<Integer, Integer>> actualValues = topologyTestDriver
+        .createOutputTopic(SumLambdaExample.SUM_OF_ODD_NUMBERS_TOPIC,
+                           new IntegerDeserializer(),
+                           new IntegerDeserializer())
+        .readKeyValuesToList();
       assertThat(actualValues).isEqualTo(expectedValues);
     }
   }
