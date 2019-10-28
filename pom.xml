@@ -56,7 +56,7 @@
         <java.version>1.8</java.version>
         <licenses.version>5.4.0-SNAPSHOT</licenses.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <scala.version>${kafka.scala.version}.7</scala.version>
+        <scala.version>${kafka.scala.version}.8</scala.version>
         <scalatest.version>3.0.5</scalatest.version>
     </properties>
 
