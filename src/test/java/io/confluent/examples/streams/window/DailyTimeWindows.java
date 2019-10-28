@@ -52,6 +52,7 @@ public class DailyTimeWindows extends Windows<TimeWindow> {
         return windows;
     }
 
+    @Deprecated
     @Override
     public long maintainMs() {
         //By default the Window class have a maintainMs = 1 day
