@@ -36,6 +36,8 @@ import org.apache.kafka.streams.state.ReadOnlyWindowStore;
 import org.apache.kafka.streams.state.WindowStoreIterator;
 import org.apache.kafka.test.TestUtils;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -55,7 +57,7 @@ import java.util.stream.Collectors;
 public class IntegrationTestUtils {
 
   private static final int UNLIMITED_MESSAGES = -1;
-  public static final long DEFAULT_TIMEOUT = 30 * 1000L;
+  private static final long DEFAULT_TIMEOUT = 30 * 1000L;
 
   /**
    * Returns up to `maxMessages` message-values from the topic.
@@ -94,13 +96,13 @@ public class IntegrationTestUtils {
   public static <K, V> List<KeyValue<K, V>> readKeyValues(final String topic, final Properties consumerConfig, final int maxMessages) {
     final KafkaConsumer<K, V> consumer = new KafkaConsumer<>(consumerConfig);
     consumer.subscribe(Collections.singletonList(topic));
-    final int pollIntervalMs = 100;
-    final int maxTotalPollTimeMs = 2000;
+    final Duration pollInterval = Duration.ofMillis(100L);
+    final int maxTotalPollTimeMs = 10000;
     int totalPollTimeMs = 0;
     final List<KeyValue<K, V>> consumedValues = new ArrayList<>();
     while (totalPollTimeMs < maxTotalPollTimeMs && continueConsuming(consumedValues.size(), maxMessages)) {
-      totalPollTimeMs += pollIntervalMs;
-      final ConsumerRecords<K, V> records = consumer.poll(pollIntervalMs);
+      totalPollTimeMs += pollInterval.toMillis();
+      final ConsumerRecords<K, V> records = consumer.poll(pollInterval);
       for (final ConsumerRecord<K, V> record : records) {
         consumedValues.add(new KeyValue<>(record.key(), record.value()));
       }
@@ -270,11 +272,11 @@ public class IntegrationTestUtils {
    */
   public static <K, V> void assertThatOldestWindowContains(final ReadOnlyWindowStore<K, V> store, final Map<K, V> expected)
       throws InterruptedException {
-    final long fromBeginningOfTimeMs = 0;
-    final long toNowInProcessingTimeMs = System.currentTimeMillis();
+    final Instant fromBeginningOfTime = Instant.EPOCH;
+    final Instant toNowInProcessingTime = Instant.now();
     TestUtils.waitForCondition(() ->
         expected.keySet().stream().allMatch(k -> {
-          try (final WindowStoreIterator<V> iterator = store.fetch(k, fromBeginningOfTimeMs, toNowInProcessingTimeMs)) {
+          try (final WindowStoreIterator<V> iterator = store.fetch(k, fromBeginningOfTime, toNowInProcessingTime)) {
             if (iterator.hasNext()) {
               return expected.get(k).equals(iterator.next().value);
             }

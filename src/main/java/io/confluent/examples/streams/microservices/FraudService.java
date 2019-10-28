@@ -75,6 +75,7 @@ public class FraudService implements Service {
     log.info("Started Service " + getClass().getSimpleName());
   }
 
+  @SuppressWarnings("unchecked")
   private KafkaStreams processStreams(final String bootstrapServers, final String stateDir) {
 
     //Latch onto instances of the orders and inventory topics
