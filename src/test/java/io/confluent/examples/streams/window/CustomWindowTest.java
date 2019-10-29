@@ -15,7 +15,6 @@
  */
 package io.confluent.examples.streams.window;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.apache.kafka.common.serialization.IntegerSerializer;
 import org.apache.kafka.common.serialization.Serdes;
@@ -24,6 +23,8 @@ import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.KStream;
@@ -50,8 +51,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.IsEqual.equalTo;
 
 
 public class CustomWindowTest {
@@ -245,30 +246,26 @@ public class CustomWindowTest {
       streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy:1234");
       streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.Integer().getClass().getName());
       streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.Integer().getClass().getName());
-      // The commit interval for flushing records to state stores and downstream must be lower than
-      // this integration test's timeout (30 secs) to ensure we observe the expected processing results.
-      streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 10 * 1000);
-      streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
       // Use a temporary directory for storing state, which will be automatically removed after the test.
       streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
       final Topology topology = buildKafkaStreamTopology(zoneId);
 
-      final TopologyTestDriver testDriver = new TopologyTestDriver(topology, streamsConfiguration);
+      try (final TopologyTestDriver testDriver = new TopologyTestDriver(topology, streamsConfiguration)) {
+        final TestInputTopic<String, Integer> input = testDriver
+          .createInputTopic(inputTopic,
+                            new StringSerializer(),
+                            new IntegerSerializer());
+        final TestOutputTopic<Windowed<Integer>, Integer> output = testDriver
+          .createOutputTopic(outputTopic,
+                             new TimeWindowedDeserializer<>(
+                               new IntegerDeserializer(),
+                               Duration.ofDays(1).toMillis()),
+                             new IntegerDeserializer());
 
-      testDriver.createInputTopic(inputTopic, new StringSerializer(), new IntegerSerializer())
-        .pipeRecordList(inputValues);
-
-      final List<KeyValue<Windowed<Integer>, Integer>> result =
-        testDriver.createOutputTopic(outputTopic,
-                                     new TimeWindowedDeserializer<>(
-                                         new IntegerDeserializer(),
-                                         Duration.ofDays(1).toMillis()),
-                                     new IntegerDeserializer())
-          .readKeyValuesToList();
-      assertThat(expectedValues, equalTo(result));
-
-      testDriver.close();
+        input.pipeRecordList(inputValues);
+        assertThat(output.readKeyValuesToList(), equalTo(expectedValues));
+      }
     }
 
     private Topology buildKafkaStreamTopology(final ZoneId zoneId) {

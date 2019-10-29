@@ -24,6 +24,8 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Grouped;
@@ -40,7 +42,8 @@ import java.util.Properties;
 
 import static io.confluent.examples.streams.IntegrationTestUtils.mkEntry;
 import static io.confluent.examples.streams.IntegrationTestUtils.mkMap;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * End-to-end integration test that demonstrates how to perform a join between a KStream and a
@@ -179,33 +182,38 @@ public class StreamToTableJoinIntegrationTest {
 
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
       //
-      // Step 2: Publish user-region information.
+      // Step 2: Setup input and output topics.
+      //
+      final TestInputTopic<String, String> regionInput = topologyTestDriver
+        .createInputTopic(userRegionsTopic,
+                          new StringSerializer(),
+                          new StringSerializer());
+      final TestInputTopic<String, Long> clickInput = topologyTestDriver
+        .createInputTopic(userClicksTopic,
+                          new StringSerializer(),
+                          new LongSerializer());
+      final TestOutputTopic<String, Long> output = topologyTestDriver
+        .createOutputTopic(outputTopic,
+                           new StringDeserializer(),
+                           new LongDeserializer());
+
+      //
+      // Step 3: Publish user-region information.
       //
       // To keep this code example simple and easier to understand/reason about, we publish all
       // user-region records before any user-click records (cf. step 3).  In practice though,
       // data records would typically be arriving concurrently in both input streams/topics.
-      topologyTestDriver.createInputTopic(userRegionsTopic,
-                                          new StringSerializer(),
-                                          new StringSerializer())
-        .pipeKeyValueList(userRegions);
+      regionInput.pipeKeyValueList(userRegions);
 
       //
-      // Step 3: Publish some user click events.
+      // Step 4: Publish some user click events.
       //
-      topologyTestDriver.createInputTopic(userClicksTopic,
-                                          new StringSerializer(),
-                                          new LongSerializer())
-        .pipeKeyValueList(userClicks);
+      clickInput.pipeKeyValueList(userClicks);
 
       //
-      // Step 4: Verify the application's output data.
+      // Step 5: Verify the application's output data.
       //
-      final Map<String, Long> actualClicksPerRegion = topologyTestDriver
-        .createOutputTopic(outputTopic,
-                           new StringDeserializer(),
-                           new LongDeserializer())
-        .readKeyValuesToMap();
-      assertThat(actualClicksPerRegion).isEqualTo(expectedClicksPerRegion);
+      assertThat(output.readKeyValuesToMap(), equalTo(expectedClicksPerRegion));
     }
   }
 

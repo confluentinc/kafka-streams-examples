@@ -41,7 +41,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ApplicationResetIntegrationTest {
   @ClassRule
@@ -114,7 +115,7 @@ public class ApplicationResetIntegrationTest {
         outputTopic,
         inputValues.size()
       );
-      assertThat(result).isEqualTo(expectedResult);
+      assertThat(result, equalTo(expectedResult));
 
       streams.close();
     }
@@ -165,7 +166,7 @@ public class ApplicationResetIntegrationTest {
         outputTopic,
         inputValues.size()
       );
-      assertThat(resultRerun).isEqualTo(expectedResult);
+      assertThat(resultRerun, equalTo(expectedResult));
 
       streams.close();
     }

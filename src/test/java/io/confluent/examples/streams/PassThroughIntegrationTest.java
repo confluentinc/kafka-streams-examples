@@ -15,22 +15,22 @@
  */
 package io.confluent.examples.streams;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * End-to-end integration test that reads data from an input topic and writes the same data as-is to
@@ -65,23 +65,26 @@ public class PassThroughIntegrationTest {
 
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
       //
-      // Step 2: Produce some input data to the input topic.
+      // Step 2: Setup input and output topics.
       //
-      topologyTestDriver.createInputTopic(inputTopic,
-                                          new IntegrationTestUtils.NothingSerde<>(),
-                                          new StringSerializer())
-        .pipeValueList(inputValues);
-      //
-      // Step 3: Verify the application's output data.
-      //
-      final List<String> actualValues = topologyTestDriver
+      final TestInputTopic<Void, String> input = topologyTestDriver
+        .createInputTopic(inputTopic,
+                          new IntegrationTestUtils.NothingSerde<>(),
+                          new StringSerializer());
+      final TestOutputTopic<Void, String> output = topologyTestDriver
         .createOutputTopic(outputTopic,
                            new IntegrationTestUtils.NothingSerde<>(),
-                           new StringDeserializer())
-        .readValuesToList();
+                           new StringDeserializer());
 
-      assertThat(actualValues).isEqualTo(inputValues);
+      //
+      // Step 3: Produce some input data to the input topic.
+      //
+      input.pipeValueList(inputValues);
+
+      //
+      // Step 4: Verify the application's output data.
+      //
+      assertThat(output.readValuesToList(), equalTo(inputValues));
     }
   }
-
 }

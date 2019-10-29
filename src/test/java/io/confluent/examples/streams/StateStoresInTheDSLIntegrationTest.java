@@ -22,6 +22,8 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
@@ -162,20 +164,23 @@ public class StateStoresInTheDSLIntegrationTest {
 
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
       //
-      // Step 2: Produce some input data to the input topic.
+      // Step 2: Setup input and output topics.
       //
-      topologyTestDriver.createInputTopic(inputTopic,
-                                          new IntegrationTestUtils.NothingSerde<>(),
-                                          new StringSerializer())
-        .pipeValueList(inputValues);
+      final TestInputTopic<Void, String> input = topologyTestDriver
+        .createInputTopic(inputTopic,
+                          new IntegrationTestUtils.NothingSerde<>(),
+                          new StringSerializer());
+      final TestOutputTopic<String, Long> output = topologyTestDriver
+        .createOutputTopic(outputTopic, new StringDeserializer(), new LongDeserializer());
+      //
+      // Step 3: Produce some input data to the input topic.
+      //
+      input.pipeValueList(inputValues);
 
       //
-      // Step 3: Verify the application's output data.
+      // Step 4: Verify the application's output data.
       //
-      final List<KeyValue<String, Long>> actualValues = topologyTestDriver
-        .createOutputTopic(outputTopic, new StringDeserializer(), new LongDeserializer())
-        .readKeyValuesToList();
-      assertThat(actualValues).isEqualTo(expectedRecords);
+      assertThat(output.readKeyValuesToList()).isEqualTo(expectedRecords);
     }
   }
 

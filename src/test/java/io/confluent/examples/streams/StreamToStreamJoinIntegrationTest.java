@@ -21,6 +21,8 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.JoinWindows;
 import org.apache.kafka.streams.kstream.KStream;
@@ -33,7 +35,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * End-to-end integration test that demonstrates how to perform a join between two KStreams.
@@ -111,28 +114,29 @@ public class StreamToStreamJoinIntegrationTest {
 
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
       //
-      // Step 2: Publish ad impressions.
+      // Step 2: Setup input and output topics.
       //
-      topologyTestDriver.createInputTopic(adImpressionsTopic,
-                                          new StringSerializer(),
-                                          new StringSerializer())
-        .pipeKeyValueList(inputAdImpressions);
+      final TestInputTopic<String, String> impressionInput = topologyTestDriver
+        .createInputTopic(adImpressionsTopic,
+                          new StringSerializer(),
+                          new StringSerializer());
+      final TestInputTopic<String, String> clickInput = topologyTestDriver
+        .createInputTopic(adClicksTopic,
+                          new StringSerializer(),
+                          new StringSerializer());
+      final TestOutputTopic<String, String> output = topologyTestDriver
+        .createOutputTopic(outputTopic, new StringDeserializer(), new StringDeserializer());
 
       //
-      // Step 3: Publish ad clicks.
+      // Step 3: Publish input data.
       //
-      topologyTestDriver.createInputTopic(adClicksTopic,
-                                          new StringSerializer(),
-                                          new StringSerializer())
-        .pipeKeyValueList(inputAdClicks);
+      impressionInput.pipeKeyValueList(inputAdImpressions);
+      clickInput.pipeKeyValueList(inputAdClicks);
 
       //
       // Step 4: Verify the application's output data.
       //
-      final List<KeyValue<String, String>> actualResults = topologyTestDriver
-        .createOutputTopic(outputTopic, new StringDeserializer(), new StringDeserializer())
-        .readKeyValuesToList();
-      assertThat(actualResults).containsExactlyElementsOf(expectedResults);
+      assertThat(output.readKeyValuesToList(), equalTo(expectedResults));
     }
   }
 }

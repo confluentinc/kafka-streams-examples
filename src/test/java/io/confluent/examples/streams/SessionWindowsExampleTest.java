@@ -23,6 +23,8 @@ import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.Windowed;
 import org.apache.kafka.streams.kstream.internals.SessionWindow;
@@ -49,6 +51,8 @@ public class SessionWindowsExampleTest {
   private static final String MOCK_SCHEMA_REGISTRY_URL = "mock://" + SCHEMA_REGISTRY_SCOPE;
 
   private TopologyTestDriver topologyTestDriver;
+  private TestInputTopic<String, PlayEvent> input;
+  private TestOutputTopic<String, Long> output;
   private final Map<String, String> AVRO_SERDE_CONFIG = Collections.singletonMap(
     AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, MOCK_SCHEMA_REGISTRY_URL
   );
@@ -59,33 +63,34 @@ public class SessionWindowsExampleTest {
       SessionWindowsExample.buildTopology(AVRO_SERDE_CONFIG),
       SessionWindowsExample.streamsConfig("dummy", TestUtils.tempDirectory().getPath())
     );
+    final SpecificAvroSerializer<PlayEvent> playEventSerializer = new SpecificAvroSerializer<>();
+    playEventSerializer.configure(AVRO_SERDE_CONFIG, false);
+
+    input = topologyTestDriver.createInputTopic(SessionWindowsExample.PLAY_EVENTS,
+                                                new StringSerializer(),
+                                                playEventSerializer);
+    output = topologyTestDriver.createOutputTopic(SessionWindowsExample.PLAY_EVENTS_PER_SESSION,
+                                                  new StringDeserializer(),
+                                                  new LongDeserializer());
   }
 
   @After
   public void closeStreams() {
-    topologyTestDriver.close();
+    if (topologyTestDriver != null) {
+      topologyTestDriver.close();
+    }
     MockSchemaRegistry.dropScope(SCHEMA_REGISTRY_SCOPE);
   }
 
   @Test
   public void shouldCountPlayEventsBySession() {
-    final SpecificAvroSerializer<PlayEvent> playEventSerializer = new SpecificAvroSerializer<>();
-    playEventSerializer.configure(AVRO_SERDE_CONFIG, false);
-
     final long start = System.currentTimeMillis();
 
     final String userId = "erica";
-    topologyTestDriver.createInputTopic(SessionWindowsExample.PLAY_EVENTS,
-                                        new StringSerializer(),
-                                        playEventSerializer)
-      .pipeInput(userId, new PlayEvent(1L, 10L), start);
 
-    final List<KeyValue<String, Long>> firstSession = topologyTestDriver
-      .createOutputTopic(SessionWindowsExample.PLAY_EVENTS_PER_SESSION,
-                         new StringDeserializer(),
-                         new LongDeserializer())
-      .readKeyValuesToList();
+    input.pipeInput(userId, new PlayEvent(1L, 10L), start);
 
+    final List<KeyValue<String, Long>> firstSession = output.readKeyValuesToList();
     // should have a session for erica with start and end time the same
     assertThat(firstSession.get(0), equalTo(KeyValue.pair(userId + "@" +start+"->"+start, 1L)));
 
@@ -100,17 +105,9 @@ public class SessionWindowsExampleTest {
     // send another event that is after the inactivity gap, so we have 2 independent sessions
     final long secondSessionStart = start + SessionWindowsExample.INACTIVITY_GAP.toMillis() + 1;
 
-    topologyTestDriver.createInputTopic(SessionWindowsExample.PLAY_EVENTS,
-                                        new StringSerializer(),
-                                        playEventSerializer)
-      .pipeInput(userId, new PlayEvent(2L, 10L), secondSessionStart);
+    input.pipeInput(userId, new PlayEvent(2L, 10L), secondSessionStart);
 
-    final List<KeyValue<String, Long>> secondSession = topologyTestDriver
-      .createOutputTopic(SessionWindowsExample.PLAY_EVENTS_PER_SESSION,
-                         new StringDeserializer(),
-                         new LongDeserializer())
-      .readKeyValuesToList();
-
+    final List<KeyValue<String, Long>> secondSession = output.readKeyValuesToList();
     // should have created a new session
     assertThat(secondSession.get(0), equalTo(KeyValue.pair(userId + "@" + secondSessionStart + "->" + secondSessionStart,
                                                            1L)));
@@ -123,17 +120,9 @@ public class SessionWindowsExampleTest {
     // create an event between the two sessions to demonstrate merging
     final long mergeTime = start + SessionWindowsExample.INACTIVITY_GAP.toMillis() / 2;
 
-    topologyTestDriver.createInputTopic(SessionWindowsExample.PLAY_EVENTS,
-                                        new StringSerializer(),
-                                        playEventSerializer)
-      .pipeInput(userId, new PlayEvent(3L, 10L), mergeTime);
+    input.pipeInput(userId, new PlayEvent(3L, 10L), mergeTime);
 
-
-    final List<KeyValue<String, Long>> merged = topologyTestDriver
-      .createOutputTopic(SessionWindowsExample.PLAY_EVENTS_PER_SESSION,
-                         new StringDeserializer(),
-                         new LongDeserializer())
-      .readKeyValuesToList();
+    final List<KeyValue<String, Long>> merged = output.readKeyValuesToList();
     // should have merged all sessions into one and sent tombstones for the sessions that were
     // merged
     assertThat(merged, equalTo(Arrays.asList(KeyValue.pair(userId + "@" +start+"->"+start, null),
@@ -146,10 +135,6 @@ public class SessionWindowsExampleTest {
     // should only have the merged session in the store
     final List<KeyValue<Windowed<String>, Long>> mergedResults = fetchSessionsFromLocalStore(userId, playEventsPerSession);
     assertThat(mergedResults, equalTo(Collections.singletonList(KeyValue.pair(new Windowed<>(userId, new SessionWindow(start, secondSessionStart)), 3L))));
-
-
-
-
   }
 
   private List<KeyValue<Windowed<String>, Long>> fetchSessionsFromLocalStore(final String userId,
@@ -160,5 +145,4 @@ public class SessionWindowsExampleTest {
     }
     return results;
   }
-
 }
