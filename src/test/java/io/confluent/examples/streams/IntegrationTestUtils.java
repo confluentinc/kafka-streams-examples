@@ -97,12 +97,14 @@ public class IntegrationTestUtils {
     final KafkaConsumer<K, V> consumer = new KafkaConsumer<>(consumerConfig);
     consumer.subscribe(Collections.singletonList(topic));
     final Duration pollInterval = Duration.ofMillis(100L);
-    final int maxTotalPollTimeMs = 10000;
-    int totalPollTimeMs = 0;
+    final long maxTotalPollTimeMs = 10000L;
+    long totalPollTimeMs = 0;
     final List<KeyValue<K, V>> consumedValues = new ArrayList<>();
     while (totalPollTimeMs < maxTotalPollTimeMs && continueConsuming(consumedValues.size(), maxMessages)) {
-      totalPollTimeMs += pollInterval.toMillis();
+      final long pollStart = System.currentTimeMillis();
       final ConsumerRecords<K, V> records = consumer.poll(pollInterval);
+      final long pollEnd = System.currentTimeMillis();
+      totalPollTimeMs += (pollEnd - pollStart);
       for (final ConsumerRecord<K, V> record : records) {
         consumedValues.add(new KeyValue<>(record.key(), record.value()));
       }
@@ -112,6 +114,7 @@ public class IntegrationTestUtils {
   }
 
   private static boolean continueConsuming(final int messagesConsumed, final int maxMessages) {
+    System.err.println("mjsax: " + messagesConsumed + " -- " + maxMessages);
     return maxMessages <= 0 || messagesConsumed < maxMessages;
   }
 

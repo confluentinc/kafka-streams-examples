@@ -75,7 +75,6 @@ public class FraudService implements Service {
     log.info("Started Service " + getClass().getSimpleName());
   }
 
-  @SuppressWarnings("unchecked")
   private KafkaStreams processStreams(final String bootstrapServers, final String stateDir) {
 
     //Latch onto instances of the orders and inventory topics
@@ -103,6 +102,7 @@ public class FraudService implements Service {
         .selectKey((id, orderValue) -> orderValue.getOrder().getId());
 
     //Now branch the stream into two, for pass and fail, based on whether the windowed total is over Fraud Limit
+    @SuppressWarnings("unchecked")
     final KStream<String, OrderValue>[] forks = ordersWithTotals.branch(
         (id, orderValue) -> orderValue.getValue() >= FRAUD_LIMIT,
         (id, orderValue) -> orderValue.getValue() < FRAUD_LIMIT);
