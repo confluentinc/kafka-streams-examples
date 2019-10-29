@@ -101,7 +101,7 @@ public class StreamToStreamJoinIntegrationTest {
       JoinWindows.of(Duration.ofSeconds(5)),
       // In this specific example, we don't need to define join serdes explicitly because the key, left value, and
       // right value are all of type String, which matches our default serdes configured for the application.  However,
-      // we want to showcase the use of `Joined.with(...)` in case your code needs a different type setup.
+      // we want to showcase the use of `StreamJoined.with(...)` in case your code needs a different type setup.
       StreamJoined.with(
         Serdes.String(), /* key */
         Serdes.String(), /* left value */
