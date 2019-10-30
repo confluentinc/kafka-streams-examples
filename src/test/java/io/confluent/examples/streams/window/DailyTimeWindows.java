@@ -52,17 +52,6 @@ public class DailyTimeWindows extends Windows<TimeWindow> {
         return windows;
     }
 
-    @Deprecated
-    @Override
-    public long maintainMs() {
-        //By default the Window class have a maintainMs = 1 day
-        //So we need to make sure retention is at least than size + grace period
-        //Otherwise sanity check made by TimeWindowedKStreamImpl.materialize() method will throw an Exception
-
-        //NOTE: that this could be done either in the window it self or by configuring retention on the Materialize by calling Materialize.withRetention(XXX)
-        return size() + gracePeriodMs();
-    }
-
     @Override
     public long size() {
         return Duration.ofDays(1).toMillis();
