@@ -21,10 +21,12 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.JoinWindows;
-import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.StreamJoined;
 import org.apache.kafka.test.TestUtils;
 import org.junit.Test;
 
@@ -33,7 +35,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * End-to-end integration test that demonstrates how to perform a join between two KStreams.
@@ -98,8 +101,8 @@ public class StreamToStreamJoinIntegrationTest {
       JoinWindows.of(Duration.ofSeconds(5)),
       // In this specific example, we don't need to define join serdes explicitly because the key, left value, and
       // right value are all of type String, which matches our default serdes configured for the application.  However,
-      // we want to showcase the use of `Joined.with(...)` in case your code needs a different type setup.
-      Joined.with(
+      // we want to showcase the use of `StreamJoined.with(...)` in case your code needs a different type setup.
+      StreamJoined.with(
         Serdes.String(), /* key */
         Serdes.String(), /* left value */
         Serdes.String()  /* right value */
@@ -111,39 +114,29 @@ public class StreamToStreamJoinIntegrationTest {
 
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
       //
-      // Step 2: Publish ad impressions.
+      // Step 2: Setup input and output topics.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        adImpressionsTopic,
-        inputAdImpressions,
-        topologyTestDriver,
-        new StringSerializer(),
-        new StringSerializer()
-      );
+      final TestInputTopic<String, String> impressionInput = topologyTestDriver
+        .createInputTopic(adImpressionsTopic,
+                          new StringSerializer(),
+                          new StringSerializer());
+      final TestInputTopic<String, String> clickInput = topologyTestDriver
+        .createInputTopic(adClicksTopic,
+                          new StringSerializer(),
+                          new StringSerializer());
+      final TestOutputTopic<String, String> output = topologyTestDriver
+        .createOutputTopic(outputTopic, new StringDeserializer(), new StringDeserializer());
 
       //
-      // Step 3: Publish ad clicks.
+      // Step 3: Publish input data.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        adClicksTopic,
-        inputAdClicks,
-        topologyTestDriver,
-        new StringSerializer(),
-        new StringSerializer()
-      );
+      impressionInput.pipeKeyValueList(inputAdImpressions);
+      clickInput.pipeKeyValueList(inputAdClicks);
 
       //
       // Step 4: Verify the application's output data.
       //
-      final List<KeyValue<String, String>> actualResults =
-        IntegrationTestUtils.drainStreamOutput(
-          outputTopic,
-          topologyTestDriver,
-          new StringDeserializer(),
-          new StringDeserializer()
-        );
-      assertThat(actualResults).containsExactlyElementsOf(expectedResults);
+      assertThat(output.readKeyValuesToList(), equalTo(expectedResults));
     }
   }
-
 }

@@ -20,9 +20,10 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
@@ -35,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static io.confluent.examples.streams.IntegrationTestUtils.mkEntry;
 import static io.confluent.examples.streams.IntegrationTestUtils.mkMap;
@@ -110,26 +110,24 @@ public class WordCountLambdaIntegrationTest {
 
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
       //
-      // Step 2: Produce some input data to the input topic.
+      // Step 2: Setup input and output topics.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringSerializer()
-      );
+      final TestInputTopic<Void, String> input = topologyTestDriver
+        .createInputTopic(inputTopic,
+                          new IntegrationTestUtils.NothingSerde<>(),
+                          new StringSerializer());
+      final TestOutputTopic<String, Long> output = topologyTestDriver
+        .createOutputTopic(outputTopic, new StringDeserializer(), new LongDeserializer());
 
       //
-      // Step 3: Verify the application's output data.
+      // Step 3: Produce some input data to the input topic.
       //
-      final Map<String, Long> actualWordCounts = IntegrationTestUtils.drainTableOutput(
-        outputTopic,
-        topologyTestDriver,
-        new StringDeserializer(),
-        new LongDeserializer()
-      );
-      assertThat(actualWordCounts).isEqualTo(expectedWordCounts);
+      input.pipeValueList(inputValues);
+
+      //
+      // Step 4: Verify the application's output data.
+      //
+      assertThat(output.readKeyValuesToMap()).isEqualTo(expectedWordCounts);
     }
   }
 
