@@ -230,7 +230,7 @@ public class CustomWindowTest {
                     .withRetention(Duration.ofDays(1L).plus(gracePeriod)))
           // We only care about final result
           .suppress(Suppressed.untilWindowCloses(Suppressed.BufferConfig.unbounded()))
-           .toStream();
+          .toStream();
         sumOfOddNumbers.print(Printed.toSysOut());
         sumOfOddNumbers.to(outputTopic, Produced.with(WindowedSerdes.timeWindowedSerdeFrom(Integer.class), Serdes.Integer()));
         return builder.build();
