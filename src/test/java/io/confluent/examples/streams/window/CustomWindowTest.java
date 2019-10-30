@@ -213,7 +213,7 @@ public class CustomWindowTest {
     private Topology buildKafkaStreamTopology(final ZoneId zoneId) {
         final StreamsBuilder builder = new StreamsBuilder();
 
-        final Duration gracePeriod = Duration.ofMinutes(30);
+        final Duration gracePeriod = Duration.ofMinutes(30L);
 
         final KStream<String, Integer> input = builder.stream(inputTopic);
         final KStream<Windowed<Integer>, Integer> sumOfOddNumbers = input
