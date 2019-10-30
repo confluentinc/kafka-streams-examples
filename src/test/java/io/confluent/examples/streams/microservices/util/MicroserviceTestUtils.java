@@ -134,7 +134,7 @@ public class MicroserviceTestUtils {
   }
 
   public static void tailAllTopicsToConsole(final String bootstrapServers) {
-    for (final Topic t : Topics.ALL.values()) {
+    for (final Topic<?, ?> t : Topics.ALL.values()) {
       tailAllTopicsToConsole(t, bootstrapServers);
     }
   }
