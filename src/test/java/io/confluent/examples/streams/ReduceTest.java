@@ -23,6 +23,8 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Grouped;
@@ -38,7 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * How to aggregate messages via `groupByKey()` and `reduce()` to implement concatenation of data.
@@ -73,20 +76,30 @@ public class ReduceTest {
     expectedOutput.put(456, "stream all the things");
     expectedOutput.put(123, "hello world kafka streams");
 
-    // Step 1: Create the topology and its configuration
+    //
+    // Step 1: Create the topology and its configuration.
+    //
     final StreamsBuilder builder = createTopology();
     final Properties streamsConfiguration = createTopologyConfiguration();
 
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
-      // Step 2: Write the input
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic, inputRecords, topologyTestDriver, new IntegerSerializer(), new StringSerializer());
+      //
+      // Step 2: Setup input and output topics.
+      //
+      final TestInputTopic<Integer, String> input = topologyTestDriver
+        .createInputTopic(inputTopic, new IntegerSerializer(), new StringSerializer());
+      final TestOutputTopic<Integer, String> output = topologyTestDriver
+        .createOutputTopic(outputTopic, new IntegerDeserializer(), new StringDeserializer());
 
-      // Step 3: Validate the output
-      final Map<Integer, String> actualOutput = IntegrationTestUtils.drainTableOutput(
-        outputTopic, topologyTestDriver, new IntegerDeserializer(), new StringDeserializer());
-      assertThat(actualOutput).hasSameSizeAs(expectedOutput);
-      assertThat(actualOutput).containsAllEntriesOf(expectedOutput);
+      //
+      // Step 2: Write the input.
+      //
+      input.pipeKeyValueList(inputRecords);
+
+      //
+      // Step 3: Validate the output.
+      //
+      assertThat(output.readKeyValuesToMap(), equalTo(expectedOutput));
     }
   }
 
@@ -111,5 +124,4 @@ public class ReduceTest {
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
     return streamsConfiguration;
   }
-
 }

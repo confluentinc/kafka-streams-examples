@@ -23,6 +23,7 @@ import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TestInputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
@@ -88,11 +89,11 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
 
     final String inputTopic = "inputTopic";
 
-    final KStream<String, Long> input = builder.stream(inputTopic);
+    final KStream<String, Long> stream = builder.stream(inputTopic);
 
     // rolling MAX() aggregation
     final String maxStore = "max-store";
-    input.groupByKey().aggregate(
+    stream.groupByKey().aggregate(
       () -> Long.MIN_VALUE,
       (aggKey, value, aggregate) -> Math.max(value, aggregate),
       Materialized.as(maxStore)
@@ -100,7 +101,7 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
 
     // windowed MAX() aggregation
     final String maxWindowStore = "max-window-store";
-    input.groupByKey()
+    stream.groupByKey()
       .windowedBy(TimeWindows.of(Duration.ofMinutes(1L)).grace(Duration.ZERO))
       .aggregate(
         () -> Long.MIN_VALUE,
@@ -109,18 +110,19 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
 
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
       //
-      // Step 2: Produce some input data to the input topic.
+      // Step 2: Setup input topic.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        inputUserClicks,
-        topologyTestDriver,
-        new StringSerializer(),
-        new LongSerializer()
-      );
+      final TestInputTopic<String, Long> input = topologyTestDriver
+        .createInputTopic(inputTopic,
+                          new StringSerializer(),
+                          new LongSerializer());
+      //
+      // Step 3: Produce some input data to the input topic.
+      //
+      input.pipeKeyValueList(inputUserClicks);
 
       //
-      // Step 3: Validate the application's state by interactively querying its state stores.
+      // Step 4: Validate the application's state by interactively querying its state stores.
       //
       final ReadOnlyKeyValueStore<String, Long> keyValueStore =
         topologyTestDriver.getKeyValueStore(maxStore);

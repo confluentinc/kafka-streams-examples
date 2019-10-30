@@ -15,7 +15,6 @@
  */
 package io.confluent.examples.streams;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -23,6 +22,8 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
@@ -39,7 +40,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -136,10 +136,11 @@ public class StateStoresInTheDSLIntegrationTest {
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
     // Create a state store manually.
-    final StoreBuilder<KeyValueStore<String, Long>> wordCountsStore = Stores.keyValueStoreBuilder(
-      Stores.persistentKeyValueStore("WordCountsStore"),
-      Serdes.String(),
-      Serdes.Long())
+    final StoreBuilder<KeyValueStore<String, Long>> wordCountsStore = Stores
+      .keyValueStoreBuilder(
+        Stores.persistentKeyValueStore("WordCountsStore"),
+        Serdes.String(),
+        Serdes.Long())
       .withCachingEnabled();
 
     // Important (1 of 2): You must add the state store to the topology, otherwise your application
@@ -163,26 +164,23 @@ public class StateStoresInTheDSLIntegrationTest {
 
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
       //
-      // Step 2: Produce some input data to the input topic.
+      // Step 2: Setup input and output topics.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringSerializer()
-      );
+      final TestInputTopic<Void, String> input = topologyTestDriver
+        .createInputTopic(inputTopic,
+                          new IntegrationTestUtils.NothingSerde<>(),
+                          new StringSerializer());
+      final TestOutputTopic<String, Long> output = topologyTestDriver
+        .createOutputTopic(outputTopic, new StringDeserializer(), new LongDeserializer());
+      //
+      // Step 3: Produce some input data to the input topic.
+      //
+      input.pipeValueList(inputValues);
 
       //
-      // Step 3: Verify the application's output data.
+      // Step 4: Verify the application's output data.
       //
-      final List<KeyValue<String, Long>> actualValues = IntegrationTestUtils.drainStreamOutput(
-        outputTopic,
-        topologyTestDriver,
-        new StringDeserializer(),
-        new LongDeserializer()
-      );
-      assertThat(actualValues).isEqualTo(expectedRecords);
+      assertThat(output.readKeyValuesToList()).isEqualTo(expectedRecords);
     }
   }
 

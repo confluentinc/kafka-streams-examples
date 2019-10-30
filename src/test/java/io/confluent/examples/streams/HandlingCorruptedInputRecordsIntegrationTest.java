@@ -16,6 +16,7 @@
 package io.confluent.examples.streams;
 
 import org.apache.kafka.common.errors.SerializationException;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.Serde;
@@ -24,6 +25,8 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
@@ -35,7 +38,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * End-to-end integration test that demonstrates how to handle corrupt input records (think: poison
@@ -52,9 +56,6 @@ public class HandlingCorruptedInputRecordsIntegrationTest {
 
   @Test
   public void shouldIgnoreCorruptInputRecords() {
-    final List<Long> inputValues = Arrays.asList(1L, 2L, 3L);
-    final List<Long> expectedValues = inputValues.stream().map(x -> 2 * x).collect(Collectors.toList());
-
     //
     // Step 1: Configure and start the processor topology.
     //
@@ -72,10 +73,10 @@ public class HandlingCorruptedInputRecordsIntegrationTest {
     final String inputTopic = "inputTopic";
     final String outputTopic = "outputTopic";
 
-    final KStream<byte[], byte[]> input = builder.stream(inputTopic);
+    final KStream<byte[], byte[]> stream = builder.stream(inputTopic);
 
     // Note how the returned stream is of type `KStream<String, Long>`.
-    final KStream<String, Long> doubled = input.flatMap(
+    final KStream<String, Long> doubled = stream.flatMap(
       (k, v) -> {
         try {
           // Attempt deserialization
@@ -100,39 +101,40 @@ public class HandlingCorruptedInputRecordsIntegrationTest {
     doubled.to(outputTopic, Produced.with(stringSerde, longSerde));
 
 
+    final List<Long> inputValues = Arrays.asList(1L, 2L, 3L);
+    final LongSerializer longSerializer = new LongSerializer();
+    final List<byte[]> serializedInputValues =
+        inputValues.stream().map(x -> longSerializer.serialize(inputTopic, x)).collect(Collectors.toList());
+    final List<Long> expectedValues = inputValues.stream().map(x -> 2 * x).collect(Collectors.toList());
+
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
       //
-      // Step 2: Produce some corrupt input data to the input topic.
+      // Step 2: Setup input and output topics.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        Collections.singletonList(new KeyValue<>(null, "corrupt")),
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringSerializer()
-      );
+      // setup input topic as byte[]-value type to allow ingesting corrupted data
+      final TestInputTopic<Void, byte[]> input = topologyTestDriver
+        .createInputTopic(inputTopic,
+                          new IntegrationTestUtils.NothingSerde<>(),
+                          new ByteArraySerializer());
+      final TestOutputTopic<Void, Long> output = topologyTestDriver
+        .createOutputTopic(outputTopic,
+                           new IntegrationTestUtils.NothingSerde<>(),
+                           new LongDeserializer());
 
       //
-      // Step 3: Produce some (valid) input data to the input topic.
+      // Step 3: Produce some corrupt input data to the input topic.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new LongSerializer()
-      );
+      input.pipeInput(new StringSerializer().serialize(inputTopic, "corrupt"));
 
       //
-      // Step 4: Verify the application's output data.
+      // Step 4: Produce some (valid) input data to the input topic.
       //
-      final List<Long> actualValues = IntegrationTestUtils.drainStreamOutput(
-        outputTopic,
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new LongDeserializer()
-      ).stream().map(kv -> kv.value).collect(Collectors.toList());
-      assertThat(actualValues).isEqualTo(expectedValues);
+      input.pipeValueList(serializedInputValues);
+
+      //
+      // Step 5: Verify the application's output data.
+      //
+      assertThat(output.readValuesToList(), equalTo(expectedValues));
     }
   }
 }
