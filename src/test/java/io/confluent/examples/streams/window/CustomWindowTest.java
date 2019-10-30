@@ -23,6 +23,7 @@ import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.apache.kafka.common.serialization.IntegerSerializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
@@ -37,6 +38,7 @@ import org.apache.kafka.streams.kstream.TimeWindowedDeserializer;
 import org.apache.kafka.streams.kstream.Windowed;
 import org.apache.kafka.streams.kstream.WindowedSerdes;
 import org.apache.kafka.streams.kstream.internals.TimeWindow;
+import org.apache.kafka.streams.state.WindowStore;
 import org.apache.kafka.streams.test.ConsumerRecordFactory;
 import org.apache.kafka.streams.test.OutputVerifier;
 import org.apache.kafka.test.TestUtils;
@@ -211,16 +213,24 @@ public class CustomWindowTest {
     private Topology buildKafkaStreamTopology(final ZoneId zoneId) {
         final StreamsBuilder builder = new StreamsBuilder();
 
+        final Duration gracePeriod = Duration.ofMinutes(30L);
+
         final KStream<String, Integer> input = builder.stream(inputTopic);
         final KStream<Windowed<Integer>, Integer> sumOfOddNumbers = input
-                .selectKey((k, v) -> 1)
-                .groupByKey()
-                .windowedBy(new DailyTimeWindows(zoneId, windowStartHour, Duration.ofMinutes(30)))
-                // A simple sum of value
-                .reduce((v1, v2) -> v1 + v2, Materialized.with(Serdes.Integer(), Serdes.Integer()))
-                // We only care about final result
-                .suppress(Suppressed.untilWindowCloses(Suppressed.BufferConfig.unbounded()))
-                .toStream();
+          .selectKey((k, v) -> 1)
+          .groupByKey()
+          .windowedBy(new DailyTimeWindows(zoneId, windowStartHour, gracePeriod))
+          // A simple sum of value
+          .reduce(Integer::sum,
+                  Materialized.<Integer, Integer, WindowStore<Bytes, byte[]>>with(Serdes.Integer(),
+                                                                                  Serdes.Integer())
+                    // the default store retention time is 1 day;
+                    // need to explicitly increase the retention time
+                    // to allow for a 1-day window plus configured grace period
+                    .withRetention(Duration.ofDays(1L).plus(gracePeriod)))
+          // We only care about final result
+          .suppress(Suppressed.untilWindowCloses(Suppressed.BufferConfig.unbounded()))
+          .toStream();
         sumOfOddNumbers.print(Printed.toSysOut());
         sumOfOddNumbers.to(outputTopic, Produced.with(WindowedSerdes.timeWindowedSerdeFrom(Integer.class), Serdes.Integer()));
         return builder.build();
