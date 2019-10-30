@@ -226,7 +226,7 @@ public class CustomWindowTest {
                                                                                   Serdes.Integer())
                     // the default store retention time is 1 day;
                     // need to explicitly increase the retention time
-                    // to allow for a 1-day window plus configured retention time
+                    // to allow for a 1-day window plus configured grace period
                     .withRetention(Duration.ofDays(1L).plus(gracePeriod)))
           // We only care about final result
           .suppress(Suppressed.untilWindowCloses(Suppressed.BufferConfig.unbounded()))
