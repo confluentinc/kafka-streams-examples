@@ -6,4 +6,5 @@ dockerfile {
     mvnSkipDeploy = true
     upstreamProjects = 'confluentinc/rest-utils'
     nodeLabel = 'docker-oraclejdk8-compose-swarm'
+    cron = ''
 }
