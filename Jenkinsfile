@@ -7,4 +7,6 @@ dockerfile {
     upstreamProjects = 'confluentinc/rest-utils'
     nodeLabel = 'docker-oraclejdk8-compose-swarm'
     cron = ''
+    cpImages = true
+    osTypes = ['deb9', 'rhel8']
 }
