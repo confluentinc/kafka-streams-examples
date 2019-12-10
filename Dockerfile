@@ -22,7 +22,7 @@ FROM ${DOCKER_UPSTREAM_REGISTRY}confluentinc/cp-base-new:${DOCKER_UPSTREAM_TAG}
 ARG STREAMS_VERSION
 ARG ARTIFACT_ID
 
-MAINTAINER partner-support@confluent.io
+LABEL MAINTAINER partner-support@confluent.io
 LABEL io.confluent.docker=true
 ARG COMMIT_ID=unknown
 LABEL io.confluent.docker.git.id=$COMMIT_ID
