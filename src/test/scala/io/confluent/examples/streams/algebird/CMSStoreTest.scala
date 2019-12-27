@@ -26,7 +26,7 @@ import org.apache.kafka.common.utils.LogContext
 import org.apache.kafka.streams.processor.internals.MockStreamsMetrics
 import org.apache.kafka.streams.state.KeyValueStoreTestDriver
 import org.apache.kafka.streams.state.internals.ThreadCache
-import org.apache.kafka.test.{InternalMockProcessorContext, NoOpRecordCollector, TestUtils}
+import org.apache.kafka.test.{InternalMockProcessorContext, MockRecordCollector, TestUtils}
 import org.assertj.core.api.Assertions.assertThat
 import org.junit._
 import org.scalatest.junit.AssertionsForJUnit
@@ -163,7 +163,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     val processorContext = {
       // We must use a "spying" RecordCollector because, unfortunately, Kafka's
       // KeyValueStoreTestDriver is not providing any such facilities.
-      val observingCollector = new NoOpRecordCollector() {
+      val observingCollector = new MockRecordCollector() {
         override def send[K, V](topic: String,
                                 key: K,
                                 value: V,
