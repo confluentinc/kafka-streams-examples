@@ -379,7 +379,9 @@ $ mvn package # Packages the application examples into a standalone jar
 
 | Branch (this repo)                      | Confluent Platform | Apache Kafka      |
 | ----------------------------------------|--------------------|-------------------|
-| [5.4.x](../../../tree/5.4.x/)\*         | 5.4.0-SNAPSHOT     | 2.4.0-SNAPSHOT    |
+| [5.4.0-post](../../../tree/5.4.0-post/) | 5.4.0              | 2.4.0             |
+| [5.3.2-post](../../../tree/5.3.0-post/) | 5.3.2              | 2.3.1             |
+| [5.3.1-post](../../../tree/5.3.0-post/) | 5.3.1              | 2.3.0             |
 | [5.3.0-post](../../../tree/5.3.0-post/) | 5.3.0              | 2.3.0             |
 | [5.2.2-post](../../../tree/5.2.2-post/) | 5.2.2              | 2.2.1             |
 | [5.2.1-post](../../../tree/5.2.1-post/) | 5.2.1              | 2.2.1             |
@@ -388,8 +390,6 @@ $ mvn package # Packages the application examples into a standalone jar
 | [4.1.0-post](../../../tree/4.1.0-post/) | 4.1.0              | 1.1.0             |
 | [4.0.0-post](../../../tree/4.4.0-post/) | 4.0.0              | 1.0.0             |
 | [3.3.0-post](../../../tree/3.3.0-post/) | 3.3.0              | 0.11.0            |
-
-\*You must manually build the `2.3` version of Apache Kafka and the `5.3.x` version of Confluent Platform.  See instructions above.
 
 The `master` branch of this repository represents active development, and may require additional steps on your side to
 make it compile.  Check this README as well as [pom.xml](pom.xml) for any such information.
