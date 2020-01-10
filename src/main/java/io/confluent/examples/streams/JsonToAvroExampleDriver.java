@@ -15,11 +15,11 @@
  */
 package io.confluent.examples.streams;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.examples.streams.avro.WikiFeed;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
-import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,7 +35,8 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.codehaus.jackson.map.ObjectMapper;
+
+import java.io.IOException;
 
 /**
  * This is a sample driver for the {@link JsonToAvroExample} and

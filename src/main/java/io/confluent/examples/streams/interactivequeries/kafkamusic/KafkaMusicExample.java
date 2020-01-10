@@ -471,11 +471,16 @@ public class KafkaMusicExample {
   static class TopFiveSongs implements Iterable<SongPlayCount> {
     private final Map<Long, SongPlayCount> currentSongs = new HashMap<>();
     private final TreeSet<SongPlayCount> topFive = new TreeSet<>((o1, o2) -> {
-      final int result = o2.getPlays().compareTo(o1.getPlays());
+      final Long o1Plays = o1.getPlays();
+      final Long o2Plays = o2.getPlays();
+
+      final int result = o2Plays.compareTo(o1Plays);
       if (result != 0) {
         return result;
       }
-      return o1.getSongId().compareTo(o2.getSongId());
+      final Long o1SongId = o1.getSongId();
+      final Long o2SongId = o2.getSongId();
+      return o1SongId.compareTo(o2SongId);
     });
 
     @Override
