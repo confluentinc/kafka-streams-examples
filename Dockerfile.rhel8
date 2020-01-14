@@ -20,12 +20,18 @@ ARG DOCKER_UPSTREAM_TAG=latest
 FROM ${DOCKER_UPSTREAM_REGISTRY}confluentinc/cp-base-new:${DOCKER_UPSTREAM_TAG}
 
 ARG STREAMS_VERSION
+ARG PROJECT_VERSION
 ARG ARTIFACT_ID
+ARG GIT_COMMIT
 
-LABEL MAINTAINER partner-support@confluent.io
+LABEL maintainer="partner-support@confluent.io"
+LABEL vendor="Confluent"
+LABEL version=$GIT_COMMIT
+LABEL release=$PROJECT_VERSION
+LABEL name=$ARTIFACT_ID
+LABEL summary="This image contains code examples that demonstrate how to implement real-time applications and event-driven microservices using the Streams API of [Apache Kafka](http://kafka.apache.org/) aka Kafka Streams."
 LABEL io.confluent.docker=true
-ARG COMMIT_ID=unknown
-LABEL io.confluent.docker.git.id=$COMMIT_ID
+LABEL io.confluent.docker.git.id=$GIT_COMMIT
 ARG BUILD_NUMBER=-1
 LABEL io.confluent.docker.build.number=$BUILD_NUMBER
 
