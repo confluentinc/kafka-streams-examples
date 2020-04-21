@@ -185,11 +185,8 @@ repository may have different Kafka requirements.
 > $ cd kafka
 > $ git checkout trunk
 >
-> # Bootstrap gradle wrapper
-> $ gradle
->
 > # Now build and install Kafka locally
-> $ ./gradlew clean installAll
+> $ ./gradlew clean && ./gradlewAll install
 > ```
 
 
