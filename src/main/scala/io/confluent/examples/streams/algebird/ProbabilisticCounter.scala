@@ -11,9 +11,9 @@ class ProbabilisticCounter(val cmsStoreName: String)
   extends Transformer[String, String, KeyValue[String, Long]] {
 
   private var cmsState: CMSStore[String] = _
-  private var processorContext: ProcessorContext = _
+  private var processorContext: ProcessorContext[Object, Object] = _
 
-  override def init(processorContext: ProcessorContext): Unit = {
+  override def init(processorContext: ProcessorContext[Object, Object]): Unit = {
     this.processorContext = processorContext
     cmsState = this.processorContext.getStateStore(cmsStoreName).asInstanceOf[CMSStore[String]]
   }

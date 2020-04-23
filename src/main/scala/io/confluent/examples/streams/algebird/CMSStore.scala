@@ -185,7 +185,7 @@ class CMSStore[T: CMSHasher](override val name: String,
   /**
     * Initializes this store, including restoring the store's state from its changelog.
     */
-  override def init(context: ProcessorContext, root: StateStore) {
+  override def init(context: ProcessorContext[_, _], root: StateStore) {
     val serdes = new StateSerdes[Integer, TopCMS[T]](
       name,
       Serdes.Integer(),

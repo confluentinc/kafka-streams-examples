@@ -29,14 +29,14 @@ import org.apache.kafka.streams.state.StateSerdes
   * with the [[org.apache.kafka.common.utils.Bytes]] class.
   */
 class CMSStoreChangeLogger[K, V](val storeName: String,
-                                 val context: ProcessorContext,
+                                 val context: ProcessorContext[_, _],
                                  val partition: Int,
                                  val serialization: StateSerdes[K, V]) {
 
   private val topic = ProcessorStateManager.storeChangelogTopic(context.applicationId, storeName)
   private val collector = context.asInstanceOf[RecordCollector.Supplier].recordCollector
 
-  def this(storeName: String, context: ProcessorContext, serialization: StateSerdes[K, V]) {
+  def this(storeName: String, context: ProcessorContext[_, _], serialization: StateSerdes[K, V]) {
     this(storeName, context, context.taskId.partition, serialization)
   }
 
