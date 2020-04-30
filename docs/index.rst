@@ -66,9 +66,9 @@ Ready now?  Let's start!
 
       cd kafka-streams-examples/
 
-#. Switch to the `|release|-post` branch
+#. Switch to the ``|release|-post`` branch
 
-   ::
+   .. codewithvars:: bash
      
       git checkout |release|-post
 
@@ -117,6 +117,7 @@ You should see output similar to following, though here the output is pretty-pri
 You should see output similar to following, though here the output is pretty-printed so that it's easier to read:
 
 ::
+  
     [
       {
         "artist": "Jello Biafra And The Guantanamo School Of Medicine",
@@ -159,11 +160,12 @@ This means you can easily run any of these applications from inside the containe
 
 Example: Launch the WordCount demo application (inside the `kafka-music-application` container):
 
-::
-  $ docker-compose exec kafka-music-application \
-          java -cp /usr/share/java/kafka-streams-examples/kafka-streams-examples-|release|-standalone.jar \
-          io.confluent.examples.streams.WordCountLambdaExample \
-          kafka:29092
+.. codewithvars:: bash
+  
+   docker-compose exec kafka-music-application \
+        java -cp /usr/share/java/kafka-streams-examples/kafka-streams-examples-|release|-standalone.jar \
+        io.confluent.examples.streams.WordCountLambdaExample \
+        kafka:29092
 
 Of course you can also modify the tutorial's ``docker-compose.yml`` for repeatable deployments.
 
@@ -205,7 +207,7 @@ Inspect the "play-events" input topic, which contains messages in Avro format:
 
 Use the kafka-avro-console-consumer to read the "play-events" topic:
 
-::
+.. codewithvars:: bash
   
     $ docker-compose exec schema-registry \
         kafka-avro-console-consumer \
@@ -222,7 +224,8 @@ Use the kafka-avro-console-consumer to read the "play-events" topic:
 
 Inspect the "song-feed" input topic, which contains messages in Avro format:
 
-::
+.. codewithvars:: bash
+  
     # Use the kafka-avro-console-consumer to read the "song-feed" topic
     $ docker-compose exec schema-registry \
         kafka-avro-console-consumer \
