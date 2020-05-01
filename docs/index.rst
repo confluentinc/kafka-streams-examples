@@ -1,4 +1,4 @@
-.. _docker-tutorial_kafka-streams-examples:
+codewithvars.. _docker-tutorial_kafka-streams-examples:
 
 |ak| Streams Demo Application
 -----------------------------
@@ -66,9 +66,9 @@ Ready now?  Let's start!
 
       cd kafka-streams-examples/
 
-#. Switch to the ``|release|-post`` branch
+#. Switch to the |release|-post branch
 
-   .. litwithvars:: bash
+   .. codewithvars:: bash
      
       git checkout |release|-post
 
@@ -160,7 +160,7 @@ This means you can easily run any of these applications from inside the containe
 
 Example: Launch the WordCount demo application (inside the `kafka-music-application` container):
 
-.. litwithvars:: bash
+.. codewithvars:: bash
   
    docker-compose exec kafka-music-application \
         java -cp /usr/share/java/kafka-streams-examples/kafka-streams-examples-|release|-standalone.jar \
