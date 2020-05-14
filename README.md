@@ -271,7 +271,7 @@ Kafka Streams examples via:
 #
 $ mvn clean package
 
-# >>> Creates target/kafka-streams-examples-5.0.3-standalone.jar
+# >>> Creates target/kafka-streams-examples-5.0.4-standalone.jar
 ```
 
 You can now run the example applications as follows:
@@ -279,7 +279,7 @@ You can now run the example applications as follows:
 ```shell
 # Run an example application from the standalone jar.
 # Here: `WordCountLambdaExample`
-$ java -cp target/kafka-streams-examples-5.0.3-standalone.jar \
+$ java -cp target/kafka-streams-examples-5.0.4-standalone.jar \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
 
@@ -295,7 +295,7 @@ If you want to turn on log4j while running your example application, you can edi
 ```shell
 # Run an example application from the standalone jar.
 # Here: `WordCountLambdaExample`
-$ java -cp target/kafka-streams-examples-5.0.3-standalone.jar \
+$ java -cp target/kafka-streams-examples-5.0.4-standalone.jar \
   -Dlog4j.configuration=file:src/main/resources/log4j.properties \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
