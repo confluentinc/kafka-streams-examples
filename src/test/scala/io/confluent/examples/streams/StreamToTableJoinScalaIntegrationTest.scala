@@ -24,7 +24,7 @@ import org.apache.kafka.streams.{KeyValue, StreamsConfig, TopologyTestDriver}
 import org.apache.kafka.test.TestUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.junit._
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 
 /**
   * End-to-end integration test that demonstrates how to perform a join between a KStream and a

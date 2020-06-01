@@ -27,7 +27,7 @@ import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
 import org.junit._
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 
 /**
   * End-to-end integration test that demonstrates how to work on Specific Avro data.
