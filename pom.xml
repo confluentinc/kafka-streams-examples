@@ -56,7 +56,8 @@
         <java.version>1.8</java.version>
         <licenses.version>6.0.0-SNAPSHOT</licenses.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <scala.version>${kafka.scala.version}.2</scala.version>
+        <kafka.scala.version>2.13</kafka.scala.version>
+        <scala.version>2.13.2</scala.version>
         <scalatest.version>3.1.2</scalatest.version>
         <!-- The default is deb9 -->
         <docker.os_type>deb9</docker.os_type>
