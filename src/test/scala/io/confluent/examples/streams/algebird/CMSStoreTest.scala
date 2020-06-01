@@ -29,8 +29,10 @@ import org.apache.kafka.streams.state.internals.ThreadCache
 import org.apache.kafka.test.{InternalMockProcessorContext, MockRecordCollector, TestUtils}
 import org.assertj.core.api.Assertions.assertThat
 import org.junit._
-import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.junit.AssertionsForJUnit
+import org.scalatestplus.mockito.MockitoSugar
+
+import scala.collection.MapView
 
 class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
 
@@ -129,7 +131,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     // Then
     assertThat(store.totalCount).isEqualTo(items.size)
     assertThat(store.heavyHitters).isEqualTo(items.map(x => x._1).toSet)
-    val expWordCounts: Map[String, Int] = items.map(x => x._1).groupBy(identity).mapValues(_.length)
+    val expWordCounts: MapView[String, Int] = items.map(x => x._1).groupBy(identity).view.mapValues(_.length)
     expWordCounts.foreach { case (word, count) => assertThat(store.get(word)).isEqualTo(count) }
   }
 
@@ -254,7 +256,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     processorContext.restore(store.name, driver.restoredEntries())
 
     // Then
-    val expWordCounts: Map[String, Int] = items.groupBy(identity).mapValues(_.length)
+    val expWordCounts: MapView[String, Int] = items.groupBy(identity).view.mapValues(_.length)
     expWordCounts.foreach { case (word, count) => assertThat(store.get(word)).isEqualTo(count) }
   }
 
@@ -306,7 +308,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     processorContext.restore(store.name, driver.restoredEntries())
 
     // Then
-    val expWordCounts: Map[String, Int] = expectedItems.groupBy(identity).mapValues(_.length)
+    val expWordCounts: MapView[String, Int] = expectedItems.groupBy(identity).view.mapValues(_.length)
     expWordCounts.foreach { case (word, count) => assertThat(store.get(word)).isEqualTo(count) }
     // Note: The asserts below work only because, given the test setup, we are sure not to run into
     // CMS hash collisions that would lead to non-zero counts even for un-counted items.

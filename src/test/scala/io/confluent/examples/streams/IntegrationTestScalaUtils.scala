@@ -100,8 +100,8 @@ object IntegrationTestScalaUtils {
 
   def drainStreamOutput[K, V](topic: String, driver: TopologyTestDriver)
                              (implicit keyDeser: Deserializer[K], valueDeser: Deserializer[V]): Seq[KeyValue[K, V]] = {
-    import collection.JavaConverters._
-    driver.createOutputTopic(topic, keyDeser, valueDeser).readKeyValuesToList().asScala
+    import scala.jdk.javaapi.CollectionConverters
+    CollectionConverters.asScala(driver.createOutputTopic(topic, keyDeser, valueDeser).readKeyValuesToList()).toSeq
   }
 
   def drainTableOutput[K, V](topic: String, driver: TopologyTestDriver)

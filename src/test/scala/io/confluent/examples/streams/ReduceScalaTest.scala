@@ -22,7 +22,7 @@ import org.apache.kafka.streams.scala.kstream.{KStream, KTable}
 import org.apache.kafka.streams.{KeyValue, StreamsConfig, TopologyTestDriver}
 import org.apache.kafka.test.TestUtils
 import org.junit._
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 
 /**
   * End-to-end integration test that shows how to aggregate messages via `groupByKey()` and `reduce()`.

@@ -275,6 +275,18 @@
             <version>${scalatest.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.scalatestplus</groupId>
+            <artifactId>junit-4-12_2.13</artifactId>
+            <version>3.1.2.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scalatestplus</groupId>
+            <artifactId>scalatestplus-mockito_2.13</artifactId>
+            <version>1.0.0-M2</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -355,7 +367,6 @@
                         <!-- Enable recommended additional warnings. -->
                         <arg>-Xlint</arg>
                         <!-- Warn if an argument list is modified to match the receiver. -->
-                        <arg>-Ywarn-adapted-args</arg>
                         <arg>-Ywarn-dead-code</arg>
                         <!-- Fail on compiler warnings -->
                         <!--TODO: enable this once we have warnings under control<arg>-Xfatal-warnings</arg>-->
