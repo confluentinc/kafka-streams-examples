@@ -127,8 +127,7 @@ public class EmailService implements Service {
     void sendEmail(EmailTuple details);
   }
 
-  public class EmailTuple {
-
+  public static class EmailTuple {
     public Order order;
     public Payment payment;
     public Customer customer;
