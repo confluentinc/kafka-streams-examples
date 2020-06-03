@@ -196,7 +196,7 @@ public class KafkaMusicExample {
           "[<schema.registry.url> (optional, default: " + DEFAULT_SCHEMA_REGISTRY_URL + ")] " +
           "[<hostnameForRestEndPoint> (optional, default: " + DEFAULT_REST_ENDPOINT_HOSTNAME + ")]");
     }
-    final int restEndpointPort = Integer.valueOf(args[0]);
+    final int restEndpointPort = Integer.parseInt(args[0]);
     final String bootstrapServers = args.length > 1 ? args[1] : "localhost:9092";
     final String schemaRegistryUrl = args.length > 2 ? args[2] : "http://localhost:8081";
     final String restEndpointHostname = args.length > 3 ? args[3] : DEFAULT_REST_ENDPOINT_HOSTNAME;
