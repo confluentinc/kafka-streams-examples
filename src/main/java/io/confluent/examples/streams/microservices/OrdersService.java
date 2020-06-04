@@ -264,6 +264,7 @@ public class OrdersService implements Service {
           });
       asyncResponse.resume(bean);
     } catch (final Exception swallowed) {
+      log.warn("GET failed.", swallowed);
     }
   }
 

@@ -20,6 +20,7 @@ import org.apache.kafka.common.serialization.Deserializer;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.nio.BufferUnderflowException;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -50,7 +51,9 @@ public class PriorityQueueDeserializer<T> implements Deserializer<PriorityQueue<
             final int records = dataInputStream.readInt();
             for (int i = 0; i < records; i++) {
                 final byte[] valueBytes = new byte[dataInputStream.readInt()];
-                dataInputStream.read(valueBytes);
+                if (dataInputStream.read(valueBytes) != valueBytes.length) {
+                    throw new BufferUnderflowException();
+                };
                 priorityQueue.add(valueDeserializer.deserialize(s, valueBytes));
             }
         } catch (final IOException e) {
