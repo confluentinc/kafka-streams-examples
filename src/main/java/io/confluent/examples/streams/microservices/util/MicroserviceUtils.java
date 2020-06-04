@@ -4,6 +4,8 @@ import io.confluent.examples.streams.avro.microservices.Product;
 import io.confluent.examples.streams.microservices.Service;
 import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
+
+import org.apache.commons.compress.utils.Charsets;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -117,7 +119,7 @@ public class MicroserviceUtils {
 
         @Override
         public byte[] serialize(final String topic, final Product pt) {
-          return pt.toString().getBytes(Charset.defaultCharset());
+          return pt.toString().getBytes(Charsets.UTF_8);
         }
 
         @Override
@@ -135,7 +137,7 @@ public class MicroserviceUtils {
 
         @Override
         public Product deserialize(final String topic, final byte[] bytes) {
-          return Product.valueOf(new String(bytes, Charset.defaultCharset()));
+          return Product.valueOf(new String(bytes, Charsets.UTF_8));
         }
 
         @Override
