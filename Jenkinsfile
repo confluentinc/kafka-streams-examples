@@ -6,5 +6,5 @@ dockerfile {
     mvnSkipDeploy = true
     upstreamProjects = 'confluentinc/rest-utils'
     withPush = true
-    slackChannel = 'streams-oncall'
+    slackChannel = 'streams-alerts'
 }
