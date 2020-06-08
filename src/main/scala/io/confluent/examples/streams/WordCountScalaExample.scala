@@ -89,7 +89,7 @@ import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
   * 6) Once you're done with your experiments, you can stop this example via `Ctrl-C`. If needed,
   * also stop the Kafka broker (`Ctrl-C`), and only then stop the ZooKeeper instance (`Ctrl-C`).
   **/
-class WordCountScalaExample extends App {
+object WordCountScalaExample extends App {
 
   import org.apache.kafka.streams.scala.Serdes._
   import org.apache.kafka.streams.scala.ImplicitConversions._
