@@ -4,6 +4,8 @@ import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.OrderState;
 import io.confluent.examples.streams.avro.microservices.Product;
 
+import java.util.Objects;
+
 /**
  * Simple DTO used by the REST interface
  */
@@ -78,7 +80,7 @@ public class OrderBean {
     if (Double.compare(orderBean.price, this.price) != 0) {
       return false;
     }
-    if (this.id != null ? !this.id.equals(orderBean.id) : orderBean.id != null) {
+    if (!Objects.equals(this.id, orderBean.id)) {
       return false;
     }
     if (this.state != orderBean.state) {

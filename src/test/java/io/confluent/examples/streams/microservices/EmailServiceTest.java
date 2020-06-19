@@ -12,11 +12,13 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.Properties;
 
 import static io.confluent.examples.streams.avro.microservices.OrderState.CREATED;
 import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
 import static io.confluent.examples.streams.microservices.domain.Schemas.Topics;
 import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
+import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class EmailServiceTest extends MicroserviceTestUtils {
@@ -33,7 +35,9 @@ public class EmailServiceTest extends MicroserviceTestUtils {
     CLUSTER.createTopic(Topics.ORDERS.name());
     CLUSTER.createTopic(Topics.CUSTOMERS.name());
     CLUSTER.createTopic(Topics.PAYMENTS.name());
-    Schemas.configureSerdesWithSchemaRegistryUrl(CLUSTER.schemaRegistryUrl());
+    final Properties config = new Properties();
+    config.put(SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl());
+    Schemas.configureSerdes(config);
   }
 
   @After
@@ -63,7 +67,7 @@ public class EmailServiceTest extends MicroserviceTestUtils {
     send(Topics.PAYMENTS, Collections.singleton(new KeyValue<>(payment.getId(), payment)));
 
     //When
-    emailService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
+    emailService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath(), new Properties());
 
     //Then
     TestUtils.waitForCondition(() -> complete, 60000L, "Email was never sent.");

@@ -4,6 +4,9 @@ public class Paths {
 
   private final String base;
 
+  public Paths(final String url) {
+    base = url;
+  }
   public Paths(final String host, final int port) {
     base = "http://" + host + ":" + port;
   }
