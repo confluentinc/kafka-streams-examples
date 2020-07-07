@@ -143,7 +143,7 @@ public class FraudService implements Service {
 
     final Options opts = new Options();
     opts.addOption(Option.builder("b")
-            .longOpt("bootstrap-server")
+            .longOpt("bootstrap-servers")
             .hasArg()
             .desc("Kafka cluster bootstrap server string (ex: broker:9092)")
             .build());
@@ -187,7 +187,7 @@ public class FraudService implements Service {
     Schemas.configureSerdes(defaultConfig);
 
     service.start(
-            cl.getOptionValue("bootstrap-server", DEFAULT_BOOTSTRAP_SERVERS),
+            cl.getOptionValue("bootstrap-servers", DEFAULT_BOOTSTRAP_SERVERS),
             cl.getOptionValue("state-dir", "/tmp/kafka-streams-examples"),
             defaultConfig);
     addShutdownHookAndBlock(service);

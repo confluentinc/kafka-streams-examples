@@ -56,7 +56,7 @@ public class AddInventory {
 
         final Options opts = new Options();
         opts.addOption(Option.builder("b")
-                .longOpt("bootstrap-server").hasArg().desc("Kafka cluster bootstrap server string").build())
+                .longOpt("bootstrap-servers").hasArg().desc("Kafka cluster bootstrap server string").build())
              .addOption(Option.builder("c")
                 .longOpt("config-file").hasArg().desc("Java properties file with configurations for Kafka Clients").build())
              .addOption(Option.builder("h")

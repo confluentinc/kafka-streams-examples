@@ -418,7 +418,7 @@ public class OrdersService implements Service {
   public static void main(final String[] args) throws Exception {
     final Options opts = new Options();
     opts.addOption(Option.builder("b")
-            .longOpt("bootstrap-server").hasArg().desc("Kafka cluster bootstrap server string").build())
+            .longOpt("bootstrap-servers").hasArg().desc("Kafka cluster bootstrap server string").build())
         .addOption(Option.builder("s")
             .longOpt("schema-registry").hasArg().desc("Schema Registry URL").build())
         .addOption(Option.builder("h")
@@ -438,7 +438,7 @@ public class OrdersService implements Service {
       return;
     }
 
-    final String bootstrapServers = cl.getOptionValue("bootstrap-server", DEFAULT_BOOTSTRAP_SERVERS);
+    final String bootstrapServers = cl.getOptionValue("bootstrap-servers", DEFAULT_BOOTSTRAP_SERVERS);
     final String restHostname = cl.getOptionValue("hostname", "localhost");
     final int restPort = Integer.parseInt(cl.getOptionValue("port", "5432"));
     final String stateDir = cl.getOptionValue("state-dir", "/tmp/kafka-streams");

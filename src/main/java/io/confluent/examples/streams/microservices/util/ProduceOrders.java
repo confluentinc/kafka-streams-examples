@@ -30,7 +30,7 @@ public class ProduceOrders {
 
         final Options opts = new Options();
         opts.addOption(Option.builder("b")
-                .longOpt("bootstrap-server").hasArg().desc("Kafka cluster bootstrap server string").build())
+                .longOpt("bootstrap-servers").hasArg().desc("Kafka cluster bootstrap server string").build())
                 .addOption(Option.builder("s")
                         .longOpt("schema-registry").hasArg().desc("Schema Registry URL").build())
                 .addOption(Option.builder("c")

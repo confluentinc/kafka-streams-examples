@@ -73,7 +73,7 @@ public class PostOrdersAndPayments {
 
         final Options opts = new Options();
         opts.addOption(Option.builder("b")
-                    .longOpt("bootstrap-server").hasArg().desc("Kafka cluster bootstrap server string").build())
+                    .longOpt("bootstrap-servers").hasArg().desc("Kafka cluster bootstrap server string").build())
                 .addOption(Option.builder("s")
                     .longOpt("schema-registry").hasArg().desc("Schema Registry URL").build())
                 .addOption(Option.builder("o")
@@ -92,7 +92,7 @@ public class PostOrdersAndPayments {
             return;
         }
 
-        final String bootstrapServers = cl.getOptionValue("bootstrap-server", DEFAULT_BOOTSTRAP_SERVERS);
+        final String bootstrapServers = cl.getOptionValue("bootstrap-servers", DEFAULT_BOOTSTRAP_SERVERS);
         final String orderServiceUrl = cl.getOptionValue("order-service-url", "http://localhost:5432");
         final int startingOrderId = Integer.parseInt(cl.getOptionValue("order-id", "1"));
 

@@ -152,7 +152,7 @@ public class ValidationsAggregatorService implements Service {
   public static void main(final String[] args) throws Exception {
     final Options opts = new Options();
     opts.addOption(Option.builder("b")
-            .longOpt("bootstrap-server")
+            .longOpt("bootstrap-servers")
             .hasArg()
             .desc("Kafka cluster bootstrap server string (ex: broker:9092)")
             .build());
@@ -197,7 +197,7 @@ public class ValidationsAggregatorService implements Service {
     final ValidationsAggregatorService service = new ValidationsAggregatorService();
 
     service.start(
-            cl.getOptionValue("bootstrap-server", DEFAULT_BOOTSTRAP_SERVERS),
+            cl.getOptionValue("bootstrap-servers", DEFAULT_BOOTSTRAP_SERVERS),
             cl.getOptionValue("state-dir", "/tmp/kafka-streams-examples"),
             defaultConfig);
     addShutdownHookAndBlock(service);
