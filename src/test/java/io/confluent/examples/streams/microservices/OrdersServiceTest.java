@@ -25,10 +25,13 @@ import javax.ws.rs.core.Response;
 import java.net.HttpURLConnection;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.Properties;
 
 import static io.confluent.examples.streams.avro.microservices.Order.newBuilder;
 import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
+import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
+import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.Assert.fail;
 
@@ -39,7 +42,9 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
   @BeforeClass
   public static void startKafkaCluster() {
-    Schemas.configureSerdesWithSchemaRegistryUrl(CLUSTER.schemaRegistryUrl());
+    final Properties config = new Properties();
+    config.put(SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl());
+    Schemas.configureSerdes(config);
   }
 
   @After
@@ -58,7 +63,11 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
   public void prepareKafkaCluster() throws Exception {
     CLUSTER.deleteTopicsAndWait(60000, Topics.ORDERS.name(), "OrdersService-orders-store-changelog");
     CLUSTER.createTopic(Topics.ORDERS.name());
-    Schemas.configureSerdesWithSchemaRegistryUrl(CLUSTER.schemaRegistryUrl());
+
+    final Properties config = new Properties();
+    config.put(SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl());
+
+    Schemas.configureSerdes(config);
   }
 
   @Test
@@ -69,7 +78,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //Given a rest service
     rest = new OrdersService("localhost");
-    rest.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
+    rest.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath(), new Properties());
     final Paths paths = new Paths("localhost", rest.port());
 
     //When we POST an order
@@ -114,7 +123,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //Given a rest service
     rest = new OrdersService("localhost");
-    rest.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
+    rest.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath(), new Properties());
     final Paths paths = new Paths("localhost", rest.port());
 
     //When we post an order
@@ -144,7 +153,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //Start the rest interface
     rest = new OrdersService("localhost");
-    rest.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
+    rest.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath(), new Properties());
     final Paths paths = new Paths("localhost", rest.port());
 
     final Invocation.Builder builder = client
@@ -168,10 +177,10 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //Given two rest servers on different ports
     rest = new OrdersService("localhost");
-    rest.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
+    rest.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath(), new Properties());
     final Paths paths1 = new Paths("localhost", rest.port());
     rest2 = new OrdersService("localhost");
-    rest2.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
+    rest2.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath(), new Properties());
     final Paths paths2 = new Paths("localhost", rest2.port());
 
     //And one order

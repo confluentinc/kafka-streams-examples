@@ -6,6 +6,7 @@ import static io.confluent.examples.streams.avro.microservices.OrderState.VALIDA
 import static io.confluent.examples.streams.avro.microservices.Product.JUMPERS;
 import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
 import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
+import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,6 +18,7 @@ import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
 import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
 import java.util.List;
+import java.util.Properties;
 import java.util.stream.Collectors;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.test.TestUtils;
@@ -35,7 +37,9 @@ public class ValidationsAggregatorServiceTest extends MicroserviceTestUtils {
   public static void startKafkaCluster() throws InterruptedException {
     CLUSTER.createTopic(Topics.ORDERS.name());
     CLUSTER.createTopic(Topics.ORDER_VALIDATIONS.name());
-    Schemas.configureSerdesWithSchemaRegistryUrl(CLUSTER.schemaRegistryUrl());
+    final Properties config = new Properties();
+    config.put(SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl());
+    Schemas.configureSerdes(config);
     MicroserviceTestUtils.tailAllTopicsToConsole(CLUSTER.bootstrapServers());
   }
 
@@ -62,7 +66,7 @@ public class ValidationsAggregatorServiceTest extends MicroserviceTestUtils {
     sendOrderValuations(ruleResults);
 
     //When
-    ordersService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
+    ordersService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath(), new Properties());
 
     //Then
     final List<KeyValue<String, Order>> finalOrders = MicroserviceTestUtils
