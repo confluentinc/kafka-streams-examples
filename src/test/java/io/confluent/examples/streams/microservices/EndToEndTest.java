@@ -23,13 +23,16 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.GenericType;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import static io.confluent.examples.streams.avro.microservices.Product.JUMPERS;
 import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
 import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
+import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -161,7 +164,7 @@ public class EndToEndTest extends MicroserviceTestUtils {
   }
 
   @Before
-  public void startEverythingElse() throws Exception {
+  public void startEverythingElse() throws Exception, IOException {
     if (!CLUSTER.isRunning()) {
       CLUSTER.start();
     }
@@ -174,7 +177,9 @@ public class EndToEndTest extends MicroserviceTestUtils {
       }
     });
 
-    Schemas.configureSerdesWithSchemaRegistryUrl(CLUSTER.schemaRegistryUrl());
+    final Properties config = new Properties();
+    config.put(SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl());
+    Schemas.configureSerdes(config);
 
     services.add(new FraudService());
     services.add(new InventoryService());
@@ -182,10 +187,11 @@ public class EndToEndTest extends MicroserviceTestUtils {
     services.add(new ValidationsAggregatorService());
 
     tailAllTopicsToConsole(CLUSTER.bootstrapServers());
-    services.forEach(s -> s.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath()));
+    services.forEach(s ->
+            s.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath(), new Properties()));
 
     final OrdersService ordersService = new OrdersService(HOST, 0);
-    ordersService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
+    ordersService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath(), new Properties());
     path = new Paths("localhost", ordersService.port());
     services.add(ordersService);
   }
