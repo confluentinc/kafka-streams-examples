@@ -5,6 +5,7 @@ import static io.confluent.examples.streams.avro.microservices.Product.JUMPERS;
 import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANTS;
 import static io.confluent.examples.streams.microservices.domain.Schemas.Topics;
 import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
+import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -41,7 +42,9 @@ public class InventoryServiceTest extends MicroserviceTestUtils {
   public static void startKafkaCluster() throws InterruptedException {
     CLUSTER.createTopic(Topics.ORDERS.name());
     CLUSTER.createTopic(Topics.ORDER_VALIDATIONS.name());
-    Schemas.configureSerdesWithSchemaRegistryUrl(CLUSTER.schemaRegistryUrl());
+    final Properties config = new Properties();
+    config.put(SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl());
+    Schemas.configureSerdes(config);
   }
 
   @Test
@@ -65,7 +68,7 @@ public class InventoryServiceTest extends MicroserviceTestUtils {
     sendOrders(orders);
 
     //When
-    inventoryService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath());
+    inventoryService.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath(), new Properties());
 
     //Then the final order for Jumpers should have been 'rejected' as it's out of stock
     expected = asList(
