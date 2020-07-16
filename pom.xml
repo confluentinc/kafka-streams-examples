@@ -59,8 +59,8 @@
         <kafka.scala.version>2.13</kafka.scala.version>
         <scala.version>2.13.2</scala.version>
         <scalatest.version>3.1.2</scalatest.version>
-        <!-- The default is deb9 -->
-        <docker.os_type>deb9</docker.os_type>
+        <!-- The default is ubi8 -->
+        <docker.os_type>ubi8</docker.os_type>
         <!-- Need to explicitly set this otherwise it will be overridden from common-docker pom. -->
         <docker.file>Dockerfile.${docker.os_type}</docker.file>
         <docker.tag>${project.version}-${docker.os_type}</docker.tag>
