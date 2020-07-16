@@ -8,6 +8,6 @@ dockerfile {
     nodeLabel = 'docker-oraclejdk8-compose-swarm'
     cron = ''
     cpImages = true
-    osTypes = ['deb9', 'ubi8']
+    osTypes = ['ubi8']
     slackChannel = 'streams-alerts'
 }
