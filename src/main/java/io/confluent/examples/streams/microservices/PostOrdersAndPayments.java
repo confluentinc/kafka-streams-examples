@@ -138,29 +138,33 @@ public class PostOrdersAndPayments {
 
             // POST order to OrdersService
             System.out.printf("Posting order to: %s   .... ", path.urlPost());
-            final Response response = client.target(path.urlPost())
-                                            .request(APPLICATION_JSON_TYPE)
-                                            .post(Entity.json(inputOrder));
-            System.out.printf("Response: %s %n", response.getStatus());
+            try {
+                final Response response = client.target(path.urlPost())
+                        .request(APPLICATION_JSON_TYPE)
+                        .post(Entity.json(inputOrder));
+                System.out.printf("Response: %s %n", response.getStatus());
 
-            // GET the bean back explicitly
-            System.out.printf("Getting order from: %s   .... ", path.urlGet(i));
-            returnedOrder = client.target(path.urlGet(i))
-                                  .queryParam("timeout", Duration.ofMinutes(1).toMillis() / 2)
-                                  .request(APPLICATION_JSON_TYPE)
-                                  .get(newBean());
-            if (!inputOrder.equals(returnedOrder)) {
-                System.out.printf("Posted order %d does not equal returned order: %s%n", i, returnedOrder.toString());
-            } else {
-                System.out.printf("Posted order %d equals returned order: %s%n", i, returnedOrder.toString());
+                // GET the bean back explicitly
+                System.out.printf("Getting order from: %s   .... ", path.urlGet(i));
+                returnedOrder = client.target(path.urlGet(i))
+                        .queryParam("timeout", Duration.ofMinutes(1).toMillis() / 2)
+                        .request(APPLICATION_JSON_TYPE)
+                        .get(newBean());
+                if (!inputOrder.equals(returnedOrder)) {
+                    System.out.printf("Posted order %d does not equal returned order: %s%n", i, returnedOrder.toString());
+                } else {
+                    System.out.printf("Posted order %d equals returned order: %s%n", i, returnedOrder.toString());
+                }
+
+                // Send payment
+                final Payment payment = new Payment("Payment:1234", id(i), "CZK", 1000.00d);
+                sendPayment(payment.getId(), payment, paymentProducer);
+                i++;
+            } catch (final Exception ex) {
+                System.err.printf("Error communicating with Orders Service, retrying shortly. %s", ex.getMessage());
             }
 
-            // Send payment
-            final Payment payment = new Payment("Payment:1234", id(i), "CZK", 1000.00d);
-            sendPayment(payment.getId(), payment, paymentProducer);
-
             Thread.sleep(5000L);
-            i++;
         }
 
         paymentProducer.flush();
