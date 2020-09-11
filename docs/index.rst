@@ -3,7 +3,7 @@
 |ak| Streams Demo Application
 -----------------------------
 
-This demo showcases |ak-tm| Streams API (:cp-examples:`source code|src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java`) and ksqlDB (see blog post `Hands on: Building a Streaming Application with KSQL <https://www.confluent.io/blog/building-streaming-application-ksql/>`__ and video `Demo: Build a Streaming Application with ksqlDB(https://www.youtube.com/watch?v=ExEWJVjj-RA`__).
+This demo showcases |ak-tm| Streams API (:cp-examples:`source code|src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java`) and ksqlDB (see blog post `Hands on: Building a Streaming Application with KSQL <https://www.confluent.io/blog/building-streaming-application-ksql/>`__ and video `Demo: Build a Streaming Application with ksqlDB <https://www.youtube.com/watch?v=ExEWJVjj-RA>`__).
 
 The music application demonstrates how to build a simple music charts application that continuously computes,
 in real-time, the latest charts such as Top 5 songs per music genre.  It exposes its latest processing results -- the
