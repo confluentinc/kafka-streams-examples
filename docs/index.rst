@@ -356,6 +356,8 @@ Troubleshooting
 
    Your output should resemble:
 
+   .. code-block:: bash
+
                       Name                            Command                  State                            Ports                      
         -----------------------------------------------------------------------------------------------------------------------------------
         control-center                     /etc/confluent/docker/run        Up             0.0.0.0:9021->9021/tcp                          
