@@ -68,7 +68,7 @@ To run this demo, complete the following steps:
 
    .. code-block:: bash
 
-      control-center                | [2019-12-11 14:07:40,094] INFO Started NetworkTrafficServerConnector@5533dc72{HTTP/1.1,[http/1.1]}{0.0.0.0:9021} (org.eclipse.jetty.server.AbstractConnector)
+      INFO Started NetworkTrafficServerConnector@5533dc72{HTTP/1.1,[http/1.1]}{0.0.0.0:9021} (org.eclipse.jetty.server.AbstractConnector)
 
 #. Once the demo is running, note the available endpoints from within the containers and from your host machine:
 
@@ -85,10 +85,8 @@ To run this demo, complete the following steps:
 Inspect |ak| topics
 ~~~~~~~~~~~~~~~~~~~
 
-One of the started containers is continuously generating input data for the application by writing into its input topics.
-This allows us to look at live, real-time data when playing around with the |ak| Music application.
-
-The Docker compose file includes a container ``kafka-music-application`` that auto-generates source data to two topics, in Avro format:
+The :devx-examples:`docker-compose.yml|music/docker-compose.yml` file spins up a few containers, one of which is ``kafka-music-application``, which is continuously generating input data for the music application by writing into two |ak| topics in Avro format.
+This allows you to look at live, real-time data when testing the |ak| music application.
 
 - ``play-events`` : stream of play events (“song X was played”)
 - ``song-feed`` : stream of song metadata (“song X was written by artist Y”)
@@ -98,12 +96,12 @@ The Docker compose file includes a container ``kafka-music-application`` that au
 
 #. Use Google Chrome to navigate to `Confluent Control Center <http://localhost:9021>`__.
 
-#. From ``Topics``, select any topic and then view its messages.
+#. Click on ``Topics`` and select any topic to view its messages.
 
    .. figure:: ../../../tutorials/examples/music/images/inspect_topic.png
           :width: 600px
 
-#. Use the ksqlDB query editor in |c3| to inspect the topic ``play-events``:
+#. You may also use the ksqlDB query editor in |c3| to view messages.  For example, to see the |ak| messages in ``play-events``, click on ``ksqlDB`` enter the following ksqlDB query into the editor:
 
    .. code-block:: bash
    
@@ -233,9 +231,9 @@ You have two options to proceed:
 Manually
 ++++++++
 
-#. Create a new stream called ``ksql_playevents`` from the ``play-events`` topic. Use either the ksqlDB editor or select *Add a stream*.
+Prefix the names of the ksqlDB streams and tables with ``ksql_``.  This is not required but do it so that you can run these ksqlDB queries alongside the |kstreams| API version of this music demo and avoid naming conflicts.
 
-.. note:: Prefix the names of the ksqlDB streams and tables with ``ksql_``.  This is not required but do it so that you can run these ksqlDB queries alongside the |kstreams| API version of this music demo and avoid naming conflicts.
+#. Create a new stream called ``ksql_playevents`` from the ``play-events`` topic. Use either the ksqlDB editor or select *Add a stream*.
 
    .. code-block:: bash
 
