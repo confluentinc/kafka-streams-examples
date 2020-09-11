@@ -90,8 +90,8 @@ This allows us to look at live, real-time data when playing around with the |ak|
 
 The Docker compose file includes a container ``kafka-music-application`` that auto-generates source data to two topics, in Avro format:
 
-- `play-events` : stream of play events (“song X was played”)
-- `song-feed` : stream of song metadata (“song X was written by artist Y”)
+- ``play-events`` : stream of play events (“song X was played”)
+- ``song-feed`` : stream of song metadata (“song X was written by artist Y”)
 
 .. figure:: ../../../tutorials/examples/music/images/ksql-music-demo-source-data.jpg
        :width: 600px
@@ -255,7 +255,7 @@ Manually
 
       SELECT * FROM ksql_playevents WHERE DURATION > 30000 EMIT CHANGES;
 
-#. The above query is not persistent. It will stop if this screen is closed. To make the query persistent and stay running until explicitly terminated, prepend the previous query with ``CREATE STREAM <new stream name> AS``.  From the ksqlDB query editor:
+#. The above query is not persistent. It will stop if this screen is closed. To make the query persistent and stay running until explicitly terminated, prepend the previous query with ``CREATE STREAM ... AS``.  From the ksqlDB query editor:
 
    .. code-block:: bash
 
@@ -263,38 +263,38 @@ Manually
 
 #. Verify this persistent query shows up in the queries list.
 
-#. Next let's work on the `song-feed` topic, which effectively represents a table of songs.  The original Kafka topic has a key of type `Long`, which maps to ksqlDB's `BIGINT` sql type, and the ID field stores a copy of the key. To register the topic `song-feed`, from the ksqlDB query editor. Create a `TABLE` from the original Kafka topic `song-feed`:
+#. Next let's work on the ``song-feed`` topic, which effectively represents a table of songs.  The original Kafka topic has a key of type ``Long``, which maps to ksqlDB's ``BIGINT`` sql type, and the ID field stores a copy of the key. To register the topic ``song-feed``, from the ksqlDB query editor. Create a ``TABLE`` from the original Kafka topic ``song-feed``:
 
    .. code-block:: bash
 
       CREATE TABLE ksql_song (ROWKEY BIGINT KEY) WITH (KAFKA_TOPIC='song-feed', VALUE_FORMAT='AVRO', KEY='ID');
 
-#. View the contents of this table and confirm that the entries in this ksqlDB table have a `ROWKEY` that matches the String ID of the song.
+#. View the contents of this table and confirm that the entries in this ksqlDB table have a ``ROWKEY`` that matches the String ID of the song.
  
    .. code-block:: bash
 
       SELECT * FROM ksql_song EMIT CHANGES limit 5;
 
-#. `DESCRIBE` the table to see the fields associated with this topic and notice that the field `ID` is of type `BIGINT`.
+#. ``DESCRIBE`` the table to see the fields associated with this topic and notice that the field ``ID`` is of type ``BIGINT``.
  
    .. figure:: ../../../tutorials/examples/music/images/describe_songfeed.png
        :width: 600px
 
-#. At this point we have created a stream of filtered play events called `ksql_playevents_min_duration` and a table of song metadata called `ksql_song`.  Enrich the stream of play events with song metadata using a Stream-Table `JOIN`. This will result in a new stream of play events enriched with descriptive song information like song title along with each play event.
+#. At this point we have created a stream of filtered play events called ``ksql_playevents_min_duration`` and a table of song metadata called ``ksql_song``.  Enrich the stream of play events with song metadata using a Stream-Table ``JOIN``. This will result in a new stream of play events enriched with descriptive song information like song title along with each play event.
 
    .. code-block:: bash
 
       CREATE STREAM ksql_songplays AS SELECT plays.SONG_ID AS ID, ALBUM, ARTIST, NAME, GENRE, DURATION, 1 AS KEYCOL FROM ksql_playevents_min_duration plays LEFT JOIN ksql_song songs ON plays.SONG_ID = songs.ID;
 
-Notice the addition of a clause `1 AS KEYCOL.` For every row, this creates a new field `KEYCOL` that has a value of 1. `KEYCOL` can be later used in other derived streams and tables to do aggregations on a global basis.
+#.  Notice the addition of a clause ``1 AS KEYCOL``. For every row, this creates a new field ``KEYCOL`` that has a value of 1. ``KEYCOL`` can be later used in other derived streams and tables to do aggregations on a global basis.
 
-#. Now you can create a top music chart for all time to see which songs get played the most. Use the `COUNT` function on the stream `ksql_songplays` that we created above.
+#. Now you can create a top music chart for all time to see which songs get played the most. Use the ``COUNT`` function on the stream ``ksql_songplays`` that we created above.
 
    .. code-block:: bash
 
       CREATE TABLE ksql_songplaycounts AS SELECT ID, NAME, GENRE, KEYCOL, COUNT(*) AS COUNT FROM ksql_songplays GROUP BY ID, NAME, GENRE, KEYCOL;
 
-#. While the all-time greatest hits are cool, it would also be good to see stats for just the last 30 seconds. Create another query, adding in a `WINDOW` clause, which gives counts of play events for all songs, in 30-second intervals.
+#. While the all-time greatest hits are cool, it would also be good to see stats for just the last 30 seconds. Create another query, adding in a ``WINDOW`` clause, which gives counts of play events for all songs, in 30-second intervals.
 
    CREATE TABLE ksql_songplaycounts30 AS SELECT ID, NAME, GENRE, KEYCOL, COUNT(*) AS COUNT FROM ksql_songplays WINDOW TUMBLING (size 30 seconds) GROUP BY ID, NAME, GENRE, KEYCOL;
 
