@@ -82,8 +82,8 @@ To run this demo, complete the following steps:
    | |zk|                      | ``zookeeper.connect``   | ``zookeeper:2181``              | ``localhost:2181``             |
    +---------------------------+-------------------------+---------------------------------+--------------------------------+
 
-Inspect |ak| topics
-~~~~~~~~~~~~~~~~~~~
+View messages in |ak| topics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The :devx-examples:`docker-compose.yml|music/docker-compose.yml` file spins up a few containers, one of which is ``kafka-music-data-generator``, which is continuously generating input data for the music application by writing into two |ak| topics in Avro format.
 This allows you to look at live, real-time data when testing the |ak| music application.
@@ -306,15 +306,15 @@ Prefix the names of the ksqlDB streams and tables with ``ksql_``.  This is not r
 Automatically
 +++++++++++++
 
-#. View the :devx-examples:`statements.sql|music/statements.sql`.
+#. View the :devx-examples:`ksqlDB statements.sql|music/statements.sql`.
 
-  .. literalinclude:: ../../../tutorials/examples/music/statements.sql
+   .. literalinclude:: ../../../tutorials/examples/music/statements.sql
 
-#.  Launch the ksqlDB CLI:
+#. Launch the ksqlDB CLI:
 
-    .. code:: bash
+   .. code:: bash
 
-        docker-compose exec ksqldb-cli ksql http://ksqldb-server:8088
+      docker-compose exec ksqldb-cli ksql http://ksqldb-server:8088
 
 #.  Run the script :devx-examples:`statements.sql|music/statements.sql` that executes the ksqlDB statements.
 
@@ -369,7 +369,7 @@ Troubleshooting
         schema-registry                    /etc/confluent/docker/run        Up             0.0.0.0:8081->8081/tcp                          
         zookeeper                          /etc/confluent/docker/run        Up             0.0.0.0:2181->2181/tcp, 2888/tcp, 3888/tcp     
 
-#. |c3| displays messages from topics, streams, and tables as new records arrive.  In this demo the data is sourced from an application running in a Docker container called ``kafka-music-data-generator``.  If you notice that |c3| is not displaying records, you can try restarting this application.
+#. |c3| displays messages from topics, streams, and tables as new messages arrive.  In this demo the data is sourced from an application running in a Docker container called ``kafka-music-data-generator``.  If you notice that |c3| is not displaying messages, you can try restarting this application.
 
    .. sourcecode:: bash
 
