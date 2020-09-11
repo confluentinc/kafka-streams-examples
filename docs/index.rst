@@ -37,6 +37,8 @@ Start the music application
 
 To run this demo, complete the following steps:
 
+#. In Docker's advanced `settings <https://docs.docker.com/docker-for-mac/#advanced>`__, increase the memory dedicated to Docker to at least 8GB (default is 2GB).
+
 #. Clone the Confluent examples repository:
 
    .. code-block:: bash
@@ -50,42 +52,119 @@ To run this demo, complete the following steps:
        cd examples/music/
        git checkout |release_post_branch|
 
-#. Start the demo in one of two modes, depending on whether you are running in Docker or |cp| locally:
+#. Start the demo by running a single command that brings up the Docker containers. This will take about 2 minutes to complete.
 
-   * Docker: run the full solution using ``docker-compose`` (this also starts a local |cp| cluster in Docker containers).
+   .. code-block:: bash
 
-     .. sourcecode:: bash
+      docker-compose up -d
 
-        ./start-docker.sh
+#. Check the |c3| logs to validate that it is running.
 
-   * Local: run the full solution using the provided script (this also starts a local |cp| cluster using Confluent CLI):
+   .. code-block:: bash
 
-     .. sourcecode:: bash
+      docker-compose logs -f control-center | grep -i "Started NetworkTrafficServerConnector"
 
-        ./start.sh
+#. Verify that you see in the |c3| logs:
 
-Once the demo is running, note the available endpoints from within the containers and from your host machine:
+   .. code-block:: bash
 
-+---------------------------+-------------------------+---------------------------------+--------------------------------+
-| Endpoint                  | Parameter               | Value (from within containers)  | Value (from your host machine) |
-+===========================+=========================+=================================+================================+
-| |ak|  Cluster             | ``bootstrap.servers``   | ``kafka:29092``                 | ``localhost:9092``             |
-+---------------------------+-------------------------+---------------------------------+--------------------------------+
-| |sr-long|                 | ``schema.registry.url`` | ``http://schema-registry:8081`` | ``http://localhost:8081``      |
-+---------------------------+-------------------------+---------------------------------+--------------------------------+
-| |zk|                      | ``zookeeper.connect``   | ``zookeeper:32181``             | ``localhost:32181``            |
-+---------------------------+-------------------------+---------------------------------+--------------------------------+
+      control-center                | [2019-12-11 14:07:40,094] INFO Started NetworkTrafficServerConnector@5533dc72{HTTP/1.1,[http/1.1]}{0.0.0.0:9021} (org.eclipse.jetty.server.AbstractConnector)
+
+#. Once the demo is running, note the available endpoints from within the containers and from your host machine:
+
+   +---------------------------+-------------------------+---------------------------------+--------------------------------+
+   | Endpoint                  | Parameter               | Value (from within containers)  | Value (from host machine)      |
+   +===========================+=========================+=================================+================================+
+   | |ak| brokers              | ``bootstrap.servers``   | ``kafka:29092``                 | ``localhost:9092``             |
+   +---------------------------+-------------------------+---------------------------------+--------------------------------+
+   | |sr-long|                 | ``schema.registry.url`` | ``http://schema-registry:8081`` | ``http://localhost:8081``      |
+   +---------------------------+-------------------------+---------------------------------+--------------------------------+
+   | |zk|                      | ``zookeeper.connect``   | ``zookeeper:2181``              | ``localhost:2181``             |
+   +---------------------------+-------------------------+---------------------------------+--------------------------------+
+
+Inspect |ak| topics
+~~~~~~~~~~~~~~~~~~~
+
+One of the started containers is continuously generating input data for the application by writing into its input topics.
+This allows us to look at live, real-time data when playing around with the |ak| Music application.
+
+The Docker compose file includes a container ``kafka-music-application`` that auto-generates source data to two topics, in Avro format:
+
+- `play-events` : stream of play events (“song X was played”)
+- `song-feed` : stream of song metadata (“song X was written by artist Y”)
+
+.. figure:: ../../../tutorials/examples/music/images/ksql-music-demo-source-data.jpg
+       :width: 600px
+
+#. Use Google Chrome to navigate to `Confluent Control Center <http://localhost:9021>`__.
+
+#. From ``Topics``, select any topic and then view its messages.
+
+   .. figure:: ../../../tutorials/examples/music/images/inspect_topic.png
+          :width: 600px
+
+#. Use the ksqlDB query editor in |c3| to inspect the topic ``play-events``:
+
+   .. code-block:: bash
+   
+      PRINT "play-events";
+
+#. Verify your output resembles:
+
+   .. figure:: ../../../tutorials/examples/music/images/topic_ksql_play_events.png
+          :width: 600px
+
+#. Inspect the topic ``song-feed``.  You need to reset partition 0 to see the previous data already produced to the topic.
+
+#. The source data looks as follows
+
+   .. figure:: ../../../tutorials/examples/music/images/ksql-music-demo-source-data-explore.jpg
+          :width: 600px
+
+#. You can also use the command line tools to view messages in the input topics. View the messages in the topic ``play-events``.
+
+   .. codewithvars:: bash
+  
+       docker-compose exec schema-registry \
+           kafka-avro-console-consumer \
+               --bootstrap-server kafka:29092 \
+               --topic play-events
+   
+#. Verify your output resembles:
+
+   .. codewithvars:: bash
+
+       {"song_id":11,"duration":60000}
+       {"song_id":10,"duration":60000}
+       {"song_id":12,"duration":60000}
+       {"song_id":2,"duration":60000}
+       {"song_id":1,"duration":60000}
+
+#. View the messages in the topic ``song-feed``.
+
+   .. codewithvars:: bash
+  
+       docker-compose exec schema-registry \
+           kafka-avro-console-consumer \
+               --bootstrap-server kafka:29092 \
+               --topic song-feed \
+               --from-beginning
+
+#. Verify your output resembles:
+
+   ::
+  
+     {"id":1,"album":"Fresh Fruit For Rotting Vegetables","artist":"Dead Kennedys","name":"Chemical Warfare","genre":"Punk"}
+     {"id":2,"album":"We Are the League","artist":"Anti-Nowhere League","name":"Animal","genre":"Punk"}
+     {"id":3,"album":"Live In A Dive","artist":"Subhumans","name":"All Gone Dead","genre":"Punk"}
+     {"id":4,"album":"PSI","artist":"Wheres The Pope?","name":"Fear Of God","genre":"Punk"}
 
 
-Validate the application
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-After a few seconds the application and the services are up and running.  One of the started containers is continuously
-generating input data for the application by writing into its input topics.  This allows us to look at live, real-time
-data when playing around with the |ak| Music application.
+Validate the |kstreams| application
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Now you can use your web browser or a CLI tool such as ``curl`` to interactively query the latest processing results of
-the |ak| Music application by accessing its REST API.
+the |ak| Music application by accessing its REST API, which is being run by the Docker container ``kafka-music-application``.
 
 #. List all running application instances of the |ak| Music application.
 
@@ -138,52 +217,125 @@ the |ak| Music application by accessing its REST API.
 
 #. The REST API exposed by the :cp-examples:`Kafka Music application|src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java` supports further operations.  See the :cp-examples:`top-level instructions in its source code|src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java` for details.
 
-Inspect |ak| topics
-~~~~~~~~~~~~~~~~~~~
+Create the ksqlDB application
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#. Inspect the ``play-events`` input topic, which contains messages in Avro format:
+Now you will create ksqlDB queries that are the equivalent to the |kstreams|.
 
-   .. codewithvars:: bash
-  
-       $ docker-compose exec schema-registry \
-           kafka-avro-console-consumer \
-               --bootstrap-server kafka:29092 \
-               --topic play-events --from-beginning
-   
-#. Verify your output resembles:
+You have two options to proceed:
 
-   .. codewithvars:: bash
+- manually: step through the tutorial, step-by-step
+- automatically: automates all the :devx-examples:`ksqlDB commands|music/statements.sql`
 
-       # You should see output similar to:
-       {"song_id":11,"duration":60000}
-       {"song_id":10,"duration":60000}
-       {"song_id":12,"duration":60000}
-       {"song_id":2,"duration":60000}
-       {"song_id":1,"duration":60000}
+  .. literalinclude:: ../../../tutorials/examples/music/statements.sql
 
-#. Inspect the ``song-feed`` input topic, which contains messages in Avro format:
 
-   .. codewithvars:: bash
-  
-       # Use the kafka-avro-console-consumer to read the "song-feed" topic
-       $ docker-compose exec schema-registry \
-           kafka-avro-console-consumer \
-               --bootstrap-server kafka:29092 \
-               --topic song-feed --from-beginning
+Manually
+++++++++
 
-#. Verify your output resembles:
+#. Create a new stream called ``ksql_playevents`` from the ``play-events`` topic. Use either the ksqlDB editor or select *Add a stream*.
 
-   ::
-  
-     {"id":1,"album":"Fresh Fruit For Rotting Vegetables","artist":"Dead Kennedys","name":"Chemical Warfare","genre":"Punk"}
-     {"id":2,"album":"We Are the League","artist":"Anti-Nowhere League","name":"Animal","genre":"Punk"}
-     {"id":3,"album":"Live In A Dive","artist":"Subhumans","name":"All Gone Dead","genre":"Punk"}
-     {"id":4,"album":"PSI","artist":"Wheres The Pope?","name":"Fear Of God","genre":"Punk"}
+.. note:: Prefix the names of the ksqlDB streams and tables with ``ksql_``.  This is not required but do it so that you can run these ksqlDB queries alongside the |kstreams| API version of this music demo and avoid naming conflicts.
+
+   .. code-block:: bash
+
+      CREATE STREAM ksql_playevents WITH (KAFKA_TOPIC='play-events', VALUE_FORMAT='AVRO');
+
+   .. figure:: ../../../tutorials/examples/music/images/add_a_stream.png
+          :width: 600px
+
+#. Select the topic ``play-events``  and then fill out the fields as shown below.  Because |c3| integrates with |sr-long|, ksqlDB automatically detects the fields ``song_id`` and ``duration`` and their respective data types.
+
+   .. figure:: ../../../tutorials/examples/music/images/ksql_playevents.png
+          :width: 600px
+
+#. Do some basic filtering on the newly created stream ``ksql_playevents``, e.g. to qualify songs that were played for at least 30 seconds.  From the ksqlDB query editor:
+
+   .. code-block:: bash
+
+      SELECT * FROM ksql_playevents WHERE DURATION > 30000 EMIT CHANGES;
+
+#. The above query is not persistent. It will stop if this screen is closed. To make the query persistent and stay running until explicitly terminated, prepend the previous query with ``CREATE STREAM <new stream name> AS``.  From the ksqlDB query editor:
+
+   .. code-block:: bash
+
+      CREATE STREAM ksql_playevents_min_duration AS SELECT * FROM ksql_playevents WHERE DURATION > 30000;
+
+#. Verify this persistent query shows up in the queries list.
+
+#. Next let's work on the `song-feed` topic, which effectively represents a table of songs.  The original Kafka topic has a key of type `Long`, which maps to ksqlDB's `BIGINT` sql type, and the ID field stores a copy of the key. To register the topic `song-feed`, from the ksqlDB query editor. Create a `TABLE` from the original Kafka topic `song-feed`:
+
+   .. code-block:: bash
+
+      CREATE TABLE ksql_song (ROWKEY BIGINT KEY) WITH (KAFKA_TOPIC='song-feed', VALUE_FORMAT='AVRO', KEY='ID');
+
+#. View the contents of this table and confirm that the entries in this ksqlDB table have a `ROWKEY` that matches the String ID of the song.
+ 
+   .. code-block:: bash
+
+      SELECT * FROM ksql_song EMIT CHANGES limit 5;
+
+#. `DESCRIBE` the table to see the fields associated with this topic and notice that the field `ID` is of type `BIGINT`.
+ 
+   .. figure:: ../../../tutorials/examples/music/images/describe_songfeed.png
+       :width: 600px
+
+#. At this point we have created a stream of filtered play events called `ksql_playevents_min_duration` and a table of song metadata called `ksql_song`.  Enrich the stream of play events with song metadata using a Stream-Table `JOIN`. This will result in a new stream of play events enriched with descriptive song information like song title along with each play event.
+
+   .. code-block:: bash
+
+      CREATE STREAM ksql_songplays AS SELECT plays.SONG_ID AS ID, ALBUM, ARTIST, NAME, GENRE, DURATION, 1 AS KEYCOL FROM ksql_playevents_min_duration plays LEFT JOIN ksql_song songs ON plays.SONG_ID = songs.ID;
+
+Notice the addition of a clause `1 AS KEYCOL.` For every row, this creates a new field `KEYCOL` that has a value of 1. `KEYCOL` can be later used in other derived streams and tables to do aggregations on a global basis.
+
+#. Now you can create a top music chart for all time to see which songs get played the most. Use the `COUNT` function on the stream `ksql_songplays` that we created above.
+
+   .. code-block:: bash
+
+      CREATE TABLE ksql_songplaycounts AS SELECT ID, NAME, GENRE, KEYCOL, COUNT(*) AS COUNT FROM ksql_songplays GROUP BY ID, NAME, GENRE, KEYCOL;
+
+#. While the all-time greatest hits are cool, it would also be good to see stats for just the last 30 seconds. Create another query, adding in a `WINDOW` clause, which gives counts of play events for all songs, in 30-second intervals.
+
+   CREATE TABLE ksql_songplaycounts30 AS SELECT ID, NAME, GENRE, KEYCOL, COUNT(*) AS COUNT FROM ksql_songplays WINDOW TUMBLING (size 30 seconds) GROUP BY ID, NAME, GENRE, KEYCOL;
+
+#. Congratulations, you built a streaming application that processes data in real-time!  The application enriched a stream of play events with song metadata and generated top counts. Any downstream systems can consume results from your ksqlDB queries for further processing.  If you were already familiar with SQL semantics, hopefully this tutorial wasn't too hard to follow.
+
+   .. code-block:: bash
+
+      SELECT * FROM ksql_songplaycounts30 EMIT CHANGES;
+
+   .. figure:: ../../../tutorials/examples/music/images/counts_results.png
+       :width: 600px
+
+Automatically
++++++++++++++
+
+#.  Launch the ksqlDB CLI:
+
+    .. code:: bash
+
+        docker-compose exec ksqldb-cli ksql http://ksqldb-server:8088
+
+#.  Run the script :devx-examples:`statements.sql|music/statements.sql` that executes the ksqlDB statements.
+
+    .. code:: sql
+
+        RUN SCRIPT '/tmp/statements.sql';
+
+    The output will show either a blank message, or ``Executing statement``, similar to this:
+
+    ::
+
+         Message
+        ---------
+         Executing statement
+        ---------
+
+    After the ``RUN SCRIPT`` command completes, exit out of the ``ksqldb-cli`` with a ``CTRL+D`` command
 
 
 Stop the music application
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 #. When you are done, make sure to stop the demo.
 
@@ -192,10 +344,4 @@ Stop the music application
      .. sourcecode:: bash
 
         docker-compose down
-
-   * Local:
-
-     .. sourcecode:: bash
-
-        ./stop.sh
 
