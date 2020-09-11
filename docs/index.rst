@@ -340,9 +340,16 @@ Stop the music application
 
 #. When you are done, make sure to stop the demo.
 
-   * Docker:
+   .. sourcecode:: bash
 
-     .. sourcecode:: bash
+      docker-compose down
 
-        docker-compose down
 
+Troubleshooting
+~~~~~~~~~~~~~~~
+
+#. |c3| displays messages from topics, streams, and tables as new records arrive.  In this demo the data is sourced from an application running in a Docker container called ``kafka-music-data-generator``.  If you notice that |c3| is not displaying records, you can try restarting this application.
+
+   .. sourcecode:: bash
+
+      docker-compose restart kafka-music-data-generator
