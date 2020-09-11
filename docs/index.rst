@@ -52,7 +52,7 @@ To run this demo, complete the following steps:
        cd examples/music/
        git checkout |release_post_branch|
 
-#. Start the demo by running a single command that brings up the Docker containers. This will take about 2 minutes to complete.
+#. Start the demo by running a single command that brings up all the Docker containers. This takes about 2 minutes to complete.
 
    .. code-block:: bash
 
@@ -85,7 +85,7 @@ To run this demo, complete the following steps:
 Inspect |ak| topics
 ~~~~~~~~~~~~~~~~~~~
 
-The :devx-examples:`docker-compose.yml|music/docker-compose.yml` file spins up a few containers, one of which is ``kafka-music-application``, which is continuously generating input data for the music application by writing into two |ak| topics in Avro format.
+The :devx-examples:`docker-compose.yml|music/docker-compose.yml` file spins up a few containers, one of which is ``kafka-music-data-generator``, which is continuously generating input data for the music application by writing into two |ak| topics in Avro format.
 This allows you to look at live, real-time data when testing the |ak| music application.
 
 - ``play-events`` : stream of play events (“song X was played”)
@@ -218,7 +218,7 @@ the |ak| Music application by accessing its REST API, which is being run by the 
 Create the ksqlDB application
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Now you will create ksqlDB queries that are the equivalent to the |kstreams|.
+Now you create ksqlDB queries that are the equivalent to the |kstreams|.
 
 You have two options to proceed:
 
@@ -251,7 +251,7 @@ Prefix the names of the ksqlDB streams and tables with ``ksql_``.  This is not r
 
       SELECT * FROM ksql_playevents WHERE DURATION > 30000 EMIT CHANGES;
 
-#. The above query is not persistent. It will stop if this screen is closed. To make the query persistent and stay running until explicitly terminated, prepend the previous query with ``CREATE STREAM ... AS``.  From the ksqlDB query editor:
+#. The above query is not persistent. It stops if this screen is closed. To make the query persistent and stay running until explicitly terminated, prepend the previous query with ``CREATE STREAM ... AS``.  From the ksqlDB query editor:
 
    .. code-block:: bash
 
@@ -276,7 +276,7 @@ Prefix the names of the ksqlDB streams and tables with ``ksql_``.  This is not r
    .. figure:: ../../../tutorials/examples/music/images/describe_songfeed.png
        :width: 600px
 
-#. At this point we have created a stream of filtered play events called ``ksql_playevents_min_duration`` and a table of song metadata called ``ksql_song``.  Enrich the stream of play events with song metadata using a Stream-Table ``JOIN``. This will result in a new stream of play events enriched with descriptive song information like song title along with each play event.
+#. At this point we have created a stream of filtered play events called ``ksql_playevents_min_duration`` and a table of song metadata called ``ksql_song``.  Enrich the stream of play events with song metadata using a Stream-Table ``JOIN``. This results in a new stream of play events enriched with descriptive song information like song title along with each play event.
 
    .. code-block:: bash
 
@@ -322,7 +322,7 @@ Automatically
 
         RUN SCRIPT '/tmp/statements.sql';
 
-    The output will show either a blank message, or ``Executing statement``, similar to this:
+    The output shows either a blank message, or ``Executing statement``, similar to this:
 
     ::
 
@@ -347,6 +347,25 @@ Stop the music application
 
 Troubleshooting
 ~~~~~~~~~~~~~~~
+
+#. Verify the status of the Docker containers show ``Up`` state.
+
+   .. code-block:: bash
+
+        docker-compose ps
+
+   Your output should resemble:
+
+                      Name                            Command                  State                            Ports                      
+        -----------------------------------------------------------------------------------------------------------------------------------
+        control-center                     /etc/confluent/docker/run        Up             0.0.0.0:9021->9021/tcp                          
+        kafka                              /etc/confluent/docker/run        Up             0.0.0.0:29092->29092/tcp, 0.0.0.0:9092->9092/tcp
+        kafka-music-applications-streams   bash -c echo Waiting for K ...   Up             0.0.0.0:7070->7070/tcp                          
+        kafka-music-data-generator         bash -c echo Waiting for K ...   Up             7070/tcp                                        
+        ksqldb-cli                         /bin/sh                          Up                                                             
+        ksqldb-server                      /etc/confluent/docker/run        Up (healthy)   0.0.0.0:8088->8088/tcp                          
+        schema-registry                    /etc/confluent/docker/run        Up             0.0.0.0:8081->8081/tcp                          
+        zookeeper                          /etc/confluent/docker/run        Up             0.0.0.0:2181->2181/tcp, 2888/tcp, 3888/tcp     
 
 #. |c3| displays messages from topics, streams, and tables as new records arrive.  In this demo the data is sourced from an application running in a Docker container called ``kafka-music-data-generator``.  If you notice that |c3| is not displaying records, you can try restarting this application.
 
