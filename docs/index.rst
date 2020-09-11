@@ -223,9 +223,7 @@ Now you will create ksqlDB queries that are the equivalent to the |kstreams|.
 You have two options to proceed:
 
 - manually: step through the tutorial, step-by-step
-- automatically: automates all the :devx-examples:`ksqlDB commands|music/statements.sql`
-
-  .. literalinclude:: ../../../tutorials/examples/music/statements.sql
+- automatically: submits all the :devx-examples:`ksqlDB commands|music/statements.sql` via the ksqlDB ``SCRIPT`` command:
 
 
 Manually
@@ -308,6 +306,10 @@ Prefix the names of the ksqlDB streams and tables with ``ksql_``.  This is not r
 Automatically
 +++++++++++++
 
+#. View the :devx-examples:`statements.sql|music/statements.sql`.
+
+  .. literalinclude:: ../../../tutorials/examples/music/statements.sql
+
 #.  Launch the ksqlDB CLI:
 
     .. code:: bash
@@ -330,6 +332,7 @@ Automatically
         ---------
 
     After the ``RUN SCRIPT`` command completes, exit out of the ``ksqldb-cli`` with a ``CTRL+D`` command
+
 
 
 Stop the music application
