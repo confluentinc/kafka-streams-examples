@@ -1,4 +1,4 @@
-codewithvars.. _docker-tutorial_kafka-streams-examples:
+.. _docker-tutorial_kafka-streams-examples:
 
 |ak| Streams Demo Application
 -----------------------------
