@@ -1,43 +1,17 @@
-codewithvars.. _docker-tutorial_kafka-streams-examples:
+.. _kafka-streams-example-music:
 
 |ak| Streams Demo Application
 -----------------------------
 
-In this tutorial you will run Confluent's
-:cp-examples:`Kafka Music demo application|src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java`
-for the |ak-tm| Streams API.
-If you are looking for a similar demo application written with KSQL queries, check out the separate page on the `KSQL music demo walk-thru <https://www.confluent.io/blog/building-streaming-application-ksql/>`__
+This demo showcases |ak-tm| Streams API (:cp-examples:`source code|src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java`) and ksqlDB (see blog post `Hands on: Building a Streaming Application with KSQL <https://www.confluent.io/blog/building-streaming-application-ksql/>`__ and video `Demo: Build a Streaming Application with ksqlDB(https://www.youtube.com/watch?v=ExEWJVjj-RA`__).
 
-The |ak| Music application demonstrates how to build a simple music charts application that continuously computes,
+The music application demonstrates how to build a simple music charts application that continuously computes,
 in real-time, the latest charts such as Top 5 songs per music genre.  It exposes its latest processing results -- the
 latest charts -- via the |ak| :ref:`Interactive Queries <streams_developer-guide_interactive-queries>` feature and a REST
 API.  The application's input data is in Avro format and comes from two sources: a stream of play events (think: "song
-X was played") and a stream of song metadata ("song X was written by artist Y");  see
-:ref:`inspecting the input data <docker-tutorial_kafka-streams-examples_inspect-input-data>` in the
-:ref:`Appendix <docker-tutorial_kafka-streams-examples_appendix>` for how the input data looks like.
+X was played") and a stream of song metadata ("song X was written by artist Y").
 
-More specifically, you will run the following services:
-
-- Confluent's
-  :cp-examples:`Kafka Music demo application|src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java`
-- a single-node |ak| cluster with a single-node ZooKeeper ensemble
-- :ref:`Confluent Schema Registry <schemaregistry_intro>`
-
-
-Requirements
-~~~~~~~~~~~~
-
-This tutorial uses `Docker Compose <https://docs.docker.com/compose/>`__.
-
-* You must install `Docker <https://docs.docker.com/engine/installation/>`__ and
-  `Docker Compose <https://docs.docker.com/compose/install/>`__.
-* The Confluent Docker images require Docker version 1.11 or greater.
-
-
-Running the |ak| Music demo application
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If you want to see an appetizer of the steps in this section, take a look at the following screencast:
+The following screencast shows a live bit of the music demo application:
 
 .. raw:: html
 
@@ -52,31 +26,59 @@ If you want to see an appetizer of the steps in this section, take a look at the
     </a>
   </p>
 
-Ready now?  Let's start!
+Prerequisites
+~~~~~~~~~~~~~
 
-#. Clone the Confluent Docker Images repository:
+.. include:: ../../../tutorials/examples/docs/includes/demo-validation-env.rst
 
-   ::
 
-      git clone https://github.com/confluentinc/kafka-streams-examples.git
+Start the music application
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#. Change into the directory for this tutorial.
+To run this demo, complete the following steps:
 
-   ::
+#. Clone the Confluent examples repository:
 
-      cd kafka-streams-examples/
+   .. code-block:: bash
 
-#. Switch to the |release|-post branch
+       git clone https://github.com/confluentinc/examples.git
+
+#. Navigate to the ``examples/music/`` directory and switch to the |cp| release branch:
 
    .. codewithvars:: bash
-     
-      git checkout |release|-post
 
-Now, launch the |ak| Music demo application including the services it depends on such as |ak|.
+       cd examples/music/
+       git checkout |release_post_branch|
 
-::
-  
-   docker-compose up -d
+#. Start the demo in one of two modes, depending on whether you are running in Docker or |cp| locally:
+
+   * Docker: run the full solution using ``docker-compose`` (this also starts a local |cp| cluster in Docker containers).
+
+     .. sourcecode:: bash
+
+        ./start-docker.sh
+
+   * Local: run the full solution using the provided script (this also starts a local |cp| cluster using Confluent CLI):
+
+     .. sourcecode:: bash
+
+        ./start.sh
+
+Once the demo is running, note the available endpoints from within the containers and from your host machine:
+
++---------------------------+-------------------------+---------------------------------+--------------------------------+
+| Endpoint                  | Parameter               | Value (from within containers)  | Value (from your host machine) |
++===========================+=========================+=================================+================================+
+| |ak|  Cluster             | ``bootstrap.servers``   | ``kafka:29092``                 | ``localhost:9092``             |
++---------------------------+-------------------------+---------------------------------+--------------------------------+
+| |sr-long|                 | ``schema.registry.url`` | ``http://schema-registry:8081`` | ``http://localhost:8081``      |
++---------------------------+-------------------------+---------------------------------+--------------------------------+
+| |zk|                      | ``zookeeper.connect``   | ``zookeeper:32181``             | ``localhost:32181``            |
++---------------------------+-------------------------+---------------------------------+--------------------------------+
+
+
+Validate the application
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 After a few seconds the application and the services are up and running.  One of the started containers is continuously
 generating input data for the application by writing into its input topics.  This allows us to look at live, real-time
@@ -85,199 +87,115 @@ data when playing around with the |ak| Music application.
 Now you can use your web browser or a CLI tool such as ``curl`` to interactively query the latest processing results of
 the |ak| Music application by accessing its REST API.
 
-**REST API example 1: list all running application instances of the |ak| Music application:**
+#. List all running application instances of the |ak| Music application.
 
-::
+   ::
   
-  curl -sXGET http://localhost:7070/kafka-music/instances
+     curl -sXGET http://localhost:7070/kafka-music/instances | jq .
 
-You should see output similar to following, though here the output is pretty-printed so that it is easier to read:
+#. Verify your output resembles:
 
-::
+   ::
   
-    [
-      {
-        "host": "localhost",
-        "port": 7070,
-        "storeNames": [
-          "all-songs",
-          "song-play-count",
-          "top-five-songs",
-          "top-five-songs-by-genre"
-        ]
-      }
-    ]
+       [
+         {
+           "host": "localhost",
+           "port": 7070,
+           "storeNames": [
+             "all-songs",
+             "song-play-count",
+             "top-five-songs",
+             "top-five-songs-by-genre"
+           ]
+         }
+       ]
 
-**REST API example 2: get the latest Top 5 songs across all music genres:**
+#. Get the latest Top 5 songs across all music genres
 
-::
+   ::
 
-  curl -sXGET http://localhost:7070/kafka-music/charts/top-five
+     curl -sXGET http://localhost:7070/kafka-music/charts/top-five
 
-You should see output similar to following, though here the output is pretty-printed so that it's easier to read:
+#. Verify your output resembles:
 
-::
+   ::
+     
+       [
+         {
+           "artist": "Jello Biafra And The Guantanamo School Of Medicine",
+           "album": "The Audacity Of Hype",
+           "name": "Three Strikes",
+           "plays": 70
+         },
+         {
+           "artist": "Hilltop Hoods",
+           "album": "The Calling",
+           "name": "The Calling",
+           "plays": 67
+         },
+         ...
+       ]
+
+#. The REST API exposed by the :cp-examples:`Kafka Music application|src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java` supports further operations.  See the :cp-examples:`top-level instructions in its source code|src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java` for details.
+
+Inspect |ak| topics
+~~~~~~~~~~~~~~~~~~~
+
+#. Inspect the ``play-events`` input topic, which contains messages in Avro format:
+
+   .. codewithvars:: bash
   
-    [
-      {
-        "artist": "Jello Biafra And The Guantanamo School Of Medicine",
-        "album": "The Audacity Of Hype",
-        "name": "Three Strikes",
-        "plays": 70
-      },
-      {
-        "artist": "Hilltop Hoods",
-        "album": "The Calling",
-        "name": "The Calling",
-        "plays": 67
-      },
+       $ docker-compose exec schema-registry \
+           kafka-avro-console-consumer \
+               --bootstrap-server kafka:29092 \
+               --topic play-events --from-beginning
+   
+#. Verify your output resembles:
 
-      ... rest omitted...
-    ]
+   .. codewithvars:: bash
 
-The REST API exposed by the
-:cp-examples:`Kafka Music application|src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java`
-supports further operations.  See the
-:cp-examples:`top-level instructions in its source code|src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java`
-for details.
+       # You should see output similar to:
+       {"song_id":11,"duration":60000}
+       {"song_id":10,"duration":60000}
+       {"song_id":12,"duration":60000}
+       {"song_id":2,"duration":60000}
+       {"song_id":1,"duration":60000}
 
-Once you're done playing around you can stop all the services and containers with:
+#. Inspect the ``song-feed`` input topic, which contains messages in Avro format:
 
-::
+   .. codewithvars:: bash
   
-  docker-compose down
+       # Use the kafka-avro-console-consumer to read the "song-feed" topic
+       $ docker-compose exec schema-registry \
+           kafka-avro-console-consumer \
+               --bootstrap-server kafka:29092 \
+               --topic song-feed --from-beginning
 
-We hope you enjoyed this tutorial!
+#. Verify your output resembles:
 
-
-Running further Confluent demo applications for the |ak| Streams API
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The container named ``kafka-music-application``, which runs the |ak| Music demo application, actually contains all of
-Confluent's `Kafka Streams demo applications <https://github.com/confluentinc/kafka-streams-examples>`__.  The demo applications are
-packaged in the fat jar at ``/usr/share/java/kafka-streams-examples/kafka-streams-examples-|release|-standalone.jar`` inside this container.
-This means you can easily run any of these applications from inside the container via a command similar to:
-
-Example: Launch the WordCount demo application (inside the `kafka-music-application` container):
-
-.. codewithvars:: bash
+   ::
   
-   docker-compose exec kafka-music-application \
-        java -cp /usr/share/java/kafka-streams-examples/kafka-streams-examples-|release|-standalone.jar \
-        io.confluent.examples.streams.WordCountLambdaExample \
-        kafka:29092
-
-Of course you can also modify the tutorial's ``docker-compose.yml`` for repeatable deployments.
-
-Note that you must follow the full instructions of each demo application (see its respective source code at
-https://github.com/confluentinc/examples).  These instructions include, for example, the creation of the application's
-input and output topics.  Also, each demo application supports CLI arguments.  Typically, the first CLI argument is
-the ``bootstrap.servers`` parameter and the second argument, if any, is the ``schema.registry.url`` setting.
-
-Available endpoints **from within the containers** as well as **on your host machine**:
-
-+---------------------------+-------------------------+---------------------------------+--------------------------------+
-| Endpoint                  | Parameter               | Value (from within containers)  | Value (from your host machine) |
-+===========================+=========================+=================================+================================+
-| Kafka Cluster             | ``bootstrap.servers``   | ``kafka:29092``                 | ``localhost:9092``             |
-+---------------------------+-------------------------+---------------------------------+--------------------------------+
-| Confluent Schema Registry | ``schema.registry.url`` | ``http://schema-registry:8081`` | ``http://localhost:8081``      |
-+---------------------------+-------------------------+---------------------------------+--------------------------------+
-| ZooKeeper ensemble        | ``zookeeper.connect``   | ``zookeeper:32181``             | ``localhost:32181``            |
-+---------------------------+-------------------------+---------------------------------+--------------------------------+
-
-The ZooKeeper endpoint is not required by |ak| Streams applications, but you need it to e.g.
-:ref:`manually create new Kafka topics <docker-tutorial_kafka-streams-examples_topics-create>` or to
-:ref:`list available Kafka topics <docker-tutorial_kafka-streams-examples_topics-list>`.
+     {"id":1,"album":"Fresh Fruit For Rotting Vegetables","artist":"Dead Kennedys","name":"Chemical Warfare","genre":"Punk"}
+     {"id":2,"album":"We Are the League","artist":"Anti-Nowhere League","name":"Animal","genre":"Punk"}
+     {"id":3,"album":"Live In A Dive","artist":"Subhumans","name":"All Gone Dead","genre":"Punk"}
+     {"id":4,"album":"PSI","artist":"Wheres The Pope?","name":"Fear Of God","genre":"Punk"}
 
 
-.. _docker-tutorial_kafka-streams-examples_appendix:
-
-Appendix
-~~~~~~~~
+Stop the music application
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-.. _docker-tutorial_kafka-streams-examples_inspect-input-data:
+#. When you are done, make sure to stop the demo.
 
-Inspecting the input topics of the |ak| Music application
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+   * Docker:
 
-Inspect the "play-events" input topic, which contains messages in Avro format:
+     .. sourcecode:: bash
 
+        docker-compose down
 
-Use the kafka-avro-console-consumer to read the "play-events" topic:
+   * Local:
 
-.. codewithvars:: bash
-  
-    $ docker-compose exec schema-registry \
-        kafka-avro-console-consumer \
-            --bootstrap-server kafka:29092 \
-            --topic play-events --from-beginning
+     .. sourcecode:: bash
 
-    # You should see output similar to:
-    {"song_id":11,"duration":60000}
-    {"song_id":10,"duration":60000}
-    {"song_id":12,"duration":60000}
-    {"song_id":2,"duration":60000}
-    {"song_id":1,"duration":60000}
+        ./stop.sh
 
-
-Inspect the "song-feed" input topic, which contains messages in Avro format:
-
-.. codewithvars:: bash
-  
-    # Use the kafka-avro-console-consumer to read the "song-feed" topic
-    $ docker-compose exec schema-registry \
-        kafka-avro-console-consumer \
-            --bootstrap-server kafka:29092 \
-            --topic song-feed --from-beginning
-
-You should see output similar to:
-
-::
-  
-  {"id":1,"album":"Fresh Fruit For Rotting Vegetables","artist":"Dead Kennedys","name":"Chemical Warfare","genre":"Punk"}
-  {"id":2,"album":"We Are the League","artist":"Anti-Nowhere League","name":"Animal","genre":"Punk"}
-  {"id":3,"album":"Live In A Dive","artist":"Subhumans","name":"All Gone Dead","genre":"Punk"}
-  {"id":4,"album":"PSI","artist":"Wheres The Pope?","name":"Fear Of God","genre":"Punk"}
-
-
-.. _docker-tutorial_kafka-streams-examples_topics-create:
-
-Creating new topics
-"""""""""""""""""""
-
-You can create topics manually with the ``kafka-topics`` CLI tool, which is available on the ``kafka`` container.
-
-Create a new topic named "my-new-topic", using the `kafka` container
-
-::
-  
-   docker-compose exec kafka kafka-topics \
-    --zookeeper zookeeper:32181 \
-    --create --topic my-new-topic --partitions 2 --replication-factor 1
-
-You should see a line similar to:
-
-::
-
-  Created topic "my-new-topic".
-
-
-.. _docker-tutorial_kafka-streams-examples_topics-list:
-
-Listing available topics
-""""""""""""""""""""""""
-
-You can list all available topics with the ``kafka-topics`` CLI tool, which is available on the ``kafka`` container.
-
-Run the following command to list available topics, using the ``kafka`` container
-
-
-::
-  
-   $ docker-compose exec kafka kafka-topics \
-       --zookeeper zookeeper:32181 \
-       --list
-
-Additional topic information is displayed by running ``--describe`` instead of ``-list``.
