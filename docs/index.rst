@@ -229,9 +229,8 @@ Prefix the names of the ksqlDB streams and tables with ``ksql_``.  This is not r
 
 #. Create a new stream called ``ksql_playevents`` from the ``play-events`` topic. Use either the ksqlDB editor or select *Add a stream*.
 
-   .. code-block:: bash
-
-      CREATE STREAM ksql_playevents WITH (KAFKA_TOPIC='play-events', VALUE_FORMAT='AVRO');
+   .. literalinclude:: ../../../tutorials/examples/music/statements.sql
+      :lines: 6
 
    .. figure:: ../../../tutorials/examples/music/images/add_a_stream.png
           :width: 600px
@@ -249,17 +248,15 @@ Prefix the names of the ksqlDB streams and tables with ``ksql_``.  This is not r
 
 #. The above query is not persistent. It stops if this screen is closed. To make the query persistent and stay running until explicitly terminated, prepend the previous query with ``CREATE STREAM ... AS``.  From the ksqlDB query editor:
 
-   .. code-block:: bash
-
-      CREATE STREAM ksql_playevents_min_duration AS SELECT * FROM ksql_playevents WHERE DURATION > 30000;
+   .. literalinclude:: ../../../tutorials/examples/music/statements.sql
+      :lines: 9
 
 #. Verify this persistent query shows up in the ``Running Queries`` tab.
 
 #. The original Kafka topic ``song-feed`` has a key of type ``Long``, which maps to ksqlDB's ``BIGINT`` sql type, and the ID field stores a copy of the key. Create a ``TABLE`` from the original Kafka topic ``song-feed``:
 
-   .. code-block:: bash
-
-      CREATE TABLE ksql_song (ROWKEY BIGINT KEY) WITH (KAFKA_TOPIC='song-feed', VALUE_FORMAT='AVRO', KEY='ID');
+   .. literalinclude:: ../../../tutorials/examples/music/statements.sql
+      :lines: 12
 
 #. View the contents of this table and confirm that the entries in this ksqlDB table have a ``ROWKEY`` that matches the String ID of the song.
  
@@ -274,21 +271,20 @@ Prefix the names of the ksqlDB streams and tables with ``ksql_``.  This is not r
 
 #. At this point we have created a stream of filtered play events called ``ksql_playevents_min_duration`` and a table of song metadata called ``ksql_song``.  Enrich the stream of play events with song metadata using a Stream-Table ``JOIN``. This results in a new stream of play events enriched with descriptive song information like song title along with each play event.
 
-   .. code-block:: bash
-
-      CREATE STREAM ksql_songplays AS SELECT plays.SONG_ID AS ID, ALBUM, ARTIST, NAME, GENRE, DURATION, 1 AS KEYCOL FROM ksql_playevents_min_duration plays LEFT JOIN ksql_song songs ON plays.SONG_ID = songs.ID;
+   .. literalinclude:: ../../../tutorials/examples/music/statements.sql
+      :lines: 16
 
 #.  Notice the addition of a clause ``1 AS KEYCOL``. For every row, this creates a new field ``KEYCOL`` that has a value of 1. ``KEYCOL`` can be later used in other derived streams and tables to do aggregations on a global basis.
 
 #. Now you can create a top music chart for all time to see which songs get played the most. Use the ``COUNT`` function on the stream ``ksql_songplays`` that we created above.
 
-   .. code-block:: bash
-
-      CREATE TABLE ksql_songplaycounts AS SELECT ID, NAME, GENRE, KEYCOL, COUNT(*) AS COUNT FROM ksql_songplays GROUP BY ID, NAME, GENRE, KEYCOL;
+   .. literalinclude:: ../../../tutorials/examples/music/statements.sql
+      :lines: 26
 
 #. While the all-time greatest hits are cool, it would also be good to see stats for just the last 30 seconds. Create another query, adding in a ``WINDOW`` clause, which gives counts of play events for all songs, in 30-second intervals.
 
-   CREATE TABLE ksql_songplaycounts30 AS SELECT ID, NAME, GENRE, KEYCOL, COUNT(*) AS COUNT FROM ksql_songplays WINDOW TUMBLING (size 30 seconds) GROUP BY ID, NAME, GENRE, KEYCOL;
+   .. literalinclude:: ../../../tutorials/examples/music/statements.sql
+      :lines: 19
 
 #. Congratulations, you built a streaming application that processes data in real-time!  The application enriched a stream of play events with song metadata and generated top counts. Any downstream systems can consume results from your ksqlDB queries for further processing.  If you were already familiar with SQL semantics, hopefully this tutorial wasn't too hard to follow.
 
