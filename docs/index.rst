@@ -213,7 +213,7 @@ Create the ksqlDB application
 
 Now you create ksqlDB queries that are the equivalent to the |kstreams|.
 
-.. figure:: ../../../tutorials/examples/music/images/images/ksql-music-demo-overview.jpg 
+.. figure:: ../../../tutorials/examples/music/images/ksql-music-demo-overview.jpg
     :width: 600px
 
 
@@ -254,9 +254,9 @@ Prefix the names of the ksqlDB streams and tables with ``ksql_``.  This is not r
 
       CREATE STREAM ksql_playevents_min_duration AS SELECT * FROM ksql_playevents WHERE DURATION > 30000;
 
-#. Verify this persistent query shows up in the queries list.
+#. Verify this persistent query shows up in the ``Running Queries`` tab.
 
-#. Next let's work on the ``song-feed`` topic, which effectively represents a table of songs.  The original Kafka topic has a key of type ``Long``, which maps to ksqlDB's ``BIGINT`` sql type, and the ID field stores a copy of the key. To register the topic ``song-feed``, from the ksqlDB query editor. Create a ``TABLE`` from the original Kafka topic ``song-feed``:
+#. The original Kafka topic ``song-feed`` has a key of type ``Long``, which maps to ksqlDB's ``BIGINT`` sql type, and the ID field stores a copy of the key. Create a ``TABLE`` from the original Kafka topic ``song-feed``:
 
    .. code-block:: bash
 
@@ -359,7 +359,7 @@ Troubleshooting
         -----------------------------------------------------------------------------------------------------------------------------------
         control-center                     /etc/confluent/docker/run        Up             0.0.0.0:9021->9021/tcp                          
         kafka                              /etc/confluent/docker/run        Up             0.0.0.0:29092->29092/tcp, 0.0.0.0:9092->9092/tcp
-        kafka-music-applications-streams   bash -c echo Waiting for K ...   Up             0.0.0.0:7070->7070/tcp                          
+        kafka-music-application            bash -c echo Waiting for K ...   Up             0.0.0.0:7070->7070/tcp                          
         kafka-music-data-generator         bash -c echo Waiting for K ...   Up             7070/tcp                                        
         ksqldb-cli                         /bin/sh                          Up                                                             
         ksqldb-server                      /etc/confluent/docker/run        Up (healthy)   0.0.0.0:8088->8088/tcp                          
