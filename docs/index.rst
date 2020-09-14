@@ -11,7 +11,7 @@ latest charts -- via the |ak| :ref:`Interactive Queries <streams_developer-guide
 API.  The application's input data is in Avro format and comes from two sources: a stream of play events (think: "song
 X was played") and a stream of song metadata ("song X was written by artist Y").
 
-The following screencast shows a live bit of the music demo application:
+The following `screencast <https://asciinema.org/a/111755>`__ shows a live bit of the music demo application:
 
 .. raw:: html
 
@@ -19,11 +19,6 @@ The following screencast shows a live bit of the music demo application:
   <a href="https://asciinema.org/a/111755">
     <img src="https://asciinema.org/a/111755.png" width="400" />
   </a>
-  </p>
-  <p>
-    <a href="https://asciinema.org/a/111755">
-      <strong>Screencast: Running Confluent's Kafka Music demo application (3 mins)</strong>
-    </a>
   </p>
 
 Prerequisites
@@ -58,7 +53,7 @@ To run this demo, complete the following steps:
 
       docker-compose up -d
 
-#. Check the |c3| logs to validate that it is running.
+#. View the |c3| logs and validate that it is running.
 
    .. code-block:: bash
 
@@ -70,7 +65,7 @@ To run this demo, complete the following steps:
 
       INFO Started NetworkTrafficServerConnector@5533dc72{HTTP/1.1,[http/1.1]}{0.0.0.0:9021} (org.eclipse.jetty.server.AbstractConnector)
 
-#. Once the demo is running, note the available endpoints from within the containers and from your host machine:
+#. Note the available endpoints of the |ak| brokers, |sr-long|, and |zk|, from within the containers and from your host machine:
 
    +---------------------------+-------------------------+---------------------------------+--------------------------------+
    | Endpoint                  | Parameter               | Value (from within containers)  | Value (from host machine)      |
@@ -91,10 +86,10 @@ This allows you to look at live, real-time data when testing the |ak| music appl
 - ``play-events`` : stream of play events (“song X was played”)
 - ``song-feed`` : stream of song metadata (“song X was written by artist Y”)
 
-.. figure:: ../../../tutorials/examples/music/images/ksql-music-demo-source-data.jpg
+.. figure:: ../../../tutorials/examples/music/images/ksql-music-demo-source-data-explore.jpg
        :width: 600px
 
-#. Use Google Chrome to navigate to `Confluent Control Center <http://localhost:9021>`__.
+#. From your web browser, navigate to `Confluent Control Center <http://localhost:9021>`__.
 
 #. Click on ``Topics`` and select any topic to view its messages.
 
@@ -112,14 +107,13 @@ This allows you to look at live, real-time data when testing the |ak| music appl
    .. figure:: ../../../tutorials/examples/music/images/topic_ksql_play_events.png
           :width: 600px
 
-#. Inspect the topic ``song-feed``.  You need to reset partition 0 to see the previous data already produced to the topic.
+#. Enter the following ksqlDB query into the editor to view the |ak| messages in ``song-feed``.
 
-#. The source data looks as follows
+   .. code-block:: bash
+   
+      PRINT "song-feed" FROM BEGINNING;
 
-   .. figure:: ../../../tutorials/examples/music/images/ksql-music-demo-source-data-explore.jpg
-          :width: 600px
-
-#. You can also use the command line tools to view messages in the input topics. View the messages in the topic ``play-events``.
+#. You can also use command line tools to view messages in the |ak| topics. View the messages in the topic ``play-events``.
 
    .. codewithvars:: bash
   
@@ -161,8 +155,7 @@ This allows you to look at live, real-time data when testing the |ak| music appl
 Validate the |kstreams| application
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Now you can use your web browser or a CLI tool such as ``curl`` to interactively query the latest processing results of
-the |ak| Music application by accessing its REST API, which is being run by the Docker container ``kafka-music-application``.
+The |ak| music application has a REST API, run in the Docker container ``kafka-music-application``, that you can interactively query using ``curl``.
 
 #. List all running application instances of the |ak| Music application.
 
@@ -220,6 +213,10 @@ Create the ksqlDB application
 
 Now you create ksqlDB queries that are the equivalent to the |kstreams|.
 
+.. figure:: ../../../tutorials/examples/music/images/images/ksql-music-demo-overview.jpg 
+    :width: 600px
+
+
 You have two options to proceed:
 
 - manually: step through the tutorial, step-by-step
@@ -243,7 +240,7 @@ Prefix the names of the ksqlDB streams and tables with ``ksql_``.  This is not r
 #. Select the topic ``play-events``  and then fill out the fields as shown below.  Because |c3| integrates with |sr-long|, ksqlDB automatically detects the fields ``song_id`` and ``duration`` and their respective data types.
 
    .. figure:: ../../../tutorials/examples/music/images/ksql_playevents.png
-          :width: 600px
+          :width: 400px
 
 #. Do some basic filtering on the newly created stream ``ksql_playevents``, e.g. to qualify songs that were played for at least 30 seconds.  From the ksqlDB query editor:
 
