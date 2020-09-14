@@ -218,7 +218,7 @@ In this section, create ksqlDB queries that are the equivalent to the |kstreams|
 
 You have two options to proceed:
 
-- manually: step through the tutorial, step-by-step
+- manually: step through the tutorial, creating each ksqlDB command one at a time
 - automatically: submits all the :devx-examples:`ksqlDB commands|music/statements.sql` via the ksqlDB ``SCRIPT`` command:
 
 
@@ -227,10 +227,7 @@ Manually
 
 Prefix the names of the ksqlDB streams and tables with ``ksql_``.  This is not required but do it so that you can run these ksqlDB queries alongside the |kstreams| API version of this music demo and avoid naming conflicts.
 
-#. Create a new stream called ``ksql_playevents`` from the ``play-events`` topic. Use either the ksqlDB editor or select *Add a stream*.
-
-   .. literalinclude:: ../../../tutorials/examples/music/statements.sql
-      :lines: 6
+#. Create a new stream called ``ksql_playevents`` from the ``play-events`` topic. From the ksqlDB application, select *Add a stream*.
 
    .. figure:: ../../../tutorials/examples/music/images/add_a_stream.png
           :width: 600px
