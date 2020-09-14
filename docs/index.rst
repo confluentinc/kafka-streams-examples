@@ -169,7 +169,7 @@ The |ak| music application has a REST API, run in the Docker container ``kafka-m
   
        [
          {
-           "host": "localhost",
+           "host": "kafka-music-application",
            "port": 7070,
            "storeNames": [
              "all-songs",
@@ -184,7 +184,7 @@ The |ak| music application has a REST API, run in the Docker container ``kafka-m
 
    ::
 
-     curl -sXGET http://localhost:7070/kafka-music/charts/top-five
+     curl -sXGET http://localhost:7070/kafka-music/charts/top-five | jq .
 
 #. Verify your output resembles:
 
@@ -211,11 +211,10 @@ The |ak| music application has a REST API, run in the Docker container ``kafka-m
 Create the ksqlDB application
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Now you create ksqlDB queries that are the equivalent to the |kstreams|.
+In this section, create ksqlDB queries that are the equivalent to the |kstreams|.
 
 .. figure:: ../../../tutorials/examples/music/images/ksql-music-demo-overview.jpg
     :width: 600px
-
 
 You have two options to proceed:
 
