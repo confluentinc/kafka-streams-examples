@@ -1,0 +1,4 @@
+C:\RepoPerso\kafka-streams-examples\dotnet\samples\mapfunction\bin\Debug\netcoreapp3.1\MapFunction.exe
+C:\RepoPerso\kafka-streams-examples\dotnet\samples\mapfunction\obj\Debug\netcoreapp3.1\MapFunction.csprojAssemblyReference.cache
+C:\RepoPerso\kafka-streams-examples\dotnet\samples\mapfunction\obj\Debug\netcoreapp3.1\MapFunction.AssemblyInfoInputs.cache
+C:\RepoPerso\kafka-streams-examples\dotnet\samples\mapfunction\obj\Debug\netcoreapp3.1\MapFunction.AssemblyInfo.cs
