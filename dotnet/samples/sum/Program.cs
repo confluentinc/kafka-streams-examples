@@ -58,8 +58,8 @@ namespace Sum
             var config = new StreamConfig<Int32SerDes, Int32SerDes>();
             // Give the Streams application a unique name.  The name must be unique in the Kafka cluster
             // against which the application is run.
-            config.ApplicationId = "map-function-example";
-            config.ClientId = "map-function-example-client";
+            config.ApplicationId = "sum-example";
+            config.ClientId = "sum-example-client";
             // Where to find Kafka broker(s).
             config.BootstrapServers = boostrapserver;
             config.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
