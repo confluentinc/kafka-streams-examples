@@ -1,0 +1,15 @@
+﻿{
+  "name": "Product",
+  "type": "record",
+  "namespace": "com.dotnet.samples.avro",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int"
+    },
+    {
+      "name": "name",
+      "type": "string"
+    }
+  ]
+}

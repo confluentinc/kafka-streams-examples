@@ -1,0 +1,27 @@
+﻿{
+  "name": "EnrichedOrder",
+  "type": "record",
+  "namespace": "com.dotnet.samples.avro",
+  "fields": [
+    {
+      "name": "productName",
+      "type": "string"
+    },
+    {
+      "name": "productId",
+      "type": "int"
+    },
+    {
+      "name": "customerName",
+      "type": "string"
+    },
+    {
+      "name": "customerId",
+      "type": "int"
+    },
+    {
+      "name": "orderId",
+      "type": "int"
+    }
+  ]
+}
