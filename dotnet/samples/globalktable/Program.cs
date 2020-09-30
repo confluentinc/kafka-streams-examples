@@ -9,6 +9,47 @@ using System.Threading;
 
 namespace GlobalKTable
 {
+    /// Demonstrates how to perform joins between  KStreams and GlobalKTables, i.e. joins that
+    /// don't require re-partitioning of the input streams.
+    /// <para>
+    /// In this example, we join a stream of orders that reads from a topic named
+    /// "order" with a customers table that reads from a topic named "customer", and a products
+    /// table that reads from a topic "product". The join produces an EnrichedOrder object.
+    /// </para>
+    /// <para>
+    /// HOW TO RUN THIS EXAMPLE
+    /// </para>
+    /// <para>
+    /// 1) Start Zookeeper, Kafka, and Confluent Schema Registry. Please refer to <a href='http://docs.confluent.io/current/quickstart.html#quickstart'>QuickStart</a>.
+    /// </para>
+    /// <para>
+    /// 2) Create the input/intermediate/output topics used by this example.
+    /// </para>
+    /// <code>
+    /// $ bin/kafka-topics --create --topic order \
+    ///                    --zookeeper localhost:2181 --partitions 4 --replication-factor 1
+    /// $ bin/kafka-topics --create --topic customer \
+    ///                    --zookeeper localhost:2181 --partitions 3 --replication-factor 1
+    /// $ bin/kafka-topics --create --topic product \
+    ///                    --zookeeper localhost:2181 --partitions 2 --replication-factor 1
+    /// $ bin/kafka-topics --create --topic enriched-order \
+    ///                    --zookeeper localhost:2181 --partitions 4 --replication-factor 1
+    /// </code>
+    /// Note: The above commands are for the Confluent Platform. For Apache Kafka it should be
+    /// `bin/kafka-topics.sh ...`.
+    /// <para>
+    /// 3) Start this example application either in your IDE or on the command line.
+    /// </para>
+    /// <para>
+    /// 4) Write some input data to the source topics. The
+    /// already running example application (step 3) will automatically process this input data and write
+    /// the results to the output topic.
+    /// </para>
+    /// <para>
+    /// 5) Once you're done with your experiments, you can stop this example via Ctrl-C. If needed,
+    /// also stop the Confluent Schema Registry (Ctrl-C), then stop the Kafka broker (Ctrl-C), and
+    /// only then stop the ZooKeeper instance (Ctrl-C).
+    /// </para>
     class Program
     {
         static readonly string ORDER_TOPIC = "order";

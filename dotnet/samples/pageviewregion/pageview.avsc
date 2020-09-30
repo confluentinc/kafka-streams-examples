@@ -1,0 +1,15 @@
+﻿{
+  "name": "PageView",
+  "type": "record",
+  "namespace": "com.dotnet.samples.avro",
+  "fields": [
+    {
+      "name": "user",
+      "type": "string"
+    },
+    {
+      "name": "url",
+      "type": "string"
+    }
+  ]
+}

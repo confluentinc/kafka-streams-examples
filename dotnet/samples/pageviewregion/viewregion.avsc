@@ -1,0 +1,19 @@
+﻿{
+  "name": "ViewRegion",
+  "type": "record",
+  "namespace": "com.dotnet.samples.avro",
+  "fields": [
+    {
+      "name": "page",
+      "type": "string"
+    },
+    {
+      "name": "user",
+      "type": "string"
+    },
+    {
+      "name": "region",
+      "type": "string"
+    }
+  ]
+}
