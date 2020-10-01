@@ -1,7 +1,7 @@
 ﻿using Streamiz.Kafka.Net.Mock;
 using System.Collections.Generic;
 
-namespace AggregateTests
+namespace TestUtils
 {
     /// <summary>
     /// TODO : Need to add this extensions method to Streamiz package.
@@ -28,4 +28,5 @@ namespace AggregateTests
             return map;
         }
     }
+
 }

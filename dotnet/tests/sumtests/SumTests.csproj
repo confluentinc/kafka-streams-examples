@@ -13,8 +13,4 @@
     <PackageReference Include="Streamiz.Kafka.Net" Version="1.0.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\TestUtils\TestUtils.csproj" />
-  </ItemGroup>
-
 </Project>
