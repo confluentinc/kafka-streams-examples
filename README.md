@@ -23,6 +23,7 @@ Table of Contents
     * [Using IntelliJ or Eclipse](#requirements-ide)
     * [Java](#requirements-java)
     * [Scala](#requirements-scala)
+    * [Dotnet](#requirements-dotnet)
 * [Packaging and running the examples](#packaging-and-running)
 * [Development](#development)
 * [Version Compatibility Matrix](#version-compatibility)
@@ -60,21 +61,21 @@ There are three kinds of examples:
 
 Additional examples may be found under [src/main/](src/main/java/io/confluent/examples/streams/).
 
-| Application Name            | Concepts used                                            | Java 8+ | Java 7+ | Scala |
-| --------------------------- | -------------------------------------------------------- | ------- | ------- | ----- |
-| WordCount                   | DSL, aggregation, stateful                               | [Java 8+ example](src/main/java/io/confluent/examples/streams/WordCountLambdaExample.java) | | [Scala Example](src/main/scala/io/confluent/examples/streams/WordCountScalaExample.scala) |
-| MapFunction                 | DSL, stateless transformations, `map()`                  | [Java 8+ example](src/main/java/io/confluent/examples/streams/MapFunctionLambdaExample.java) | | [Scala Example](src/main/scala/io/confluent/examples/streams/MapFunctionScalaExample.scala) |
-| SessionWindows              | Sessionization of user events, user behavior analysis    | | [Java 7+ example](src/main/java/io/confluent/examples/streams/SessionWindowsExample.java)
-| GlobalKTable                | `join()` between `KStream` and `GlobalKTable`            | [Java 8+ example](src/main/java/io/confluent/examples/streams/GlobalKTablesExample.java) | | |
-| PageViewRegion              | `join()` between `KStream` and `KTable`                  | [Java 8+ example](src/main/java/io/confluent/examples/streams/PageViewRegionLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/PageViewRegionExample.java) | |
-| PageViewRegionGenericAvro   | Working with data in Generic Avro format                 | [Java 8+ example](src/main/java/io/confluent/examples/streams/PageViewRegionLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/PageViewRegionExample.java) | |
-| WikipediaFeedSpecificAvro   | Working with data in Specific Avro format                | [Java 8+ example](src/main/java/io/confluent/examples/streams/WikipediaFeedAvroLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/WikipediaFeedAvroExample.java) | |
+| Application Name            | Concepts used                                            | Java 8+ | Java 7+ | Scala | Dotnet |
+| --------------------------- | -------------------------------------------------------- | ------- | ------- | ----- | ------ |
+| WordCount                   | DSL, aggregation, stateful                               | [Java 8+ example](src/main/java/io/confluent/examples/streams/WordCountLambdaExample.java) | | [Scala Example](src/main/scala/io/confluent/examples/streams/WordCountScalaExample.scala) | [Dotnet Example](dotnet/samples/wordcount/Program.cs) |
+| MapFunction                 | DSL, stateless transformations, `map()`                  | [Java 8+ example](src/main/java/io/confluent/examples/streams/MapFunctionLambdaExample.java) | | [Scala Example](src/main/scala/io/confluent/examples/streams/MapFunctionScalaExample.scala) | [Dotnet Example](dotnet/samples/mapfunction/Program.cs) |
+| SessionWindows              | Sessionization of user events, user behavior analysis    | | [Java 7+ example](src/main/java/io/confluent/examples/streams/SessionWindowsExample.java) | |
+| GlobalKTable                | `join()` between `KStream` and `GlobalKTable`            | [Java 8+ example](src/main/java/io/confluent/examples/streams/GlobalKTablesExample.java) | | | [Dotnet Example](dotnet/samples/globalktable/Program.cs) |
+| PageViewRegion              | `join()` between `KStream` and `KTable`                  | [Java 8+ example](src/main/java/io/confluent/examples/streams/PageViewRegionLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/PageViewRegionExample.java) | | [Dotnet Example](dotnet/samples/pageviewregion/Program.cs) |
+| PageViewRegionGenericAvro   | Working with data in Generic Avro format                 | [Java 8+ example](src/main/java/io/confluent/examples/streams/PageViewRegionLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/PageViewRegionExample.java) | | |
+| WikipediaFeedSpecificAvro   | Working with data in Specific Avro format                | [Java 8+ example](src/main/java/io/confluent/examples/streams/WikipediaFeedAvroLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/WikipediaFeedAvroExample.java) | | |
 | SecureKafkaStreams          | Secure, encryption, client authentication                | | [Java 7+ example](src/main/java/io/confluent/examples/streams/SecureKafkaStreamsExample.java) | |
-| Sum                         | DSL, stateful transformations, `reduce()`                | [Java 8+ example](src/main/java/io/confluent/examples/streams/SumLambdaExample.java) | | |
-| WordCountInteractiveQueries | Interactive Queries, REST, RPC                           | [Java 8+ example](src/main/java/io/confluent/examples/streams/interactivequeries/WordCountInteractiveQueriesExample.java) | | |
-| KafkaMusic                  | Interactive Queries, State Stores, REST API              | [Java 8+ example](src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java) | | |
-| ApplicationReset            | Application Reset Tool `kafka-streams-application-reset` | [Java 8+ example](src/main/java/io/confluent/examples/streams/ApplicationResetExample.java) | | |
-| Microservice                | Microservice ecosystem, state stores, dynamic routing, joins, filtering, branching, stateful operations | [Java 8+ example](src/main/java/io/confluent/examples/streams/microservices) | | |
+| Sum                         | DSL, stateful transformations, `reduce()`                | [Java 8+ example](src/main/java/io/confluent/examples/streams/SumLambdaExample.java) | | | [Dotnet Example](dotnet/samples/sum/Program.cs) |
+| WordCountInteractiveQueries | Interactive Queries, REST, RPC                           | [Java 8+ example](src/main/java/io/confluent/examples/streams/interactivequeries/WordCountInteractiveQueriesExample.java) | | | |
+| KafkaMusic                  | Interactive Queries, State Stores, REST API              | [Java 8+ example](src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java) | | | |
+| ApplicationReset            | Application Reset Tool `kafka-streams-application-reset` | [Java 8+ example](src/main/java/io/confluent/examples/streams/ApplicationResetExample.java) | | | |
+| Microservice                | Microservice ecosystem, state stores, dynamic routing, joins, filtering, branching, stateful operations | [Java 8+ example](src/main/java/io/confluent/examples/streams/microservices) | | | |
 
 
 <a name="examples-unit-tests"/>
@@ -101,32 +102,32 @@ Additional examples may be found under [src/test/](src/test/java/io/confluent/ex
 
 > Tip: Run `mvn test` to launch the tests.
 
-| Integration Test Name               | Concepts used                               | Java 8+ | Java 7+ | Scala |
-| ----------------------------------- | ------------------------------------------- | ------- | ------- | ----- |
-| WordCount                           | DSL, aggregation, stateful                  | [Java 8+ Example](src/test/java/io/confluent/examples/streams/WordCountLambdaIntegrationTest.java) | | [Scala Example](src/test/scala/io/confluent/examples/streams/WordCountScalaIntegrationTest.scala) |
-| WordCountInteractiveQueries         | Interactive Queries, REST, RPC              | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/interactivequeries/WordCountInteractiveQueriesExampleTest.java) | |
-| Aggregate                           | DSL, `groupBy()`, `aggregate()`             | [Java 8+ Example](src/test/java/io/confluent/examples/streams/AggregateTest.java) | | [Scala Example](src/test/scala/io/confluent/examples/streams/AggregateScalaTest.scala) |
-| CustomStreamTableJoin               | DSL, Processor API, Transformers            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/CustomStreamTableJoinIntegrationTest.java) | | |
-| EventDeduplication                  | DSL, Processor API, Transformers            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/EventDeduplicationLambdaIntegrationTest.java) | | |
-| GlobalKTable                        | DSL, global state                           | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/GlobalKTablesExampleTest.java) | |
-| HandlingCorruptedInputRecords       | DSL, `flatMap()`                            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/HandlingCorruptedInputRecordsIntegrationTest.java) | | |
-| KafkaMusic (Interactive Queries)    | Interactive Queries, State Stores, REST API | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExampleTest.java) | |
-| MapFunction                         | DSL, stateless transformations, `map()`     | [Java 8+ Example](src/test/java/io/confluent/examples/streams/MapFunctionLambdaIntegrationTest.java) | | |
-| MixAndMatch DSL + Processor API     | Integrating DSL and Processor API           | [Java 8+ Example](src/test/java/io/confluent/examples/streams/MixAndMatchLambdaIntegrationTest.java) | | |
-| PassThrough                         | DSL, `stream()`, `to()`                     | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/PassThroughIntegrationTest.java) | |
-| PoisonPill                          | DSL, `flatMap()`                            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/HandlingCorruptedInputRecordsIntegrationTest.java) | | |
-| ProbabilisticCounting\*\*\*         | DSL, Processor API, custom state stores     | | | [Scala Example](src/test/scala/io/confluent/examples/streams/ProbabilisticCountingScalaIntegrationTest.scala) |
-| Reduce (Concatenate)                | DSL, `groupByKey()`, `reduce()`             | [Java 8+ Example](src/test/java/io/confluent/examples/streams/ReduceTest.java) | | [Scala Example](src/test/scala/io/confluent/examples/streams/ReduceScalaTest.scala) |
-| SessionWindows                      | DSL, windowed aggregation, sessionization   | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/SessionWindowsExampleTest.java) | |
-| StatesStoresDSL                     | DSL, Processor API, Transformers            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/StateStoresInTheDSLIntegrationTest.java) | | |
-| StreamToStreamJoin                  | DSL, `join()` between KStream and KStream   | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/StreamToStreamJoinIntegrationTest.java) | |
-| StreamToTableJoin                   | DSL, `join()` between KStream and KTable    | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/StreamToTableJoinIntegrationTest.java) | [Scala Example](src/test/scala/io/confluent/examples/streams/StreamToTableJoinScalaIntegrationTest.scala) |
-| Sum                                 | DSL, aggregation, stateful, `reduce()`      | [Java 8+ Example](src/test/java/io/confluent/examples/streams/SumLambdaIntegrationTest.java) | | |
-| TableToTableJoin                    | DSL, `join()` between KTable and KTable     | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/TableToTableJoinIntegrationTest.java) | |
-| UserCountsPerRegion                 | DSL, aggregation, stateful, `count()`       | [Java 8+ Example](src/test/java/io/confluent/examples/streams/UserCountsPerRegionLambdaIntegrationTest.java) | | |
-| ValidateStateWithInteractiveQueries | Interactive Queries for validating state    | | [Java 8+ Example](src/test/java/io/confluent/examples/streams/ValidateStateWithInteractiveQueriesLambdaIntegrationTest.java) | | |
-| GenericAvro                         | Working with data in Generic Avro format    | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/GenericAvroIntegrationTest.java) |  [Scala Example](src/test/scala/io/confluent/examples/streams/GenericAvroScalaIntegrationTest.scala) |
-| SpecificAvro                        | Working with data in Specific Avro format   | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/SpecificAvroIntegrationTest.java) | [Scala Example](src/test/scala/io/confluent/examples/streams/SpecificAvroScalaIntegrationTest.scala) |
+| Integration Test Name               | Concepts used                               | Java 8+ | Java 7+ | Scala | Dotnet |
+| ----------------------------------- | ------------------------------------------- | ------- | ------- | ----- | ------ |
+| WordCount                           | DSL, aggregation, stateful                  | [Java 8+ Example](src/test/java/io/confluent/examples/streams/WordCountLambdaIntegrationTest.java) | | [Scala Example](src/test/scala/io/confluent/examples/streams/WordCountScalaIntegrationTest.scala) | [Dotnet Example](dotnet/tests/wordcounttests/WordCountTest.cs) |
+| WordCountInteractiveQueries         | Interactive Queries, REST, RPC              | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/interactivequeries/WordCountInteractiveQueriesExampleTest.java) | | |
+| Aggregate                           | DSL, `groupBy()`, `aggregate()`             | [Java 8+ Example](src/test/java/io/confluent/examples/streams/AggregateTest.java) | | [Scala Example](src/test/scala/io/confluent/examples/streams/AggregateScalaTest.scala) | [Dotnet Example](dotnet/tests/aggregatetests/AggregateTest.cs) |
+| CustomStreamTableJoin               | DSL, Processor API, Transformers            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/CustomStreamTableJoinIntegrationTest.java) | | | |
+| EventDeduplication                  | DSL, Processor API, Transformers            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/EventDeduplicationLambdaIntegrationTest.java) | | | |
+| GlobalKTable                        | DSL, global state                           | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/GlobalKTablesExampleTest.java) | | [Dotnet Example](dotnet/tests/globalktabletests/GlobalKTableTest.cs) |
+| HandlingCorruptedInputRecords       | DSL, `flatMap()`                            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/HandlingCorruptedInputRecordsIntegrationTest.java) | | | |
+| KafkaMusic (Interactive Queries)    | Interactive Queries, State Stores, REST API | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExampleTest.java) | | |
+| MapFunction                         | DSL, stateless transformations, `map()`     | [Java 8+ Example](src/test/java/io/confluent/examples/streams/MapFunctionLambdaIntegrationTest.java) | | | [Dotnet Example](dotnet/tests/maptest/MapTest.cs) |
+| MixAndMatch DSL + Processor API     | Integrating DSL and Processor API           | [Java 8+ Example](src/test/java/io/confluent/examples/streams/MixAndMatchLambdaIntegrationTest.java) | | | |
+| PassThrough                         | DSL, `stream()`, `to()`                     | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/PassThroughIntegrationTest.java) | | [Dotnet Example](dotnet/tests/passthroughtests/PassThroughTest.cs) |
+| PoisonPill                          | DSL, `flatMap()`                            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/HandlingCorruptedInputRecordsIntegrationTest.java) | | | |
+| ProbabilisticCounting\*\*\*         | DSL, Processor API, custom state stores     | | | [Scala Example](src/test/scala/io/confluent/examples/streams/ProbabilisticCountingScalaIntegrationTest.scala) | |
+| Reduce (Concatenate)                | DSL, `groupByKey()`, `reduce()`             | [Java 8+ Example](src/test/java/io/confluent/examples/streams/ReduceTest.java) | | [Scala Example](src/test/scala/io/confluent/examples/streams/ReduceScalaTest.scala) | [Dotnet Example](dotnet/tests/reducetests/ReduceTest.cs) |
+| SessionWindows                      | DSL, windowed aggregation, sessionization   | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/SessionWindowsExampleTest.java) | | |
+| StatesStoresDSL                     | DSL, Processor API, Transformers            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/StateStoresInTheDSLIntegrationTest.java) | | | |
+| StreamToStreamJoin                  | DSL, `join()` between KStream and KStream   | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/StreamToStreamJoinIntegrationTest.java) | | [Dotnet Example](dotnet/tests/streamtostreamjointests/StreamToStreamJoinTest.cs) |
+| StreamToTableJoin                   | DSL, `join()` between KStream and KTable    | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/StreamToTableJoinIntegrationTest.java) | [Scala Example](src/test/scala/io/confluent/examples/streams/StreamToTableJoinScalaIntegrationTest.scala) | [Dotnet Example](dotnet/tests/streamtotablejointests/StreamToTableJoinTest.cs) |
+| Sum                                 | DSL, aggregation, stateful, `reduce()`      | [Java 8+ Example](src/test/java/io/confluent/examples/streams/SumLambdaIntegrationTest.java) | | | [Dotnet Example](dotnet/tests/sumtests/SumTest.cs) |
+| TableToTableJoin                    | DSL, `join()` between KTable and KTable     | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/TableToTableJoinIntegrationTest.java) | | |
+| UserCountsPerRegion                 | DSL, aggregation, stateful, `count()`       | [Java 8+ Example](src/test/java/io/confluent/examples/streams/UserCountsPerRegionLambdaIntegrationTest.java) | | | [Dotnet Example](dotnet/tests/counttests/CountTest.cs) |
+| ValidateStateWithInteractiveQueries | Interactive Queries for validating state    | | [Java 8+ Example](src/test/java/io/confluent/examples/streams/ValidateStateWithInteractiveQueriesLambdaIntegrationTest.java) | | | |
+| GenericAvro                         | Working with data in Generic Avro format    | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/GenericAvroIntegrationTest.java) |  [Scala Example](src/test/scala/io/confluent/examples/streams/GenericAvroScalaIntegrationTest.scala) | |
+| SpecificAvro                        | Working with data in Specific Avro format   | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/SpecificAvroIntegrationTest.java) | [Scala Example](src/test/scala/io/confluent/examples/streams/SpecificAvroScalaIntegrationTest.scala) | |
 
 \*\*\*demonstrates how to probabilistically count items in an input stream by implementing a custom state store
 ([CMSStore](src/main/scala/io/confluent/examples/streams/algebird/CMSStore.scala)) that is backed by a
@@ -279,6 +280,16 @@ If you want to experiment with the Scala examples in this repository, you need a
 and SAM / Java lambda (e.g. Scala 2.11 with `-Xexperimental` compiler flag, or 2.12).
 
 If you are compiling with Java 9+, you'll need to have Scala version 2.12+ to be compatible with the Java version.
+
+<a name="requirements-dotnet"/>
+
+## Dotnet
+
+> The implementation of Kafka Streams in .NET is provided by the community through this [package](https://www.nuget.org/packages/Streamiz.Kafka.Net/).
+
+If you wan to expirement this package, you need a [.NET Core 3.0](https://dotnet.microsoft.com/download/dotnet-core/3.0) (SDK for developers, Runtime for runnners).
+
+You can use VS Code IDE for developing Kafka Streams Application using [Streamiz package](https://www.nuget.org/packages/Streamiz.Kafka.Net/)
 
 
 <a name="packaging-and-running"/>
