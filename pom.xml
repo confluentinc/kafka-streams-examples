@@ -7,11 +7,12 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>rest-utils-parent</artifactId>
-        <version>6.1.0-SNAPSHOT</version>
+        <version>[6.1.0-0, 6.1.1-0)</version>
     </parent>
 
     <artifactId>kafka-streams-examples</artifactId>
     <packaging>jar</packaging>
+    <version>6.1.0-0</version>
 
     <organization>
         <name>Confluent, Inc.</name>
@@ -54,7 +55,6 @@
         <docker.skip-build>false</docker.skip-build>
         <docker.skip-test>false</docker.skip-test>
         <java.version>1.8</java.version>
-        <licenses.version>6.1.0-SNAPSHOT</licenses.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kafka.scala.version>2.13</kafka.scala.version>
         <scala.version>2.13.2</scala.version>
@@ -64,23 +64,25 @@
         <!-- Need to explicitly set this otherwise it will be overridden from common-docker pom. -->
         <docker.file>Dockerfile.${docker.os_type}</docker.file>
         <docker.tag>${project.version}-${docker.os_type}</docker.tag>
+        <io.confluent.schema-registry.version>${confluent.version.range}</io.confluent.schema-registry.version>
+        <io.confluent.blueway.version>${confluent.version.range}</io.confluent.blueway.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-streams-avro-serde</artifactId>
-            <version>${confluent.version}</version>
+            <version>${io.confluent.schema-registry.version}</version>
         </dependency>
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-avro-serializer</artifactId>
-            <version>${confluent.version}</version>
+            <version>${io.confluent.schema-registry.version}</version>
         </dependency>
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-schema-registry-client</artifactId>
-            <version>${confluent.version}</version>
+            <version>${io.confluent.schema-registry.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
@@ -184,7 +186,7 @@
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>monitoring-interceptors</artifactId>
-            <version>${confluent.version}</version>
+            <version>${io.confluent.blueway.version}</version>
         </dependency>
 
         <dependency>
@@ -264,13 +266,13 @@
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-schema-registry</artifactId>
-            <version>${confluent.version}</version>
+            <version>${io.confluent.schema-registry.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-schema-registry</artifactId>
-            <version>${confluent.version}</version>
+            <version>${io.confluent.schema-registry.version}</version>
             <!-- Required for e.g. schema registry's RestApp -->
             <classifier>tests</classifier>
             <scope>test</scope>
