@@ -66,6 +66,7 @@
         <docker.tag>${project.version}-${docker.os_type}</docker.tag>
         <io.confluent.schema-registry.version>${confluent.version.range}</io.confluent.schema-registry.version>
         <io.confluent.blueway.version>${confluent.version.range}</io.confluent.blueway.version>
+        <io.confluent.kafka-streams-examples.version>6.1.0-0</io.confluent.kafka-streams-examples.version>
     </properties>
 
     <dependencies>
