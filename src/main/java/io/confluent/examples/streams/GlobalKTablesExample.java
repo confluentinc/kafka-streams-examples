@@ -42,6 +42,10 @@ import java.util.Properties;
  * Demonstrates how to perform joins between  KStreams and GlobalKTables, i.e. joins that
  * don't require re-partitioning of the input streams.
  * <p>
+ * The {@link GlobalStoresExample} shows another way to perform the same operation using
+ * {@link org.apache.kafka.streams.TopologyDescription.GlobalStore} and a
+ * {@link org.apache.kafka.streams.kstream.ValueTransformer}.
+ * <p>
  * In this example, we join a stream of orders that reads from a topic named
  * "order" with a customers table that reads from a topic named "customer", and a products
  * table that reads from a topic "product". The join produces an EnrichedOrder object.
@@ -75,14 +79,14 @@ import java.util.Properties;
  * $ java -cp target/kafka-streams-examples-6.0.1-standalone.jar io.confluent.examples.streams.GlobalKTablesExample
  * }
  * </pre>
- * 4) Write some input data to the source topics (e.g. via {@link GlobalKTablesExampleDriver}). The
+ * 4) Write some input data to the source topics (e.g. via {@link GlobalKTablesAndStoresExampleDriver}). The
  * already running example application (step 3) will automatically process this input data and write
  * the results to the output topic.
  * <pre>
  * {@code
  * # Here: Write input data using the example driver. The driver will exit once it has received
  * # all EnrichedOrders
- * $ java -cp target/kafka-streams-examples-6.0.1-standalone.jar io.confluent.examples.streams.GlobalKTablesExampleDriver
+ * $ java -cp target/kafka-streams-examples-6.0.1-standalone.jar io.confluent.examples.streams.GlobalKTablesAndStoresExampleDriver
  * }
  * </pre>
  * <p>

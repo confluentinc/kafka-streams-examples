@@ -87,15 +87,15 @@ public class GlobalKTablesExampleTest {
 
   @Test
   public void shouldDemonstrateGlobalKTableJoins() throws Exception {
-    final List<Customer> customers = GlobalKTablesExampleDriver.generateCustomers(CLUSTER.bootstrapServers(),
+    final List<Customer> customers = GlobalKTablesAndStoresExampleDriver.generateCustomers(CLUSTER.bootstrapServers(),
                                                                                   CLUSTER.schemaRegistryUrl(),
                                                                                   100);
 
-    final List<Product> products = GlobalKTablesExampleDriver.generateProducts(CLUSTER.bootstrapServers(),
+    final List<Product> products = GlobalKTablesAndStoresExampleDriver.generateProducts(CLUSTER.bootstrapServers(),
                                                                                CLUSTER.schemaRegistryUrl(),
                                                                                100);
 
-    final List<Order> orders = GlobalKTablesExampleDriver.generateOrders(CLUSTER.bootstrapServers(),
+    final List<Order> orders = GlobalKTablesAndStoresExampleDriver.generateOrders(CLUSTER.bootstrapServers(),
                                                                          CLUSTER.schemaRegistryUrl(),
                                                                          100,
                                                                          100,
