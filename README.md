@@ -5,7 +5,7 @@ microservices using the Streams API of [Apache Kafka](http://kafka.apache.org/) 
 
 For more information take a look at the
 [**latest Confluent documentation on the Kafka Streams API**](http://docs.confluent.io/current/streams/), notably the
-[**Developer Guide**](http://docs.confluent.io/current/streams/developer-guide.html).
+[**Developer Guide**](https://docs.confluent.io/platform/current/streams/developer-guide/index.html)
 
 
 ---
