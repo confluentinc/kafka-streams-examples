@@ -325,6 +325,7 @@ public class OrdersService implements Service {
     jettyServer = startJetty(port, this);
     port = jettyServer.getURI().getPort(); // update port, in case port was zero
     producer = startProducer(bootstrapServers, ORDERS, defaultConfig);
+    defaultConfig.put(StreamsConfig.STATE_DIR_CONFIG, stateDir);
     streams = startKStreams(bootstrapServers, defaultConfig);
     log.info("Started Service " + getClass().getSimpleName());
     log.info("Order Service listening at:" + jettyServer.getURI().toString());
