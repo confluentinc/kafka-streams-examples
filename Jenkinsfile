@@ -9,5 +9,5 @@ dockerfile {
     cron = ''
     cpImages = true
     osTypes = ['deb9', 'ubi8']
-    slackChannel = 'streams-alerts'
+    slackChannel = 'ksqldb-warn'
 }
