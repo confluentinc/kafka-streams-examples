@@ -9,6 +9,6 @@ dockerfile {
     cron = ''
     cpImages = true
     osTypes = ['ubi8']
-    slackChannel = 'streams-alerts'
+    slackChannel = 'ksqldb-warn'
     nanoVersion = true
 }
