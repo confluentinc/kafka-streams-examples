@@ -6,5 +6,5 @@ dockerfile {
     mvnSkipDeploy = true
     upstreamProjects = 'confluentinc/rest-utils'
     withPush = true
-    slackChannel = 'streams-alerts'
+    slackChannel = 'ksqldb-warn'
 }
