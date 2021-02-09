@@ -358,9 +358,10 @@ public class OrdersService implements Service {
   }
 
   private Properties config(final String bootstrapServers, final Properties defaultConfig) {
+    final String statDir = defaultConfig.getProperty(StreamsConfig.STATE_DIR_CONFIG);
     final Properties props = baseStreamsConfig(
             bootstrapServers,
-            "/tmp/kafka-streams",
+            statDir != null ? statDir : "/tmp/kafka-streams",
             SERVICE_APP_ID,
             defaultConfig);
     props.put(StreamsConfig.APPLICATION_SERVER_CONFIG, host + ":" + port);
