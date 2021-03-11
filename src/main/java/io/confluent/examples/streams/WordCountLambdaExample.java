@@ -49,10 +49,10 @@ import java.util.regex.Pattern;
  * 2) Create the input and output topics used by this example.
  * <pre>
  * {@code
- * $ bin/kafka-topics --create --topic streams-plaintext-input \
- *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
- * $ bin/kafka-topics --create --topic streams-wordcount-output \
- *                    --zookeeper localhost:2181 --partitions 1 --replication-factor 1
+ * $ bin/kafka-topics --bootstrap-server localhost:9092 --create --topic streams-plaintext-input \
+ *                   --partitions 1 --replication-factor 1
+ * $ bin/kafka-topics --bootstrap-server localhost:9092 --create --topic streams-wordcount-output \
+ *                   --partitions 1 --replication-factor 1
  * }</pre>
  * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be {@code bin/kafka-topics.sh ...}.
  * <p>
