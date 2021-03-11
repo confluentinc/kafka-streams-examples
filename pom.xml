@@ -445,11 +445,6 @@
                         <descriptor>src/assembly/package.xml</descriptor>
                         <descriptor>src/assembly/standalone.xml</descriptor>
                     </descriptors>
-                    <archive>
-                        <manifest>
-                            <mainClass>io.confluent.kafka.schemaregistry.rest.SchemaRegistryMain</mainClass>
-                        </manifest>
-                    </archive>
                     <attach>false</attach>
                 </configuration>
                 <executions>
