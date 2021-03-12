@@ -42,7 +42,7 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-6.2.0-beta210210003100-standalone.jar io.confluent.examples.streams.SessionWindowsExampleDriver
+ * $ java -cp target/kafka-streams-examples-6.2.0-beta210210003100-cp2-standalone.jar io.confluent.examples.streams.SessionWindowsExampleDriver
  * }
  * </pre>
  */
