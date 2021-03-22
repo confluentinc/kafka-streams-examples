@@ -54,7 +54,7 @@ import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
   * Once packaged you can then run:
   *
   * {{{
-  * $ java -cp target/kafka-streams-examples-6.2.0-beta210210003100-standalone.jar io.confluent.examples.streams.MapFunctionScalaExample
+  * $ java -cp target/kafka-streams-examples-6.2.0-beta210210003100-cp3-standalone.jar io.confluent.examples.streams.MapFunctionScalaExample
   * }}}
   *
   * 4) Write some input data to the source topics (e.g. via `kafka-console-producer`.  The already
