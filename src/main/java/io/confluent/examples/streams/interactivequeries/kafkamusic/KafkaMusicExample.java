@@ -467,6 +467,22 @@ public class KafkaMusicExample {
 
   /**
    * Used in aggregations to keep track of the Top five songs
+   *
+   * Warning: this aggregator relies on the current order of execution
+   * for updates, namely that the subtractor (#remove) is called prior
+   * to the adder (#add). That is an implementation detail which,
+   * while it has remained stable for years, is not part of the public
+   * contract. There is a Kafka JIRA ticket requesting to make this
+   * order of execution part of the public contract.
+   * See https://issues.apache.org/jira/browse/KAFKA-12446
+   *
+   * In the meantime, be aware that if you follow this example
+   * your aggregator might no longer work correctly if future
+   * updates to Kafka Streams were to ever change the order of execution.
+   *
+   * The issue occurs for any aggregator that uses non-commutative functions
+   * while relying on a group by key which picks out the same entries as
+   * the upstream key.
    */
   static class TopFiveSongs implements Iterable<SongPlayCount> {
     private final Map<Long, SongPlayCount> currentSongs = new HashMap<>();
