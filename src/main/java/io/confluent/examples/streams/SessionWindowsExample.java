@@ -16,7 +16,7 @@
 package io.confluent.examples.streams;
 
 import io.confluent.examples.streams.avro.PlayEvent;
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
@@ -115,7 +115,7 @@ public class SessionWindowsExample {
     final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
     final String schemaRegistryUrl = args.length > 1 ? args[1] : "http://localhost:8081";
     final KafkaStreams streams = new KafkaStreams(
-      buildTopology(singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl)),
+      buildTopology(singletonMap(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl)),
       streamsConfig(bootstrapServers, "/tmp/kafka-streams")
     );
 

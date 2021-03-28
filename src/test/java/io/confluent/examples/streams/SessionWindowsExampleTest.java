@@ -17,7 +17,7 @@ package io.confluent.examples.streams;
 
 import io.confluent.examples.streams.avro.PlayEvent;
 import io.confluent.kafka.schemaregistry.testutil.MockSchemaRegistry;
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -54,7 +54,7 @@ public class SessionWindowsExampleTest {
   private TestInputTopic<String, PlayEvent> input;
   private TestOutputTopic<String, Long> output;
   private final Map<String, String> AVRO_SERDE_CONFIG = Collections.singletonMap(
-    AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, MOCK_SCHEMA_REGISTRY_URL
+      AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, MOCK_SCHEMA_REGISTRY_URL
   );
 
   @Before

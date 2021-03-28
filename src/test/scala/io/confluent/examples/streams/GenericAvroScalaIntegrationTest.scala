@@ -18,7 +18,7 @@ package io.confluent.examples.streams
 import java.util.{Collections, Properties}
 
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
-import io.confluent.kafka.serializers.{AbstractKafkaAvroSerDeConfig, KafkaAvroDeserializer, KafkaAvroSerializer}
+import io.confluent.kafka.serializers.{AbstractKafkaSchemaSerDeConfig, KafkaAvroDeserializer, KafkaAvroSerializer}
 import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
@@ -74,7 +74,7 @@ class GenericAvroScalaIntegrationTest extends AssertionsForJUnit {
       val p = new Properties()
       p.put(StreamsConfig.APPLICATION_ID_CONFIG, "generic-avro-scala-integration-test")
       p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
-      p.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, cluster.schemaRegistryUrl)
+      p.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, cluster.schemaRegistryUrl)
       p.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
       p
     }
@@ -83,7 +83,7 @@ class GenericAvroScalaIntegrationTest extends AssertionsForJUnit {
     implicit val genericAvroSerde: Serde[GenericRecord] = {
       val gas = new GenericAvroSerde
       val isKeySerde: Boolean = false
-      gas.configure(Collections.singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, cluster.schemaRegistryUrl), isKeySerde)
+      gas.configure(Collections.singletonMap(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, cluster.schemaRegistryUrl), isKeySerde)
       gas
     }
 
@@ -103,7 +103,7 @@ class GenericAvroScalaIntegrationTest extends AssertionsForJUnit {
       p.put(ProducerConfig.RETRIES_CONFIG, "0")
       p.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[ByteArraySerializer])
       p.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[KafkaAvroSerializer])
-      p.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, cluster.schemaRegistryUrl)
+      p.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, cluster.schemaRegistryUrl)
       p
     }
     import collection.JavaConverters._
@@ -119,7 +119,7 @@ class GenericAvroScalaIntegrationTest extends AssertionsForJUnit {
       p.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
       p.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, classOf[ByteArrayDeserializer])
       p.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, classOf[KafkaAvroDeserializer])
-      p.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, cluster.schemaRegistryUrl)
+      p.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, cluster.schemaRegistryUrl)
       p
     }
     val actualValues: java.util.List[GenericRecord] =

@@ -18,7 +18,7 @@ package io.confluent.examples.streams.interactivequeries.kafkamusic;
 import io.confluent.examples.streams.avro.PlayEvent;
 import io.confluent.examples.streams.avro.Song;
 import io.confluent.examples.streams.avro.SongPlayCount;
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Deserializer;
@@ -200,7 +200,7 @@ public class KafkaMusicExample {
     System.out.println("REST endpoint at http://" + restEndpointHostname + ":" + restEndpointPort);
 
     final KafkaStreams streams = new KafkaStreams(
-      buildTopology(singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl)),
+      buildTopology(singletonMap(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl)),
       streamsConfig(bootstrapServers, restEndpointPort, "/tmp/kafka-streams", restEndpointHostname)
     );
 
