@@ -19,7 +19,7 @@ import io.confluent.examples.streams.avro.Customer;
 import io.confluent.examples.streams.avro.EnrichedOrder;
 import io.confluent.examples.streams.avro.Order;
 import io.confluent.examples.streams.avro.Product;
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
@@ -145,7 +145,7 @@ public class GlobalKTablesExample {
     // create and configure the SpecificAvroSerdes required in this example
     final SpecificAvroSerde<Order> orderSerde = new SpecificAvroSerde<>();
     final Map<String, String> serdeConfig =
-        Collections.singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
+        Collections.singletonMap(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
             schemaRegistryUrl);
     orderSerde.configure(serdeConfig, false);
 
