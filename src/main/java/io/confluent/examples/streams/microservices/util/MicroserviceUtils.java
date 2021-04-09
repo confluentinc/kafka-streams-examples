@@ -103,7 +103,7 @@ public class MicroserviceUtils {
     }
 
     @Override
-    public void close(String storeName, Options options) {
+    public void close(final String storeName, final Options options) {
 
     }
   }
