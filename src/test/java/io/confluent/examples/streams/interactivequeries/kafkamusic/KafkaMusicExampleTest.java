@@ -64,6 +64,7 @@ import java.util.stream.IntStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static junit.framework.TestCase.fail;
+import static org.apache.kafka.streams.StoreQueryParameters.fromNameAndType;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -239,7 +240,7 @@ public class KafkaMusicExampleTest {
       TestUtils.waitForCondition(() -> {
         final ReadOnlyKeyValueStore<Long, Song> songsStore;
         try {
-          songsStore = streams.store(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.keyValueStore());
+          songsStore = streams.store(fromNameAndType(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.keyValueStore()));
           return songsStore.all().hasNext();
         } catch (final Exception e) {
           e.printStackTrace();

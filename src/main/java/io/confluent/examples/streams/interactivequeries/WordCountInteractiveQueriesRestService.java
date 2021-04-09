@@ -48,6 +48,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+import static org.apache.kafka.streams.StoreQueryParameters.fromNameAndType;
+
 /**
  *  A simple REST proxy that runs embedded in the {@link WordCountInteractiveQueriesExample}. This is used to
  *  demonstrate how a developer can use the Interactive Queries APIs exposed by Kafka Streams to
@@ -89,7 +91,8 @@ public class WordCountInteractiveQueriesRestService {
     }
 
     // Lookup the KeyValueStore with the provided storeName
-    final ReadOnlyKeyValueStore<String, Long> store = streams.store(storeName, QueryableStoreTypes.keyValueStore());
+    final ReadOnlyKeyValueStore<String, Long> store =
+            streams.store(fromNameAndType(storeName, QueryableStoreTypes.keyValueStore()));
     if (store == null) {
       throw new NotFoundException();
     }
@@ -158,8 +161,8 @@ public class WordCountInteractiveQueriesRestService {
                                           @PathParam("to") final Long to) {
 
     // Lookup the WindowStore with the provided storeName
-    final ReadOnlyWindowStore<String, Long> store = streams.store(storeName,
-                                                                  QueryableStoreTypes.windowStore());
+    final ReadOnlyWindowStore<String, Long> store =
+            streams.store(fromNameAndType(storeName, QueryableStoreTypes.windowStore()));
     if (store == null) {
       throw new NotFoundException();
     }
@@ -227,7 +230,8 @@ public class WordCountInteractiveQueriesRestService {
                                                        KeyValueIterator<String, Long>> rangeFunction) {
 
     // Get the KeyValue Store
-    final ReadOnlyKeyValueStore<String, Long> store = streams.store(storeName, QueryableStoreTypes.keyValueStore());
+    final ReadOnlyKeyValueStore<String, Long> store =
+            streams.store(fromNameAndType(storeName, QueryableStoreTypes.keyValueStore()));
     final List<KeyValueBean> results = new ArrayList<>();
     // Apply the function, i.e., query the store
     final KeyValueIterator<String, Long> range = rangeFunction.apply(store);

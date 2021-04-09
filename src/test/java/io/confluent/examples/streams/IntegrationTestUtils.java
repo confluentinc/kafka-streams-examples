@@ -25,10 +25,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
-import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.errors.InvalidStateStoreException;
-import org.apache.kafka.streams.state.QueryableStoreType;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.ReadOnlyWindowStore;
 import org.apache.kafka.streams.state.WindowStoreIterator;
@@ -242,33 +239,6 @@ public class IntegrationTestUtils {
             " but received only " + accumData.size() +
             " records before timeout " + waitTime + " ms");
       Thread.sleep(Math.min(waitTime, 100L));
-    }
-  }
-
-  /**
-   * Waits until the named store is queryable and, once it is, returns a reference to the store.
-   * <p>
-   * Caveat: This is a point in time view and it may change due to partition reassignment.
-   * That is, the returned store may still not be queryable in case a rebalancing is happening or
-   * happened around the same time.  This caveat is acceptable for testing purposes when only a
-   * single `KafkaStreams` instance of the application is running.
-   *
-   * @param streams            the `KafkaStreams` instance to which the store belongs
-   * @param storeName          the name of the store
-   * @param queryableStoreType the type of the (queryable) store
-   * @param <T>                the type of the (queryable) store
-   * @return the same store, which is now ready for querying (but see caveat above)
-   */
-  public static <T> T waitUntilStoreIsQueryable(final String storeName,
-                                                final QueryableStoreType<T> queryableStoreType,
-                                                final KafkaStreams streams) throws InterruptedException {
-    while (true) {
-      try {
-        return streams.store(storeName, queryableStoreType);
-      } catch (final InvalidStateStoreException ignored) {
-        // store not yet ready for querying
-        Thread.sleep(50);
-      }
     }
   }
 

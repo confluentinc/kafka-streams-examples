@@ -101,6 +101,11 @@ public class MicroserviceUtils {
       // Set number of compaction threads (but not flush threads).
       options.setIncreaseParallelism(compactionParallelism);
     }
+
+    @Override
+    public void close(final String storeName, final Options options) {
+
+    }
   }
 
   //Streams doesn't provide an Enum serdes so just create one here.
