@@ -47,6 +47,8 @@ import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.apache.kafka.streams.StoreQueryParameters.fromNameAndType;
+
 /**
  *  A simple REST proxy that runs embedded in the {@link KafkaMusicExample}. This is used to
  *  demonstrate how a developer can use the Interactive Queries APIs exposed by Kafka Streams to
@@ -130,7 +132,7 @@ public class MusicPlaysRestService {
                                                final String storeName) {
 
     final ReadOnlyKeyValueStore<String, KafkaMusicExample.TopFiveSongs> topFiveStore =
-        streams.store(storeName, QueryableStoreTypes.keyValueStore());
+        streams.store(fromNameAndType(storeName, QueryableStoreTypes.keyValueStore()));
     // Get the value from the store
     final KafkaMusicExample.TopFiveSongs value = topFiveStore.get(key);
     if (value == null) {
@@ -157,8 +159,8 @@ public class MusicPlaysRestService {
                                           songPlayCount.getPlays()));
       } else {
         // look in the local store
-        final ReadOnlyKeyValueStore<Long, Song> songStore = streams.store(KafkaMusicExample.ALL_SONGS,
-                                                                          QueryableStoreTypes.keyValueStore());
+        final ReadOnlyKeyValueStore<Long, Song> songStore =
+                streams.store(fromNameAndType(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.keyValueStore()));
         final Song song = songStore.get(songPlayCount.getSongId());
         results.add(new SongPlayCountBean(song.getArtist(), song.getAlbum(), song.getName(),
                                           songPlayCount.getPlays()));
@@ -171,8 +173,8 @@ public class MusicPlaysRestService {
   @Path("/song/{id}")
   @Produces(MediaType.APPLICATION_JSON)
   public SongBean song(@PathParam("id") final Long songId) {
-    final ReadOnlyKeyValueStore<Long, Song> songStore = streams.store(KafkaMusicExample.ALL_SONGS,
-                                                                      QueryableStoreTypes.keyValueStore());
+    final ReadOnlyKeyValueStore<Long, Song> songStore =
+            streams.store(fromNameAndType(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.keyValueStore()));
     final Song song = songStore.get(songId);
     if (song == null) {
       throw new NotFoundException(String.format("Song with id [%d] was not found", songId));

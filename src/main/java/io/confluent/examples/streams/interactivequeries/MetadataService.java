@@ -17,12 +17,15 @@ package io.confluent.examples.streams.interactivequeries;
 
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.KeyQueryMetadata;
 import org.apache.kafka.streams.state.StreamsMetadata;
 
 import javax.ws.rs.NotFoundException;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.apache.kafka.common.utils.Utils.mkSet;
 
 /**
  * Looks up StreamsMetadata from KafkaStreams and converts the results
@@ -70,14 +73,14 @@ public class MetadataService {
                                                          final Serializer<K> serializer) {
     // Get metadata for the instances of this Kafka Streams application hosting the store and
     // potentially the value for key
-    final StreamsMetadata metadata = streams.metadataForKey(store, key, serializer);
+    final KeyQueryMetadata metadata = streams.queryMetadataForKey(store, key, serializer);
     if (metadata == null) {
       throw new NotFoundException();
     }
 
-    return new HostStoreInfo(metadata.host(),
-                             metadata.port(),
-                             metadata.stateStoreNames());
+    return new HostStoreInfo(metadata.activeHost().host(),
+                             metadata.activeHost().port(),
+                             mkSet(store));
   }
 
   private List<HostStoreInfo> mapInstancesToHostStoreInfo(
