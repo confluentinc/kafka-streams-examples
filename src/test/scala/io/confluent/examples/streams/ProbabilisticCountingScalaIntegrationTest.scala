@@ -21,7 +21,7 @@ import java.util.Properties
 import io.confluent.examples.streams.algebird.{CMSStoreBuilder, ProbabilisticCounter}
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams.scala.ImplicitConversions._
-import org.apache.kafka.streams.scala.Serdes._
+import org.apache.kafka.streams.scala.serialization.Serdes._
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream.KStream
 import org.apache.kafka.streams.{StreamsConfig, TopologyTestDriver}
@@ -41,7 +41,7 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
   private val outputTopic = "output-topic"
 
   @Test
-  def shouldProbabilisticallyCountWords() {
+  def shouldProbabilisticallyCountWords(): Unit = {
     val inputTextLines: Seq[String] = Seq(
       "Hello Kafka Streams",
       "All streams lead to Kafka",

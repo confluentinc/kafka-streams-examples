@@ -36,8 +36,8 @@ import org.scalatestplus.junit.AssertionsForJUnit
   */
 class SpecificAvroScalaIntegrationTest extends AssertionsForJUnit {
 
-  import org.apache.kafka.streams.scala.Serdes._
   import org.apache.kafka.streams.scala.ImplicitConversions._
+  import org.apache.kafka.streams.scala.serialization.Serdes._
 
   private val privateCluster: EmbeddedSingleNodeKafkaCluster = new EmbeddedSingleNodeKafkaCluster
 
@@ -47,13 +47,13 @@ class SpecificAvroScalaIntegrationTest extends AssertionsForJUnit {
   private val outputTopic = "output-topic"
 
   @Before
-  def startKafkaCluster() {
+  def startKafkaCluster(): Unit = {
     cluster.createTopic(inputTopic, 2, 1)
     cluster.createTopic(outputTopic)
   }
 
   @Test
-  def shouldRoundTripGenericAvroDataThroughKafka() {
+  def shouldRoundTripGenericAvroDataThroughKafka(): Unit = {
     val f: WikiFeed = WikiFeed.newBuilder.setUser("alice").setIsNew(true).setContent("lorem ipsum").build
     val inputValues: Seq[WikiFeed] = Seq(f)
 
@@ -98,8 +98,8 @@ class SpecificAvroScalaIntegrationTest extends AssertionsForJUnit {
       p.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, cluster.schemaRegistryUrl)
       p
     }
-    import collection.JavaConverters._
-    IntegrationTestUtils.produceValuesSynchronously(inputTopic, inputValues.asJava, producerConfig)
+    import scala.jdk.CollectionConverters._
+    IntegrationTestUtils.produceValuesSynchronously(inputTopic, SeqHasAsJava(inputValues).asJava, producerConfig)
 
     //
     // Step 3: Verify the application's output data.

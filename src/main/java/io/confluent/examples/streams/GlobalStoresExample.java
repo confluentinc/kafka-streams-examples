@@ -30,8 +30,9 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.ValueTransformer;
-import org.apache.kafka.streams.processor.Processor;
-import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Processor;
+import org.apache.kafka.streams.processor.api.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.Stores;
 
@@ -187,9 +188,9 @@ public class GlobalStoresExample {
             private KeyValueStore<Long, Product> productStore;
 
             @Override
-            public void init(final ProcessorContext processorContext) {
-                customerStore = (KeyValueStore<Long, Customer>) processorContext.getStateStore(CUSTOMER_STORE);
-                productStore = (KeyValueStore<Long, Product>) processorContext.getStateStore(PRODUCT_STORE);
+            public void init(final org.apache.kafka.streams.processor.ProcessorContext processorContext) {
+                customerStore = processorContext.getStateStore(CUSTOMER_STORE);
+                productStore = processorContext.getStateStore(PRODUCT_STORE);
             }
 
             @Override
@@ -216,7 +217,7 @@ public class GlobalStoresExample {
     }
 
     // Processor that keeps the global store updated.
-    private static class GlobalStoreUpdater<K, V> implements Processor<K, V> {
+    private static class GlobalStoreUpdater<K, V> implements Processor<K, V, Void, Void> {
 
         private final String storeName;
 
@@ -227,17 +228,17 @@ public class GlobalStoresExample {
         private KeyValueStore<K, V> store;
 
         @Override
-        public void init(final ProcessorContext processorContext) {
-            store = (KeyValueStore<K, V>) processorContext.getStateStore(storeName);
+        public void init(final ProcessorContext<Void, Void> processorContext) {
+            store = processorContext.getStateStore(storeName);
         }
 
         @Override
-        public void process(final K key, final V value) {
+        public void process(final Record<K, V> record) {
             // We are only supposed to put operation the keep the store updated.
             // We should not filter record or modify the key or value
             // Doing so would break fault-tolerance.
             // see https://issues.apache.org/jira/browse/KAFKA-7663
-            store.put(key, value);
+            store.put(record.key(), record.value());
         }
 
         @Override

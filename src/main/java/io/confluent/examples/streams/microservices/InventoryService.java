@@ -134,10 +134,8 @@ public class InventoryService implements Service {
     private KeyValueStore<Product, Long> reservedStocksStore;
 
     @Override
-    @SuppressWarnings("unchecked")
     public void init(final ProcessorContext context) {
-      reservedStocksStore = (KeyValueStore<Product, Long>) context
-        .getStateStore(RESERVED_STOCK_STORE_NAME);
+      reservedStocksStore = context.getStateStore(RESERVED_STOCK_STORE_NAME);
     }
 
     @Override

@@ -100,12 +100,7 @@ public class WikipediaFeedAvroExample {
     streams.start();
 
     // Add shutdown hook to respond to SIGTERM and gracefully close Kafka Streams
-    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-      @Override
-      public void run() {
-        streams.close();
-      }
-    }));
+    Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
   }
 
   static KafkaStreams buildWikipediaFeed(final String bootstrapServers,

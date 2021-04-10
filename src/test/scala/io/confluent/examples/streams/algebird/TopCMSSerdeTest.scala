@@ -51,21 +51,21 @@ class TopCMSSerdeTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
-  def shouldSerializeNullToNull() {
+  def shouldSerializeNullToNull(): Unit = {
     val serde: Serde[TopCMS[String]] = TopCMSSerde[String]
     assertThat(serde.serializer.serialize(anyTopic, null)).isNull()
     serde.close()
   }
 
   @Test
-  def shouldDeserializeNullToNull() {
+  def shouldDeserializeNullToNull(): Unit = {
     val serde: Serde[TopCMS[String]] = TopCMSSerde[String]
     assertThat(serde.deserializer.deserialize(anyTopic, null)).isNull()
     serde.close()
   }
 
   @Test
-  def shouldThrowSerializationExceptionWhenDeserializingZeroBytes() {
+  def shouldThrowSerializationExceptionWhenDeserializingZeroBytes(): Unit = {
     val serde: Serde[TopCMS[String]] = TopCMSSerde[String]
     try {
       serde.deserializer.deserialize(anyTopic, new Array[Byte](0))

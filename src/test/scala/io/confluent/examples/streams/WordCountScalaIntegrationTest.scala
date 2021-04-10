@@ -20,7 +20,7 @@ import java.util.Properties
 import io.confluent.examples.streams.IntegrationTestUtils.NothingSerde
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams.scala.ImplicitConversions._
-import org.apache.kafka.streams.scala.Serdes._
+import org.apache.kafka.streams.scala.serialization.Serdes._
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream.{KStream, KTable}
 import org.apache.kafka.streams.{KeyValue, StreamsConfig, TopologyTestDriver}
@@ -29,8 +29,7 @@ import org.junit._
 import org.scalatestplus.junit.AssertionsForJUnit
 import org.assertj.core.api.Assertions.assertThat
 
-import scala.collection.JavaConverters._
-
+import scala.jdk.CollectionConverters._
 /**
   * End-to-end integration test based on [[WordCountLambdaExample]], using an embedded Kafka cluster.
   *
@@ -50,7 +49,7 @@ class WordCountScalaIntegrationTest extends AssertionsForJUnit {
   private val outputTopic = "output-topic"
 
   @Test
-  def shouldCountWords() {
+  def shouldCountWords(): Unit = {
     val inputTextLines: Seq[String] = Seq(
       "Hello Kafka Streams",
       "All streams lead to Kafka",

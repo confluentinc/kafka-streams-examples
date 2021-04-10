@@ -35,13 +35,13 @@ import org.scalatestplus.junit.AssertionsForJUnit
 class ReduceScalaTest extends AssertionsForJUnit {
 
   import org.apache.kafka.streams.scala.ImplicitConversions._
-  import org.apache.kafka.streams.scala.Serdes._
+  import org.apache.kafka.streams.scala.serialization.Serdes._
 
   private val inputTopic = "inputTopic"
   private val outputTopic = "output-topic"
 
   @Test
-  def shouldConcatenateWithReduce() {
+  def shouldConcatenateWithReduce():Unit = {
     val inputRecords: Seq[KeyValue[Int, String]] = Seq(
       (456, "stream"),
       (123, "hello"),

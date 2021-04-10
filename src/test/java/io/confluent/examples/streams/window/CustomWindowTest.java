@@ -291,7 +291,7 @@ public class CustomWindowTest {
         .suppress(Suppressed.untilWindowCloses(Suppressed.BufferConfig.unbounded()))
         .toStream();
       sumOfOddNumbers.print(Printed.toSysOut());
-      sumOfOddNumbers.to(outputTopic, Produced.with(WindowedSerdes.timeWindowedSerdeFrom(Integer.class), Serdes.Integer()));
+      sumOfOddNumbers.to(outputTopic, Produced.with(WindowedSerdes.timeWindowedSerdeFrom(Integer.class, Duration.ofDays(1L).toMillis()), Serdes.Integer()));
       return builder.build();
     }
 

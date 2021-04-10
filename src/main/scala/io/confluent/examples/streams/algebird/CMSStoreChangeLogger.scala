@@ -15,12 +15,12 @@
  */
 package io.confluent.examples.streams.algebird
 
-import org.apache.kafka.streams.processor.ProcessorContext
+import org.apache.kafka.streams.processor.StateStoreContext
 import org.apache.kafka.streams.processor.internals.{ProcessorStateManager, RecordCollector}
 import org.apache.kafka.streams.state.StateSerdes
 
 /**
-  * Copied from Kafka's [[org.apache.kafka.streams.state.internals.StoreChangeLogger]].
+  * Copied from Kafka's [[org.apache.kafka.streams.processor.internals.ProcessorContextImpl]].
   *
   * If StoreChangeLogger had been public, we would have used it as-is.
   *
@@ -29,18 +29,18 @@ import org.apache.kafka.streams.state.StateSerdes
   * with the [[org.apache.kafka.common.utils.Bytes]] class.
   */
 class CMSStoreChangeLogger[K, V](val storeName: String,
-                                 val context: ProcessorContext,
+                                 val context: StateStoreContext,
                                  val partition: Int,
                                  val serialization: StateSerdes[K, V]) {
 
   private val topic = ProcessorStateManager.storeChangelogTopic(context.applicationId, storeName)
   private val collector = context.asInstanceOf[RecordCollector.Supplier].recordCollector
 
-  def this(storeName: String, context: ProcessorContext, serialization: StateSerdes[K, V]) {
+  def this(storeName: String, context: StateStoreContext, serialization: StateSerdes[K, V]) = {
     this(storeName, context, context.taskId.partition, serialization)
   }
 
-  def logChange(key: K, value: V, timestamp: Long) {
+  def logChange(key: K, value: V, timestamp: Long): Unit = {
     if (collector != null) {
       val keySerializer = serialization.keySerializer
       val valueSerializer = serialization.valueSerializer

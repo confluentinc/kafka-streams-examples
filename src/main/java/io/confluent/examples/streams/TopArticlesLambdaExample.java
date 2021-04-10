@@ -100,6 +100,7 @@ public class TopArticlesLambdaExample {
 
   static final String TOP_NEWS_PER_INDUSTRY_TOPIC = "TopNewsPerIndustry";
   static final String PAGE_VIEWS = "PageViews";
+  static final Duration windowSize = Duration.ofHours(1);
 
   private static boolean isArticle(final GenericRecord record) {
     final Utf8 flags = (Utf8) record.get("flags");
@@ -165,7 +166,8 @@ public class TopArticlesLambdaExample {
     final Serde<GenericRecord> valueAvroSerde = new GenericAvroSerde();
     valueAvroSerde.configure(serdeConfig, false);
 
-    final Serde<Windowed<String>> windowedStringSerde = WindowedSerdes.timeWindowedSerdeFrom(String.class);
+    final Serde<Windowed<String>> windowedStringSerde =
+            WindowedSerdes.timeWindowedSerdeFrom(String.class, windowSize.toMillis());
 
     final StreamsBuilder builder = new StreamsBuilder();
 
@@ -190,7 +192,7 @@ public class TopArticlesLambdaExample {
     final KTable<Windowed<GenericRecord>, Long> viewCounts = articleViews
       // count the clicks per hour, using tumbling windows with a size of one hour
       .groupByKey(Grouped.with(keyAvroSerde, valueAvroSerde))
-      .windowedBy(TimeWindows.of(Duration.ofHours(1)))
+      .windowedBy(TimeWindows.of(windowSize))
       .count();
 
     final Comparator<GenericRecord> comparator =

@@ -153,7 +153,7 @@ public class PostOrdersAndPayments {
                 if (!inputOrder.equals(returnedOrder)) {
                     System.out.printf("Posted order %d does not equal returned order: %s%n", i, returnedOrder.toString());
                 } else {
-                    System.out.printf("Posted order %d equals returned order: %s%n", i, returnedOrder.toString());
+                    System.out.printf("Posted order %d equals returned order: %s%n", i, returnedOrder);
                 }
 
                 // Send payment
