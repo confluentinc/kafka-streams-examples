@@ -16,7 +16,6 @@
 package io.confluent.examples.streams
 
 import java.util.{Collections, Properties}
-
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
 import io.confluent.kafka.serializers.{AbstractKafkaSchemaSerDeConfig, KafkaAvroDeserializer, KafkaAvroSerializer}
 import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde
@@ -37,7 +36,7 @@ import org.scalatestplus.junit.AssertionsForJUnit
   */
 class GenericAvroScalaIntegrationTest extends AssertionsForJUnit {
 
-  import org.apache.kafka.streams.scala.Serdes._
+  import org.apache.kafka.streams.scala.serialization.Serdes._
   import org.apache.kafka.streams.scala.ImplicitConversions._
 
   private val privateCluster: EmbeddedSingleNodeKafkaCluster = new EmbeddedSingleNodeKafkaCluster
@@ -48,13 +47,13 @@ class GenericAvroScalaIntegrationTest extends AssertionsForJUnit {
   private val outputTopic = "output-topic"
 
   @Before
-  def startKafkaCluster() {
+  def startKafkaCluster(): Unit = {
     cluster.createTopic(inputTopic, 2, 1)
     cluster.createTopic(outputTopic)
   }
 
   @Test
-  def shouldRoundTripGenericAvroDataThroughKafka() {
+  def shouldRoundTripGenericAvroDataThroughKafka(): Unit = {
     val schema: Schema = new Schema.Parser().parse(getClass.getResourceAsStream("/avro/io/confluent/examples/streams/wikifeed.avsc"))
     val record: GenericRecord = {
       val r = new GenericData.Record(schema)
@@ -106,8 +105,8 @@ class GenericAvroScalaIntegrationTest extends AssertionsForJUnit {
       p.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, cluster.schemaRegistryUrl)
       p
     }
-    import collection.JavaConverters._
-    IntegrationTestUtils.produceValuesSynchronously(inputTopic, inputValues.asJava, producerConfig)
+    import scala.jdk.CollectionConverters._
+    IntegrationTestUtils.produceValuesSynchronously(inputTopic, SeqHasAsJava(inputValues).asJava, producerConfig)
 
     //
     // Step 3: Verify the application's output data.

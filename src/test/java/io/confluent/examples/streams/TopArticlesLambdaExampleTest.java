@@ -119,7 +119,8 @@ public class TopArticlesLambdaExampleTest {
     consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, "top-articles-consumer");
     consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    final Deserializer<Windowed<String>> windowedDeserializer = WindowedSerdes.timeWindowedSerdeFrom(String.class).deserializer();
+    final Deserializer<Windowed<String>> windowedDeserializer =
+            WindowedSerdes.timeWindowedSerdeFrom(String.class, TopArticlesLambdaExample.windowSize.toMillis()).deserializer();
 
     MonitoringInterceptorUtils.maybeConfigureInterceptorsConsumer(consumerProperties);
 

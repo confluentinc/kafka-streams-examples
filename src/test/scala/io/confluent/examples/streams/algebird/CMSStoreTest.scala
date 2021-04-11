@@ -23,6 +23,7 @@ import org.apache.kafka.common.header.Headers
 import org.apache.kafka.common.metrics.Metrics
 import org.apache.kafka.common.serialization.{Serdes, Serializer}
 import org.apache.kafka.common.utils.LogContext
+import org.apache.kafka.streams.processor.StateStoreContext
 import org.apache.kafka.streams.processor.internals.MockStreamsMetrics
 import org.apache.kafka.streams.state.KeyValueStoreTestDriver
 import org.apache.kafka.streams.state.internals.ThreadCache
@@ -89,7 +90,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     val processorContext = createTestContext[String]()
 
     // When
-    store.init(processorContext, store)
+    store.init(processorContext.asInstanceOf[StateStoreContext], store)
 
     // Then
     assertThat(store.isOpen).isTrue
@@ -121,7 +122,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
       ("bar", System.currentTimeMillis()),
       ("foor", System.currentTimeMillis()))
     val processorContext = createTestContext()
-    store.init(processorContext, store)
+    store.init(processorContext.asInstanceOf[StateStoreContext], store)
 
     // When
     items.foreach(x => store.put(x._1, x._2))
@@ -141,7 +142,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     val driver: KeyValueStoreTestDriver[Integer, TopCMS[String]] = createTestDriver[String]()
     val processorContext = createTestContext(driver)
     val store: CMSStore[String] = new CMSStore[String](anyStoreName, loggingEnabled = true)
-    store.init(processorContext, store)
+    store.init(processorContext.asInstanceOf[StateStoreContext], store)
 
     // When
     val items = Seq(
@@ -165,7 +166,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     val processorContext = {
       // We must use a "spying" RecordCollector because, unfortunately, Kafka's
       // KeyValueStoreTestDriver is not providing any such facilities.
-      val observingCollector = new MockRecordCollector() {
+      val observingCollector: MockRecordCollector = new MockRecordCollector() {
         override def send[K, V](topic: String,
                                 key: K,
                                 value: V,
@@ -173,7 +174,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
                                 partition: Integer,
                                 timestamp: Long,
                                 keySerializer: Serializer[K],
-                                valueSerializer: Serializer[V]) {
+                                valueSerializer: Serializer[V]): Unit = {
           observedChangelogRecords.add(new ProducerRecord[K, V](topic, partition, timestamp, key, value))
         }
       }
@@ -182,7 +183,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
       context.setTime(1)
       context
     }
-    store.init(processorContext, store)
+    store.init(processorContext.asInstanceOf[StateStoreContext], store)
     val items = Seq(
       ("one", System.currentTimeMillis()),
       ("two", System.currentTimeMillis()),
@@ -207,7 +208,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     val driver: KeyValueStoreTestDriver[Integer, TopCMS[String]] = createTestDriver[String]()
     val processorContext = createTestContext(driver)
     val store: CMSStore[String] = new CMSStore[String](anyStoreName, loggingEnabled = false)
-    store.init(processorContext, store)
+    store.init(processorContext.asInstanceOf[StateStoreContext], store)
 
     // When
     val items = Seq(
@@ -230,7 +231,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     val processorContext = createTestContext[String](driver)
 
     // When
-    store.init(processorContext, store)
+    store.init(processorContext.asInstanceOf[StateStoreContext], store)
     processorContext.restore(store.name, driver.restoredEntries())
 
     // Then
@@ -252,7 +253,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     }
 
     // When
-    store.init(processorContext, store)
+    store.init(processorContext.asInstanceOf[StateStoreContext], store)
     processorContext.restore(store.name, driver.restoredEntries())
 
     // Then
@@ -273,7 +274,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     }
 
     // When
-    store.init(processorContext, store)
+    store.init(processorContext.asInstanceOf[StateStoreContext], store)
     processorContext.restore(store.name, driver.restoredEntries())
 
     // Then
@@ -304,7 +305,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     }
 
     // When
-    store.init(processorContext, store)
+    store.init(processorContext.asInstanceOf[StateStoreContext], store)
     processorContext.restore(store.name, driver.restoredEntries())
 
     // Then
@@ -329,7 +330,7 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
     }
 
     // When
-    store.init(processorContext, store)
+    store.init(processorContext.asInstanceOf[StateStoreContext], store)
 
     // Then
     assertThat(store.totalCount).isZero

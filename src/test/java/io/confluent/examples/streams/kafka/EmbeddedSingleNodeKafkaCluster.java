@@ -17,7 +17,7 @@ package io.confluent.examples.streams.kafka;
 
 import io.confluent.examples.streams.zookeeper.ZooKeeperEmbedded;
 import io.confluent.kafka.schemaregistry.RestApp;
-import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
+import io.confluent.kafka.schemaregistry.CompatibilityLevel;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import kafka.server.KafkaConfig$;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
@@ -27,6 +27,7 @@ import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.collection.JavaConverters;
+import scala.jdk.CollectionConverters;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -44,7 +45,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
   private static final Logger log = LoggerFactory.getLogger(EmbeddedSingleNodeKafkaCluster.class);
   private static final int DEFAULT_BROKER_PORT = 0; // 0 results in a random port being selected
   private static final String KAFKA_SCHEMAS_TOPIC = "_schemas";
-  private static final String AVRO_COMPATIBILITY_TYPE = AvroCompatibilityLevel.NONE.name;
+  private static final String AVRO_COMPATIBILITY_TYPE = CompatibilityLevel.NONE.name;
 
   private static final String KAFKASTORE_OPERATION_TIMEOUT_MS = "60000";
   private static final String KAFKASTORE_DEBUG = "true";
@@ -276,10 +277,10 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
       // The Set returned from JavaConverters.setAsJavaSetConverter does not support the remove
       // method so we need to continue to wrap in a HashSet
       final Set<String> allTopicsFromZk = new HashSet<>(
-          JavaConverters.setAsJavaSetConverter(broker.kafkaServer().zkClient().getAllTopicsInCluster(false)).asJava());
+          CollectionConverters.SetHasAsJava(broker.kafkaServer().zkClient().getAllTopicsInCluster(false)).asJava());
 
       final Set<String> allTopicsFromBrokerCache = new HashSet<>(
-          JavaConverters.seqAsJavaListConverter(broker.kafkaServer().metadataCache().getAllTopics().toSeq()).asJava());
+          CollectionConverters.SeqHasAsJava(broker.kafkaServer().metadataCache().getAllTopics().toSeq()).asJava());
 
       return !allTopicsFromZk.removeAll(deletedTopics) && !allTopicsFromBrokerCache.removeAll(deletedTopics);
     }

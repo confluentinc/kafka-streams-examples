@@ -15,7 +15,7 @@ class ProbabilisticCounter(val cmsStoreName: String)
 
   override def init(processorContext: ProcessorContext): Unit = {
     this.processorContext = processorContext
-    cmsState = this.processorContext.getStateStore(cmsStoreName).asInstanceOf[CMSStore[String]]
+    cmsState = this.processorContext.getStateStore[CMSStore[String]](cmsStoreName)
   }
 
   override def transform(key: String, value: String): KeyValue[String, Long] = {

@@ -112,7 +112,8 @@ public class TopArticlesExampleDriver {
     consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG,
         "top-articles-lambda-example-consumer");
     consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    final Deserializer<Windowed<String>> windowedDeserializer = WindowedSerdes.timeWindowedSerdeFrom(String.class).deserializer();
+    final Deserializer<Windowed<String>> windowedDeserializer =
+            WindowedSerdes.timeWindowedSerdeFrom(String.class, TopArticlesLambdaExample.windowSize.toMillis()).deserializer();
     final KafkaConsumer<Windowed<String>, String> consumer = new KafkaConsumer<>(consumerProperties,
                                                                                  windowedDeserializer,
                                                                                  Serdes.String().deserializer());

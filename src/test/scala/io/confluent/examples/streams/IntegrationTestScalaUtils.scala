@@ -85,7 +85,7 @@ object IntegrationTestScalaUtils {
 
   def produceValuesSynchronously[V](topic: String, values: Seq[V], driver: TopologyTestDriver)
                                    (implicit valueSerializer: Serializer[V]): Unit = {
-    import collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     driver.createInputTopic(topic,
                             new NothingSerde[Null],
                             valueSerializer)
@@ -93,20 +93,20 @@ object IntegrationTestScalaUtils {
   }
 
   def produceKeyValuesSynchronously[K, V](topic: String, records: Seq[KeyValue[K, V]], driver: TopologyTestDriver)
-                                         (implicit keySer: Serializer[K], valueSer: Serializer[V]) {
-    import collection.JavaConverters._
-    driver.createInputTopic(topic, keySer, valueSer).pipeKeyValueList(records.asJava)
+                                         (implicit keySer: Serializer[K], valueSer: Serializer[V]): Unit = {
+    import scala.jdk.CollectionConverters._
+    driver.createInputTopic(topic, keySer, valueSer).pipeKeyValueList(SeqHasAsJava(records).asJava)
   }
 
   def drainStreamOutput[K, V](topic: String, driver: TopologyTestDriver)
                              (implicit keyDeser: Deserializer[K], valueDeser: Deserializer[V]): Seq[KeyValue[K, V]] = {
-    import scala.jdk.javaapi.CollectionConverters
-    CollectionConverters.asScala(driver.createOutputTopic(topic, keyDeser, valueDeser).readKeyValuesToList()).toSeq
+    import scala.jdk.CollectionConverters._
+    driver.createOutputTopic(topic, keyDeser, valueDeser).readKeyValuesToList().asScala.toSeq
   }
 
   def drainTableOutput[K, V](topic: String, driver: TopologyTestDriver)
                             (implicit keyDeser: Deserializer[K], valueDeser: Deserializer[V]): Map[K, V] = {
-    import collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     driver.createOutputTopic(topic, keyDeser, valueDeser).readKeyValuesToMap().asScala.toMap
   }
 

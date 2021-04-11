@@ -4,7 +4,6 @@ import static io.confluent.examples.streams.microservices.util.MicroserviceUtils
 import static io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig.BASIC_AUTH_CREDENTIALS_SOURCE;
 import static io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig.USER_INFO_CONFIG;
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
-import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_USER_INFO_CONFIG;
 
 import io.confluent.examples.streams.avro.microservices.Customer;
 import io.confluent.examples.streams.avro.microservices.Order;
@@ -93,8 +92,6 @@ public class Schemas {
       map.put(BASIC_AUTH_CREDENTIALS_SOURCE, config.getProperty(BASIC_AUTH_CREDENTIALS_SOURCE));
     if (config.containsKey(USER_INFO_CONFIG))
       map.put(USER_INFO_CONFIG, config.getProperty(USER_INFO_CONFIG));
-    else if (config.containsKey(SCHEMA_REGISTRY_USER_INFO_CONFIG))
-      map.put(USER_INFO_CONFIG, config.getProperty(SCHEMA_REGISTRY_USER_INFO_CONFIG));
     return map;
   }
   public static void configureSerdes(final Properties config) {

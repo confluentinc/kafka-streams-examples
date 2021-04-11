@@ -7,6 +7,7 @@ import io.confluent.examples.streams.avro.microservices.OrderValue;
 import io.confluent.examples.streams.microservices.domain.Schemas;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -19,14 +20,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.KafkaStreams.State;
 
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.Consumed;
-import org.apache.kafka.streams.kstream.Grouped;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KTable;
-import org.apache.kafka.streams.kstream.Materialized;
-import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.SessionWindows;
-import org.apache.kafka.streams.kstream.Windowed;
+import org.apache.kafka.streams.kstream.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,17 +104,17 @@ public class FraudService implements Service {
         .selectKey((id, orderValue) -> orderValue.getOrder().getId());
 
     //Now branch the stream into two, for pass and fail, based on whether the windowed total is over Fraud Limit
-    @SuppressWarnings("unchecked")
-    final KStream<String, OrderValue>[] forks = ordersWithTotals.branch(
-        (id, orderValue) -> orderValue.getValue() >= FRAUD_LIMIT,
-        (id, orderValue) -> orderValue.getValue() < FRAUD_LIMIT);
+    final Map<String, KStream<String, OrderValue>> forks = ordersWithTotals.split(Named.as("limit-"))
+        .branch((id, orderValue) -> orderValue.getValue() >= FRAUD_LIMIT, Branched.as("above"))
+        .branch((id, orderValue) -> orderValue.getValue() < FRAUD_LIMIT, Branched.as("below"))
+        .noDefaultBranch();
 
-    forks[0].mapValues(
+    forks.get("limit-above").mapValues(
         orderValue -> new OrderValidation(orderValue.getOrder().getId(), FRAUD_CHECK, FAIL))
         .to(ORDER_VALIDATIONS.name(), Produced
             .with(ORDER_VALIDATIONS.keySerde(), ORDER_VALIDATIONS.valueSerde()));
 
-    forks[1].mapValues(
+    forks.get("limit-below").mapValues(
         orderValue -> new OrderValidation(orderValue.getOrder().getId(), FRAUD_CHECK, PASS))
         .to(ORDER_VALIDATIONS.name(), Produced
             .with(ORDER_VALIDATIONS.keySerde(), ORDER_VALIDATIONS.valueSerde()));

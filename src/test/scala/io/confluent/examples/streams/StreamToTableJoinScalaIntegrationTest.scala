@@ -41,14 +41,14 @@ import org.scalatestplus.junit.AssertionsForJUnit
 class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
 
   import org.apache.kafka.streams.scala.ImplicitConversions._
-  import org.apache.kafka.streams.scala.Serdes._
+  import org.apache.kafka.streams.scala.serialization.Serdes._
 
   private val userClicksTopic = "user-clicks"
   private val userRegionsTopic = "user-regions"
   private val outputTopic = "output-topic"
 
   @Test
-  def shouldCountClicksPerRegion() {
+  def shouldCountClicksPerRegion(): Unit = {
     // Input 1: Clicks per user (multiple records allowed per user).
     val userClicks: Seq[KeyValue[String, Long]] = Seq(
       ("alice", 13L),
@@ -142,7 +142,7 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
       //
       // Step 2: Setup input and output topics.
       //
-      import collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
       val regionInput = topologyTestDriver.createInputTopic(userRegionsTopic,
                                                             new StringSerializer,
                                                             new StringSerializer)

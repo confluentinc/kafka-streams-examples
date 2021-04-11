@@ -44,11 +44,8 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
+import java.net.BindException;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -56,9 +53,11 @@ import static io.confluent.examples.streams.interactivequeries.WordCountInteract
 import static io.confluent.examples.streams.microservices.util.MicroserviceTestUtils.getWithRetries;
 import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.fail;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertThrows;
 
 /**
  * End-to-end integration test for {@link WordCountInteractiveQueriesExample}. Demonstrates
@@ -87,8 +86,6 @@ public class WordCountInteractiveQueriesExampleTest {
   private KafkaStreams kafkaStreams;
   private WordCountInteractiveQueriesRestService proxy;
 
-  @Rule
-  public ExpectedException expectedEx = ExpectedException.none();
   private static final Logger log = LoggerFactory.getLogger(WordCountInteractiveQueriesExampleTest.class);
 
   @BeforeClass
@@ -243,7 +240,7 @@ public class WordCountInteractiveQueriesExampleTest {
         proxy = WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, host, port);
         break;
       } catch (final Exception ex) {
-        log.error("Could not start Rest Service due to: " + ex.toString());
+        log.error("Could not start Rest Service due to: " + ex);
       }
 
       Thread.sleep(1000);
@@ -288,10 +285,12 @@ public class WordCountInteractiveQueriesExampleTest {
     
     kafkaStreams.start();
     proxy = WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, host, port);
-    expectedEx.expect(Exception.class);
-    expectedEx.expectCause(IsInstanceOf.instanceOf(java.net.BindException.class));
     // Binding to same port again will raise BindException.
-    WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, host, port);
+    final IOException exception = assertThrows(
+        IOException.class,
+        () -> WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, host, port)
+    );
+    assertThat(exception.getCause(), instanceOf(BindException.class));
   }
 
   /**
@@ -304,7 +303,7 @@ public class WordCountInteractiveQueriesExampleTest {
     final long until = System.currentTimeMillis() + 60000L;
     while (hostStoreInfo.isEmpty() ||
            hostStoreInfo.get(0).getStoreNames().size() != 2 && System.currentTimeMillis() < until) {
-      Thread.sleep(10);
+      Thread.sleep(10L);
       hostStoreInfo = getWithRetries(request, new GenericType<List<HostStoreInfo>>() {}, 5);
     }
     return hostStoreInfo;
@@ -321,7 +320,7 @@ public class WordCountInteractiveQueriesExampleTest {
         //
       }
     }
-    Collections.sort(results, (o1, o2) -> o1.getKey().compareTo(o2.getKey()));
+    Collections.sort(results, Comparator.comparing(KeyValueBean::getKey));
     return results;
   }
 

@@ -15,6 +15,7 @@
  */
 package io.confluent.examples.streams;
 
+import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.testutil.MockSchemaRegistry;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
@@ -53,9 +54,8 @@ public class GenericAvroIntegrationTest {
   private static final String SCHEMA_REGISTRY_SCOPE = GenericAvroIntegrationTest.class.getName();
   private static final String MOCK_SCHEMA_REGISTRY_URL = "mock://" + SCHEMA_REGISTRY_SCOPE;
 
-
-  private static String inputTopic = "inputTopic";
-  private static String outputTopic = "outputTopic";
+  private static final String inputTopic = "inputTopic";
+  private static final String outputTopic = "outputTopic";
 
   @Test
   public void shouldRoundTripGenericAvroDataThroughKafka() throws Exception {
@@ -66,7 +66,7 @@ public class GenericAvroIntegrationTest {
 
     final SchemaRegistryClient schemaRegistryClient = MockSchemaRegistry.getClientForScope(SCHEMA_REGISTRY_SCOPE);
 
-    schemaRegistryClient.register("inputTopic-value", schema);
+    schemaRegistryClient.register("inputTopic-value", new AvroSchema(schema));
 
     final GenericRecord record = new GenericData.Record(schema);
     record.put("user", "alice");

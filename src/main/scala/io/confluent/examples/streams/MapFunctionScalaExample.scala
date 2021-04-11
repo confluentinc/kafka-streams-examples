@@ -99,7 +99,7 @@ import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
   */
 object MapFunctionScalaExample extends App {
 
-  import org.apache.kafka.streams.scala.Serdes._
+  import org.apache.kafka.streams.scala.serialization.Serdes._
   import org.apache.kafka.streams.scala.ImplicitConversions._
 
   val config: Properties = {
