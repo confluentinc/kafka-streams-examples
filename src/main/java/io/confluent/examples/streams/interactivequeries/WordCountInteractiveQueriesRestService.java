@@ -18,6 +18,7 @@ package io.confluent.examples.streams.interactivequeries;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StoreQueryParameters;
 import org.apache.kafka.streams.state.HostInfo;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
@@ -89,7 +90,8 @@ public class WordCountInteractiveQueriesRestService {
     }
 
     // Lookup the KeyValueStore with the provided storeName
-    final ReadOnlyKeyValueStore<String, Long> store = streams.store(storeName, QueryableStoreTypes.keyValueStore());
+    final ReadOnlyKeyValueStore<String, Long> store = streams.store(
+        StoreQueryParameters.fromNameAndType(storeName, QueryableStoreTypes.keyValueStore()));
     if (store == null) {
       throw new NotFoundException();
     }
@@ -158,8 +160,8 @@ public class WordCountInteractiveQueriesRestService {
                                           @PathParam("to") final Long to) {
 
     // Lookup the WindowStore with the provided storeName
-    final ReadOnlyWindowStore<String, Long> store = streams.store(storeName,
-                                                                  QueryableStoreTypes.windowStore());
+    final ReadOnlyWindowStore<String, Long> store = streams
+        .store(StoreQueryParameters.fromNameAndType(storeName, QueryableStoreTypes.windowStore()));
     if (store == null) {
       throw new NotFoundException();
     }
@@ -227,7 +229,8 @@ public class WordCountInteractiveQueriesRestService {
                                                        KeyValueIterator<String, Long>> rangeFunction) {
 
     // Get the KeyValue Store
-    final ReadOnlyKeyValueStore<String, Long> store = streams.store(storeName, QueryableStoreTypes.keyValueStore());
+    final ReadOnlyKeyValueStore<String, Long> store = streams.store(
+        StoreQueryParameters.fromNameAndType(storeName, QueryableStoreTypes.keyValueStore()));
     final List<KeyValueBean> results = new ArrayList<>();
     // Apply the function, i.e., query the store
     final KeyValueIterator<String, Long> range = rangeFunction.apply(store);
