@@ -22,6 +22,7 @@ import io.confluent.examples.streams.interactivequeries.MetadataService;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StoreQueryParameters;
 import org.apache.kafka.streams.state.HostInfo;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
@@ -161,6 +162,7 @@ public class MusicPlaysRestService {
         // look in the local store
         final ReadOnlyKeyValueStore<Long, Song> songStore =
                 streams.store(fromNameAndType(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.keyValueStore()));
+
         final Song song = songStore.get(songPlayCount.getSongId());
         results.add(new SongPlayCountBean(song.getArtist(), song.getAlbum(), song.getName(),
                                           songPlayCount.getPlays()));

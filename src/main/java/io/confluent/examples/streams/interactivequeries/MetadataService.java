@@ -15,6 +15,7 @@
  */
 package io.confluent.examples.streams.interactivequeries;
 
+import java.util.Collections;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyQueryMetadata;
@@ -80,7 +81,7 @@ public class MetadataService {
 
     return new HostStoreInfo(metadata.activeHost().host(),
                              metadata.activeHost().port(),
-                             mkSet(store));
+                             Collections.singleton(store));
   }
 
   private List<HostStoreInfo> mapInstancesToHostStoreInfo(
