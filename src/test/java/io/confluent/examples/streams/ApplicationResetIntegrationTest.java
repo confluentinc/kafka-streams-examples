@@ -138,7 +138,6 @@ public class ApplicationResetIntegrationTest {
       new String[]{
         "--application-id", applicationId,
         "--bootstrap-servers", CLUSTER.bootstrapServers(),
-        "--zookeeper", CLUSTER.zookeeperConnect(),
         "--input-topics", inputTopic
       });
     Assert.assertEquals(0, exitCode);
