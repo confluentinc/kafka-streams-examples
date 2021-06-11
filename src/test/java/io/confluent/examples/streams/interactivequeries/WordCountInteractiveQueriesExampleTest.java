@@ -138,7 +138,7 @@ public class WordCountInteractiveQueriesExampleTest {
     });
     kafkaStreams.start();
 
-    assertTrue("streams failed to start within timeout", startupLatch.await(30, TimeUnit.SECONDS));
+    assertTrue("streams failed to start within timeout", startupLatch.await(60, TimeUnit.SECONDS));
 
     bindHostAndStartRestProxy(port, host);
   
