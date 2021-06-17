@@ -37,7 +37,7 @@ class CMSStoreChangeLogger[K, V](val storeName: String,
   private val collector = context.asInstanceOf[RecordCollector.Supplier].recordCollector
 
   def this(storeName: String, context: StateStoreContext, serialization: StateSerdes[K, V]) = {
-    this(storeName, context, context.taskId.partition, serialization)
+    this(storeName, context, context.taskId.partition(), serialization)
   }
 
   def logChange(key: K, value: V, timestamp: Long): Unit = {

@@ -26,11 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import org.apache.commons.cli.*;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -101,7 +97,7 @@ public class OrderDetailsService implements Service {
             }
           }
           if (eosEnabled) {
-            producer.sendOffsetsToTransaction(consumedOffsets, CONSUMER_GROUP_ID);
+            producer.sendOffsetsToTransaction(consumedOffsets, new ConsumerGroupMetadata(CONSUMER_GROUP_ID));
             producer.commitTransaction();
           }
         }
