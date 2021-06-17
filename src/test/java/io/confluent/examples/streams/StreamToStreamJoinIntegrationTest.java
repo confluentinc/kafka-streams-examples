@@ -98,7 +98,7 @@ public class StreamToStreamJoinIntegrationTest {
       (impressionValue, clickValue) ->
         (clickValue == null)? impressionValue + "/not-clicked-yet": impressionValue + "/" + clickValue,
       // KStream-KStream joins are always windowed joins, hence we must provide a join window.
-      JoinWindows.of(Duration.ofSeconds(5)).grace(Duration.ZERO),
+      JoinWindows.ofTimeDifferenceWithNoGrace(Duration.ofSeconds(5)),
       // In this specific example, we don't need to define join serdes explicitly because the key, left value, and
       // right value are all of type String, which matches our default serdes configured for the application.  However,
       // we want to showcase the use of `StreamJoined.with(...)` in case your code needs a different type setup.
