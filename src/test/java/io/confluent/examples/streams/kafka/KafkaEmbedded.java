@@ -15,6 +15,7 @@
  */
 package io.confluent.examples.streams.kafka;
 
+import kafka.cluster.EndPoint;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaConfig$;
 import kafka.server.KafkaServer;
@@ -78,11 +79,10 @@ public class KafkaEmbedded {
         brokerList(), zookeeperConnect());
   }
 
-  private Properties effectiveConfigFrom(final Properties initialConfig) throws IOException {
+  private Properties effectiveConfigFrom(final Properties initialConfig) {
     final Properties effectiveConfig = new Properties();
     effectiveConfig.put(KafkaConfig$.MODULE$.BrokerIdProp(), 0);
-    effectiveConfig.put(KafkaConfig$.MODULE$.HostNameProp(), "127.0.0.1");
-    effectiveConfig.put(KafkaConfig$.MODULE$.PortProp(), "9092");
+    effectiveConfig.put(KafkaConfig.ListenersProp(), "PLAINTEXT://127.0.0.1:9092");
     effectiveConfig.put(KafkaConfig$.MODULE$.NumPartitionsProp(), 1);
     effectiveConfig.put(KafkaConfig$.MODULE$.AutoCreateTopicsEnableProp(), true);
     effectiveConfig.put(KafkaConfig$.MODULE$.MessageMaxBytesProp(), 1000000);
@@ -99,8 +99,12 @@ public class KafkaEmbedded {
    * You can use this to tell Kafka producers and consumers how to connect to this instance.
    */
   public String brokerList() {
-    return String.join(":", kafka.config().hostName(), Integer.toString(kafka.boundPort(ListenerName.forSecurityProtocol(SecurityProtocol
-                                                                                            .PLAINTEXT))));
+    final EndPoint endPoint = kafka.advertisedListeners().head();
+    final String hostname = endPoint.host() == null ? "" : endPoint.host();
+
+    return String.join(":", hostname, Integer.toString(
+            kafka.boundPort(ListenerName.forSecurityProtocol(SecurityProtocol.PLAINTEXT))
+    ));
   }
 
 

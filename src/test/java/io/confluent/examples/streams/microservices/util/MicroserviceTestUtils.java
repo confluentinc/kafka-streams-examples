@@ -28,7 +28,6 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,7 +44,7 @@ import static java.util.Collections.singletonList;
 public class MicroserviceTestUtils {
 
   private static final Logger log = LoggerFactory.getLogger(MicroserviceTestUtils.class);
-  private static final List<TopicTailer> tailers = new ArrayList<>();
+  private static final List<TopicTailer<?, ?>> tailers = new ArrayList<>();
   private static int consumerCounter;
 
   @ClassRule
@@ -124,7 +123,7 @@ public class MicroserviceTestUtils {
 
   private static <K, V> void tailAllTopicsToConsole(final Schemas.Topic<K, V> topic,
                                                     final String bootstrapServers) {
-    final TopicTailer task = new TopicTailer<>(topic, bootstrapServers);
+    final TopicTailer<K, V> task = new TopicTailer<>(topic, bootstrapServers);
     tailers.add(task);
     Executors.newSingleThreadExecutor().execute(task);
   }
