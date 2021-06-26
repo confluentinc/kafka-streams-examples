@@ -205,6 +205,10 @@ public class WordCountLambdaExample {
 
     // Write the `KTable<String, Long>` to the output topic.
     wordCounts.toStream().to(outputTopic, Produced.with(Serdes.String(), Serdes.Long()));
+
+    wordCounts.toStream().process(()-> {
+      return new TiDBOutputProcessor();
+    });
   }
 
 }
