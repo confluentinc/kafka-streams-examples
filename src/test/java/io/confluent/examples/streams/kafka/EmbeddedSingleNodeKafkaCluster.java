@@ -43,7 +43,7 @@ import java.util.Set;
 public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
 
   private static final Logger log = LoggerFactory.getLogger(EmbeddedSingleNodeKafkaCluster.class);
-  private static final int DEFAULT_BROKER_PORT = 0; // 0 results in a random port being selected
+  private static final int DEFAULT_BROKER_PORT = 1234; // pick a random port
   private static final String KAFKA_SCHEMAS_TOPIC = "_schemas";
   private static final String AVRO_COMPATIBILITY_TYPE = CompatibilityLevel.NONE.name;
 
