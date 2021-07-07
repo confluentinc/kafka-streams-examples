@@ -43,7 +43,7 @@ import java.util.Set;
 public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
 
   private static final Logger log = LoggerFactory.getLogger(EmbeddedSingleNodeKafkaCluster.class);
-  private static final int DEFAULT_BROKER_PORT = 0; // 0 results in a random port being selected
+  private static final int DEFAULT_BROKER_PORT = 1234; // pick a random port
   private static final String KAFKA_SCHEMAS_TOPIC = "_schemas";
   private static final String AVRO_COMPATIBILITY_TYPE = CompatibilityLevel.NONE.name;
 
@@ -96,8 +96,9 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, KAFKASTORE_OPERATION_TIMEOUT_MS);
     schemaRegistryProps.put(SchemaRegistryConfig.DEBUG_CONFIG, KAFKASTORE_DEBUG);
     schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_INIT_TIMEOUT_CONFIG, KAFKASTORE_INIT_TIMEOUT);
+    schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, effectiveBrokerConfig.getProperty(KafkaConfig.ListenersProp()));
 
-    schemaRegistry = new RestApp(0, zookeeperConnect(), KAFKA_SCHEMAS_TOPIC, AVRO_COMPATIBILITY_TYPE, schemaRegistryProps);
+    schemaRegistry = new RestApp(0, null, KAFKA_SCHEMAS_TOPIC, AVRO_COMPATIBILITY_TYPE, schemaRegistryProps);
     schemaRegistry.start();
     running = true;
   }
@@ -165,17 +166,6 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
    */
   public String bootstrapServers() {
     return broker.brokerList();
-  }
-
-  /**
-   * This cluster's ZK connection string aka `zookeeper.connect` in `hostnameOrIp:port` format.
-   * Example: `127.0.0.1:2181`.
-   * <p>
-   * You can use this to e.g. tell Kafka consumers (old consumer API) how to connect to this
-   * cluster.
-   */
-  public String zookeeperConnect() {
-    return zookeeper.connectString();
   }
 
   /**
