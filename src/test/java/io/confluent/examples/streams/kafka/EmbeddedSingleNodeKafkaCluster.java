@@ -169,17 +169,6 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
   }
 
   /**
-   * This cluster's ZK connection string aka `zookeeper.connect` in `hostnameOrIp:port` format.
-   * Example: `127.0.0.1:2181`.
-   * <p>
-   * You can use this to e.g. tell Kafka consumers (old consumer API) how to connect to this
-   * cluster.
-   */
-  public String zookeeperConnect() {
-    return zookeeper.connectString();
-  }
-
-  /**
    * The "schema.registry.url" setting of the schema registry instance.
    */
   public String schemaRegistryUrl() {
