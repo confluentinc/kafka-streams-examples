@@ -92,10 +92,17 @@ public class InventoryServiceTest extends MicroserviceTestUtils {
 
   private List<KeyValue<Product, Long>> readInventoryStateStore(final int numberOfRecordsToWaitFor)
       throws InterruptedException {
+    // named topologies are experimental, using `null` for now
     return IntegrationTestUtils
-        .waitUntilMinKeyValueRecordsReceived(inventoryConsumerProperties(CLUSTER),
-            ProcessorStateManager.storeChangelogTopic(InventoryService.SERVICE_APP_ID,
-                InventoryService.RESERVED_STOCK_STORE_NAME), numberOfRecordsToWaitFor);
+        .waitUntilMinKeyValueRecordsReceived(
+            inventoryConsumerProperties(CLUSTER),
+            ProcessorStateManager.storeChangelogTopic(
+                InventoryService.SERVICE_APP_ID,
+                InventoryService.RESERVED_STOCK_STORE_NAME,
+                null
+            ),
+            numberOfRecordsToWaitFor
+        );
   }
 
   private static Properties inventoryConsumerProperties(final EmbeddedSingleNodeKafkaCluster cluster) {
