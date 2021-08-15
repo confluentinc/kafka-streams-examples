@@ -24,6 +24,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.apache.kafka.common.serialization.IntegerSerializer;
+import org.apache.kafka.common.serialization.VoidSerializer;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -79,13 +80,13 @@ public class SumLambdaExampleDriver {
   private static void produceInput(final String bootstrapServers) {
     final Properties props = new Properties();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class);
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, VoidSerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class);
 
-    final KafkaProducer<Integer, Integer> producer = new KafkaProducer<>(props);
+    final KafkaProducer<Void, Integer> producer = new KafkaProducer<>(props);
 
     IntStream.range(0, 100)
-            .mapToObj(val -> new ProducerRecord<>(SumLambdaExample.NUMBERS_TOPIC, val, val))
+            .mapToObj(val -> new ProducerRecord<>(SumLambdaExample.NUMBERS_TOPIC, (Void) null, val))
             .forEach(producer::send);
 
     producer.flush();
