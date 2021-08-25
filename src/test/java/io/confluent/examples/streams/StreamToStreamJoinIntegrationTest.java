@@ -18,6 +18,7 @@ package io.confluent.examples.streams;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.TestInputTopic;
@@ -26,12 +27,10 @@ import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.JoinWindows;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.StreamJoined;
-import org.apache.kafka.streams.test.TestRecord;
 import org.apache.kafka.test.TestUtils;
 import org.junit.Test;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -53,25 +52,26 @@ public class StreamToStreamJoinIntegrationTest {
   @Test
   public void shouldJoinTwoStreams() {
     // Input 1: Ad impressions
-    final List<TestRecord<String, String>> inputAdImpressions = Arrays.asList(
-      new TestRecord<>("car-advertisement", "shown", Instant.ofEpochMilli(10L)), // outer join result
-      new TestRecord<>("newspaper-advertisement", "shown", Instant.ofEpochMilli(30L)),
-      new TestRecord<>("gadget-advertisement", "shown", Instant.ofEpochMilli(40L))
+    final List<KeyValue<String, String>> inputAdImpressions = Arrays.asList(
+      new KeyValue<>("car-advertisement", "shown"),
+      new KeyValue<>("newspaper-advertisement", "shown"),
+      new KeyValue<>("gadget-advertisement", "shown")
     );
 
     // Input 2: Ad clicks
-    final List<TestRecord<String, String>> inputAdClicks = Arrays.asList(
-      new TestRecord<>("newspaper-advertisement", "clicked", Instant.ofEpochMilli(35L)),
-      new TestRecord<>("gadget-advertisement", "clicked", Instant.ofEpochMilli(45L)),
-      new TestRecord<>("newspaper-advertisement", "clicked", Instant.ofEpochMilli(30L).plus(Duration.ofSeconds(5L))),
-      new TestRecord<>("newspaper-advertisement", "clicked", Instant.ofEpochMilli(31L).plus(Duration.ofSeconds(5L))) // advance stream-time and "drain" outer join result
+    final List<KeyValue<String, String>> inputAdClicks = Arrays.asList(
+      new KeyValue<>("newspaper-advertisement", "clicked"),
+      new KeyValue<>("gadget-advertisement", "clicked"),
+      new KeyValue<>("newspaper-advertisement", "clicked")
     );
 
-    final List<TestRecord<String, String>> expectedResults = Arrays.asList(
-      new TestRecord<>("newspaper-advertisement", "shown/clicked", Instant.ofEpochMilli(35L)),
-      new TestRecord<>("gadget-advertisement", "shown/clicked", Instant.ofEpochMilli(45L)),
-      new TestRecord<>("car-advertisement", "shown/not-clicked-yet", Instant.ofEpochMilli(10L)),
-      new TestRecord<>("newspaper-advertisement", "shown/clicked", Instant.ofEpochMilli(30L).plus(Duration.ofSeconds(5L)))
+    final List<KeyValue<String, String>> expectedResults = Arrays.asList(
+      new KeyValue<>("car-advertisement", "shown/not-clicked-yet"),
+      new KeyValue<>("newspaper-advertisement", "shown/not-clicked-yet"),
+      new KeyValue<>("gadget-advertisement", "shown/not-clicked-yet"),
+      new KeyValue<>("newspaper-advertisement", "shown/clicked"),
+      new KeyValue<>("gadget-advertisement", "shown/clicked"),
+      new KeyValue<>("newspaper-advertisement", "shown/clicked")
     );
 
     //
@@ -98,7 +98,7 @@ public class StreamToStreamJoinIntegrationTest {
       (impressionValue, clickValue) ->
         (clickValue == null)? impressionValue + "/not-clicked-yet": impressionValue + "/" + clickValue,
       // KStream-KStream joins are always windowed joins, hence we must provide a join window.
-      JoinWindows.ofTimeDifferenceWithNoGrace(Duration.ofSeconds(5)),
+      JoinWindows.of(Duration.ofSeconds(5)),
       // In this specific example, we don't need to define join serdes explicitly because the key, left value, and
       // right value are all of type String, which matches our default serdes configured for the application.  However,
       // we want to showcase the use of `StreamJoined.with(...)` in case your code needs a different type setup.
@@ -130,13 +130,13 @@ public class StreamToStreamJoinIntegrationTest {
       //
       // Step 3: Publish input data.
       //
-      impressionInput.pipeRecordList(inputAdImpressions);
-      clickInput.pipeRecordList(inputAdClicks);
+      impressionInput.pipeKeyValueList(inputAdImpressions);
+      clickInput.pipeKeyValueList(inputAdClicks);
 
       //
       // Step 4: Verify the application's output data.
       //
-      assertThat(output.readRecordsToList(), equalTo(expectedResults));
+      assertThat(output.readKeyValuesToList(), equalTo(expectedResults));
     }
   }
 }
