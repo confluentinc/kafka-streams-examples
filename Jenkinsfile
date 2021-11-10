@@ -7,4 +7,5 @@ dockerfile {
     upstreamProjects = 'confluentinc/rest-utils'
     withPush = true
     slackChannel = 'ksqldb-warn'
+    disableConcurrentBuilds = true
 }
