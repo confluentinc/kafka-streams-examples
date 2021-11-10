@@ -10,4 +10,5 @@ dockerfile {
     cpImages = true
     osTypes = ['ubi8']
     slackChannel = 'ksqldb-warn'
+    disableConcurrentBuilds = true
 }
