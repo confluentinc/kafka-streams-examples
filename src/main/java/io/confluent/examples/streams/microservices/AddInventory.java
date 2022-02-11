@@ -33,7 +33,7 @@ public class AddInventory {
         producerConfig.putAll(defaultConfig);
         producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-        producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
+        producerConfig.put(ProducerConfig.RETRIES_CONFIG, 1);
         producerConfig.put(ProducerConfig.CLIENT_ID_CONFIG, "inventory-generator");
         MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(producerConfig);
 

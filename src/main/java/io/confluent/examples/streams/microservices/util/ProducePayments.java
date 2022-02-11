@@ -61,7 +61,7 @@ public class ProducePayments {
         props.putAll(defaultConfig);
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.ACKS_CONFIG, "all");
-        props.put(ProducerConfig.RETRIES_CONFIG, 0);
+        props.put(ProducerConfig.RETRIES_CONFIG, 1);
         MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(props);
 
         try (final KafkaProducer<String, Payment> producer = new KafkaProducer<>(props, new StringSerializer(), mySerializer)) {
