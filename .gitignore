@@ -23,4 +23,3 @@ java/.settings/
 .vscode/*
 .eggs
 *.egg-info/
-.mvn/
