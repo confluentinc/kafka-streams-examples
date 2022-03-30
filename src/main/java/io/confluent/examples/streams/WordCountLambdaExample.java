@@ -85,7 +85,7 @@ import java.util.regex.Pattern;
  * $ bin/kafka-console-consumer --topic streams-wordcount-output --from-beginning \
  *                              --bootstrap-server localhost:9092 \
  *                              --property print.key=true \
- *                              --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
+ *                              --value-deserializer value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
  * }</pre>
  * You should see output data similar to below. Please note that the exact output
  * sequence will depend on how fast you type the above sentences. If you type them
