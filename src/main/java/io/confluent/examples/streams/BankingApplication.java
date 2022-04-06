@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
@@ -29,12 +31,15 @@ import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KafkaStreams.State;
-import org.apache.kafka.streams.KafkaStreams.StateListener;
 import org.apache.kafka.streams.KeyQueryMetadata;
 import org.apache.kafka.streams.StoreQueryParameters;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.Consumed;
+import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.query.KeyQuery;
+import org.apache.kafka.streams.query.StateQueryRequest;
+import org.apache.kafka.streams.query.StateQueryResult;
 import org.apache.kafka.streams.state.HostInfo;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
@@ -43,18 +48,72 @@ import org.apache.kafka.streams.state.ValueAndTimestamp;
 public class BankingApplication {
 
   private final KafkaStreams kafkaStreams;
+  private final HostInfo hostInfo;
 
-  public BankingApplication(final KafkaStreams kafkaStreams) {
+  public BankingApplication(
+      final KafkaStreams kafkaStreams,
+      final HostInfo hostInfo) {
     this.kafkaStreams = kafkaStreams;
+    this.hostInfo = hostInfo;
   }
 
-  @GET("/summary")
-  public JsonNode summary(String accountId) {
-    final CurrentBalance balance = fetchCurrentBalance(accountId);
+  @GET
+  @Path("/local_summary")
+  public JsonNode getLocalSummary(String accountId) {
+    final ReadOnlyKeyValueStore<String, ValueAndTimestamp<CurrentBalance>> currentBalanceStore =
+        kafkaStreams.store(
+            StoreQueryParameters.fromNameAndType(
+                "currentBalance",
+                QueryableStoreTypes.timestampedKeyValueStore()
+            )
+        );
+
+    final CurrentBalance balance = currentBalanceStore.get(accountId).value();
+
     return JsonNodeFactory.instance.objectNode()
         .put("balance", balance.getBalance())
         .put("last purchase", balance.getLastPurchase())
         ;
+  }
+
+  @GET
+  @Path("/local_summary_iqv2")
+  public JsonNode getLocalSummaryIQv2(String accountId) {
+    final StateQueryRequest<ValueAndTimestamp<CurrentBalance>> query =
+        StateQueryRequest
+            .inStore("currentBalance")
+            .withQuery(KeyQuery.withKey(accountId));
+
+    final StateQueryResult<ValueAndTimestamp<CurrentBalance>> result = kafkaStreams.query(query);
+
+    final CurrentBalance balance = result.getOnlyPartitionResult().getResult().value();
+
+    return JsonNodeFactory.instance.objectNode()
+        .put("balance", balance.getBalance())
+        .put("last purchase", balance.getLastPurchase())
+        ;
+  }
+
+  private void customization() {
+
+  }
+
+  @GET
+  @Path("/summary")
+  public JsonNode summary(String accountId) {
+    final KeyQueryMetadata metadata =
+        kafkaStreams.queryMetadataForKey(
+            "currentBalance",
+            accountId,
+            new StringSerializer()
+        );
+    final HostInfo hostInfo1 = metadata.activeHost();
+
+    if (isLocal(hostInfo1)) {
+      return getLocalSummary(accountId);
+    } else {
+      return forwardRequestTo(hostInfo1, accountId);
+    }
   }
 
   public static void main(String[] args) {
@@ -76,63 +135,43 @@ public class BankingApplication {
         .stream("transactions", Consumed.with(Serdes.String(), new TransactionSerde()))
         .groupByKey()
         .reduce((currentT, newT) -> {
-          long newAmount = currentT.amount + newT.amount;
+          int newAmount = currentT.amount + newT.amount;
           String lastPurchase = newT.product;
           return new Transaction(newAmount, lastPurchase);
-        });
+        }, Materialized.as("currentBalance"));
 
     final KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), config);
 
-    final BankingApplication bankingApplication = new BankingApplication(kafkaStreams);
+    final BankingApplication bankingApplication = new BankingApplication(kafkaStreams, hostInfo);
     bankingApplication.run();
   }
 
   private void run() {
     final CountDownLatch startupLatch = new CountDownLatch(1);
-    kafkaStreams.setStateListener(new StateListener() {
-      @Override
-      public void onChange(final State oldState, final State newState) {
-        if (newState == State.RUNNING) {
-          startupLatch.countDown();
-        }
+    kafkaStreams.setStateListener((oldState, newState) -> {
+      if (newState == State.RUNNING) {
+        startupLatch.countDown();
       }
     });
     kafkaStreams.start();
     // wait for Streams to reach RUNNING state (at which point, it can serve IQ)
-    startupLatch.await();
+    try {
+      startupLatch.await();
+    } catch (InterruptedException e) {
+      e.printStackTrace(System.err);
+      throw new RuntimeException(e);
+    }
     // then start REST server
     // ...
   }
 
-  private CurrentBalance fetchCurrentBalance(final String accountId) {
-    final KeyQueryMetadata metadata =
-        kafkaStreams.queryMetadataForKey(
-            "currentBalance",
-            accountId,
-            new StringSerializer()
-        );
-    final HostInfo hostInfo = metadata.activeHost();
-
-    if (isLocal(hostInfo)) {
-      final ReadOnlyKeyValueStore<String, ValueAndTimestamp<CurrentBalance>> currentBalanceStore =
-          kafkaStreams.store(
-              StoreQueryParameters.fromNameAndType(
-                  "currentBalance",
-                  QueryableStoreTypes.timestampedKeyValueStore()
-              )
-          );
-      return currentBalanceStore.get(accountId).value();
-    } else {
-      return forwardRequestTo(hostInfo, accountId);
-    }
-  }
-
-  private CurrentBalance forwardRequestTo(final HostInfo hostInfo, final String accountId) {
+  private JsonNode forwardRequestTo(final HostInfo hostInfo, final String accountId) {
     // dummy: would do a real web request to the correct host.
-    throw new RuntimeException("placeholder for request forwarding");
+    throw new NotImplementedException("demo");
   }
 
   private boolean isLocal(final HostInfo hostInfo) {
+    return hostInfo.equals(this.hostInfo);
   }
 
   public static class CurrentBalance {
