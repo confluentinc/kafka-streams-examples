@@ -37,7 +37,7 @@ class CMSStoreChangeLogger[K, V](val storeName: String,
   private val topic = ProcessorStateManager.storeChangelogTopic(context.applicationId, storeName, context.taskId().topologyName())
   private val collector = context.asInstanceOf[RecordCollector.Supplier].recordCollector
 
-  def this(storeName: String, context: StateStoreContext, serialization: StateSerdes[K, V], name: String) = {
+  def this(storeName: String, context: StateStoreContext, serialization: StateSerdes[K, V], processorNodeId: String) = {
     this(storeName, context, context.taskId.partition(), serialization, processorNodeId)
   }
 
