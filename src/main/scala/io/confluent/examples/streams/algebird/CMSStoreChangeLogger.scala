@@ -16,7 +16,7 @@
 package io.confluent.examples.streams.algebird
 
 import org.apache.kafka.streams.processor.StateStoreContext
-import org.apache.kafka.streams.processor.internals.{ProcessorStateManager, RecordCollector}
+import org.apache.kafka.streams.processor.internals.{InternalProcessorContext, ProcessorStateManager, RecordCollector}
 import org.apache.kafka.streams.state.StateSerdes
 
 /**
@@ -31,20 +31,21 @@ import org.apache.kafka.streams.state.StateSerdes
 class CMSStoreChangeLogger[K, V](val storeName: String,
                                  val context: StateStoreContext,
                                  val partition: Int,
-                                 val serialization: StateSerdes[K, V]) {
+                                 val serialization: StateSerdes[K, V],
+                                 val processorNodeId: String) {
 
   private val topic = ProcessorStateManager.storeChangelogTopic(context.applicationId, storeName, context.taskId().topologyName())
   private val collector = context.asInstanceOf[RecordCollector.Supplier].recordCollector
 
-  def this(storeName: String, context: StateStoreContext, serialization: StateSerdes[K, V]) = {
-    this(storeName, context, context.taskId.partition(), serialization)
+  def this(storeName: String, context: StateStoreContext, serialization: StateSerdes[K, V], processorNodeId: String) = {
+    this(storeName, context, context.taskId.partition(), serialization, processorNodeId)
   }
 
   def logChange(key: K, value: V, timestamp: Long): Unit = {
     if (collector != null) {
       val keySerializer = serialization.keySerializer
       val valueSerializer = serialization.valueSerializer
-      collector.send(this.topic, key, value, null, this.partition, timestamp, keySerializer, valueSerializer)
+      collector.send(this.topic, key, value, null, this.partition, timestamp, keySerializer, valueSerializer, processorNodeId, context.asInstanceOf[InternalProcessorContext[Void,Void]])
     }
   }
 
