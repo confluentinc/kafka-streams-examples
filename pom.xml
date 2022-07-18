@@ -135,6 +135,11 @@
             <version>1.7.36</version>
         </dependency>
         <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>logredactor</artifactId>
+            <version>1.0.10</version>
+        </dependency>
+        <dependency>
             <groupId>javax.ws.rs</groupId>
             <artifactId>javax.ws.rs-api</artifactId>
             <version>2.1</version>
