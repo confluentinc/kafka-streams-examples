@@ -133,7 +133,7 @@ public class WordCountLambdaExample {
     // when resetting the application for doing a re-run (via the Application Reset Tool,
     // https://docs.confluent.io/platform/current/streams/developer-guide/app-reset-tool.html).
     //
-    // The drawback of cleaning up local state prior is that your app must rebuilt its local state from scratch, which
+    // The drawback of cleaning up local state prior is that your app must rebuild its local state from scratch, which
     // will take time and will require reading all the state-relevant data from the Kafka cluster over the network.
     // Thus in a production scenario you typically do not want to clean up always as we do here but rather only when it
     // is truly needed, i.e., only under certain conditions (e.g., the presence of a command line flag for your app).
