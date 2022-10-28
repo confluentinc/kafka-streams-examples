@@ -7,12 +7,12 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>rest-utils-parent</artifactId>
-        <version>[6.2.8-0, 6.2.9-0)</version>
+        <version>6.2.8</version>
     </parent>
 
     <artifactId>kafka-streams-examples</artifactId>
     <packaging>jar</packaging>
-    <version>6.2.8-0</version>
+    <version>6.2.8</version>
 
     <organization>
         <name>Confluent, Inc.</name>
@@ -66,7 +66,7 @@
         <docker.tag>${project.version}-${docker.os_type}</docker.tag>
         <io.confluent.schema-registry.version>${confluent.version.range}</io.confluent.schema-registry.version>
         <io.confluent.blueway.version>${confluent.version.range}</io.confluent.blueway.version>
-        <io.confluent.kafka-streams-examples.version>6.2.8-0</io.confluent.kafka-streams-examples.version>
+        <io.confluent.kafka-streams-examples.version>6.2.8</io.confluent.kafka-streams-examples.version>
     </properties>
 
     <dependencies>
