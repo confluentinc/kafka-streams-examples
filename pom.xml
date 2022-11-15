@@ -56,8 +56,6 @@
         <docker.skip-test>false</docker.skip-test>
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kafka.scala.version>2.13</kafka.scala.version>
-        <scala.version>2.13.2</scala.version>
         <scalatest.version>3.1.2</scalatest.version>
         <!-- The default is ubi8 -->
         <docker.os_type>ubi8</docker.os_type>
