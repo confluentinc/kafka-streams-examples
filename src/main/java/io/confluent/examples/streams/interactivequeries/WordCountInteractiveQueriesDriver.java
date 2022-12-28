@@ -36,7 +36,7 @@ import java.util.Random;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.5.13-SNAPSHOT-standalone.jar io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesDriver
+ * $ java -cp target/kafka-streams-examples-5.5.14-SNAPSHOT-standalone.jar io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesDriver
  * }
  * </pre>
  * You should terminate with Ctrl-C
