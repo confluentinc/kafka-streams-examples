@@ -52,7 +52,7 @@ import java.util.stream.IntStream;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * java -cp target/kafka-streams-examples-6.0.11-standalone.jar io.confluent.examples.streams.TopArticlesLambdaExample
+ * java -cp target/kafka-streams-examples-6.0.12-standalone.jar io.confluent.examples.streams.TopArticlesLambdaExample
  * }
  * </pre>
  *
