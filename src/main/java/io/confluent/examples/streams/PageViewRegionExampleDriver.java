@@ -49,7 +49,7 @@ import java.util.Random;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-6.0.13-SNAPSHOT-standalone.jar io.confluent.examples.streams.PageViewRegionExampleDriver
+ * $ java -cp target/kafka-streams-examples-6.0.14-SNAPSHOT-standalone.jar io.confluent.examples.streams.PageViewRegionExampleDriver
  * }
  * </pre>
  * You should terminate with {@code Ctrl-C}.

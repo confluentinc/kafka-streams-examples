@@ -110,7 +110,7 @@ import static java.util.Collections.singletonMap;
  *
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-6.0.13-SNAPSHOT-standalone.jar \
+ * $ java -cp target/kafka-streams-examples-6.0.14-SNAPSHOT-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExample 7070
  * }
  * </pre>
@@ -121,7 +121,7 @@ import static java.util.Collections.singletonMap;
  *
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-6.0.13-SNAPSHOT-standalone.jar \
+ * $ java -cp target/kafka-streams-examples-6.0.14-SNAPSHOT-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExample 7071
  * }
  * </pre>
