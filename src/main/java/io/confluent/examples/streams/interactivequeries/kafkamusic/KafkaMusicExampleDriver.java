@@ -52,7 +52,7 @@ import java.io.IOException;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.5.15-SNAPSHOT-standalone.jar \
+ * $ java -cp target/kafka-streams-examples-5.5.16-SNAPSHOT-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExampleDriver
  * }
  * </pre>
