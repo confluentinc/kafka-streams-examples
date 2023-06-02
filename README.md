@@ -408,3 +408,7 @@ make it compile.  Check this README as well as [pom.xml](pom.xml) for any such i
     * For general questions about Apache Kafka and Confluent Platform, please head over to the
       [Confluent mailing list](https://groups.google.com/forum/?pli=1#!forum/confluent-platform)
       or to the [Apache Kafka mailing lists](http://kafka.apache.org/contact).
+
+# License
+
+Usage of this image is subject to the license terms of the software contained within. Please refer to Confluent's Docker images documentation [reference](https://docs.confluent.io/platform/current/installation/docker/image-reference.html) for further information. The software to extend and build the custom Docker images is available under the Apache 2.0 License.
