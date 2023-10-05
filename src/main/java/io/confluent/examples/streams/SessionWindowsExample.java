@@ -50,7 +50,7 @@ import static java.util.Collections.singletonMap;
  * <br>
  * HOW TO RUN THIS EXAMPLE
  * <p>
- * 1) Start Zookeeper, Kafka, and Confluent Schema Registry. Please refer to <a href='http://docs.confluent.io/current/quickstart.html#quickstart'>QuickStart</a>.
+ * 1) Start Zookeeper, Kafka, and Confluent Schema Registry. Please refer to <a href="http://docs.confluent.io/current/quickstart.html#quickstart">QuickStart</a>.
  * <p>
  * 2) Create the input/intermediate/output topics used by this example.
  * <pre>
@@ -66,7 +66,7 @@ import static java.util.Collections.singletonMap;
  * <p>
  * 3) Start this example application either in your IDE or on the command line.
  * <p>
- * If via the command line please refer to <a href='https://github.com/confluentinc/kafka-streams-examples#packaging-and-running'>Packaging</a>.
+ * If via the command line please refer to <a href="https://github.com/confluentinc/kafka-streams-examples#packaging-and-running">Packaging</a>.
  * Once packaged you can then run:
  * <pre>
  * {@code
@@ -150,7 +150,7 @@ public class SessionWindowsExample {
     // started
     config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     // disable caching to see session merging
-    config.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
+    config.put(StreamsConfig.STATESTORE_CACHE_MAX_BYTES_CONFIG, 0);
     return config;
   }
 
@@ -164,7 +164,7 @@ public class SessionWindowsExample {
         // group by key so we can count by session windows
         .groupByKey(Grouped.with(Serdes.String(), playEventSerde))
         // window by session
-        .windowedBy(SessionWindows.with(INACTIVITY_GAP))
+        .windowedBy(SessionWindows.ofInactivityGapAndGrace(INACTIVITY_GAP, Duration.ofMillis(100)))
         // count play events per session
         .count(Materialized.<String, Long, SessionStore<Bytes, byte[]>>as(PLAY_EVENTS_PER_SESSION)
             .withKeySerde(Serdes.String())
