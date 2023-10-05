@@ -436,7 +436,7 @@ public class KafkaMusicExample {
   /**
    * Used in aggregations to keep track of the Top five songs
    *
-   * <p></p>Warning: this aggregator relies on the current order of execution
+   * <p>Warning: this aggregator relies on the current order of execution
    * for updates, namely that the subtractor (#remove) is called prior
    * to the adder (#add). That is an implementation detail which,
    * while it has remained stable for years, is not part of the public
