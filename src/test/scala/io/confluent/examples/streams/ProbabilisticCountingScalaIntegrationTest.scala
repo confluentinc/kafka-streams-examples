@@ -105,7 +105,7 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
     val textLines: KStream[String, String] = builder.stream[String, String](inputTopic)
     val approximateWordCounts: KStream[String, Long] = textLines
       .flatMapValues(textLine => textLine.toLowerCase.split("\\W+"))
-      .transform(() => new ProbabilisticCounter(cmsStoreName), Named.as("cms-store"), cmsStoreName)
+      .process(() => new ProbabilisticCounter(cmsStoreName), Named.as("cms-store"), cmsStoreName)
     approximateWordCounts.to(outputTopic)
     builder
   }

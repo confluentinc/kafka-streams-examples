@@ -30,9 +30,10 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.Transformer;
-import org.apache.kafka.streams.kstream.TransformerSupplier;
-import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Processor;
+import org.apache.kafka.streams.processor.api.ProcessorContext;
+import org.apache.kafka.streams.processor.api.ProcessorSupplier;
+import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.ValueAndTimestamp;
 import org.apache.kafka.test.TestUtils;
@@ -64,13 +65,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * End-to-end integration test that demonstrates one way to implement a custom join operation.
  * Here, we implement custom Transformers with the Processor API and plug them into a DSL topology.
  *
- * Note: This example works with Java 8+ only.
+ * <p>Note: This example works with Java 8+ only.
  *
- * TODO (and note for maintainers): This test can be migrated to use the TopologyTestDriver of Kafka Streams only once
+ * <p>TODO (and note for maintainers): This test can be migrated to use the TopologyTestDriver of Kafka Streams only once
  * the driver is handling timestamps exactly like a "real" setup does. Until then, this test must use an embedded
  * Kafka cluster.
  *
- * EXAMPLE DESCRIPTION
+ * <p>EXAMPLE DESCRIPTION
  * ===================
  * Specifically, this example implements a stream-table LEFT join where both (1) the stream side triggers a join output
  * being sent downstream (default behavior of KStreams) but also (2) the table side (not supported yet in Kafka Streams
@@ -80,55 +81,55 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * for a stream-table LEFT join) a join output will be sent where the table-side data is `null`.  See the input/output
  * join examples further down below as illustration of the implemented behavior.
  *
- * The approach in this example shares state stores between a stream-side and a table-side transformer, respectively.
+ * <p>The approach in this example shares state stores between a stream-side and a table-side transformer, respectively.
  * This is safe because, if shared, Kafka Streams will place the transformers as well as the state stores into the same
  * stream task, in which all access is exclusive and single-threaded.  The state store on the table side is the normal
  * store of a KTable (whereas a second, dedicated state store for the table would have duplicated data unnecessarily),
  * whereas the state store on the stream side is manually added and attached to the processing topology.
  *
- * An alternative, more flexible approach is outlined further down below, in case you need additional control over the
+ * <p>An alternative, more flexible approach is outlined further down below, in case you need additional control over the
  * join behavior, e.g. by including stream-side vs. table-side timestamps in your decision-making logic.
  *
- *
- * THIS CODE EXAMPLE COMPARED TO KAFKA STREAMS DEFAULT JOIN BEHAVIOR
+ * <p>THIS CODE EXAMPLE COMPARED TO KAFKA STREAMS DEFAULT JOIN BEHAVIOR
  * =================================================================
  * The default stream-table join behavior of Kafka Streams only triggers join output when data arrives at the stream
- * side.  See https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Streams+Join+Semantics.
+ * side.  See <a href="https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Streams+Join+Semantics">Kafka Streams Join Semantics</a>.
  *
- * Kafka Streams INNER stream-table join:
+ * <p>Kafka Streams INNER stream-table join:
  *
+ * <p>
  * Time | Stream              Table         | Join output
  * -----+-----------------------------------+-------------------------
  * 10   | ("alice", 999.99)                 | -
  * 20   |                     ("alice", 1L) | -
  * 30   | ("alice", 555.55)                 | ("alice", (555.55, 1L))
  *
- * Kafka Streams LEFT stream-table join:
+ * <p>Kafka Streams LEFT stream-table join:
  *
+ * <p>
  * Time | Stream              Table         | Join output
  * -----+-----------------------------------+-------------------------
  * 10   | ("alice", 999.99)                 | ("alice", (999.99, null)
  * 20   |                     ("alice", 1L) | -
  * 30   | ("alice", 555.55)                 | ("alice", (555.55, 1L))
  *
- *
- * The code in this example changes the above behavior so that an application will wait a configurable amount of time
+ * <p>The code in this example changes the above behavior so that an application will wait a configurable amount of time
  * for data to arrive also at the table before it produces the join output for a given key (here: "alice").  The
  * motivation is that, in this example, we'd prefer to receive fully populated join messages rather than join messages
  * where the table-side information is missing (null).  Depending on your use case, you might prefer this changed
  * behavior, and these changed semantics, over the default join semantics of Kafka Streams.
  *
+ * <p>
  * Time | Stream              Table         | Join output
  * -----+-----------------------------------+-------------------------
  * 10   | ("alice", 999.99)                 | -
  * 20   |                     ("alice", 1L) | ("alice", (999.99, 1L))
  * 30   | ("alice", 555.55)                 | ("alice", (555.55, 1L))
  *
- * Note how, in the example above, the custom join produced a join output of `("alice", (999.99, 1L))`, even though the
+ * <p>Note how, in the example above, the custom join produced a join output of `("alice", (999.99, 1L))`, even though the
  * table-side record `("alice", 1L)` has NEWER timestamp than the stream record `("alice", 999.99)`.
  *
- *
- * YOUR OWN LOGIC SHOULD STILL ADHERE TO GENERAL JOIN RULES
+ * <p>YOUR OWN LOGIC SHOULD STILL ADHERE TO GENERAL JOIN RULES
  * ========================================================
  * Kafka Streams' current stream-table join semantics dictate that only a single join output will ever be produced for a
  * newly arriving stream-side record.  Table-side triggering of the join should only be used to ensure (rather: to
@@ -136,29 +137,29 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * table.  However, table-side triggering should NOT be used to sent multiple join outputs for the same stream-side
  * record.
  *
- * Example of WRONG logic:
+ * <p>Example of WRONG logic:
  *
+ * <p>
  * Time | Stream              Table         | Join output
  * -----+-----------------------------------+------------------------
  * 10   | ("alice", 999.99)                 |
  * 20   |                     ("alice", 1L) | ("alice", (999.99, 1L))
  * 30   |                     ("alice", 2L) | ("alice", (999.99, 2L))
  *
- * The wrong example above falsely produces two outputs, whereas it should produce only a single one.  It's up to you to
+ * <p>The wrong example above falsely produces two outputs, whereas it should produce only a single one.  It's up to you to
  * decide which one, however.
  *
- *
- * HOW TO ADAPT THIS EXAMPLE TO YOUR OWN USE CASES
+ * <p>HOW TO ADAPT THIS EXAMPLE TO YOUR OWN USE CASES
  * ===============================================
  * 1. You might want to add further logic that, for instance, changes the join behavior depending on the respective
  * timestamps of received stream records and table records.
  *
- * 2. The KTable's ValueTransformerWithKeySupplier can only react to values it <i>actually observes</i>.  By default,
+ * <p>2. The KTable's ValueTransformerWithKeySupplier can only react to values it <i>actually observes</i>.  By default,
  * the Kafka Streams DSL enables record caching for tables, which will cause the ValueTransformerWithKey to not observe
  * every single value that enters the table.  If your use case requires observing every single record, you must
  * configure the KTable so that its state store disables record caching: `Materialized.as(...).withCachingDisabled()`.
  *
- * 3. If you need even more control on what join output is being produced (or not being produced), or more control on
+ * <p>3. If you need even more control on what join output is being produced (or not being produced), or more control on
  * state management for the join in general, you may want to switch from this approach's use of a KTable (for reading
  * the table's topic) together with a ValueTransformerWithKeySupplier for managing the table-side triggering of the join
  * to a KStream together with a normal Transformer and a second state store.  Here, you'd read the table's topic into a
@@ -228,7 +229,7 @@ public class CustomStreamTableJoinIntegrationTest {
 
     // Perform the custom join operation.
     final KStream<String, Pair<Double, Long>> joined =
-        stream.transform(
+        stream.process(
             new StreamTableJoinStreamSideLogic(joinWindow, tableStoreName),
             tableStoreName);
 
@@ -275,12 +276,12 @@ public class CustomStreamTableJoinIntegrationTest {
    * before sending a join output for a newly received stream-side record.  This is but one example for such custom
    * join semantics -- feel free to modify this example to match your own needs.
    *
-   * This behavior will increase the likelihood of "fully populated" join output messages, i.e. with data from both the
+   * <p>This behavior will increase the likelihood of "fully populated" join output messages, i.e. with data from both the
    * stream and the table side.  The downside is that the waiting behavior will increase the end-to-end processing
    * latency for a stream-side record in the topology.
    */
   private static final class StreamTableJoinStreamSideLogic
-      implements TransformerSupplier<String, Double, KeyValue<String, Pair<Double, Long>>> {
+      implements ProcessorSupplier<String, Double, String, Pair<Double, Long>> {
 
     private static final Logger LOG = LoggerFactory.getLogger(StreamTableJoinStreamSideLogic.class);
 
@@ -293,37 +294,34 @@ public class CustomStreamTableJoinIntegrationTest {
     }
 
     @Override
-    public Transformer<String, Double, KeyValue<String, Pair<Double, Long>>> get() {
-      return new Transformer<String, Double, KeyValue<String, Pair<Double, Long>>>() {
+    public Processor<String, Double, String, Pair<Double, Long>> get() {
+      return new Processor<String, Double, String, Pair<Double, Long>>() {
 
         private KeyValueStore<String, ValueAndTimestamp<Long>> tableStore;
-        private ProcessorContext context;
+        private ProcessorContext<String, Pair<Double, Long>> context;
 
-        @SuppressWarnings("unchecked")
         @Override
-        public void init(final ProcessorContext context) {
-          tableStore = (KeyValueStore<String, ValueAndTimestamp<Long>>) context.getStateStore(tableStoreName);
+        public void init(final ProcessorContext<String, Pair<Double, Long>> context) {
           this.context = context;
+          tableStore = context.getStateStore(tableStoreName);
         }
 
         @Override
-        public KeyValue<String, Pair<Double, Long>> transform(final String key, final Double value) {
-          LOG.info("Received stream record ({}, {}) with timestamp {}", key, value, context.timestamp());
-          return sendFullJoinRecordOrWaitForTableSide(key, value, context.timestamp());
+        public void process(final Record<String, Double> record) {
+          LOG.info("Received stream record ({})}", record);
+          context.forward(sendFullJoinRecordOrWaitForTableSide(record));
         }
 
-        private KeyValue<String, Pair<Double, Long>> sendFullJoinRecordOrWaitForTableSide(final String key,
-                                                                                          final Double value,
-                                                                                          final long streamRecordTimestamp) {
-          final ValueAndTimestamp<Long> tableValue = tableStore.get(key);
+        private Record<String, Pair<Double, Long>> sendFullJoinRecordOrWaitForTableSide(final Record<String, Double> record) {
+          final ValueAndTimestamp<Long> tableValue = tableStore.get(record.key());
           if (tableValue != null &&
-              withinAcceptableBounds(Instant.ofEpochMilli(tableValue.timestamp()), Instant.ofEpochMilli(streamRecordTimestamp))) {
-            final KeyValue<String, Pair<Double, Long>> joinRecord = KeyValue.pair(key, new Pair<>(value, tableValue.value()));
-            LOG.info("Table data available for key {}, sending fully populated join message {}", key, joinRecord);
+              withinAcceptableBounds(Instant.ofEpochMilli(tableValue.timestamp()), Instant.ofEpochMilli(record.timestamp()))) {
+            final Record<String, Pair<Double, Long>> joinRecord = record.withValue(new Pair<>(record.value(), tableValue.value()));
+            LOG.info("Table data available for key {}, sending fully populated join message {}", record.key(), joinRecord);
             return joinRecord;
           } else {
-            LOG.info("Table data unavailable for key {}, sending the join result as null", key);
-            return KeyValue.pair(key, new Pair<>(value, null));
+            LOG.info("Table data unavailable for key {}, sending the join result as null", record.key());
+            return record.withValue(new Pair<>(record.value(), null));
           }
         }
 
@@ -332,9 +330,6 @@ public class CustomStreamTableJoinIntegrationTest {
           return Duration.between(streamRecordTimestamp, tableRecordTimestamp)
               .compareTo(joinWindow) <= 0;
         }
-
-        @Override
-        public void close() {}
       };
     }
   }

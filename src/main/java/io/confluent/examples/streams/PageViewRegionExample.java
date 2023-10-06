@@ -57,7 +57,7 @@ import java.util.Properties;
  * <br>
  * HOW TO RUN THIS EXAMPLE
  * <p>
- * 1) Start Zookeeper, Kafka, and Confluent Schema Registry. Please refer to <a href='http://docs.confluent.io/current/quickstart.html#quickstart'>QuickStart</a>.
+ * 1) Start Zookeeper, Kafka, and Confluent Schema Registry. Please refer to <a href="http://docs.confluent.io/current/quickstart.html#quickstart">QuickStart</a>.
  * <p>
  * 2) Create the input/intermediate/output topics used by this example.
  * <pre>
@@ -74,7 +74,7 @@ import java.util.Properties;
  * <p>
  * 3) Start this example application either in your IDE or on the command line.
  * <p>
- * If via the command line please refer to <a href='https://github.com/confluentinc/kafka-streams-examples#packaging-and-running'>Packaging</a>.
+ * If via the command line please refer to <a href="https://github.com/confluentinc/kafka-streams-examples#packaging-and-running">Packaging</a>.
  * Once packaged you can then run:
  * <pre>
  * {@code
@@ -129,7 +129,7 @@ public class PageViewRegionExample {
     // Where to find the Confluent schema registry instance(s)
     streamsConfiguration.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
     // Specify default (de)serializers for record keys and for record values.
-    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, GenericAvroSerde.class);
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     // Records should be flushed every 10 seconds. This is less than the default
@@ -198,7 +198,7 @@ public class PageViewRegionExample {
       })
       // count views by user, using hopping windows of size 5 minutes that advance every 1 minute
       .groupByKey() // no need to specify explicit serdes because the resulting key and value types match our default serde settings
-      .windowedBy(TimeWindows.of(Duration.ofMinutes(5)).advanceBy(Duration.ofMinutes(1)))
+      .windowedBy(TimeWindows.ofSizeWithNoGrace(Duration.ofMinutes(5)).advanceBy(Duration.ofMinutes(1)))
       .count();
 
     // Note: The following operations would NOT be needed for the actual pageview-by-region

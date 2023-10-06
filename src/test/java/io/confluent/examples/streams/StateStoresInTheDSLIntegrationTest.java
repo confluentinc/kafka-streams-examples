@@ -27,9 +27,10 @@ import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.Transformer;
-import org.apache.kafka.streams.kstream.TransformerSupplier;
-import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Processor;
+import org.apache.kafka.streams.processor.api.ProcessorContext;
+import org.apache.kafka.streams.processor.api.ProcessorSupplier;
+import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
@@ -48,8 +49,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>
  * Don't pay too much attention to the output data of the application (or to the output data of the
  * Transformer).  What we want to showcase here is the technical interaction between state stores
- * and the Kafka Streams DSL, at the example of {@link KStream#transform(TransformerSupplier,
- * String...)}.  What the application is actually computing is of secondary concern.
+ * and the Kafka Streams DSL, at the example of {@link KStream#process(ProcessorSupplier, String...)}.
+ * What the application is actually computing is of secondary concern.
  * <p>
  * Note: This example works with Java 8+ only.
  */
@@ -62,7 +63,7 @@ public class StateStoresInTheDSLIntegrationTest {
    * Returns a transformer that computes running, ever-incrementing word counts.
    */
   private static final class WordCountTransformerSupplier
-    implements TransformerSupplier<byte[], String, KeyValue<String, Long>> {
+    implements ProcessorSupplier<byte[], String, String, Long> {
 
     final private String stateStoreName;
 
@@ -71,26 +72,27 @@ public class StateStoresInTheDSLIntegrationTest {
     }
 
     @Override
-    public Transformer<byte[], String, KeyValue<String, Long>> get() {
-      return new Transformer<byte[], String, KeyValue<String, Long>>() {
+    public Processor<byte[], String, String, Long> get() {
+      return new Processor<byte[], String, String, Long>() {
 
+        private ProcessorContext<String, Long> context;
         private KeyValueStore<String, Long> stateStore;
 
-        @SuppressWarnings("unchecked")
         @Override
-        public void init(final ProcessorContext context) {
-          stateStore = (KeyValueStore<String, Long>) context.getStateStore(stateStoreName);
+        public void init(final ProcessorContext<String, Long> context) {
+          this.context = context;
+          stateStore = context.getStateStore(stateStoreName);
         }
 
         @Override
-        public KeyValue<String, Long> transform(final byte[] key, final String value) {
+        public void process(final Record<byte[], String> record) {
           // For simplification (and unlike the traditional wordcount) we assume that the value is
           // a single word, i.e. we don't split the value by whitespace into potentially one or more
           // words.
-          final Optional<Long> count = Optional.ofNullable(stateStore.get(value));
+          final Optional<Long> count = Optional.ofNullable(stateStore.get(record.value()));
           final Long incrementedCount = count.orElse(0L) + 1;
-          stateStore.put(value, incrementedCount);
-          return KeyValue.pair(value, incrementedCount);
+          stateStore.put(record.value(), incrementedCount);
+          context.forward(new Record<>(record.value(), incrementedCount, record.timestamp(), record.headers()));
         }
 
         @Override
@@ -130,8 +132,8 @@ public class StateStoresInTheDSLIntegrationTest {
     final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "state-store-dsl-lambda-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config");
-    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray().getClass().getName());
-    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArraySerde.class);
+    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
@@ -158,7 +160,7 @@ public class StateStoresInTheDSLIntegrationTest {
     // (within the transformer) because `ProcessorContext#getStateStore("WordCountsStore")` will
     // return `null`.
     final KStream<String, Long> wordCounts =
-      words.transform(new WordCountTransformerSupplier(wordCountsStore.name()), wordCountsStore.name());
+      words.process(new WordCountTransformerSupplier(wordCountsStore.name()), wordCountsStore.name());
 
     wordCounts.to(outputTopic, Produced.with(Serdes.String(), Serdes.Long()));
 
