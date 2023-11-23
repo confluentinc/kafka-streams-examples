@@ -65,9 +65,15 @@
         <io.confluent.schema-registry.version>${confluent.version.range}</io.confluent.schema-registry.version>
         <io.confluent.blueway.version>${confluent.version.range}</io.confluent.blueway.version>
         <io.confluent.kafka-streams-examples.version>6.1.15-0</io.confluent.kafka-streams-examples.version>
+        <dropwizard.version>4.1.12.1</dropwizard.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>${dropwizard.version}</version>
+        </dependency>
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-streams-avro-serde</artifactId>
