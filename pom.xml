@@ -49,6 +49,7 @@
          https://github.com/confluentinc/common (see common's pom.xml for kafka.version).
     -->
     <properties>
+	<dropwizard.version>4.1.12.1</dropwizard.version>
         <algebird.version>0.13.7</algebird.version>
         <avro.version>1.10.1</avro.version>
         <chill.version>0.9.5</chill.version>
@@ -68,6 +69,11 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>${dropwizard.version}</version>
+        </dependency>
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-streams-avro-serde</artifactId>
