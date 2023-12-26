@@ -11,4 +11,5 @@ dockerfile {
     osTypes = ['ubi8']
     slackChannel = 'ksqldb-warn'
     nanoVersion = true
+    buildArm = true
 }

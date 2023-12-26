@@ -36,7 +36,7 @@ import java.util.Random;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-7.0.0-standalone.jar io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesDriver
+ * $ java -cp target/kafka-streams-examples-7.4.0-0-standalone.jar io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesDriver
  * }
  * </pre>
  * You should terminate with Ctrl-C
@@ -62,7 +62,7 @@ public class WordCountInteractiveQueriesDriver {
     final Properties producerConfig = new Properties();
     producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-    producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
+    producerConfig.put(ProducerConfig.RETRIES_CONFIG, 1);
     producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 

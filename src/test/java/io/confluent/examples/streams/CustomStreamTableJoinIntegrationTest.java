@@ -345,7 +345,7 @@ public class CustomStreamTableJoinIntegrationTest {
     final Properties producerConfigStream = new Properties();
     producerConfigStream.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     producerConfigStream.put(ProducerConfig.ACKS_CONFIG, "all");
-    producerConfigStream.put(ProducerConfig.RETRIES_CONFIG, 0);
+    producerConfigStream.put(ProducerConfig.RETRIES_CONFIG, 1);
     producerConfigStream.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     producerConfigStream.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, DoubleSerializer.class);
     IntegrationTestUtils.produceKeyValuesWithTimestampsSynchronously(
@@ -357,7 +357,7 @@ public class CustomStreamTableJoinIntegrationTest {
     final Properties producerConfigTable = new Properties();
     producerConfigTable.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     producerConfigTable.put(ProducerConfig.ACKS_CONFIG, "all");
-    producerConfigTable.put(ProducerConfig.RETRIES_CONFIG, 0);
+    producerConfigTable.put(ProducerConfig.RETRIES_CONFIG, 1);
     producerConfigTable.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     producerConfigTable.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
     IntegrationTestUtils.produceKeyValuesWithTimestampsSynchronously(

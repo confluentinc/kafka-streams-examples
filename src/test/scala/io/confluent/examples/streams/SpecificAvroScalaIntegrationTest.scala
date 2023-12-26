@@ -92,7 +92,7 @@ class SpecificAvroScalaIntegrationTest extends AssertionsForJUnit {
       val p = new Properties()
       p.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
       p.put(ProducerConfig.ACKS_CONFIG, "all")
-      p.put(ProducerConfig.RETRIES_CONFIG, "0")
+      p.put(ProducerConfig.RETRIES_CONFIG, "1")
       p.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[ByteArraySerializer])
       p.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[KafkaAvroSerializer])
       p.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, cluster.schemaRegistryUrl)
