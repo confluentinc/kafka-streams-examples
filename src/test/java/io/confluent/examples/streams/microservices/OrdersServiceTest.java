@@ -56,7 +56,7 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
   @Before
   public void prepareKafkaCluster() throws Exception {
-    CLUSTER.deleteTopicsAndWait(30000, Topics.ORDERS.name(), "OrdersService-orders-store-changelog");
+    CLUSTER.deleteTopicsAndWait(60000, Topics.ORDERS.name(), "OrdersService-orders-store-changelog");
     CLUSTER.createTopic(Topics.ORDERS.name());
     Schemas.configureSerdesWithSchemaRegistryUrl(CLUSTER.schemaRegistryUrl());
   }

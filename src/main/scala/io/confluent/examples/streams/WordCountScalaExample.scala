@@ -2,9 +2,7 @@ package io.confluent.examples.streams
 
 import java.time.Duration
 import java.util.Properties
-import java.util.concurrent.TimeUnit
 
-import io.confluent.examples.streams.MapFunctionScalaExample.streams
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream._
 import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
@@ -43,7 +41,7 @@ import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
   * Once packaged you can then run:
   *
   * {{{
-  * $ java -cp target/kafka-streams-examples-5.1.5-SNAPSHOT-standalone.jar io.confluent.examples.streams.WordCountLambdaExample
+  * $ java -cp target/kafka-streams-examples-5.2.8-SNAPSHOT-standalone.jar io.confluent.examples.streams.WordCountLambdaExample
   * }}}
   *
   * 4) Write some input data to the source topic "streams-plaintext-input" (e.g. via `kafka-console-producer`).

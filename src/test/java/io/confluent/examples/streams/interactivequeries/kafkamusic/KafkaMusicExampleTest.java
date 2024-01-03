@@ -56,6 +56,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -207,7 +209,21 @@ public class KafkaMusicExampleTest {
   public void shouldCreateChartsAndAccessThemViaInteractiveQueries() throws Exception {
     final String host = "localhost";
     createStreams(host);
+    final CountDownLatch startupLatch = new CountDownLatch(1);
+    streams.setStateListener((newState, oldState) -> {
+      if (newState == KafkaStreams.State.RUNNING && oldState != KafkaStreams.State.RUNNING) {
+        startupLatch.countDown();
+      }
+    });
     streams.start();
+
+    try {
+      if (!startupLatch.await(60, TimeUnit.SECONDS)) {
+        throw new RuntimeException("Streams never finished rebalancing on startup");
+      }
+    } catch (final InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
 
     if (restProxy != null) {
       // wait until the StreamsMetadata is available as this indicates that

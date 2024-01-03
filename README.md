@@ -12,8 +12,10 @@ For more information take a look at the
 Table of Contents
 
 * [Available examples](#available-examples)
-    * [Java](#examples)
-    * [Scala](#examples)
+    * [Examples: Runnable Applications](#examples-apps)
+    * [Examples: Unit Tests](#examples-unit-tests)
+    * [Examples: Integration Tests](#examples-integration-tests)
+    * [Docker Example: Kafka Music demo application](#examples-docker)
 * [Requirements](#requirements)
     * [Apache Kafka](#requirements-kafka)
     * [Confluent Platform](#requirements-confluent-platform)
@@ -23,7 +25,6 @@ Table of Contents
 * [Packaging and running the examples](#packaging-and-running)
 * [Development](#development)
 * [Version Compatibility Matrix](#version-compatibility)
-* [Docker](#docker)
 * [Where to find help](#help)
 
 ---
@@ -36,82 +37,145 @@ Table of Contents
 This repository has several branches to help you find the correct code examples for the version of Apache Kafka and/or
 Confluent Platform that you are using.  See [Version Compatibility Matrix](#version-compatibility) below for details.
 
-There are two kinds of examples:
+There are three kinds of examples:
 
 * **Examples under [src/main/](src/main/)**: These examples are short and concise.  Also, you can interactively
   test-drive these examples, e.g. against a local Kafka cluster.  If you want to actually run these examples, then you
   must first install and run Apache Kafka and friends, which we describe in section
   [Packaging and running the examples](#packaging-and-running).  Each example also states its exact requirements and
   instructions at the very top.
-* **Examples under [src/test/](src/test/)**: These examples are a bit longer because they implement integration tests
-  that demonstrate end-to-end data pipelines.  Here, we use a testing framework to automatically spawn embedded Kafka
+* **Examples under [src/test/](src/test/)**: These examples should test applications under [src/main/](src/main/).
+  Unit Tests with TopologyTestDriver test the stream logic without external system dependencies.
+  The integration tests use an embedded Kafka
   clusters, feed input data to them (using the standard Kafka producer client), process the data using Kafka Streams,
   and finally read and verify the output results (using the standard Kafka consumer client).
   These examples are also a good starting point to learn how to implement your own end-to-end integration tests.
+* **Ready-to-run Docker Examples**: These examples are already built and containerized.
 
-## Examples
 
-<a name="examples"/>
+<a name="examples-apps"/>
 
-| Name | Concepts used | Java 8+ | Java 7+ | Scala |
-| --- | --- | --- | --- | --- |
-| WordCount | DSL | [Java 8+ example](src/main/java/io/confluent/examples/streams/WordCountLambdaExample.java) | | [Scala Example](src/main/scala/io/confluent/examples/streams/WordCountScalaExample.scala) |
-| MapFunction | DSL, stateless transformations, map() | [Java 8+ example](src/main/java/io/confluent/examples/streams/MapFunctionLambdaExample.java) | | [Scala Example](src/main/scala/io/confluent/examples/streams/MapFunctionScalaExample.scala) |
-| SessionWindows | Sessionization of user events, user behavior analysis  | | [Java 7+ example](src/main/java/io/confluent/examples/streams/SessionWindowsExample.java)
-| Sum | DSL, stateful transformations, `reduce` | [Java 8+ example](src/main/java/io/confluent/examples/streams/SumLambdaExample.java)
-| PageViewRegion | `join` between `KStream` and `KTable` | [Java 8+ example](src/main/java/io/confluent/examples/streams/PageViewRegionLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/PageViewRegionExample.java) | |
-| PageViewRegionGenericAvro | Generic Avro | [Java 8+ example](src/main/java/io/confluent/examples/streams/PageViewRegionLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/PageViewRegionExample.java)
-| WikipediaFeedSpecificAvro | Specific Avro | [Java 8+ example](src/main/java/io/confluent/examples/streams/WikipediaFeedAvroLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/WikipediaFeedAvroExample.java)
-| SecureKafkaStreams | Secure, encryption, client authentication | | [Java 7+ example](src/main/java/io/confluent/examples/streams/SecureKafkaStreamsExample.java)
-| StatesStoresDSL | State Stores, DSL | [Java 8+ example](src/test/java/io/confluent/examples/streams/StateStoresInTheDSLIntegrationTest.java)
-| WordCountInteractiveQueries | Interactive Queries, REST, RPC | [Java 8+ example](src/main/java/io/confluent/examples/streams/interactivequeries/WordCountInteractiveQueriesExample.java)
-| KafkaMusic | Interactive Queries, State Stores, REST API | [Java 8+ example](src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java)
-| PoisonPill | Corrupt input records | [Java 8+ example](src/test/java/io/confluent/examples/streams/HandlingCorruptedInputRecordsIntegrationTest.java)
-| MixAndMatch DSL+Processor | DSL, Processor API, `KStream#transform()`, `KStream#process()`, custom `Transformer` and `Processor` implementations | [Java 8+ example](src/test/java/io/confluent/examples/streams/MixAndMatchLambdaIntegrationTest.java)
-| ApplicationReset | Application Reset Tool `bin/kafka-streams-application-reset` | [Java 8+ example](src/main/java/io/confluent/examples/streams/ApplicationResetExample.java)
-| GlobalKTable |join between `KStream` and `GlobalKTable`| [Java 8+ example](src/main/java/io/confluent/examples/streams/GlobalKTablesExample.java)
-| Microservice | Microservice ecosystem, state stores, dynamic routing, joins, filtering, branching, stateful operations | [Java 8+ example](src/main/java/io/confluent/examples/streams/microservices)
+## Examples: Runnable Applications
 
-## Additional examples
+Additional examples may be found under [src/main/](src/main/java/io/confluent/examples/streams/).
 
-Additional examples may be found [here](src/main/java/io/confluent/examples/streams/).
+| Application Name            | Concepts used                                            | Java 8+ | Java 7+ | Scala |
+| --------------------------- | -------------------------------------------------------- | ------- | ------- | ----- |
+| WordCount                   | DSL, aggregation, stateful                               | [Java 8+ example](src/main/java/io/confluent/examples/streams/WordCountLambdaExample.java) | | [Scala Example](src/main/scala/io/confluent/examples/streams/WordCountScalaExample.scala) |
+| MapFunction                 | DSL, stateless transformations, `map()`                  | [Java 8+ example](src/main/java/io/confluent/examples/streams/MapFunctionLambdaExample.java) | | [Scala Example](src/main/scala/io/confluent/examples/streams/MapFunctionScalaExample.scala) |
+| SessionWindows              | Sessionization of user events, user behavior analysis    | | [Java 7+ example](src/main/java/io/confluent/examples/streams/SessionWindowsExample.java)
+| GlobalKTable                | `join()` between `KStream` and `GlobalKTable`            | [Java 8+ example](src/main/java/io/confluent/examples/streams/GlobalKTablesExample.java) | | |
+| PageViewRegion              | `join()` between `KStream` and `KTable`                  | [Java 8+ example](src/main/java/io/confluent/examples/streams/PageViewRegionLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/PageViewRegionExample.java) | |
+| PageViewRegionGenericAvro   | Working with data in Generic Avro format                 | [Java 8+ example](src/main/java/io/confluent/examples/streams/PageViewRegionLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/PageViewRegionExample.java) | |
+| WikipediaFeedSpecificAvro   | Working with data in Specific Avro format                | [Java 8+ example](src/main/java/io/confluent/examples/streams/WikipediaFeedAvroLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/WikipediaFeedAvroExample.java) | |
+| SecureKafkaStreams          | Secure, encryption, client authentication                | | [Java 7+ example](src/main/java/io/confluent/examples/streams/SecureKafkaStreamsExample.java) | |
+| Sum                         | DSL, stateful transformations, `reduce()`                | [Java 8+ example](src/main/java/io/confluent/examples/streams/SumLambdaExample.java) | | |
+| WordCountInteractiveQueries | Interactive Queries, REST, RPC                           | [Java 8+ example](src/main/java/io/confluent/examples/streams/interactivequeries/WordCountInteractiveQueriesExample.java) | | |
+| KafkaMusic                  | Interactive Queries, State Stores, REST API              | [Java 8+ example](src/main/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExample.java) | | |
+| ApplicationReset            | Application Reset Tool `kafka-streams-application-reset` | [Java 8+ example](src/main/java/io/confluent/examples/streams/ApplicationResetExample.java) | | |
+| Microservice                | Microservice ecosystem, state stores, dynamic routing, joins, filtering, branching, stateful operations | [Java 8+ example](src/main/java/io/confluent/examples/streams/microservices) | | |
 
-## Integration Tests
+
+<a name="examples-unit-tests"/>
+
+## Examples: Unit Tests
+
+The stream processing of Kafka Streams can be **unit tested** with the `TopologyTestDriver` from the
+`org.apache.kafka:kafka-streams-test-utils` artifact. The test driver allows you to write sample input into your
+processing topology and validate its output.
+
+See the documentation at [Testing Streams Code](https://docs.confluent.io/current/streams/developer-guide/test-streams.html).
+
+
+<a name="examples-integration-tests"/>
+
+## Examples: Integration Tests
 
 We also provide several **integration tests**, which demonstrate end-to-end data pipelines.  Here, we spawn embedded Kafka
 clusters and the [Confluent Schema Registry](https://github.com/confluentinc/schema-registry), feed input data to them
 (using the standard Kafka producer client), process the data using Kafka Streams, and finally read and verify the output
 results (using the standard Kafka consumer client).
 
-> Tip: Run `mvn test` to launch the integration tests.
+Additional examples may be found under [src/test/](src/test/java/io/confluent/examples/streams/).
 
-| Integration Test Name  | Java 8+ | Java 7+ | Scala |
-| --- | --- | --- | --- |
-| WordCount | [Java 8+ Integration Test](src/test/java/io/confluent/examples/streams/WordCountLambdaIntegrationTest.java) | | [Scala Integration Test](src/test/scala/io/confluent/examples/streams/WordCountScalaIntegrationTest.scala)
-| WordCountInteractiveQueries | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/interactivequeries/WordCountInteractiveQueriesExampleTest.java)
-| EventDeduplication | [Java 8+ Integration Test](src/test/java/io/confluent/examples/streams/EventDeduplicationLambdaIntegrationTest.java)
-| GlobalKTable | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/GlobalKTablesExampleTest.java)
-| HandlingCorruptedInputRecords | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/HandlingCorruptedInputRecordsIntegrationTest.java)
-| KafkaMusic | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExampleTest.java)
-| MapFunction | [Java 8+ Integration Test](src/test/java/io/confluent/examples/streams/MapFunctionLambdaIntegrationTest.java)
-| MixAndMatch DSL+Processor | [Java 8+ Integration Test](src/test/java/io/confluent/examples/streams/MixAndMatchLambdaIntegrationTest.java)
-| PassThrough | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/PassThroughIntegrationTest.java)
-| SessionWindows | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/SessionWindowsExampleTest.java)
-| Sum | [Java 8+ Integration Test](src/test/java/io/confluent/examples/streams/SumLambdaIntegrationTest.java)
-| StreamToStreamJoin | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/StreamToStreamJoinIntegrationTest.java)
-| StreamToTableJoin | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/StreamToTableJoinIntegrationTest.java) |  [Scala Integration Test](src/test/scala/io/confluent/examples/streams/StreamToTableJoinScalaIntegrationTest.scala)
-| TableToTableJoin | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/TableToTableJoinIntegrationTest.java)
-| UserCountsPerRegion | [Java 8+ Integration Test](src/test/java/io/confluent/examples/streams/UserCountsPerRegionLambdaIntegrationTest.java)
-| GenericAvro | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/GenericAvroIntegrationTest.java) |  [Scala Integration Test](src/test/scala/io/confluent/examples/streams/GenericAvroScalaIntegrationTest.scala)
-| SpecificAvro | | [Java 7+ Integration Test](src/test/java/io/confluent/examples/streams/SpecificAvroIntegrationTest.java) | [Scala Integration Test](src/test/scala/io/confluent/examples/streams/SpecificAvroScalaIntegrationTest.scala)
-| ValidateStateWithInteractiveQueries | [Java 8+ Integration Test](src/test/java/io/confluent/examples/streams/ValidateStateWithInteractiveQueriesLambdaIntegrationTest.java)
-| ProbabilisticCounting*** | | | [Scala Integration Test](src/test/scala/io/confluent/examples/streams/ProbabilisticCountingScalaIntegrationTest.scala)
+> Tip: Run `mvn test` to launch the tests.
+
+| Integration Test Name               | Concepts used                               | Java 8+ | Java 7+ | Scala |
+| ----------------------------------- | ------------------------------------------- | ------- | ------- | ----- |
+| WordCount                           | DSL, aggregation, stateful                  | [Java 8+ Example](src/test/java/io/confluent/examples/streams/WordCountLambdaIntegrationTest.java) | | [Scala Example](src/test/scala/io/confluent/examples/streams/WordCountScalaIntegrationTest.scala) |
+| WordCountInteractiveQueries         | Interactive Queries, REST, RPC              | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/interactivequeries/WordCountInteractiveQueriesExampleTest.java) | |
+| Aggregate                           | DSL, `groupBy()`, `aggregate()`             | [Java 8+ Example](src/test/java/io/confluent/examples/streams/AggregateTest.java) | | [Scala Example](src/test/scala/io/confluent/examples/streams/AggregateScalaTest.scala) |
+| CustomStreamTableJoin               | DSL, Processor API, Transformers            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/CustomStreamTableJoinIntegrationTest.java) | | |
+| EventDeduplication                  | DSL, Processor API, Transformers            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/EventDeduplicationLambdaIntegrationTest.java) | | |
+| GlobalKTable                        | DSL, global state                           | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/GlobalKTablesExampleTest.java) | |
+| HandlingCorruptedInputRecords       | DSL, `flatMap()`                            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/HandlingCorruptedInputRecordsIntegrationTest.java) | | |
+| KafkaMusic (Interactive Queries)    | Interactive Queries, State Stores, REST API | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExampleTest.java) | |
+| MapFunction                         | DSL, stateless transformations, `map()`     | [Java 8+ Example](src/test/java/io/confluent/examples/streams/MapFunctionLambdaIntegrationTest.java) | | |
+| MixAndMatch DSL + Processor API     | Integrating DSL and Processor API           | [Java 8+ Example](src/test/java/io/confluent/examples/streams/MixAndMatchLambdaIntegrationTest.java) | | |
+| PassThrough                         | DSL, `stream()`, `to()`                     | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/PassThroughIntegrationTest.java) | |
+| PoisonPill                          | DSL, `flatMap()`                            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/HandlingCorruptedInputRecordsIntegrationTest.java) | | |
+| ProbabilisticCounting\*\*\*         | DSL, Processor API, custom state stores     | | | [Scala Example](src/test/scala/io/confluent/examples/streams/ProbabilisticCountingScalaIntegrationTest.scala) |
+| Reduce (Concatenate)                | DSL, `groupByKey()`, `reduce()`             | [Java 8+ Example](src/test/java/io/confluent/examples/streams/ReduceTest.java) | | [Scala Example](src/test/scala/io/confluent/examples/streams/ReduceScalaTest.scala) |
+| SessionWindows                      | DSL, windowed aggregation, sessionization   | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/SessionWindowsExampleTest.java) | |
+| StatesStoresDSL                     | DSL, Processor API, Transformers            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/StateStoresInTheDSLIntegrationTest.java) | | |
+| StreamToStreamJoin                  | DSL, `join()` between KStream and KStream   | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/StreamToStreamJoinIntegrationTest.java) | |
+| StreamToTableJoin                   | DSL, `join()` between KStream and KTable    | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/StreamToTableJoinIntegrationTest.java) | [Scala Example](src/test/scala/io/confluent/examples/streams/StreamToTableJoinScalaIntegrationTest.scala) |
+| Sum                                 | DSL, aggregation, stateful, `reduce()`      | [Java 8+ Example](src/test/java/io/confluent/examples/streams/SumLambdaIntegrationTest.java) | | |
+| TableToTableJoin                    | DSL, `join()` between KTable and KTable     | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/TableToTableJoinIntegrationTest.java) | |
+| UserCountsPerRegion                 | DSL, aggregation, stateful, `count()`       | [Java 8+ Example](src/test/java/io/confluent/examples/streams/UserCountsPerRegionLambdaIntegrationTest.java) | | |
+| ValidateStateWithInteractiveQueries | Interactive Queries for validating state    | | [Java 8+ Example](src/test/java/io/confluent/examples/streams/ValidateStateWithInteractiveQueriesLambdaIntegrationTest.java) | | |
+| GenericAvro                         | Working with data in Generic Avro format    | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/GenericAvroIntegrationTest.java) |  [Scala Example](src/test/scala/io/confluent/examples/streams/GenericAvroScalaIntegrationTest.scala) |
+| SpecificAvro                        | Working with data in Specific Avro format   | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/SpecificAvroIntegrationTest.java) | [Scala Example](src/test/scala/io/confluent/examples/streams/SpecificAvroScalaIntegrationTest.scala) |
+
+\*\*\*demonstrates how to probabilistically count items in an input stream by implementing a custom state store
+([CMSStore](src/main/scala/io/confluent/examples/streams/algebird/CMSStore.scala)) that is backed by a
+[Count-Min Sketch](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) data structure (with the CMS implementation
+of [Twitter Algebird](https://github.com/twitter/algebird))
 
 
-***demonstrates how to probabilistically count items in an input stream by implementing a custom state store
-  ([CMSStore](src/main/scala/io/confluent/examples/streams/algebird/CMSStore.scala)) that is backed by a
-  [Count-Min Sketch](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) data structure (with the CMS implementation
-  of [Twitter Algebird](https://github.com/twitter/algebird)
+<a name="examples-docker"/>
+
+# Docker Example: Kafka Music demo application
+
+This containerized example launches:
+
+* Confluent's Kafka Music demo application for the Kafka Streams API, which makes use of
+  [Interactive Queries](http://docs.confluent.io/current/streams/developer-guide.html)
+* a single-node Apache Kafka cluster with a single-node ZooKeeper ensemble
+* a [Confluent Schema Registry](https://github.com/confluentinc/schema-registry) instance
+
+The Kafka Music application demonstrates how to build of a simple music charts application that continuously computes,
+in real-time, the latest charts such as latest Top 5 songs per music genre.  It exposes its latest processing results
+-- the latest charts -- via Kafka’s [Interactive Queries](http://docs.confluent.io/current/streams/developer-guide.html#interactive-queries)
+feature via a REST API.  The application's input data is in Avro format, hence the use of Confluent Schema Registry,
+and comes from two sources: a stream of play events (think: "song X was played") and a stream of song metadata ("song X
+was written by artist Y").
+
+You can find detailed documentation at
+https://docs.confluent.io/current/streams/kafka-streams-examples/docs/index.html.
+
+
+<a name="examples-docker"/>
+
+# Docker Example: Kafka Music demo application
+
+This containerized example launches:
+
+* Confluent's Kafka Music demo application for the Kafka Streams API, which makes use of
+  [Interactive Queries](http://docs.confluent.io/current/streams/developer-guide.html)
+* a single-node Apache Kafka cluster with a single-node ZooKeeper ensemble
+* a [Confluent Schema Registry](https://github.com/confluentinc/schema-registry) instance
+
+The Kafka Music application demonstrates how to build of a simple music charts application that continuously computes,
+in real-time, the latest charts such as latest Top 5 songs per music genre.  It exposes its latest processing results
+-- the latest charts -- via Kafka’s [Interactive Queries](http://docs.confluent.io/current/streams/developer-guide.html#interactive-queries)
+feature via a REST API.  The application's input data is in Avro format, hence the use of Confluent Schema Registry,
+and comes from two sources: a stream of play events (think: "song X was played") and a stream of song metadata ("song X
+was written by artist Y").
+
+You can find detailed documentation at
+https://docs.confluent.io/current/streams/kafka-streams-examples/docs/index.html.
+
 
 <a name="requirements"/>
 
@@ -142,24 +206,25 @@ repository may have different Kafka requirements.
 > $ ./gradlew clean installAll
 > ```
 
+
 <a name="requirements-confluent-platform"/>
 
 ## Confluent Platform
 
 The code in this repository requires [Confluent Schema Registry](https://github.com/confluentinc/schema-registry).
-And to build Confluent Schema Registry in its development version, further dependencies of Confluent Platform are needed (e.g.
-[Confluent Common](https://github.com/confluentinc/common) and
-[Confluent Rest Utils](https://github.com/confluentinc/rest-utils), 
-please read its own [README](https://github.com/confluentinc/schema-registry) file for details).
 See [Version Compatibility Matrix](#version-compatibility) for further details, as different branches of this
-repository may have different Confluent Platform requirements.
+repository have different Confluent Platform requirements.
 
 * [Confluent Platform Quickstart](http://docs.confluent.io/current/quickstart.html) (how to download and install)
 * [Confluent Platform documentation](http://docs.confluent.io/current/)
 
 > **For the `master` branch:** To build a development version, you typically need the latest `master` version of Confluent Platform's
-> Schema Registry (cf. `confluent.version` in [pom.xml](pom.xml) for details). The following instructions will build and locally install
-> the latest `master` Schema Registry version:
+> Schema Registry (cf. `confluent.version` in [pom.xml](pom.xml), which is set by the upstream
+> [Confluent Common](https://github.com/confluentinc/common) project).
+> The following instructions will build and locally install the latest `master` Schema Registry version, which includes
+> building its dependencies such as [Confluent Common](https://github.com/confluentinc/common) and
+> [Confluent Rest Utils](https://github.com/confluentinc/rest-utils).
+> Please read the [Schema Registry README](https://github.com/confluentinc/schema-registry) for details.
 >
 > ```shell
 > $ git clone https://github.com/confluentinc/common.git
@@ -192,9 +257,14 @@ Also, each example states its exact requirements at the very top.
 ## Using IntelliJ or Eclipse
 
 If you are using an IDE and import the project you might end up with a "missing import / class not found" error.
-Some Avro classes are generated from schema files and the IDE does not generete those classes automatically.
-You can run `mvn -Dskip.tests=true compile` manually (c.f. the steps above) to resolve the error.
-If you are using Eclipse, you can also right-click on `pom.xml` file and choose `Run As` -> `Maven generate-sources`.
+Some Avro classes are generated from schema files and IDEs sometimes do not generate these classes automatically.
+To resolve this error, manually run:
+
+```shell
+$ mvn -Dskip.tests=true compile
+```
+
+If you are using Eclipse, you can also right-click on `pom.xml` file and choose _Run As > Maven generate-sources_.
 
 
 <a name="requirements-java"/>
@@ -227,11 +297,13 @@ If you are compiling with Java 9+, you'll need to have Scala version 2.12+ to be
 
 <a name="packaging-and-running"/>
 
-# Packaging and running the examples
+# Packaging and running the Application Examples
+
+The instructions in this section are only needed if you want to interactively test-drive the
+[application examples](#examples-apps) under [src/main/](src/main/).
 
 > **Tip:** If you only want to run the integration tests (`mvn test`), then you do not need to package or install
-> anything -- just run `mvn test`.  The instructions below are only needed if you want to interactively test-drive the
-> examples under [src/main/](src/main/).
+> anything -- just run `mvn test`. These tests launch embedded Kafka clusters.
 
 The first step is to install and run a Kafka cluster, which must consist of at least one Kafka broker as well as
 at least one ZooKeeper instance.  Some examples may also require a running instance of Confluent schema registry.
@@ -241,70 +313,65 @@ details.
 In a nutshell:
 
 ```shell
+# Ensure you have downloaded and installed Confluent Platform as per the Quickstart instructions above.
+
 # Start ZooKeeper
 $ ./bin/zookeeper-server-start ./etc/kafka/zookeeper.properties
 
 # In a separate terminal, start Kafka broker
 $ ./bin/kafka-server-start ./etc/kafka/server.properties
 
-# In a separate terminal, start Confluent schema registry
+# In a separate terminal, start Confluent Schema Registry
 $ ./bin/schema-registry-start ./etc/schema-registry/schema-registry.properties
 
 # Again, please refer to the Confluent Platform Quickstart for details such as
 # how to download Confluent Platform, how to stop the above three services, etc.
 ```
 
-> Tip:  You can also run `mvn test`, which executes the included integration tests.  These tests spawn embedded Kafka
-> clusters to showcase the Kafka Streams functionality end-to-end.  The benefit of the integration tests is that you
-> don't need to install and run a Kafka cluster yourself.
-
-If you want to run the examples against a Kafka cluster, you may want to create a standalone jar ("fat jar") of the
-Kafka Streams examples via:
+The next step is to create a standalone jar ("fat jar") of the [application examples](#examples-apps):
 
 ```shell
-# Create a standalone jar
-#
-# Tip: You can also disable the test suite (e.g. to speed up the packaging
-#      or to lower JVM memory usage) if needed:
-#
-#     $ mvn -DskipTests=true clean package
-#
+# Create a standalone jar ("fat jar")
 $ mvn clean package
 
-# >>> Creates target/kafka-streams-examples-5.1.5-SNAPSHOT-standalone.jar
+# >>> Creates target/kafka-streams-examples-5.2.8-SNAPSHOT-standalone.jar
 ```
 
-You can now run the example applications as follows:
+> Tip: If needed, you can disable the test suite during packaging, for example to speed up the packaging or to lower
+> JVM memory usage:
+>
+> ```shell
+> $ mvn -DskipTests=true clean package
+> ```
+
+You can now run the application examples as follows:
 
 ```shell
-# Run an example application from the standalone jar.
-# Here: `WordCountLambdaExample`
-$ java -cp target/kafka-streams-examples-5.1.5-SNAPSHOT-standalone.jar \
+# Run an example application from the standalone jar. Here: `WordCountLambdaExample`
+$ java -cp target/kafka-streams-examples-5.2.8-SNAPSHOT-standalone.jar \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
 
-The application will try to read from the specified input topic (in the above example it is ``TextLinesTopic``),
-execute the processing logic, and then try to write back to the specified output topic (in the above example it is ``WordsWithCountsTopic``).
+The application will try to read from the specified input topic (in the above example it is ``streams-plaintext-input``),
+execute the processing logic, and then try to write back to the specified output topic (in the above example it is ``streams-wordcount-output``).
 In order to observe the expected output stream, you will need to start a console producer to send messages into the input topic
 and start a console consumer to continuously read from the output topic. More details in how to run the examples can be found
-in the [java docs](src/main/java/io/confluent/examples/streams/WordCountLambdaExample.java#L29) of each example code.
+in the [java docs](src/main/java/io/confluent/examples/streams/WordCountLambdaExample.java#L31) of each example code.
 
 If you want to turn on log4j while running your example application, you can edit the
 [log4j.properties](src/main/resources/log4j.properties) file and then execute as follows:
 
 ```shell
-# Run an example application from the standalone jar.
-# Here: `WordCountLambdaExample`
-$ java -cp target/kafka-streams-examples-5.1.5-SNAPSHOT-standalone.jar \
+# Run an example application from the standalone jar. Here: `WordCountLambdaExample`
+$ java -cp target/kafka-streams-examples-5.2.8-SNAPSHOT-standalone.jar \
   -Dlog4j.configuration=file:src/main/resources/log4j.properties \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
 
-Keep in mind that the machine on which you run the command above must have access to the Kafka/ZK clusters you
+Keep in mind that the machine on which you run the command above must have access to the Kafka/ZooKeeper clusters you
 configured in the code examples.  By default, the code examples assume the Kafka cluster is accessible via
 `localhost:9092` (aka Kafka's ``bootstrap.servers`` parameter) and the ZooKeeper ensemble via `localhost:2181`.
 You can override the default ``bootstrap.servers`` parameter through a command line argument.
-
 
 
 <a name="development"/>
@@ -316,6 +383,7 @@ This project uses the standard maven lifecycle and commands such as:
 ```shell
 $ mvn compile # This also generates Java classes from the Avro schemas
 $ mvn test    # Runs unit and integration tests
+$ mvn package # Packages the application examples into a standalone jar
 ```
 
 
@@ -323,46 +391,21 @@ $ mvn test    # Runs unit and integration tests
 
 # Version Compatibility Matrix
 
-| Branch (this repo)                      | Apache Kafka      | Confluent Platform | Notes                                                                                                                                |
-| ----------------------------------------|-------------------|--------------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| [5.1.x](../../../tree/5.1.x/)           | 2.1.2-SNAPSHOT    | 5.1.3-SNAPSHOT     | You must manually build the `2.1` version of Apache Kafka and the `5.1.x` version of Confluent Platform.  See instructions above.    |
-| [5.1.0-post](../../../tree/5.1.0-post/) | 2.1.0             | 5.1.0              | Works out of the box                                                                                                                 |
-| [5.0.0-post](../../../tree/5.0.0-post/) | 2.0.0             | 5.0.0              | Works out of the box                                                                                                                 |
-| [4.1.0-post](../../../tree/4.1.0-post/) | 1.1.0(-cp1)       | 4.1.0              | Works out of the box                                                                                                                 |
-| [4.0.0-post](../../../tree/4.4.0-post/) | 1.0.0(-cp1)       | 4.0.0              | Works out of the box                                                                                                                 |
-| [3.3.0-post](../../../tree/3.3.0-post/) | 0.11.0.0(-cp1)    | 3.3.0              | Works out of the box                                                                                                                 |
+| Branch (this repo)                      | Confluent Platform | Apache Kafka      |
+| ----------------------------------------|--------------------|-------------------|
+| [5.2.x](../../../tree/5.2.x/)\*         | 5.2.3-SNAPSHOT     | 2.2.2-SNAPSHOT    |
+| [5.2.2-post](../../../tree/5.2.2-post/) | 5.2.2              | 2.2.1             |
+| [5.2.1-post](../../../tree/5.2.1-post/) | 5.2.1              | 2.2.1             |
+| [5.1.0-post](../../../tree/5.1.0-post/) | 5.1.0              | 2.1.0             |
+| [5.0.0-post](../../../tree/5.0.0-post/) | 5.0.0              | 2.0.0             |
+| [4.1.0-post](../../../tree/4.1.0-post/) | 4.1.0              | 1.1.0             |
+| [4.0.0-post](../../../tree/4.4.0-post/) | 4.0.0              | 1.0.0             |
+| [3.3.0-post](../../../tree/3.3.0-post/) | 3.3.0              | 0.11.0            |
+
+\*You must manually build the `2.2.2` version of Apache Kafka and the `5.2.x` version of Confluent Platform.  See instructions above.
 
 The `master` branch of this repository represents active development, and may require additional steps on your side to
 make it compile.  Check this README as well as [pom.xml](pom.xml) for any such information.
-
-
-<a name="docker"/>
-
-# Docker Examples
-
-This example launches:
-
-* Confluent's Kafka Music demo application for the Kafka Streams API.  This application demonstrates how to build of a simple music charts application.  It uses Kafka's
-  [Interactive Queries](http://docs.confluent.io/current/streams/developer-guide.html#interactive-queries) feature to
-  expose its latest processing results (e.g. latest Top 5 songs) via a REST API.  Its input data is in Avro format,
-  hence the use of Confluent Schema Registry (see below).
-* a single-node Apache Kafka cluster with a single-node ZooKeeper ensemble
-* a [Confluent Schema Registry](https://github.com/confluentinc/schema-registry) instance
-
-The Kafka Music application demonstrates how to build of a simple music charts application that continuously computes,
-in real-time, the latest charts such as Top 5 songs per music genre.  It exposes its latest processing results -- the
-latest charts -- via Kafka’s Interactive Queries feature and a REST API.  The application's input data is in Avro format
-and comes from two sources: a stream of play events (think: "song X was played") and a stream of song metadata ("song X
-was written by artist Y").
-
-More specifically, we will run the following services:
-
-* Confluent's Kafka Music demo application
-* a single-node Kafka cluster with a single-node ZooKeeper ensemble
-* Confluent Schema Registry
-
-You can find detailed documentation at
-http://docs.confluent.io/current/streams/kafka-streams-examples/docs/index.html
 
 
 <a name="help"/>
@@ -370,17 +413,14 @@ http://docs.confluent.io/current/streams/kafka-streams-examples/docs/index.html
 # Where to find help
 
 * Looking for documentation on Apache Kafka's Streams API?
-    * We recommend to read the [Kafka Streams chapter](http://docs.confluent.io/current/streams/) in the
-      [Confluent Platform documentation](http://docs.confluent.io/current/).
+    * We recommend to read the [Kafka Streams chapter](https://docs.confluent.io/current/streams/) in the
+      [Confluent Platform documentation](https://docs.confluent.io/current/).
     * Watch our talk
       [Rethinking Stream Processing with Apache Kafka](https://www.youtube.com/watch?v=ACwnrnVJXuE)
 * Running into problems to use the demos and examples in this project?
-    * First, you should check our [FAQ wiki](https://github.com/confluentinc/kafka-streams-examples/wiki/FAQ).
+    * First, you should check our [FAQ wiki](https://github.com/confluentinc/kafka-streams-examples/wiki/FAQ) for an answer first.
     * If the FAQ doesn't help you, [create a new GitHub issue](https://github.com/confluentinc/kafka-streams-examples/issues).
 * Want to ask a question, report a bug in Kafka or its Kafka Streams API, request a new Kafka feature?
     * For general questions about Apache Kafka and Confluent Platform, please head over to the
       [Confluent mailing list](https://groups.google.com/forum/?pli=1#!forum/confluent-platform)
       or to the [Apache Kafka mailing lists](http://kafka.apache.org/contact).
-    * For questions about the demos and examples in this repository:
-        * Please check our [FAQ wiki](https://github.com/confluentinc/kafka-streams-examples/wiki/FAQ) for an answer first.
-        * If the FAQ doesn't help you, [create a new GitHub issue](https://github.com/confluentinc/kafka-streams-examples/issues).

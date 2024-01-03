@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>rest-utils-parent</artifactId>
-        <version>5.1.5-SNAPSHOT</version>
+        <version>5.2.8-SNAPSHOT</version>
     </parent>
 
     <artifactId>kafka-streams-examples</artifactId>
@@ -54,10 +54,10 @@
         <docker.skip-build>false</docker.skip-build>
         <docker.skip-test>false</docker.skip-test>
         <java.version>1.8</java.version>
-        <licenses.version>5.1.5-SNAPSHOT</licenses.version>
+        <licenses.version>5.2.8-SNAPSHOT</licenses.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <scala.version>${kafka.scala.version}.8</scala.version>
-        <scalatest.version>2.2.6</scalatest.version>
+        <scala.version>${kafka.scala.version}.7</scala.version>
+        <scalatest.version>3.0.5</scalatest.version>
     </properties>
 
     <dependencies>
@@ -90,12 +90,6 @@
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-streams-scala_${kafka.scala.version}</artifactId>
             <version>${kafka.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-streams-test-utils</artifactId>
-            <version>${kafka.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.avro</groupId>
@@ -212,6 +206,12 @@
             <artifactId>kafka_${kafka.scala.version}</artifactId>
             <version>${kafka.version}</version>
             <classifier>test</classifier>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-streams-test-utils</artifactId>
+            <version>${kafka.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

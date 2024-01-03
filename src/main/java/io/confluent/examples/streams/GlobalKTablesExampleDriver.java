@@ -56,7 +56,7 @@ import static io.confluent.examples.streams.GlobalKTablesExample.PRODUCT_TOPIC;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.0.0-SNAPSHOT-standalone.jar io.confluent.examples.streams.GlobalKTablesExampleDriver
+ * $ java -cp target/kafka-streams-examples-5.2.8-SNAPSHOT-standalone.jar io.confluent.examples.streams.GlobalKTablesExampleDriver
  * }
  * </pre>
  */

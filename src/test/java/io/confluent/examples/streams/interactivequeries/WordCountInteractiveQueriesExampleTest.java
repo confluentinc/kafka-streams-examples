@@ -26,6 +26,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
+import org.hamcrest.core.IsInstanceOf;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -134,7 +135,7 @@ public class WordCountInteractiveQueriesExampleTest {
 
     final CountDownLatch startupLatch = new CountDownLatch(1);
     kafkaStreams.setStateListener((newState, oldState) -> {
-      if (newState == KafkaStreams.State.RUNNING && oldState == KafkaStreams.State.REBALANCING) {
+      if (newState == KafkaStreams.State.RUNNING && oldState != KafkaStreams.State.RUNNING) {
         startupLatch.countDown();
       }
     });
@@ -261,7 +262,7 @@ public class WordCountInteractiveQueriesExampleTest {
     
     final CountDownLatch startupLatch = new CountDownLatch(1);
     kafkaStreams.setStateListener((newState, oldState) -> {
-      if (newState == KafkaStreams.State.RUNNING && oldState == KafkaStreams.State.REBALANCING) {
+      if (newState == KafkaStreams.State.RUNNING && oldState != KafkaStreams.State.RUNNING) {
         startupLatch.countDown();
       }
     });
@@ -280,7 +281,7 @@ public class WordCountInteractiveQueriesExampleTest {
     
     final CountDownLatch startupLatch = new CountDownLatch(1);
     kafkaStreams.setStateListener((newState, oldState) -> {
-      if (newState == KafkaStreams.State.RUNNING && oldState == KafkaStreams.State.REBALANCING) {
+      if (newState == KafkaStreams.State.RUNNING && oldState != KafkaStreams.State.RUNNING) {
         startupLatch.countDown();
       }
     });
@@ -288,7 +289,7 @@ public class WordCountInteractiveQueriesExampleTest {
     kafkaStreams.start();
     proxy = WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, host, port);
     expectedEx.expect(Exception.class);
-    expectedEx.expectMessage("java.net.BindException: Address already in use");
+    expectedEx.expectCause(IsInstanceOf.instanceOf(java.net.BindException.class));
     // Binding to same port again will raise BindException.
     WordCountInteractiveQueriesExample.startRestProxy(kafkaStreams, host, port);
   }

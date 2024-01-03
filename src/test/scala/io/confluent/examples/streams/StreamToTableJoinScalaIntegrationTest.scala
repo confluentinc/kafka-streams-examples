@@ -17,9 +17,6 @@ package io.confluent.examples.streams
 
 import java.util.Properties
 
-import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster
-import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream.{KStream, KTable}
@@ -46,20 +43,9 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
   import org.apache.kafka.streams.scala.ImplicitConversions._
   import org.apache.kafka.streams.scala.Serdes._
 
-  private val privateCluster: EmbeddedSingleNodeKafkaCluster = new EmbeddedSingleNodeKafkaCluster
-
-  @Rule def cluster: EmbeddedSingleNodeKafkaCluster = privateCluster
-
   private val userClicksTopic = "user-clicks"
   private val userRegionsTopic = "user-regions"
   private val outputTopic = "output-topic"
-
-  @Before
-  def startKafkaCluster() {
-    cluster.createTopic(userClicksTopic)
-    cluster.createTopic(userRegionsTopic)
-    cluster.createTopic(outputTopic)
-  }
 
   @Test
   def shouldCountClicksPerRegion() {
@@ -159,15 +145,6 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
       // To keep this code example simple and easier to understand/reason about, we publish all
       // user-region records before any user-click records (cf. step 3).  In practice though,
       // data records would typically be arriving concurrently in both input streams/topics.
-      val userRegionsProducerConfig: Properties = {
-        val p = new Properties()
-        p.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
-        p.put(ProducerConfig.ACKS_CONFIG, "all")
-        p.put(ProducerConfig.RETRIES_CONFIG, "0")
-        p.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
-        p.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
-        p
-      }
       import collection.JavaConverters._
       IntegrationTestUtils.produceKeyValuesSynchronously(
         userRegionsTopic,
@@ -191,15 +168,6 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
       //
       // Step 4: Verify the application's output data.
       //
-      val consumerConfig = {
-        val p = new Properties()
-        p.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers())
-        p.put(ConsumerConfig.GROUP_ID_CONFIG, "join-scala-integration-test-standard-consumer")
-        p.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
-        p.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer])
-        p.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, classOf[LongDeserializer])
-        p
-      }
       val actualClicksPerRegion =
         IntegrationTestUtils.drainTableOutput(
           outputTopic,

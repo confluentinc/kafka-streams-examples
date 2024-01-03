@@ -23,6 +23,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.record.TimestampType;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
@@ -50,6 +51,8 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+
+import io.confluent.examples.streams.utils.KeyValueWithTimestamp;
 
 /**
  * Utility functions to make integration testing more convenient.
@@ -118,7 +121,8 @@ public class IntegrationTestUtils {
   }
 
   /**
-   * Send the records to the topic, and wait until the writes are acknowledged.
+   * Write a collection of KeyValueWithTimestamp pairs, with explicitly defined timestamps, to Kafka
+   * and wait until the writes are acknowledged.
    *
    * @param topic          Kafka topic to write the data records to
    * @param records        Data records to write to Kafka
@@ -126,31 +130,79 @@ public class IntegrationTestUtils {
    * @param <K>            Key type of the data records
    * @param <V>            Value type of the data records
    */
-  public static <K, V> void produceKeyValuesSynchronously(
-      final String topic, final Collection<KeyValue<K, V>> records, final Properties producerConfig)
+  public static <K, V> void produceKeyValuesWithTimestampsSynchronously(
+      final String topic,
+      final Collection<KeyValueWithTimestamp<K, V>> records,
+      final Properties producerConfig)
       throws ExecutionException, InterruptedException {
     final Producer<K, V> producer = new KafkaProducer<>(producerConfig);
-    for (final KeyValue<K, V> record : records) {
+    for (final KeyValueWithTimestamp<K, V> record : records) {
       final Future<RecordMetadata> f = producer.send(
-          new ProducerRecord<>(topic, record.key, record.value));
+          new ProducerRecord<>(topic, null, record.timestamp, record.key, record.value));
       f.get();
     }
     producer.flush();
     producer.close();
   }
 
+  /**
+   * @param topic          Kafka topic to write the data records to
+   * @param records        Data records to write to Kafka
+   * @param producerConfig Kafka producer configuration
+   * @param <K>            Key type of the data records
+   * @param <V>            Value type of the data records
+   */
+  public static <K, V> void produceKeyValuesSynchronously(
+      final String topic,
+      final Collection<KeyValue<K, V>> records,
+      final Properties producerConfig)
+      throws ExecutionException, InterruptedException {
+    final Collection<KeyValueWithTimestamp<K, V>> keyedRecordsWithTimestamp =
+        records
+            .stream()
+            .map(record -> new KeyValueWithTimestamp<>(record.key, record.value, System.currentTimeMillis()))
+            .collect(Collectors.toList());
+    produceKeyValuesWithTimestampsSynchronously(topic, keyedRecordsWithTimestamp, producerConfig);
+  }
+
   public static <V> void produceValuesSynchronously(
       final String topic, final Collection<V> records, final Properties producerConfig)
       throws ExecutionException, InterruptedException {
     final Collection<KeyValue<Object, V>> keyedRecords =
-        records.stream().map(record -> new KeyValue<>(null, record)).collect(Collectors.toList());
+        records
+            .stream()
+            .map(record -> new KeyValue<>(null, record))
+            .collect(Collectors.toList());
     produceKeyValuesSynchronously(topic, keyedRecords, producerConfig);
   }
 
-  public static <K, V> List<KeyValue<K, V>> waitUntilMinKeyValueRecordsReceived(final Properties consumerConfig,
-                                                                                final String topic,
-                                                                                final int expectedNumRecords) throws InterruptedException {
+  /**
+   * Like {@link IntegrationTestUtils#produceValuesSynchronously(String, Collection, Properties)}, except for use with
+   * TopologyTestDriver tests, rather than "native" Kafka broker tests.
+   *
+   * @param topic              Kafka topic to write the data records to
+   * @param values             Message values to write to Kafka (keys will have type byte[] and be set to null)
+   * @param topologyTestDriver The {@link TopologyTestDriver} to send the data records to
+   * @param valueSerializer    The {@link Serializer} corresponding to the value type
+   * @param <V>                Value type of the data records
+   */
+  static <K, V> void produceValuesSynchronously(final String topic,
+                                                final List<V> values,
+                                                final TopologyTestDriver topologyTestDriver,
+                                                final Serializer<V> valueSerializer) {
+    final List<KeyValue<byte[], V>> keyedRecords =
+      values
+        .stream()
+        .map(value -> new KeyValue<byte[], V>(null, value))
+        .collect(Collectors.toList());
+    produceKeyValuesSynchronously(topic, keyedRecords, topologyTestDriver, new ByteArraySerializer(), valueSerializer);
+  }
 
+  public static <K, V> List<KeyValue<K, V>> waitUntilMinKeyValueRecordsReceived(
+      final Properties consumerConfig,
+      final String topic,
+      final int expectedNumRecords)
+      throws InterruptedException {
     return waitUntilMinKeyValueRecordsReceived(consumerConfig, topic, expectedNumRecords, DEFAULT_TIMEOUT);
   }
 
@@ -286,7 +338,8 @@ public class IntegrationTestUtils {
           }
         }),
         30000,
-        "Expected values not found in WindowStore"); }
+        "Expected values not found in WindowStore");
+  }
 
   /**
    * Similar to {@link IntegrationTestUtils#waitUntilMinKeyValueRecordsReceived(Properties, String, int)}, except for
@@ -313,10 +366,16 @@ public class IntegrationTestUtils {
     final Map<K, V> results = new LinkedHashMap<>();
     while (true) {
       final ProducerRecord<K, V> record = topologyTestDriver.readOutput(topic, keyDeserializer, valueDeserializer);
-      if (record == null) {
+      // Tables ignore records with null keys.
+      if (record == null || record.key() == null) {
         break;
       } else {
-        results.put(record.key(), record.value());
+        // For tables, a null-valued record represents a "DELETE" or tombstone for the corresponding key.
+        if (record.value() == null) {
+          results.remove(record.key());
+        } else {
+          results.put(record.key(), record.value());
+        }
       }
     }
     return results;

@@ -83,7 +83,7 @@ import java.util.Properties;
  *
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.1.5-SNAPSHOT-standalone.jar \
+ * $ java -cp target/kafka-streams-examples-5.2.8-SNAPSHOT-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExample 7070
  * }
  * </pre>
@@ -94,7 +94,7 @@ import java.util.Properties;
  *
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.1.5-SNAPSHOT-standalone.jar \
+ * $ java -cp target/kafka-streams-examples-5.2.8-SNAPSHOT-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExample 7071
  * }
  * </pre>

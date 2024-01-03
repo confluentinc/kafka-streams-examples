@@ -26,7 +26,6 @@ import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
-import org.assertj.core.api.Assertions.assertThat
 import org.junit._
 import org.scalatest.junit.AssertionsForJUnit
 
@@ -119,7 +118,7 @@ class SpecificAvroScalaIntegrationTest extends AssertionsForJUnit {
     val actualValues: java.util.List[WikiFeed] =
       IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfig, outputTopic, inputValues.size)
     streams.close()
-    assertThat(actualValues).containsExactlyElementsOf(inputValues.asJava)
+    assert(actualValues === inputValues.asJava)
   }
 
 }
