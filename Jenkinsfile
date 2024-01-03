@@ -11,5 +11,5 @@ docker_oraclejdk8 {
     // nodeLabel = 'docker-oraclejdk8-compose'
     upstreamProjects = 'confluentinc/common'
     withPush = true
-    slackChannel = 'ksqldb-warn'
+    slackChannel = 'kafka-streams-quality'
 }
