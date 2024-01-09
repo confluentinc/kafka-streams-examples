@@ -140,42 +140,36 @@ class StreamToTableJoinScalaIntegrationTest extends AssertionsForJUnit {
 
     try {
       //
-      // Step 2: Publish user-region information.
+      // Step 2: Setup input and output topics.
+      //
+      import collection.JavaConverters._
+      val regionInput = topologyTestDriver.createInputTopic(userRegionsTopic,
+                                                            new StringSerializer,
+                                                            new StringSerializer)
+      val clickInput = topologyTestDriver.createInputTopic(userClicksTopic,
+                                                           new StringSerializer,
+                                                           new LongSerializer)
+      val output = topologyTestDriver.createOutputTopic(outputTopic,
+                                                        new StringDeserializer,
+                                                        new LongDeserializer)
+
+      //
+      // Step 3: Publish user-region information.
       //
       // To keep this code example simple and easier to understand/reason about, we publish all
       // user-region records before any user-click records (cf. step 3).  In practice though,
       // data records would typically be arriving concurrently in both input streams/topics.
-      import collection.JavaConverters._
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        userRegionsTopic,
-        userRegions.asJava,
-        topologyTestDriver,
-        new StringSerializer,
-        new StringSerializer
-      )
+      regionInput.pipeKeyValueList(userRegions.asJava)
 
       //
-      // Step 3: Publish some user click events.
+      // Step 4: Publish some user click events.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        userClicksTopic,
-        userClicks.map(kv => new KeyValue(kv.key, kv.value.asInstanceOf[java.lang.Long])).asJava,
-        topologyTestDriver,
-        new StringSerializer,
-        new LongSerializer
-      )
+      clickInput.pipeKeyValueList(userClicks.map(kv => new KeyValue(kv.key, kv.value.asInstanceOf[java.lang.Long])).asJava)
 
       //
-      // Step 4: Verify the application's output data.
+      // Step 5: Verify the application's output data.
       //
-      val actualClicksPerRegion =
-        IntegrationTestUtils.drainTableOutput(
-          outputTopic,
-          topologyTestDriver,
-          new StringDeserializer,
-          new LongDeserializer
-        )
-      assertThat(actualClicksPerRegion).isEqualTo(expectedClicksPerRegion.asJava)
+      assertThat(output.readKeyValuesToMap()).isEqualTo(expectedClicksPerRegion.asJava)
     } finally {
       topologyTestDriver.close()
     }

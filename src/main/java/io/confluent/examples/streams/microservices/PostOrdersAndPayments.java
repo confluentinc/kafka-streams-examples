@@ -73,7 +73,7 @@ public class PostOrdersAndPayments {
         final List<Product> productTypeList = Arrays.asList(Product.JUMPERS, Product.UNDERPANTS, Product.STOCKINGS);
         final Random randomGenerator = new Random();
 
-        final int restPort = args.length > 0 ? Integer.valueOf(args[0]) : 5432;
+        final int restPort = args.length > 0 ? Integer.parseInt(args[0]) : 5432;
         System.out.printf("restPort: %d%n", restPort);
         final String bootstrapServers = args.length > 1 ? args[1] : "localhost:9092";
         final String schemaRegistryUrl = args.length > 2 ? args[2] : "http://localhost:8081";
@@ -94,7 +94,7 @@ public class PostOrdersAndPayments {
             final int randomCustomerId = randomGenerator.nextInt(NUM_CUSTOMERS);
             final Product randomProduct = productTypeList.get(randomGenerator.nextInt(productTypeList.size()));
 
-            final OrderBean inputOrder = new OrderBean(id(i), (long) randomCustomerId, OrderState.CREATED, randomProduct, 1, 1d);
+            final OrderBean inputOrder = new OrderBean(id(i), randomCustomerId, OrderState.CREATED, randomProduct, 1, 1d);
 
             // POST order to OrdersService
             System.out.printf("Posting order to: %s   .... ", path.urlPost());

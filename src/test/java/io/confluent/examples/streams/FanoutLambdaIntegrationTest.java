@@ -18,9 +18,10 @@ package io.confluent.examples.streams;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.KStream;
 import org.junit.Test;
@@ -30,7 +31,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * End-to-end integration test that demonstrates "fan-out", using an embedded Kafka cluster.
@@ -82,38 +84,34 @@ public class FanoutLambdaIntegrationTest {
 
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
       //
-      // Step 2: Produce some input data to the input topic.
+      // Step 2: Setup input and output topics.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopicA,
-        inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringSerializer()
-      );
+      final TestInputTopic<Void, String> input = topologyTestDriver
+        .createInputTopic(inputTopicA,
+                          new IntegrationTestUtils.NothingSerde<>(),
+                          new StringSerializer());
+      final TestOutputTopic<Void, String> outputB = topologyTestDriver
+        .createOutputTopic(outputTopicB,
+                           new IntegrationTestUtils.NothingSerde<>(),
+                           new StringDeserializer());
+      final TestOutputTopic<Void, String> outputC = topologyTestDriver
+        .createOutputTopic(outputTopicC,
+                           new IntegrationTestUtils.NothingSerde<>(),
+                           new StringDeserializer());
 
       //
-      // Step 3: Verify the application's output data.
+      // Step 3: Produce some input data to the input topic.
+      //
+      input.pipeValueList(inputValues);
+
+      //
+      // Step 4: Verify the application's output data.
       //
 
       // Verify output topic B
-      final List<String> actualValuesForB = IntegrationTestUtils.drainStreamOutput(
-        outputTopicB,
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringDeserializer()
-      ).stream().map(kv -> kv.value).collect(Collectors.toList());
-      assertThat(actualValuesForB).isEqualTo(expectedValuesForB);
-
+      assertThat(outputB.readValuesToList(), equalTo(expectedValuesForB));
       // Verify output topic C
-      final List<String> actualValuesForC = IntegrationTestUtils.drainStreamOutput(
-        outputTopicC,
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringDeserializer()
-      ).stream().map(kv -> kv.value).collect(Collectors.toList());
-      assertThat(actualValuesForC).isEqualTo(expectedValuesForC);
+      assertThat(outputC.readValuesToList(), equalTo(expectedValuesForC));
     }
   }
-
 }

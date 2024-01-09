@@ -24,12 +24,12 @@ import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
@@ -38,9 +38,9 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * End-to-end integration test that demonstrates how to work on Generic Avro data.
@@ -72,7 +72,7 @@ public class GenericAvroIntegrationTest {
     record.put("user", "alice");
     record.put("is_new", true);
     record.put("content", "lorem ipsum");
-    final List<GenericRecord> inputValues = Collections.singletonList(record);
+    final List<Object> inputValues = Collections.singletonList(record);
 
     //
     // Step 1: Configure and start the processor topology.
@@ -85,7 +85,6 @@ public class GenericAvroIntegrationTest {
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray().getClass().getName());
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, GenericAvroSerde.class);
     streamsConfiguration.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, MOCK_SCHEMA_REGISTRY_URL);
-    streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
     // Write the input data as-is to the output topic.
     //
@@ -108,36 +107,30 @@ public class GenericAvroIntegrationTest {
     final KStream<String, GenericRecord> stream = builder.stream(inputTopic);
     stream.to(outputTopic, Produced.with(stringSerde, genericAvroSerde));
 
-
-    final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration);
-
-    try {
-
+    try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)){
       //
-      // Step 2: Produce some input data to the input topic.
+      // Step 2: Setup input and output topics.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        inputValues.stream().map(v -> new KeyValue<>(null, (Object) v)).collect(Collectors.toList()),
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new KafkaAvroSerializer(schemaRegistryClient)
-      );
+      final TestInputTopic<Void, Object> input = topologyTestDriver
+        .createInputTopic(inputTopic,
+                          new IntegrationTestUtils.NothingSerde<>(),
+                          new KafkaAvroSerializer(schemaRegistryClient));
+      final TestOutputTopic<Void, Object> output = topologyTestDriver
+        .createOutputTopic(outputTopic,
+                           new IntegrationTestUtils.NothingSerde<>(),
+                           new KafkaAvroDeserializer(schemaRegistryClient));
 
       //
-      // Step 3: Verify the application's output data.
+      // Step 3: Produce some input data to the input topic.
       //
-      final List<GenericRecord> actualValues = IntegrationTestUtils.drainStreamOutput(
-        outputTopic,
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new KafkaAvroDeserializer(schemaRegistryClient)
-      ).stream().map(kv -> (GenericRecord) kv.value).collect(Collectors.toList());
-      assertThat(actualValues).isEqualTo(inputValues);
+      input.pipeValueList(inputValues);
+
+      //
+      // Step 4: Verify the application's output data.
+      //
+      assertThat(output.readValuesToList(), equalTo(inputValues));
     } finally {
-      topologyTestDriver.close();
       MockSchemaRegistry.dropScope(SCHEMA_REGISTRY_SCOPE);
     }
   }
-
 }

@@ -20,6 +20,8 @@ import org.apache.kafka.common.serialization.IntegerSerializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.test.TestUtils;
 import org.junit.Test;
@@ -27,9 +29,9 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * End-to-end integration test that shows how to compute the sum of numbers, based on {@link
@@ -64,26 +66,26 @@ public class SumLambdaIntegrationTest {
 
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(SumLambdaExample.getTopology(), streamsConfiguration)) {
       //
-      // Step 2: Produce some input data to the input topic.
+      // Step 2: Setup input and output topics.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        SumLambdaExample.NUMBERS_TOPIC,
-        inputValues.stream().map(i -> new KeyValue<Void, Integer>(null, i)).collect(Collectors.toList()),
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new IntegerSerializer()
-      );
+      final TestInputTopic<Void, Integer> input = topologyTestDriver
+        .createInputTopic(SumLambdaExample.NUMBERS_TOPIC,
+                          new IntegrationTestUtils.NothingSerde<>(),
+                          new IntegerSerializer());
+      final TestOutputTopic<Integer, Integer> output = topologyTestDriver
+        .createOutputTopic(SumLambdaExample.SUM_OF_ODD_NUMBERS_TOPIC,
+                           new IntegerDeserializer(),
+                           new IntegerDeserializer());
 
       //
-      // Step 3: Verify the application's output data.
+      // Step 3: Produce some input data to the input topic.
       //
-      final List<KeyValue<Integer, Integer>> actualValues = IntegrationTestUtils.drainStreamOutput(
-        SumLambdaExample.SUM_OF_ODD_NUMBERS_TOPIC,
-        topologyTestDriver,
-        new IntegerDeserializer(),
-        new IntegerDeserializer()
-      );
-      assertThat(actualValues).isEqualTo(expectedValues);
+      input.pipeValueList(inputValues);
+
+      //
+      // Step 4: Verify the application's output data.
+      //
+      assertThat(output.readKeyValuesToList(), equalTo(expectedValues));
     }
   }
 

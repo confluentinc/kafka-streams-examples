@@ -15,6 +15,7 @@
  */
 package io.confluent.examples.streams
 
+import io.confluent.examples.streams.IntegrationTestUtils.NothingSerde
 import org.apache.kafka.common.serialization.{Deserializer, Serde, Serializer, Serdes => JSerdes}
 import org.apache.kafka.streams.kstream.{Windowed, WindowedSerdes}
 import org.apache.kafka.streams.{KeyValue, TopologyTestDriver}
@@ -85,25 +86,28 @@ object IntegrationTestScalaUtils {
   def produceValuesSynchronously[V](topic: String, values: Seq[V], driver: TopologyTestDriver)
                                    (implicit valueSerializer: Serializer[V]): Unit = {
     import collection.JavaConverters._
-    IntegrationTestUtils.produceValuesSynchronously(topic, values.asJava, driver, valueSerializer)
+    driver.createInputTopic(topic,
+                            new NothingSerde[Null],
+                            valueSerializer)
+      .pipeValueList(values.asJava)
   }
 
   def produceKeyValuesSynchronously[K, V](topic: String, records: Seq[KeyValue[K, V]], driver: TopologyTestDriver)
-                                         (implicit keySer: Serializer[K], valueSer: Serializer[V]) = {
+                                         (implicit keySer: Serializer[K], valueSer: Serializer[V]) {
     import collection.JavaConverters._
-    IntegrationTestUtils.produceKeyValuesSynchronously(topic, records.asJava, driver, keySer, valueSer)
+    driver.createInputTopic(topic, keySer, valueSer).pipeKeyValueList(records.asJava)
   }
 
   def drainStreamOutput[K, V](topic: String, driver: TopologyTestDriver)
                              (implicit keyDeser: Deserializer[K], valueDeser: Deserializer[V]): Seq[KeyValue[K, V]] = {
     import collection.JavaConverters._
-    IntegrationTestUtils.drainStreamOutput(topic, driver, keyDeser, valueDeser).asScala
+    driver.createOutputTopic(topic, keyDeser, valueDeser).readKeyValuesToList().asScala
   }
 
   def drainTableOutput[K, V](topic: String, driver: TopologyTestDriver)
                             (implicit keyDeser: Deserializer[K], valueDeser: Deserializer[V]): Map[K, V] = {
     import collection.JavaConverters._
-    IntegrationTestUtils.drainTableOutput(topic, driver, keyDeser, valueDeser).asScala.toMap
+    driver.createOutputTopic(topic, keyDeser, valueDeser).readKeyValuesToMap().asScala.toMap
   }
 
 }

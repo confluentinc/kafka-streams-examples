@@ -21,6 +21,8 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Grouped;
@@ -37,7 +39,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * How to aggregate messages via `groupBy()` and `aggregate()`.
@@ -69,18 +72,32 @@ public class AggregateTest {
     expectedOutput.put("k", 5L);
     expectedOutput.put("s", 22L);
 
-    // Step 1: Create the topology and its configuration
+    //
+    // Step 1: Create the topology and its configuration.
+    //
     final StreamsBuilder builder = createTopology();
     final Properties streamsConfiguration = createTopologyConfiguration();
 
     try (final TopologyTestDriver testDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
-      // Step 2: Write the input
-      IntegrationTestUtils.produceValuesSynchronously(inputTopic, inputValues, testDriver, new StringSerializer());
+      //
+      // Step 2: Setup input and output topics.
+      //
+      final TestInputTopic<Void, String> input = testDriver
+       .createInputTopic(inputTopic,
+                         new IntegrationTestUtils.NothingSerde<>(),
+                         new StringSerializer());
+      final TestOutputTopic<String, Long> output = testDriver
+        .createOutputTopic(outputTopic, new StringDeserializer(), new LongDeserializer());
 
-      // Step 3: Validate the output
-      final Map<String, Long> actualOutput = IntegrationTestUtils.drainTableOutput(
-        outputTopic, testDriver, new StringDeserializer(), new LongDeserializer());
-      assertThat(actualOutput).isEqualTo(expectedOutput);
+      //
+      // Step 3: Write the input.
+      //
+      input.pipeValueList(inputValues);
+
+      //
+      // Step 4: Validate the output.
+      //
+      assertThat(output.readKeyValuesToMap(), equalTo(expectedOutput));
     }
   }
 
@@ -110,5 +127,4 @@ public class AggregateTest {
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
     return streamsConfiguration;
   }
-
 }

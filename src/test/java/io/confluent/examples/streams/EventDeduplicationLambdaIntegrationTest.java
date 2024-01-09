@@ -21,6 +21,8 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
@@ -38,9 +40,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * End-to-end integration test that demonstrates how to remove duplicate records from an input
@@ -212,8 +214,8 @@ public class EventDeduplicationLambdaIntegrationTest {
     final String inputTopic = "inputTopic";
     final String outputTopic = "outputTopic";
 
-    final KStream<byte[], String> input = builder.stream(inputTopic);
-    final KStream<byte[], String> deduplicated = input.transform(
+    final KStream<byte[], String> stream = builder.stream(inputTopic);
+    final KStream<byte[], String> deduplicated = stream.transform(
         // In this example, we assume that the record value as-is represents a unique event ID by
         // which we can perform de-duplication.  If your records are different, adapt the extractor
         // function as needed.
@@ -223,27 +225,26 @@ public class EventDeduplicationLambdaIntegrationTest {
 
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
       //
-      // Step 2: Produce some input data to the input topic.
+      // Step 2: Setup input and output topics.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        inputValues.stream().map(v -> new KeyValue<>(null, v)).collect(Collectors.toList()),
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringSerializer()
-      );
+      final TestInputTopic<Void, String> input = topologyTestDriver
+        .createInputTopic(inputTopic,
+                          new IntegrationTestUtils.NothingSerde<>(),
+                          new StringSerializer());
+      final TestOutputTopic<Void, String> output = topologyTestDriver
+        .createOutputTopic(outputTopic,
+                           new IntegrationTestUtils.NothingSerde<>(),
+                           new StringDeserializer());
 
       //
-      // Step 3: Verify the application's output data.
+      // Step 3: Produce some input data to the input topic.
       //
-      final List<String> actualValues = IntegrationTestUtils.drainStreamOutput(
-        outputTopic,
-        topologyTestDriver,
-        new IntegrationTestUtils.NothingSerde<>(),
-        new StringDeserializer()
-      ).stream().map(kv -> kv.value).collect(Collectors.toList());
-      assertThat(actualValues).containsExactlyElementsOf(expectedValues);
+      input.pipeValueList(inputValues);
+
+      //
+      // Step 4: Verify the application's output data.
+      //
+      assertThat(output.readValuesToList(), equalTo(expectedValues));
     }
   }
-
 }

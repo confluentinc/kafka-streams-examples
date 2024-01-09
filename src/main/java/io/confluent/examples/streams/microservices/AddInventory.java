@@ -48,8 +48,8 @@ public class AddInventory {
 
     public static void main(final String[] args) {
 
-        final int quantityUnderpants = args.length > 0 ? Integer.valueOf(args[0]) : 20;
-        final int quantityJumpers = args.length > 1 ? Integer.valueOf(args[1]) : 10;
+        final int quantityUnderpants = args.length > 0 ? Integer.parseInt(args[0]) : 20;
+        final int quantityJumpers = args.length > 1 ? Integer.parseInt(args[1]) : 10;
         final String bootstrapServers = args.length > 2 ? args[2] : "localhost:9092";
 
         // Send Inventory

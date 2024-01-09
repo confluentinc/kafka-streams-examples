@@ -23,6 +23,8 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Produced;
@@ -36,7 +38,8 @@ import java.util.Properties;
 
 import static io.confluent.examples.streams.IntegrationTestUtils.mkEntry;
 import static io.confluent.examples.streams.IntegrationTestUtils.mkMap;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * End-to-end integration test that demonstrates how aggregations on a KTable produce the expected
@@ -111,27 +114,26 @@ public class UserCountsPerRegionLambdaIntegrationTest {
 
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
       //
-      // Step 2: Publish user-region information.
+      // Step 2: Setup input and output topics.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        userRegionRecords,
-        topologyTestDriver,
-        new StringSerializer(),
-        new StringSerializer()
-      );
+      final TestInputTopic<String, String> input = topologyTestDriver
+          .createInputTopic(inputTopic,
+                            new StringSerializer(),
+                            new StringSerializer());
+      final TestOutputTopic<String, Long> output = topologyTestDriver
+        .createOutputTopic(outputTopic,
+                           new StringDeserializer(),
+                           new LongDeserializer());
 
       //
-      // Step 3: Verify the application's output data.
+      // Step 3: Publish user-region information.
       //
+      input.pipeKeyValueList(userRegionRecords);
 
-      final Map<String, Long> actualClicksPerRegion = IntegrationTestUtils.drainTableOutput(
-        outputTopic,
-        topologyTestDriver,
-        new StringDeserializer(),
-        new LongDeserializer()
-      );
-      assertThat(actualClicksPerRegion).isEqualTo(expectedUsersPerRegion);
+      //
+      // Step 4: Verify the application's output data.
+      //
+      assertThat(output.readKeyValuesToMap(), equalTo(expectedUsersPerRegion));
     }
   }
 

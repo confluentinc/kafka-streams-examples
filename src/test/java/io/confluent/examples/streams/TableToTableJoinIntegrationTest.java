@@ -23,6 +23,8 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KTable;
@@ -34,10 +36,12 @@ import org.apache.kafka.test.TestUtils;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * End-to-end integration test that demonstrates how to perform a join between two KTables.
@@ -103,52 +107,48 @@ public class TableToTableJoinIntegrationTest {
 
     final String storeName = "joined-store";
     userRegions.join(userLastLogins,
-      (regionValue, lastLoginValue) -> regionValue + "/" + lastLoginValue,
-      Materialized.as(storeName))
+                     (regionValue, lastLoginValue) -> regionValue + "/" + lastLoginValue,
+                     Materialized.as(storeName))
       .toStream()
       .to(outputTopic, Produced.with(Serdes.String(), Serdes.String()));
 
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
       //
-      // Step 2: Publish user regions.
+      // Step 2: Setup input and output topics.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        userRegionTopic,
-        userRegionRecords,
-        topologyTestDriver,
-        new StringSerializer(),
-        new StringSerializer()
-      );
+      final TestInputTopic<String, String> regionInput = topologyTestDriver
+        .createInputTopic(userRegionTopic,
+                          new StringSerializer(),
+                          new StringSerializer());
+      final TestInputTopic<String, Long> loginInput = topologyTestDriver
+        .createInputTopic(userLastLoginTopic,
+                          new StringSerializer(),
+                          new LongSerializer());
+      final TestOutputTopic<String, String> output = topologyTestDriver
+        .createOutputTopic(outputTopic, new StringDeserializer(), new StringDeserializer());
 
       //
-      // Step 3: Publish user's last login timestamps.
+      // Step 3: Publish input data.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        userLastLoginTopic,
-        userLastLoginRecords,
-        topologyTestDriver,
-        new StringSerializer(),
-        new LongSerializer()
-      );
+      regionInput.pipeKeyValueList(userRegionRecords);
+      loginInput.pipeKeyValueList(userLastLoginRecords);
 
       //
       // Step 4: Verify the application's output data.
       //
-      final List<KeyValue<String, String>> actualResults = IntegrationTestUtils.drainStreamOutput(
-        outputTopic,
-        topologyTestDriver,
-        new StringDeserializer(),
-        new StringDeserializer()
-      );
+      assertThat(output.readKeyValuesToList(), equalTo(expectedResults));
 
       // Verify the (local) state store of the joined table.
       // For a comprehensive demonstration of interactive queries please refer to KafkaMusicExample.
       final ReadOnlyKeyValueStore<String, String> readOnlyKeyValueStore =
         topologyTestDriver.getKeyValueStore(storeName);
-      final KeyValueIterator<String, String> keyValueIterator = readOnlyKeyValueStore.all();
-      assertThat(keyValueIterator).containsExactlyElementsOf(expectedResultsForJoinStateStore);
-
-      assertThat(actualResults).containsExactlyElementsOf(expectedResults);
+      final List<KeyValue<String, String>> storeData = new LinkedList<>();
+      try (final KeyValueIterator<String, String> keyValueIterator = readOnlyKeyValueStore.all()) {
+        while (keyValueIterator.hasNext()) {
+          storeData.add(keyValueIterator.next());
+        }
+      }
+      assertThat(storeData, equalTo(expectedResultsForJoinStateStore));
     }
   }
 }

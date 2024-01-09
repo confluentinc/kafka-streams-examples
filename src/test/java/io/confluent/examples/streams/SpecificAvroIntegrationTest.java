@@ -41,7 +41,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * End-to-end integration test that demonstrates how to work on Specific Avro data.
@@ -135,7 +136,6 @@ public class SpecificAvroIntegrationTest {
         inputValues.size()
     );
     streams.close();
-    assertEquals(inputValues, actualValues);
+    assertThat(actualValues, equalTo(inputValues));
   }
-
 }

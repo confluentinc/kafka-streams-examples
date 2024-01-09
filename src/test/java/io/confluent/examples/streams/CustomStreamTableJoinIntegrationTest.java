@@ -57,7 +57,8 @@ import io.confluent.examples.streams.utils.Pair;
 import io.confluent.examples.streams.utils.PairOfDoubleAndLongDeserializer;
 import io.confluent.examples.streams.utils.PairSerde;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * End-to-end integration test that demonstrates one way to implement a custom join operation.
@@ -265,7 +266,7 @@ public class CustomStreamTableJoinIntegrationTest {
       //
       final List<KeyValue<String, Pair<Double, Long>>> actualRecords =
           readOutputDataFromJoinedStream(expectedOutputRecords.size());
-      assertThat(actualRecords).containsExactlyElementsOf(expectedOutputRecords);
+      assertThat(actualRecords, equalTo(expectedOutputRecords));
     }
   }
 
@@ -321,7 +322,7 @@ public class CustomStreamTableJoinIntegrationTest {
             LOG.info("Table data available for key {}, sending fully populated join message {}", key, joinRecord);
             return joinRecord;
           } else {
-            LOG.info("Table data unavailable for key {}, sending the join result as null", key, key, value);
+            LOG.info("Table data unavailable for key {}, sending the join result as null", key);
             return KeyValue.pair(key, new Pair<>(value, null));
           }
         }
@@ -333,12 +334,9 @@ public class CustomStreamTableJoinIntegrationTest {
         }
 
         @Override
-        public void close() {
-        }
-
+        public void close() {}
       };
     }
-
   }
 
   private void writeInputDataToStream(final List<KeyValueWithTimestamp<String, Double>> inputStreamRecords)
@@ -376,5 +374,4 @@ public class CustomStreamTableJoinIntegrationTest {
     consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, PairOfDoubleAndLongDeserializer.class);
     return IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig, outputTopic, numExpectedRecords);
   }
-
 }

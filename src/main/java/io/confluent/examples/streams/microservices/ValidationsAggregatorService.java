@@ -19,11 +19,11 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Grouped;
 import org.apache.kafka.streams.kstream.JoinWindows;
-import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.SessionWindows;
+import org.apache.kafka.streams.kstream.StreamJoined;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,13 +47,13 @@ public class ValidationsAggregatorService implements Service {
       ORDERS.valueSerde());
   private final Grouped<String, OrderValidation> serdes3 = Grouped
       .with(ORDER_VALIDATIONS.keySerde(), ORDER_VALIDATIONS.valueSerde());
-  private final Joined<String, Long, Order> serdes4 = Joined
+  private final StreamJoined<String, Long, Order> serdes4 = StreamJoined
       .with(ORDERS.keySerde(), Serdes.Long(), ORDERS.valueSerde());
   private final Produced<String, Order> serdes5 = Produced
       .with(ORDERS.keySerde(), ORDERS.valueSerde());
   private final Grouped<String, Order> serdes6 = Grouped
       .with(ORDERS.keySerde(), ORDERS.valueSerde());
-  private final Joined<String, OrderValidation, Order> serdes7 = Joined
+  private final StreamJoined<String, OrderValidation, Order> serdes7 = StreamJoined
       .with(ORDERS.keySerde(), ORDER_VALIDATIONS.valueSerde(), ORDERS.valueSerde());
 
   private KafkaStreams streams;

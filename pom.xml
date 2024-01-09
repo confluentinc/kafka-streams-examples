@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>rest-utils-parent</artifactId>
-        <version>5.3.9-SNAPSHOT</version>
+        <version>5.4.12-SNAPSHOT</version>
     </parent>
 
     <artifactId>kafka-streams-examples</artifactId>
@@ -54,10 +54,15 @@
         <docker.skip-build>false</docker.skip-build>
         <docker.skip-test>false</docker.skip-test>
         <java.version>1.8</java.version>
-        <licenses.version>5.3.9-SNAPSHOT</licenses.version>
+        <licenses.version>5.4.12-SNAPSHOT</licenses.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <scala.version>${kafka.scala.version}.7</scala.version>
+        <scala.version>${kafka.scala.version}.8</scala.version>
         <scalatest.version>3.0.5</scalatest.version>
+        <!-- The default is deb9 -->
+        <docker.os_type>deb9</docker.os_type>
+        <!-- Need to explicitly set this otherwise it will be overridden from common-docker pom. -->
+        <docker.file>Dockerfile.${docker.os_type}</docker.file>
+        <docker.tag>${project.version}-${docker.os_type}</docker.tag>
     </properties>
 
     <dependencies>
@@ -117,7 +122,8 @@
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <artifactId>slf4j-reload4j</artifactId>
+            <version>1.7.36</version>
         </dependency>
         <dependency>
             <groupId>javax.ws.rs</groupId>
@@ -237,12 +243,24 @@
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-schema-registry</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
             <version>${confluent.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-schema-registry</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
             <version>${confluent.version}</version>
             <!-- Required for e.g. schema registry's RestApp -->
             <classifier>tests</classifier>

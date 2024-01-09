@@ -21,9 +21,9 @@ import java.util.concurrent.TimeUnit;
 import org.apache.kafka.streams.KafkaStreams.State;
 import org.apache.kafka.streams.kstream.GlobalKTable;
 import org.apache.kafka.streams.kstream.JoinWindows;
-import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.StreamJoined;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +84,7 @@ public class EmailService implements Service {
     final GlobalKTable<Long, Customer> customers = builder.globalTable(CUSTOMERS.name(),
         Consumed.with(CUSTOMERS.keySerde(), CUSTOMERS.valueSerde()));
 
-    final Joined<String, Order, Payment> serdes = Joined
+    final StreamJoined<String, Order, Payment> serdes = StreamJoined
         .with(ORDERS.keySerde(), ORDERS.valueSerde(), PAYMENTS.valueSerde());
 
     //Join the two streams and the table then send an email for each
@@ -136,6 +136,7 @@ public class EmailService implements Service {
   }
 
   public static class EmailTuple {
+
     public Order order;
     public Payment payment;
     public Customer customer;

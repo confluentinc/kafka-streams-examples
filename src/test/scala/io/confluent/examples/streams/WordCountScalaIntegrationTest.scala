@@ -96,25 +96,25 @@ class WordCountScalaIntegrationTest extends AssertionsForJUnit {
 
     try {
       //
-      // Step 2: Publish some input text lines.
+      // Step 2: Setup input and output topics.
       //
-      IntegrationTestUtils.produceKeyValuesSynchronously(
-        inputTopic,
-        inputTextLines.map(v => new KeyValue(null, v)).asJava,
-        topologyTestDriver,
-        new NothingSerde[Null],
-        new StringSerializer
-      )
+      val input = topologyTestDriver.createInputTopic(inputTopic,
+                                                      new NothingSerde[Null],
+                                                      new StringSerializer)
+      val output = topologyTestDriver.createOutputTopic(outputTopic,
+                                                        new StringDeserializer,
+                                                        new LongDeserializer)
+      //
+      // Step 3: Publish some input text lines.
+      //
+      input.pipeKeyValueList(inputTextLines.map(v => new KeyValue(null, v)).asJava)
 
       //
-      // Step 3: Verify the application's output data.
+      // Step 4: Verify the application's output data.
       //
-      val actualWordCounts =
-      IntegrationTestUtils.drainTableOutput(outputTopic, topologyTestDriver, new StringDeserializer, new LongDeserializer)
-      assertThat(actualWordCounts).isEqualTo(expectedWordCounts.asJava)
+      assertThat(output.readKeyValuesToMap()).isEqualTo(expectedWordCounts.asJava)
     } finally {
       topologyTestDriver.close()
     }
   }
-
 }

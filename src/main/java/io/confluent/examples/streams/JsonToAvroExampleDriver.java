@@ -48,7 +48,7 @@ import org.codehaus.jackson.map.ObjectMapper;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * java -cp target/kafka-streams-examples-5.3.9-SNAPSHOT-standalone.jar io.confluent.examples.streams.JsonToAvroExampleDriver
+ * java -cp target/kafka-streams-examples-5.4.12-SNAPSHOT-standalone.jar io.confluent.examples.streams.JsonToAvroExampleDriver
  * }
  * </pre>
  *

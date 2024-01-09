@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.singletonList;
@@ -243,12 +244,13 @@ public class MicroserviceTestUtils {
 
   public static <T> T getWithRetries(final Invocation.Builder builder,
                                      final GenericType<T> genericType,
-                                     int numberOfRetries) {
+                                     final int numberOfRetries) {
+    final AtomicInteger retriesRemaining = new AtomicInteger(numberOfRetries);
     while (true) {
       try {
         return builder.get(genericType);
       } catch (final ServerErrorException exception) {
-        if (exception.getMessage().contains("504") && numberOfRetries-- > 0) {
+        if (exception.getMessage().contains("504") && retriesRemaining.getAndDecrement() > 0) {
           continue;
         }
         throw exception;
@@ -258,12 +260,13 @@ public class MicroserviceTestUtils {
 
   public static <T> T getWithRetries(final Invocation.Builder builder,
                                      final Class<T> clazz,
-                                     int numberOfRetries) {
+                                     final int numberOfRetries) {
+    final AtomicInteger retriesRemaining = new AtomicInteger(numberOfRetries);
     while (true) {
       try {
         return builder.get(clazz);
       } catch (final ServerErrorException exception) {
-        if (exception.getMessage().contains("504") && numberOfRetries-- > 0) {
+        if (exception.getMessage().contains("504") && retriesRemaining.getAndDecrement() > 0) {
           continue;
         }
         throw exception;
@@ -273,12 +276,13 @@ public class MicroserviceTestUtils {
 
   public static <T> Response postWithRetries(final Invocation.Builder builder,
                                              final Entity<T> entity,
-                                             int numberOfRetries) {
+                                             final int numberOfRetries) {
+    final AtomicInteger retriesRemaining = new AtomicInteger(numberOfRetries);
     while (true) {
       try {
         return builder.post(entity);
       } catch (final ServerErrorException exception) {
-        if (exception.getMessage().contains("504") && numberOfRetries-- > 0) {
+        if (exception.getMessage().contains("504") && retriesRemaining.getAndDecrement() > 0) {
           continue;
         }
         throw exception;
