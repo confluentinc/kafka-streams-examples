@@ -9,6 +9,6 @@ dockerfile {
     cron = ''
     cpImages = true
     osTypes = ['ubi8']
-    slackChannel = 'ksqldb-warn'
+    slackChannel = 'kafka-streams-quality'
     disableConcurrentBuilds = true
 }
