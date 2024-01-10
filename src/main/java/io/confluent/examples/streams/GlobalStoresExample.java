@@ -29,7 +29,9 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.ValueTransformer;
+import org.apache.kafka.streams.processor.api.FixedKeyProcessor;
+import org.apache.kafka.streams.processor.api.FixedKeyProcessorContext;
+import org.apache.kafka.streams.processor.api.FixedKeyRecord;
 import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.apache.kafka.streams.processor.api.Record;
@@ -54,7 +56,7 @@ import java.util.Properties;
  * <br>
  * HOW TO RUN THIS EXAMPLE
  * <p>
- * 1) Start Zookeeper, Kafka, and Confluent Schema Registry. Please refer to <a href='http://docs.confluent.io/current/quickstart.html#quickstart'>QuickStart</a>.
+ * 1) Start Zookeeper, Kafka, and Confluent Schema Registry. Please refer to <a href="http://docs.confluent.io/current/quickstart.html#quickstart">QuickStart</a>.
  * <p>
  * 2) Create the input/intermediate/output topics used by this example.
  * <pre>
@@ -73,7 +75,7 @@ import java.util.Properties;
  * <p>
  * 3) Start this example application either in your IDE or on the command line.
  * <p>
- * If via the command line please refer to <a href='https://github.com/confluentinc/kafka-streams-examples#packaging-and-running'>Packaging</a>.
+ * If via the command line please refer to <a href="https://github.com/confluentinc/kafka-streams-examples#packaging-and-running">Packaging</a>.
  * Once packaged you can then run:
  * <pre>
  * {@code
@@ -182,31 +184,28 @@ public class GlobalStoresExample {
 
         // We transform each order with a value transformer which will access each
         // global store to retrieve customer and product linked to the order.
-        final KStream<Long, EnrichedOrder> enrichedOrdersStream = ordersStream.transformValues(() -> new ValueTransformer<Order, EnrichedOrder>() {
+        final KStream<Long, EnrichedOrder> enrichedOrdersStream = ordersStream.processValues(() -> new FixedKeyProcessor<Long, Order, EnrichedOrder>() {
 
+            private FixedKeyProcessorContext<Long, EnrichedOrder> processorContext;
             private KeyValueStore<Long, Customer> customerStore;
             private KeyValueStore<Long, Product> productStore;
 
             @Override
-            public void init(final org.apache.kafka.streams.processor.ProcessorContext processorContext) {
+            public void init(final FixedKeyProcessorContext<Long, EnrichedOrder> processorContext) {
+                this.processorContext = processorContext;
                 customerStore = processorContext.getStateStore(CUSTOMER_STORE);
                 productStore = processorContext.getStateStore(PRODUCT_STORE);
             }
 
             @Override
-            public EnrichedOrder transform(final Order order) {
+            public void process(final FixedKeyRecord<Long, Order> record) {
                 // Get the customer corresponding the order from the customer store
-                final Customer customer = customerStore.get(order.getCustomerId());
+                final Customer customer = customerStore.get(record.value().getCustomerId());
 
                 // Get the product corresponding the order from the product store
-                final Product product = productStore.get(order.getProductId());
+                final Product product = productStore.get(record.value().getProductId());
 
-                return new EnrichedOrder(product, customer, order);
-            }
-
-            @Override
-            public void close() {
-                // No-op
+                processorContext.forward(record.withValue(new EnrichedOrder(product, customer, record.value())));
             }
         });
 
