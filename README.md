@@ -5,7 +5,7 @@ microservices using the Streams API of [Apache Kafka](http://kafka.apache.org/) 
 
 For more information take a look at the
 [**latest Confluent documentation on the Kafka Streams API**](http://docs.confluent.io/current/streams/), notably the
-[**Developer Guide**](http://docs.confluent.io/current/streams/developer-guide.html).
+[**Developer Guide**](https://docs.confluent.io/platform/current/streams/developer-guide/index.html)
 
 
 ---
@@ -66,6 +66,7 @@ Additional examples may be found under [src/main/](src/main/java/io/confluent/ex
 | MapFunction                 | DSL, stateless transformations, `map()`                  | [Java 8+ example](src/main/java/io/confluent/examples/streams/MapFunctionLambdaExample.java) | | [Scala Example](src/main/scala/io/confluent/examples/streams/MapFunctionScalaExample.scala) |
 | SessionWindows              | Sessionization of user events, user behavior analysis    | | [Java 7+ example](src/main/java/io/confluent/examples/streams/SessionWindowsExample.java)
 | GlobalKTable                | `join()` between `KStream` and `GlobalKTable`            | [Java 8+ example](src/main/java/io/confluent/examples/streams/GlobalKTablesExample.java) | | |
+| GlobalStore                 | "join" between `KStream` and `GlobalStore`               | [Java 8+ example](src/main/java/io/confluent/examples/streams/GlobalStoresExample.java) | | |
 | PageViewRegion              | `join()` between `KStream` and `KTable`                  | [Java 8+ example](src/main/java/io/confluent/examples/streams/PageViewRegionLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/PageViewRegionExample.java) | |
 | PageViewRegionGenericAvro   | Working with data in Generic Avro format                 | [Java 8+ example](src/main/java/io/confluent/examples/streams/PageViewRegionLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/PageViewRegionExample.java) | |
 | WikipediaFeedSpecificAvro   | Working with data in Specific Avro format                | [Java 8+ example](src/main/java/io/confluent/examples/streams/WikipediaFeedAvroLambdaExample.java) | [Java 7+ example](src/main/java/io/confluent/examples/streams/WikipediaFeedAvroExample.java) | |
@@ -109,6 +110,7 @@ Additional examples may be found under [src/test/](src/test/java/io/confluent/ex
 | CustomStreamTableJoin               | DSL, Processor API, Transformers            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/CustomStreamTableJoinIntegrationTest.java) | | |
 | EventDeduplication                  | DSL, Processor API, Transformers            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/EventDeduplicationLambdaIntegrationTest.java) | | |
 | GlobalKTable                        | DSL, global state                           | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/GlobalKTablesExampleTest.java) | |
+| GlobalStore                         | DSL, global state, Transformers             | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/GlobalStoresExampleTest.java) | |
 | HandlingCorruptedInputRecords       | DSL, `flatMap()`                            | [Java 8+ Example](src/test/java/io/confluent/examples/streams/HandlingCorruptedInputRecordsIntegrationTest.java) | | |
 | KafkaMusic (Interactive Queries)    | Interactive Queries, State Stores, REST API | | [Java 7+ Example](src/test/java/io/confluent/examples/streams/interactivequeries/kafkamusic/KafkaMusicExampleTest.java) | |
 | MapFunction                         | DSL, stateless transformations, `map()`     | [Java 8+ Example](src/test/java/io/confluent/examples/streams/MapFunctionLambdaIntegrationTest.java) | | |
@@ -185,11 +187,8 @@ repository may have different Kafka requirements.
 > $ cd kafka
 > $ git checkout trunk
 >
-> # Bootstrap gradle wrapper
-> $ gradle
->
 > # Now build and install Kafka locally
-> $ ./gradlew clean installAll
+> $ ./gradlew clean && ./gradlewAll install
 > ```
 
 
@@ -320,7 +319,7 @@ The next step is to create a standalone jar ("fat jar") of the [application exam
 # Create a standalone jar ("fat jar")
 $ mvn clean package
 
-# >>> Creates target/kafka-streams-examples-5.5.16-SNAPSHOT-standalone.jar
+# >>> Creates target/kafka-streams-examples-6.0.16-SNAPSHOT-standalone.jar
 ```
 
 > Tip: If needed, you can disable the test suite during packaging, for example to speed up the packaging or to lower
@@ -334,7 +333,7 @@ You can now run the application examples as follows:
 
 ```shell
 # Run an example application from the standalone jar. Here: `WordCountLambdaExample`
-$ java -cp target/kafka-streams-examples-5.5.16-SNAPSHOT-standalone.jar \
+$ java -cp target/kafka-streams-examples-6.0.16-SNAPSHOT-standalone.jar \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
 
@@ -349,7 +348,7 @@ If you want to turn on log4j while running your example application, you can edi
 
 ```shell
 # Run an example application from the standalone jar. Here: `WordCountLambdaExample`
-$ java -cp target/kafka-streams-examples-5.5.16-SNAPSHOT-standalone.jar \
+$ java -cp target/kafka-streams-examples-6.0.16-SNAPSHOT-standalone.jar \
   -Dlog4j.configuration=file:src/main/resources/log4j.properties \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
@@ -411,3 +410,7 @@ make it compile.  Check this README as well as [pom.xml](pom.xml) for any such i
     * For general questions about Apache Kafka and Confluent Platform, please head over to the
       [Confluent mailing list](https://groups.google.com/forum/?pli=1#!forum/confluent-platform)
       or to the [Apache Kafka mailing lists](http://kafka.apache.org/contact).
+
+# License
+
+Usage of this image is subject to the license terms of the software contained within. Please refer to Confluent's Docker images documentation [reference](https://docs.confluent.io/platform/current/installation/docker/image-reference.html) for further information. The software to extend and build the custom Docker images is available under the Apache 2.0 License.

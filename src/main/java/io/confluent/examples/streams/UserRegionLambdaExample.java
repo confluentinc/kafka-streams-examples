@@ -54,7 +54,7 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.5.16-SNAPSHOT-standalone.jar io.confluent.examples.streams.UserRegionLambdaExample
+ * $ java -cp target/kafka-streams-examples-6.0.16-SNAPSHOT-standalone.jar io.confluent.examples.streams.UserRegionLambdaExample
  * }
  * </pre>
  * 4) Write some input data to the source topics (e.g. via {@code kafka-console-producer}). The already
@@ -154,7 +154,7 @@ public class UserRegionLambdaExample {
     // Always (and unconditionally) clean local state prior to starting the processing topology.
     // We opt for this unconditional call here because this will make it easier for you to play around with the example
     // when resetting the application for doing a re-run (via the Application Reset Tool,
-    // http://docs.confluent.io/current/streams/developer-guide.html#application-reset-tool).
+    // https://docs.confluent.io/platform/current/streams/developer-guide/app-reset-tool.html).
     //
     // The drawback of cleaning up local state prior is that your app must rebuilt its local state from scratch, which
     // will take time and will require reading all the state-relevant data from the Kafka cluster over the network.

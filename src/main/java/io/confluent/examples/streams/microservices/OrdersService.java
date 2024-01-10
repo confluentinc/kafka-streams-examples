@@ -325,6 +325,7 @@ public class OrdersService implements Service {
     jettyServer = startJetty(port, this);
     port = jettyServer.getURI().getPort(); // update port, in case port was zero
     producer = startProducer(bootstrapServers, ORDERS, defaultConfig);
+    defaultConfig.put(StreamsConfig.STATE_DIR_CONFIG, stateDir);
     streams = startKStreams(bootstrapServers, defaultConfig);
     log.info("Started Service " + getClass().getSimpleName());
     log.info("Order Service listening at:" + jettyServer.getURI().toString());
@@ -357,9 +358,10 @@ public class OrdersService implements Service {
   }
 
   private Properties config(final String bootstrapServers, final Properties defaultConfig) {
+    final String stateDir = defaultConfig.getProperty(StreamsConfig.STATE_DIR_CONFIG);
     final Properties props = baseStreamsConfig(
             bootstrapServers,
-            "/tmp/kafka-streams",
+            stateDir != null ? stateDir : "/tmp/kafka-streams",
             SERVICE_APP_ID,
             defaultConfig);
     props.put(StreamsConfig.APPLICATION_SERVER_CONFIG, host + ":" + port);

@@ -276,7 +276,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
       // The Set returned from JavaConverters.setAsJavaSetConverter does not support the remove
       // method so we need to continue to wrap in a HashSet
       final Set<String> allTopicsFromZk = new HashSet<>(
-          JavaConverters.setAsJavaSetConverter(broker.kafkaServer().zkClient().getAllTopicsInCluster()).asJava());
+          JavaConverters.setAsJavaSetConverter(broker.kafkaServer().zkClient().getAllTopicsInCluster(false)).asJava());
 
       final Set<String> allTopicsFromBrokerCache = new HashSet<>(
           JavaConverters.seqAsJavaListConverter(broker.kafkaServer().metadataCache().getAllTopics().toSeq()).asJava());
@@ -295,7 +295,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     @Override
     public boolean conditionMet() {
       //TODO once KAFKA-6098 is fixed use AdminClient to verify topics have been deleted
-      return broker.kafkaServer().zkClient().getAllTopicsInCluster().contains(createdTopic) &&
+      return broker.kafkaServer().zkClient().getAllTopicsInCluster(false).contains(createdTopic) &&
           broker.kafkaServer().metadataCache().contains(createdTopic);
     }
   }

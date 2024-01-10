@@ -42,6 +42,10 @@ import java.util.Properties;
  * Demonstrates how to perform joins between  KStreams and GlobalKTables, i.e. joins that
  * don't require re-partitioning of the input streams.
  * <p>
+ * The {@link GlobalStoresExample} shows another way to perform the same operation using
+ * {@link org.apache.kafka.streams.TopologyDescription.GlobalStore} and a
+ * {@link org.apache.kafka.streams.kstream.ValueTransformer}.
+ * <p>
  * In this example, we join a stream of orders that reads from a topic named
  * "order" with a customers table that reads from a topic named "customer", and a products
  * table that reads from a topic "product". The join produces an EnrichedOrder object.
@@ -72,17 +76,17 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.5.16-SNAPSHOT-standalone.jar io.confluent.examples.streams.GlobalKTablesExample
+ * $ java -cp target/kafka-streams-examples-6.0.16-SNAPSHOT-standalone.jar io.confluent.examples.streams.GlobalKTablesExample
  * }
  * </pre>
- * 4) Write some input data to the source topics (e.g. via {@link GlobalKTablesExampleDriver}). The
+ * 4) Write some input data to the source topics (e.g. via {@link GlobalKTablesAndStoresExampleDriver}). The
  * already running example application (step 3) will automatically process this input data and write
  * the results to the output topic.
  * <pre>
  * {@code
  * # Here: Write input data using the example driver. The driver will exit once it has received
  * # all EnrichedOrders
- * $ java -cp target/kafka-streams-examples-5.5.16-SNAPSHOT-standalone.jar io.confluent.examples.streams.GlobalKTablesExampleDriver
+ * $ java -cp target/kafka-streams-examples-6.0.16-SNAPSHOT-standalone.jar io.confluent.examples.streams.GlobalKTablesAndStoresExampleDriver
  * }
  * </pre>
  * <p>
@@ -108,7 +112,7 @@ public class GlobalKTablesExample {
     // Always (and unconditionally) clean local state prior to starting the processing topology.
     // We opt for this unconditional call here because this will make it easier for you to play around with the example
     // when resetting the application for doing a re-run (via the Application Reset Tool,
-    // http://docs.confluent.io/current/streams/developer-guide.html#application-reset-tool).
+    // https://docs.confluent.io/platform/current/streams/developer-guide/app-reset-tool.html).
     //
     // The drawback of cleaning up local state prior is that your app must rebuilt its local state from scratch, which
     // will take time and will require reading all the state-relevant data from the Kafka cluster over the network.

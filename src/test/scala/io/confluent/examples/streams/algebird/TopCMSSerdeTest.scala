@@ -20,8 +20,8 @@ import org.apache.kafka.common.errors.SerializationException
 import org.apache.kafka.common.serialization.Serde
 import org.assertj.core.api.Assertions.assertThat
 import org.junit._
-import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.junit.AssertionsForJUnit
+import org.scalatestplus.mockito.MockitoSugar
 
 class TopCMSSerdeTest extends AssertionsForJUnit with MockitoSugar {
 

@@ -269,19 +269,14 @@ Prefix the names of the ksqlDB streams and tables with ``ksql_``.  This is not r
 #. At this point we have created a stream of filtered play events called ``ksql_playevents_min_duration`` and a table of song metadata called ``ksql_song``.  Enrich the stream of play events with song metadata using a Stream-Table ``JOIN``. This results in a new stream of play events enriched with descriptive song information like song title along with each play event.
 
    .. literalinclude:: ../../../tutorials/examples/music/statements.sql
-      :lines: 16
+      :lines: 15
 
 #.  Notice the addition of a clause ``1 AS KEYCOL``. For every row, this creates a new field ``KEYCOL`` that has a value of 1. ``KEYCOL`` can be later used in other derived streams and tables to do aggregations on a global basis.
 
-#. Now you can create a top music chart for all time to see which songs get played the most. Use the ``COUNT`` function on the stream ``ksql_songplays`` that we created above.
+#. Now you can create a top music chart for all time to see which songs get played the most. Use the ``COUNT`` function on the stream ``ksql_songplays`` that we created above, and since it would also be good to see stats for just the last 30 seconds, add in a ``WINDOW`` clause which gives counts of play events for all songs, in 30-second intervals.
 
    .. literalinclude:: ../../../tutorials/examples/music/statements.sql
-      :lines: 26
-
-#. While the all-time greatest hits are cool, it would also be good to see stats for just the last 30 seconds. Create another query, adding in a ``WINDOW`` clause, which gives counts of play events for all songs, in 30-second intervals.
-
-   .. literalinclude:: ../../../tutorials/examples/music/statements.sql
-      :lines: 19
+      :lines: 18
 
 #. Congratulations, you built a streaming application that processes data in real-time!  The application enriched a stream of play events with song metadata and generated top counts. Any downstream systems can consume results from your ksqlDB queries for further processing.  If you were already familiar with SQL semantics, hopefully this tutorial wasn't too hard to follow.
 

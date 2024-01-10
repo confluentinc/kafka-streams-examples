@@ -8,7 +8,7 @@ dockerfile {
     nodeLabel = 'docker-debian-jdk8-compose'
     cron = ''
     cpImages = true
-    osTypes = ['deb9', 'ubi8']
+    osTypes = ['ubi8']
     slackChannel = 'kafka-streams-quality'
     disableConcurrentBuilds = true
 }

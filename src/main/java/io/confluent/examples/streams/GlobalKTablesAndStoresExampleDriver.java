@@ -19,7 +19,7 @@ import io.confluent.examples.streams.avro.Customer;
 import io.confluent.examples.streams.avro.EnrichedOrder;
 import io.confluent.examples.streams.avro.Order;
 import io.confluent.examples.streams.avro.Product;
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
@@ -46,8 +46,8 @@ import static io.confluent.examples.streams.GlobalKTablesExample.ORDER_TOPIC;
 import static io.confluent.examples.streams.GlobalKTablesExample.PRODUCT_TOPIC;
 
 /**
- * This is a sample driver for the {@link GlobalKTablesExample}.
- * To run this driver please first refer to the instructions in {@link GlobalKTablesExample}.
+ * This is a sample driver for the {@link GlobalKTablesExample} and {@link GlobalStoresExample}.
+ * To run this driver please first refer to the instructions in {@link GlobalKTablesExample} or {@link GlobalStoresExample}.
  * You can then run this class directly in your IDE or via the command line.
  * <p>
  * To run via the command line you might want to package as a fatjar first. Please refer to:
@@ -56,11 +56,11 @@ import static io.confluent.examples.streams.GlobalKTablesExample.PRODUCT_TOPIC;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.5.16-SNAPSHOT-standalone.jar io.confluent.examples.streams.GlobalKTablesExampleDriver
+ * $ java -cp target/kafka-streams-examples-6.0.3-SNAPSHOT-standalone.jar io.confluent.examples.streams.GlobalKTablesAndStoresExampleDriver
  * }
  * </pre>
  */
-public class GlobalKTablesExampleDriver {
+public class GlobalKTablesAndStoresExampleDriver {
 
   private static final Random RANDOM = new Random();
   private static final int RECORDS_TO_GENERATE = 100;
@@ -85,7 +85,7 @@ public class GlobalKTablesExampleDriver {
     consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, Serdes.Long().deserializer().getClass());
     consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
-    consumerProps.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
+    consumerProps.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
     consumerProps.put(KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG, true);
 
     final KafkaConsumer<Long, EnrichedOrder> consumer = new KafkaConsumer<>(consumerProps);
@@ -184,7 +184,7 @@ public class GlobalKTablesExampleDriver {
 
     final SpecificAvroSerde<VT> serde = new SpecificAvroSerde<>();
     final Map<String, String> serdeConfig = Collections.singletonMap(
-        AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
+        AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
     serde.configure(serdeConfig, false);
     return serde;
   }

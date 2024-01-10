@@ -28,7 +28,7 @@ import java.util.concurrent.CountDownLatch;
 
 /**
  * Demonstrates how to reset a Kafka Streams application to re-process its input data from scratch.
- * See also <a href='http://docs.confluent.io/current/streams/developer-guide.html#application-reset-tool'>http://docs.confluent.io/current/streams/developer-guide.html#application-reset-tool</a>
+ * See also <a href='https://docs.confluent.io/platform/current/streams/developer-guide/app-reset-tool.html'>https://docs.confluent.io/platform/current/streams/developer-guide/app-reset-tool.html</a>
  * <p>
  * The main purpose of the example is to explain the usage of the "Application Reset Tool".
  * Thus, we don’t put the focus on what this topology is actually doing&mdash;the point is to have an example of a
@@ -59,7 +59,7 @@ import java.util.concurrent.CountDownLatch;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.5.16-SNAPSHOT-standalone.jar io.confluent.examples.streams.ApplicationResetExample
+ * $ java -cp target/kafka-streams-examples-6.0.16-SNAPSHOT-standalone.jar io.confluent.examples.streams.ApplicationResetExample
  * }
  * </pre>
  * 4) Write some input data to the source topic (e.g. via {@code kafka-console-producer}).
@@ -114,7 +114,7 @@ import java.util.concurrent.CountDownLatch;
  * Thus, restart the application via:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.5.16-SNAPSHOT-standalone.jar io.confluent.examples.streams.ApplicationResetExample localhost:9092 --reset
+ * $ java -cp target/kafka-streams-examples-6.0.16-SNAPSHOT-standalone.jar io.confluent.examples.streams.ApplicationResetExample localhost:9092 --reset
  * }</pre>
  * 9) If your console consumer (from step 5) is still running, you should see the same output data again.
  * If it was stopped and you restart it, if will print the result "twice".

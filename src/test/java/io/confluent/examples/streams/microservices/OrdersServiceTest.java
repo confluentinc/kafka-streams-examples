@@ -22,6 +22,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
+import java.io.File;
 import java.net.HttpURLConnection;
 import java.time.Duration;
 import java.util.Collections;
@@ -177,10 +178,18 @@ public class OrdersServiceTest extends MicroserviceTestUtils {
 
     //Given two rest servers on different ports
     rest = new OrdersService("localhost");
-    rest.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath(), new Properties());
+    rest.start(
+            CLUSTER.bootstrapServers(),
+            TestUtils.tempDirectory().getPath() + File.separator + "instance-1",
+            new Properties()
+    );
     final Paths paths1 = new Paths("localhost", rest.port());
     rest2 = new OrdersService("localhost");
-    rest2.start(CLUSTER.bootstrapServers(), TestUtils.tempDirectory().getPath(), new Properties());
+    rest2.start(
+            CLUSTER.bootstrapServers(),
+            TestUtils.tempDirectory().getPath() + File.separator + "instance-2",
+            new Properties()
+    );
     final Paths paths2 = new Paths("localhost", rest2.port());
 
     //And one order

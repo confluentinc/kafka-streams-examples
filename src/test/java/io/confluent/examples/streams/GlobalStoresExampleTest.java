@@ -20,16 +20,15 @@ import org.apache.kafka.streams.KafkaStreams;
 /**
  * Test class for {@link GlobalKTablesExample}. See {@link AbstractGlobalStoresAndTablesTest}.
  */
-public class GlobalKTablesExampleTest extends AbstractGlobalStoresAndTablesTest {
+public class GlobalStoresExampleTest extends AbstractGlobalStoresAndTablesTest {
 
-  @Override
-  public KafkaStreams createStreamsInstance(final String bootstrapServers, final String schemaRegistryUrl, final String tempDirectoryPath) {
-    return GlobalKTablesExample.createStreams(bootstrapServers, schemaRegistryUrl, tempDirectoryPath);
-  }
+    @Override
+    public KafkaStreams createStreamsInstance(final String bootstrapServers, final String schemaRegistryUrl, final String tempDirectoryPath) {
+        return GlobalStoresExample.createStreams(bootstrapServers, schemaRegistryUrl, tempDirectoryPath);
+    }
 
-  @Override
-  public String getGroupId() {
-    return "global-tables-consumer";
-  }
-
+    @Override
+    public String getGroupId() {
+        return "global-stores-consumer";
+    }
 }

@@ -53,7 +53,7 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-5.5.16-SNAPSHOT-standalone.jar io.confluent.examples.streams.SumLambdaExample
+ * $ java -cp target/kafka-streams-examples-6.0.16-SNAPSHOT-standalone.jar io.confluent.examples.streams.SumLambdaExample
  * }
  * </pre>
  * 4) Write some input data to the source topic (e.g. via {@link SumLambdaExampleDriver}). The
@@ -63,7 +63,7 @@ import java.util.Properties;
  * {@code
  * # Here: Write input data using the example driver. Once the driver has stopped generating data,
  * # you can terminate it via `Ctrl-C`.
- * $ java -cp target/kafka-streams-examples-5.5.16-SNAPSHOT-standalone.jar io.confluent.examples.streams.SumLambdaExampleDriver
+ * $ java -cp target/kafka-streams-examples-6.0.16-SNAPSHOT-standalone.jar io.confluent.examples.streams.SumLambdaExampleDriver
  * }
  * </pre>
  * 5) Inspect the resulting data in the output topics, e.g. via {@code kafka-console-consumer}.
@@ -109,7 +109,7 @@ public class SumLambdaExample {
     // Always (and unconditionally) clean local state prior to starting the processing topology.
     // We opt for this unconditional call here because this will make it easier for you to play around with the example
     // when resetting the application for doing a re-run (via the Application Reset Tool,
-    // http://docs.confluent.io/current/streams/developer-guide.html#application-reset-tool).
+    // https://docs.confluent.io/platform/current/streams/developer-guide/app-reset-tool.html).
     //
     // The drawback of cleaning up local state prior is that your app must rebuilt its local state from scratch, which
     // will take time and will require reading all the state-relevant data from the Kafka cluster over the network.
