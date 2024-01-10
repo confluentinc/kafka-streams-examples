@@ -16,7 +16,7 @@ semaphore:
 
 # Properties not ported from Jenkinsfile:
 #
-# upstreamProjects = 'confluentinc/rest-utils' --- from Slack it seems we need to add rest-utils
+# upstreamProjects = 'confluentinc/rest-utils' --- used "downstream_repos in rest-utils
 # cpImages = true
 # osTypes = ['ubi8']
 # slackChannel = 'ksqldb-warn'
