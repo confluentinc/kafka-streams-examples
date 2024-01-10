@@ -1,0 +1,22 @@
+name: kafka-streams-examples
+lang: java
+lang_version: 8
+git:
+  enable: true
+codeowners:
+  enable: true
+semaphore:
+  enable: true
+  pipeline_type: cp-dockerfile
+  docker_repos: ['confluentinc/kafka-streams-examples']
+  maven_phase: 'package' # streams examples integration-test needs host-based networking, won't work in CI as-is
+  maven_skip_deploy: true
+  build_arm: true
+  nano_version: true
+
+# Properties not ported from Jenkinsfile:
+#
+# upstreamProjects = 'confluentinc/rest-utils' --- from Slack it seems we need to add rest-utils
+# cpImages = true
+# osTypes = ['ubi8']
+# slackChannel = 'ksqldb-warn'
