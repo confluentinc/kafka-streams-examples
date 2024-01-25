@@ -281,6 +281,11 @@
             <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.xerial.snappy</groupId>
+            <artifactId>snappy-java</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <!-- The following dependencies on ScalaTest are only required for the Scala tests
              under src/test/scala/.  They are not required for Java code/tests.
