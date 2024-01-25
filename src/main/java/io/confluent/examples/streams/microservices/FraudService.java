@@ -89,7 +89,7 @@ public class FraudService implements Service {
     // detect periods of activity.
     final KTable<Windowed<Long>, OrderValue> aggregate = orders
         .groupBy((id, order) -> order.getCustomerId(), Grouped.with(Serdes.Long(), ORDERS.valueSerde()))
-        .windowedBy(SessionWindows.with(Duration.ofHours(1)))
+        .windowedBy(SessionWindows.ofInactivityGapWithNoGrace(Duration.ofHours(1)))
         .aggregate(OrderValue::new,
             //Calculate running total for each customer within this window
             (custId, order, total) -> new OrderValue(order,
@@ -124,7 +124,7 @@ public class FraudService implements Service {
     //we get a complete "changelog" from the aggregate(...) step above (i.e. every input event will have a
     //corresponding output event.
     final Properties props = baseStreamsConfig(bootstrapServers, stateDir, SERVICE_APP_ID, defaultConfig);
-    props.setProperty(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, "0");
+    props.setProperty(StreamsConfig.STATESTORE_CACHE_MAX_BYTES_CONFIG, "0");
 
     return new KafkaStreams(builder.build(), props);
   }
