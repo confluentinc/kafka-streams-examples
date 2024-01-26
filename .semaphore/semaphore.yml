@@ -59,6 +59,7 @@ blocks:
           commands:
             - . publish-test-results
             - artifact push workflow target/test-results
+            - artifact push workflow target --destination target-AMD
   - name: Deploy AMD confluentinc/kafka-streams-examples
     dependencies: ["Build, Test, & Scan AMD"]
     run:
@@ -97,6 +98,7 @@ blocks:
           commands:
             - . publish-test-results
             - artifact push workflow target/test-results
+            - artifact push workflow target --destination target-ARM
   - name: Deploy ARM confluentinc/kafka-streams-examples
     dependencies: ["Build & Test ARM"]
     run:
@@ -150,4 +152,6 @@ after_pipeline:
         commands:
           - checkout
           - sem-version java 11
-          - emit-sonarqube-data -a test-results
+          - artifact pull workflow target-AMD
+          - artifact pull workflow target-ARM
+          - emit-sonarqube-data --run_only_sonar_scan
