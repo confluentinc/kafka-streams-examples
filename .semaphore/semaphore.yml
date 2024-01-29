@@ -63,7 +63,7 @@ blocks:
   - name: Deploy AMD confluentinc/kafka-streams-examples
     dependencies: ["Build, Test, & Scan AMD"]
     run:
-      when: "branch = 'master' or branch =~ '[0-9]+\\.[0-9]+\\.[0-9]+'"
+      when: "change_in('/', {exclude: ['/.deployed-versions/', '.github/']})"
     task:
       jobs:
         - name: Deploy AMD confluentinc/kafka-streams-examples ubi8
@@ -103,7 +103,7 @@ blocks:
   - name: Deploy ARM confluentinc/kafka-streams-examples
     dependencies: ["Build & Test ARM"]
     run:
-      when: "branch = 'master' or branch =~ '[0-9]+\\.[0-9]+\\.[0-9]+'"
+      when: "change_in('/', {exclude: ['/.deployed-versions/', '.github/']})"
     task:
       agent:
         machine:
@@ -123,7 +123,7 @@ blocks:
   - name: Create Manifest and Maven Deploy
     dependencies: ["Deploy AMD confluentinc/kafka-streams-examples", "Deploy ARM confluentinc/kafka-streams-examples"]
     run:
-      when: "branch = 'master' or branch =~ '[0-9]+\\.[0-9]+\\.[0-9]+'"
+      when: "change_in('/', {exclude: ['/.deployed-versions/', '.github/']})"
     task:
       jobs:
         - name: Create Manifest and Maven Deploy
