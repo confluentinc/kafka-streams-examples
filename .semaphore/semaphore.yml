@@ -33,7 +33,7 @@ global_job_config:
       - export DOCKER_PROD_REGISTRY="519856050701.dkr.ecr.us-west-2.amazonaws.com/docker/prod/"
       # Testing 
       - export DOCKER_UPSTREAM_REGISTRY="519856050701.dkr.ecr.us-west-2.amazonaws.com/docker/dev/"
-      - export DOCKER_UPSTREAM_TAG="master-latest-ubi"
+      - export DOCKER_UPSTREAM_TAG="master-latest-ubi8"
       - export DOCKER_REPOS="unsynced-confluentinc/kafka-streams-examples"
       - export DOCKER_DEV_TAG="dev-$BRANCH_TAG-$BUILD_NUMBER"
       - export AMD_ARCH=.amd64
