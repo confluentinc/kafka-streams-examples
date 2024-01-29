@@ -31,9 +31,10 @@ global_job_config:
       - export BRANCH_TAG=$(echo $SEMAPHORE_GIT_BRANCH | tr / -)
       - export DOCKER_DEV_REGISTRY="519856050701.dkr.ecr.us-west-2.amazonaws.com/docker/dev/"
       - export DOCKER_PROD_REGISTRY="519856050701.dkr.ecr.us-west-2.amazonaws.com/docker/prod/"
-      - export DOCKER_UPSTREAM_REGISTRY=$DOCKER_PROD_REGISTRY
-      - export DOCKER_UPSTREAM_TAG=""
-      - export DOCKER_REPOS="confluentinc/kafka-streams-examples"
+      # Testing 
+      - export DOCKER_UPSTREAM_REGISTRY="519856050701.dkr.ecr.us-west-2.amazonaws.com/docker/dev/"
+      - export DOCKER_UPSTREAM_TAG="master-latest-ubi8"
+      - export DOCKER_REPOS="unsynced-confluentinc/kafka-streams-examples"
       - export DOCKER_DEV_TAG="dev-$BRANCH_TAG-$BUILD_NUMBER"
       - export AMD_ARCH=.amd64
       - export ARM_ARCH=.arm64
@@ -45,35 +46,37 @@ blocks:
       when: "change_in('/', {exclude: ['/.deployed-versions/', '.github/']})"
     task:
       jobs:
-        - name: Build, Test, & Scan
+        - name: Build, Test, & Scan ubi8
           commands:
-            - export DOCKER_DEV_FULL_IMAGES=$DOCKER_DEV_REGISTRY${DOCKER_REPOS// /:$DOCKER_DEV_TAG $DOCKER_DEV_REGISTRY}:$DOCKER_DEV_TAG
+            - export DOCKER_DEV_FULL_IMAGES=$DOCKER_DEV_REGISTRY${DOCKER_REPOS// /:$DOCKER_DEV_TAG-ubi8 $DOCKER_DEV_REGISTRY}:$DOCKER_DEV_TAG-ubi8
             - export AMD_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$AMD_ARCH }$AMD_ARCH
             - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY
-              -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=dev-$BRANCH_TAG-$BUILD_NUMBER$AMD_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG -Darch.type=$AMD_ARCH
+              -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=dev-$BRANCH_TAG-$BUILD_NUMBER$AMD_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG -Darch.type=$AMD_ARCH -Ddocker.os_type=ubi8
             - . cache-maven store
-            - . cve-scan "$AMD_DOCKER_DEV_FULL_IMAGES"
+            - cve-scan "$AMD_DOCKER_DEV_FULL_IMAGES"
             - for image in $AMD_DOCKER_DEV_FULL_IMAGES; do echo "Pushing $image" && docker push $image; done
       epilogue:
         always:
           commands:
             - . publish-test-results
             - artifact push workflow target/test-results
-  - name: Deploy AMD confluentinc/kafka-streams-examples
+  - name: Deploy AMD unsynced-confluentinc/kafka-streams-examples
     dependencies: ["Build, Test, & Scan AMD"]
     run:
       when: "branch = 'master' or branch =~ '[0-9]+\\.[0-9]+\\.[0-9]+'"
     task:
       jobs:
-        - name: Deploy AMD confluentinc/kafka-streams-examples
+        - name: Deploy AMD unsynced-confluentinc/kafka-streams-examples ubi8
           commands:
-            - export PROD_IMAGE_NAME=${DOCKER_PROD_REGISTRY}confluentinc/kafka-streams-examples
-            - export DEV_IMAGE_FULL=${DOCKER_DEV_REGISTRY}confluentinc/kafka-streams-examples:$DOCKER_DEV_TAG$AMD_ARCH
+            - export PROD_IMAGE_NAME=${DOCKER_PROD_REGISTRY}unsynced-confluentinc/kafka-streams-examples
+            - export GIT_COMMIT_TAG=$GIT_COMMIT-ubi8$AMD_ARCH
+            - export BRANCH_BUILD_TAG=$BRANCH_TAG-$BUILD_NUMBER-ubi8$AMD_ARCH
+            - export DEV_IMAGE_FULL=${DOCKER_DEV_REGISTRY}unsynced-confluentinc/kafka-streams-examples:$DOCKER_DEV_TAG$AMD_ARCH
             - docker pull $DEV_IMAGE_FULL
-            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$GIT_COMMIT$AMD_ARCH
-            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$BRANCH_TAG-$BUILD_NUMBER$AMD_ARCH
-            - docker push $PROD_IMAGE_NAME:$GIT_COMMIT$AMD_ARCH
-            - docker push $PROD_IMAGE_NAME:$BRANCH_TAG-$BUILD_NUMBER$AMD_ARCH
+            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$GIT_COMMIT_TAG
+            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$BRANCH_BUILD_TAG
+            - docker push $PROD_IMAGE_NAME:$GIT_COMMIT_TAG
+            - docker push $PROD_IMAGE_NAME:$BRANCH_BUILD_TAG
   - name: Build & Test ARM
     dependencies: []
     run:
@@ -84,12 +87,12 @@ blocks:
         machine:
           type: s1-prod-ubuntu20-04-arm64-1
       jobs:
-        - name: Build & Test
+        - name: Build & Test ubi8
           commands:
-            - export DOCKER_DEV_FULL_IMAGES=$DOCKER_DEV_REGISTRY${DOCKER_REPOS// /:$DOCKER_DEV_TAG $DOCKER_DEV_REGISTRY}:$DOCKER_DEV_TAG
+            - export DOCKER_DEV_FULL_IMAGES=$DOCKER_DEV_REGISTRY${DOCKER_REPOS// /:$DOCKER_DEV_TAG-ubi8 $DOCKER_DEV_REGISTRY}:$DOCKER_DEV_TAG-ubi8
             - export ARM_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$ARM_ARCH }$ARM_ARCH
             - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -DBUILD_NUMBER=$BUILD_NUMBER
-              -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=dev-$BRANCH_TAG-$BUILD_NUMBER$ARM_ARCH  -Darch.type=$ARM_ARCH
+              -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=dev-$BRANCH_TAG-$BUILD_NUMBER$ARM_ARCH  -Darch.type=$ARM_ARCH -Ddocker.os_type=ubi8
             - . cache-maven store
             - for image in $ARM_DOCKER_DEV_FULL_IMAGES; do echo "Pushing $image" && docker push $image; done
       epilogue:
@@ -97,7 +100,7 @@ blocks:
           commands:
             - . publish-test-results
             - artifact push workflow target/test-results
-  - name: Deploy ARM confluentinc/kafka-streams-examples
+  - name: Deploy ARM unsynced-confluentinc/kafka-streams-examples
     dependencies: ["Build & Test ARM"]
     run:
       when: "branch = 'master' or branch =~ '[0-9]+\\.[0-9]+\\.[0-9]+'"
@@ -106,17 +109,19 @@ blocks:
         machine:
           type: s1-prod-ubuntu20-04-arm64-1
       jobs:
-        - name: Deploy ARM confluentinc/kafka-streams-examples
+        - name: Deploy ARM unsynced-confluentinc/kafka-streams-examples ubi8
           commands:
-            - export PROD_IMAGE_NAME=${DOCKER_PROD_REGISTRY}confluentinc/kafka-streams-examples
-            - export DEV_IMAGE_FULL=${DOCKER_DEV_REGISTRY}confluentinc/kafka-streams-examples:$DOCKER_DEV_TAG$ARM_ARCH
+            - export PROD_IMAGE_NAME=${DOCKER_PROD_REGISTRY}unsynced-confluentinc/kafka-streams-examples
+            - export GIT_COMMIT_TAG=$GIT_COMMIT-ubi8$AMD_ARCH
+            - export BRANCH_BUILD_TAG=$BRANCH_TAG-$BUILD_NUMBER-ubi8$AMD_ARCH
+            - export DEV_IMAGE_FULL=${DOCKER_DEV_REGISTRY}unsynced-confluentinc/kafka-streams-examples:$DOCKER_DEV_TAG$ARM_ARCH
             - docker pull $DEV_IMAGE_FULL
-            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$GIT_COMMIT$ARM_ARCH
-            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$BRANCH_TAG-$BUILD_NUMBER$ARM_ARCH
-            - docker push $PROD_IMAGE_NAME:$GIT_COMMIT$ARM_ARCH
-            - docker push $PROD_IMAGE_NAME:$BRANCH_TAG-$BUILD_NUMBER$ARM_ARCH
+            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$GIT_COMMIT_TAG
+            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$BRANCH_BUILD_TAG
+            - docker push $PROD_IMAGE_NAME:$GIT_COMMIT_TAG
+            - docker push $PROD_IMAGE_NAME:$BRANCH_BUILD_TAG
   - name: Create Manifest and Maven Deploy
-    dependencies: ["Deploy AMD confluentinc/kafka-streams-examples", "Deploy ARM confluentinc/kafka-streams-examples"]
+    dependencies: ["Deploy AMD unsynced-confluentinc/kafka-streams-examples", "Deploy ARM unsynced-confluentinc/kafka-streams-examples"]
     run:
       when: "branch = 'master' or branch =~ '[0-9]+\\.[0-9]+\\.[0-9]+'"
     task:
@@ -129,10 +134,12 @@ blocks:
             - >-
               for image in $DOCKER_PROD_IMAGE_NAME;
               do
-                docker manifest create $image:$GIT_COMMIT $image:$GIT_COMMIT$AMD_ARCH $image:$GIT_COMMIT$ARM_ARCH
-                docker manifest push $image:$GIT_COMMIT
-                docker manifest create $image:$BRANCH_TAG-$BUILD_NUMBER $image:$BRANCH_TAG-$BUILD_NUMBER$AMD_ARCH $image:$BRANCH_TAG-$BUILD_NUMBER$ARM_ARCH
-                docker manifest push $image:$BRANCH_TAG-$BUILD_NUMBER
+                export GIT_COMMIT_TAG=$GIT_COMMIT-ubi8
+                docker manifest create $image:$GIT_COMMIT_TAG $image:$GIT_COMMIT_TAG$AMD_ARCH $image:$GIT_COMMIT_TAG$ARM_ARCH
+                docker manifest push $image:$GIT_COMMIT_TAG
+                export BRANCH_BUILD_TAG=$BRANCH_TAG-$BUILD_NUMBER-deb8
+                docker manifest create $image:$BRANCH_BUILD_TAG $image:$BRANCH_BUILD_TAG$AMD_ARCH $image:$BRANCH_BUILD_TAG$ARM_ARCH
+                docker manifest push $image:$BRANCH_BUILD_TAG
               done
 after_pipeline:
   task:
