@@ -112,8 +112,8 @@ blocks:
         - name: Deploy ARM confluentinc/kafka-streams-examples ubi8
           commands:
             - export PROD_IMAGE_NAME=${DOCKER_PROD_REGISTRY}confluentinc/kafka-streams-examples
-            - export GIT_COMMIT_TAG=$GIT_COMMIT-ubi8$AMD_ARCH
-            - export BRANCH_BUILD_TAG=$BRANCH_TAG-$BUILD_NUMBER-ubi8$AMD_ARCH
+            - export GIT_COMMIT_TAG=$GIT_COMMIT-ubi8$ARM_ARCH
+            - export BRANCH_BUILD_TAG=$BRANCH_TAG-$BUILD_NUMBER-ubi8$ARM_ARCH
             - export DEV_IMAGE_FULL=${DOCKER_DEV_REGISTRY}confluentinc/kafka-streams-examples:$DOCKER_DEV_TAG-ubi8$ARM_ARCH
             - docker pull $DEV_IMAGE_FULL
             - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$GIT_COMMIT_TAG
@@ -137,7 +137,7 @@ blocks:
                 export GIT_COMMIT_TAG=$GIT_COMMIT-ubi8
                 docker manifest create $image:$GIT_COMMIT_TAG $image:$GIT_COMMIT_TAG$AMD_ARCH $image:$GIT_COMMIT_TAG$ARM_ARCH
                 docker manifest push $image:$GIT_COMMIT_TAG
-                export BRANCH_BUILD_TAG=$BRANCH_TAG-$BUILD_NUMBER-deb8
+                export BRANCH_BUILD_TAG=$BRANCH_TAG-$BUILD_NUMBER-ubi8
                 docker manifest create $image:$BRANCH_BUILD_TAG $image:$BRANCH_BUILD_TAG$AMD_ARCH $image:$BRANCH_BUILD_TAG$ARM_ARCH
                 docker manifest push $image:$BRANCH_BUILD_TAG
               done
