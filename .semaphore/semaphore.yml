@@ -52,13 +52,14 @@ blocks:
             - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY
               -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=dev-$BRANCH_TAG-$BUILD_NUMBER$AMD_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG -Darch.type=$AMD_ARCH
             - . cache-maven store
-            - . cve-scan "$AMD_DOCKER_DEV_FULL_IMAGES"
+            - cve-scan "$AMD_DOCKER_DEV_FULL_IMAGES"
             - for image in $AMD_DOCKER_DEV_FULL_IMAGES; do echo "Pushing $image" && docker push $image; done
       epilogue:
         always:
           commands:
             - . publish-test-results
             - artifact push workflow target/test-results
+            - artifact push workflow target --destination target-AMD
   - name: Deploy AMD confluentinc/kafka-streams-examples
     dependencies: ["Build, Test, & Scan AMD"]
     run:
@@ -97,6 +98,7 @@ blocks:
           commands:
             - . publish-test-results
             - artifact push workflow target/test-results
+            - artifact push workflow target --destination target-ARM
   - name: Deploy ARM confluentinc/kafka-streams-examples
     dependencies: ["Build & Test ARM"]
     run:
@@ -150,4 +152,6 @@ after_pipeline:
         commands:
           - checkout
           - sem-version java 11
-          - emit-sonarqube-data -a test-results
+          - artifact pull workflow target-AMD
+          - artifact pull workflow target-ARM
+          - emit-sonarqube-data --run_only_sonar_scan
