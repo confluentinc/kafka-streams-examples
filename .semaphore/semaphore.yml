@@ -32,7 +32,7 @@ global_job_config:
       - export DOCKER_DEV_REGISTRY="519856050701.dkr.ecr.us-west-2.amazonaws.com/docker/dev/"
       - export DOCKER_PROD_REGISTRY="519856050701.dkr.ecr.us-west-2.amazonaws.com/docker/prod/"
       - export DOCKER_UPSTREAM_REGISTRY=$DOCKER_PROD_REGISTRY
-      - export DOCKER_UPSTREAM_TAG=""
+      - export DOCKER_UPSTREAM_TAG="$BRANCH_TAG-latest"
       - export DOCKER_REPOS="confluentinc/kafka-streams-examples"
       - export DOCKER_DEV_TAG="dev-$BRANCH_TAG-$BUILD_NUMBER"
       - export AMD_ARCH=.amd64
@@ -51,7 +51,7 @@ blocks:
             - export DOCKER_DEV_FULL_IMAGES=$DOCKER_DEV_REGISTRY${DOCKER_REPOS// /:$DOCKER_DEV_TAG$OS_TAG $DOCKER_DEV_REGISTRY}:$DOCKER_DEV_TAG$OS_TAG
             - export AMD_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$AMD_ARCH }$AMD_ARCH
             - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY
-              -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$AMD_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG -Darch.type=$AMD_ARCH
+              -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$AMD_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$AMD_ARCH
             - . cache-maven store
             - cve-scan "$AMD_DOCKER_DEV_FULL_IMAGES"
             - for image in $AMD_DOCKER_DEV_FULL_IMAGES; do echo "Pushing $image" && docker push $image; done
@@ -95,7 +95,7 @@ blocks:
             - export DOCKER_DEV_FULL_IMAGES=$DOCKER_DEV_REGISTRY${DOCKER_REPOS// /:$DOCKER_DEV_TAG$OS_TAG $DOCKER_DEV_REGISTRY}:$DOCKER_DEV_TAG$OS_TAG
             - export ARM_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$ARM_ARCH }$ARM_ARCH
             - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY
-              -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$ARM_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG -Darch.type=$ARM_ARCH
+              -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$ARM_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$ARM_ARCH
             - . cache-maven store
             - for image in $ARM_DOCKER_DEV_FULL_IMAGES; do echo "Pushing $image" && docker push $image; done
       epilogue:
