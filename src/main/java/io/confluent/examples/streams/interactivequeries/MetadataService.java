@@ -19,14 +19,12 @@ import java.util.Collections;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyQueryMetadata;
-import org.apache.kafka.streams.state.StreamsMetadata;
+import org.apache.kafka.streams.StreamsMetadata;
 
 import javax.ws.rs.NotFoundException;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.apache.kafka.common.utils.Utils.mkSet;
 
 /**
  * Looks up StreamsMetadata from KafkaStreams and converts the results
@@ -46,7 +44,7 @@ public class MetadataService {
    */
   public List<HostStoreInfo> streamsMetadata() {
     // Get metadata for all of the instances of this Kafka Streams application
-    final Collection<StreamsMetadata> metadata = streams.allMetadata();
+    final Collection<StreamsMetadata> metadata = streams.metadataForAllStreamsClients();
     return mapInstancesToHostStoreInfo(metadata);
   }
 
@@ -58,7 +56,7 @@ public class MetadataService {
    */
   public List<HostStoreInfo> streamsMetadataForStore(final  String store) {
     // Get metadata for all of the instances of this Kafka Streams application hosting the store
-    final Collection<StreamsMetadata> metadata = streams.allMetadataForStore(store);
+    final Collection<StreamsMetadata> metadata = streams.streamsMetadataForStore(store);
     return mapInstancesToHostStoreInfo(metadata);
   }
 
