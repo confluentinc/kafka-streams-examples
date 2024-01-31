@@ -47,7 +47,7 @@ blocks:
       jobs:
         - name: Build, Test, & Scan
           commands:
-            - export OS_TAG=""
+            - export OS_TAG="-ubi8"
             - export DOCKER_DEV_FULL_IMAGES=$DOCKER_DEV_REGISTRY${DOCKER_REPOS// /:$DOCKER_DEV_TAG$OS_TAG $DOCKER_DEV_REGISTRY}:$DOCKER_DEV_TAG$OS_TAG
             - export AMD_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$AMD_ARCH }$AMD_ARCH
             - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY
@@ -69,7 +69,7 @@ blocks:
       jobs:
         - name: Deploy AMD confluentinc/kafka-streams-examples
           commands:
-            - export OS_TAG=""
+            - export OS_TAG="-ubi8"
             - export PROD_IMAGE_NAME=${DOCKER_PROD_REGISTRY}confluentinc/kafka-streams-examples
             - export GIT_COMMIT_TAG=$GIT_COMMIT$OS_TAG$AMD_ARCH
             - export BRANCH_BUILD_TAG=$BRANCH_TAG-$BUILD_NUMBER$OS_TAG$AMD_ARCH
@@ -91,7 +91,7 @@ blocks:
       jobs:
         - name: Build & Test
           commands:
-            - export OS_TAG=""
+            - export OS_TAG="-ubi8"
             - export DOCKER_DEV_FULL_IMAGES=$DOCKER_DEV_REGISTRY${DOCKER_REPOS// /:$DOCKER_DEV_TAG$OS_TAG $DOCKER_DEV_REGISTRY}:$DOCKER_DEV_TAG$OS_TAG
             - export ARM_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$ARM_ARCH }$ARM_ARCH
             - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY
@@ -115,7 +115,7 @@ blocks:
       jobs:
         - name: Deploy ARM confluentinc/kafka-streams-examples
           commands:
-            - export OS_TAG=""
+            - export OS_TAG="-ubi8"
             - export PROD_IMAGE_NAME=${DOCKER_PROD_REGISTRY}confluentinc/kafka-streams-examples
             - export GIT_COMMIT_TAG=$GIT_COMMIT$OS_TAG$ARM_ARCH
             - export BRANCH_BUILD_TAG=$BRANCH_TAG-$BUILD_NUMBER$OS_TAG$ARM_ARCH
@@ -140,7 +140,7 @@ blocks:
             - >-
               for image in $DOCKER_PROD_IMAGE_NAME;
               do
-                export OS_TAG=""
+                export OS_TAG="-ubi8"
                 export GIT_TAG=$GIT_COMMIT$OS_TAG
                 docker manifest create $image:$GIT_TAG $image:$GIT_TAG$AMD_ARCH $image:$GIT_TAG$ARM_ARCH
                 docker manifest push $image:$GIT_TAG
