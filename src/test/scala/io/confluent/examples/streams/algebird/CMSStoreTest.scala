@@ -15,8 +15,6 @@
  */
 package io.confluent.examples.streams.algebird
 
-import java.lang.Long
-
 import com.twitter.algebird.TopCMS
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.header.Headers
@@ -24,7 +22,7 @@ import org.apache.kafka.common.metrics.Metrics
 import org.apache.kafka.common.serialization.{Serdes, Serializer}
 import org.apache.kafka.common.utils.LogContext
 import org.apache.kafka.streams.processor.StateStoreContext
-import org.apache.kafka.streams.processor.internals.MockStreamsMetrics
+import org.apache.kafka.streams.processor.internals.{InternalProcessorContext, MockStreamsMetrics}
 import org.apache.kafka.streams.state.KeyValueStoreTestDriver
 import org.apache.kafka.streams.state.internals.ThreadCache
 import org.apache.kafka.test.{InternalMockProcessorContext, MockRecordCollector, TestUtils}
@@ -172,9 +170,11 @@ class CMSStoreTest extends AssertionsForJUnit with MockitoSugar {
                                 value: V,
                                 headers: Headers,
                                 partition: Integer,
-                                timestamp: Long,
+                                timestamp: java.lang.Long,
                                 keySerializer: Serializer[K],
-                                valueSerializer: Serializer[V]): Unit = {
+                                valueSerializer: Serializer[V],
+                                processorNodeId: String,
+                                internalContext: InternalProcessorContext[Void,Void]): Unit = {
           observedChangelogRecords.add(new ProducerRecord[K, V](topic, partition, timestamp, key, value))
         }
       }
