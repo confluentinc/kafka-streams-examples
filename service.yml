@@ -6,7 +6,7 @@ git:
 codeowners:
   enable: true
 semaphore:
-  enable: true
+  enable: false
   pipeline_type: cp-dockerfile
   docker_repos: ['confluentinc/kafka-streams-examples']
   maven_phase: 'package' # streams examples integration-test needs host-based networking, won't work in CI as-is
