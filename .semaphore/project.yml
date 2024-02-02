@@ -12,10 +12,11 @@ spec:
   visibility: private
   repository:
     url: git@github.com:confluentinc/kafka-streams-examples.git
-    run_on:
-    - branches
-    - tags
-    - pull_requests
+    run_on: []
+# DISABLE DUE TO KSTREAMS-5779
+#     - branches
+#     - tags
+#     - pull_requests
     pipeline_file: .semaphore/semaphore.yml
     integration_type: github_app
     status:
@@ -23,11 +24,12 @@ spec:
       - path: .semaphore/semaphore.yml
         level: pipeline
     whitelist:
-      branches:
-      - master
-      - main
-      - /^v\d+\.\d+\.x$/
-      - /^gh-readonly-queue.*/
+      branches: []
+# DISABLE DUE TO KSTREAMS-5779
+#      - master
+#      - main
+#      - /^v\d+\.\d+\.x$/
+#      - /^gh-readonly-queue.*/
   custom_permissions: true
   debug_permissions:
   - empty
