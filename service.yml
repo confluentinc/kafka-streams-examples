@@ -13,6 +13,8 @@ semaphore:
   maven_skip_deploy: true
   build_arm: true
   nano_version: true
+  branches: []
+  triggers: []
 
 # Properties not ported from Jenkinsfile:
 #
