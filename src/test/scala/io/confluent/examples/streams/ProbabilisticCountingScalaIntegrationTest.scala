@@ -17,9 +17,9 @@ package io.confluent.examples.streams
 
 import java.util
 import java.util.Properties
-
 import io.confluent.examples.streams.algebird.{CMSStoreBuilder, ProbabilisticCounter}
 import org.apache.kafka.common.serialization._
+import org.apache.kafka.streams.kstream.Named
 import org.apache.kafka.streams.scala.ImplicitConversions._
 import org.apache.kafka.streams.scala.serialization.Serdes._
 import org.apache.kafka.streams.scala.StreamsBuilder
@@ -105,7 +105,7 @@ class ProbabilisticCountingScalaIntegrationTest extends AssertionsForJUnit {
     val textLines: KStream[String, String] = builder.stream[String, String](inputTopic)
     val approximateWordCounts: KStream[String, Long] = textLines
       .flatMapValues(textLine => textLine.toLowerCase.split("\\W+"))
-      .transform(() => new ProbabilisticCounter(cmsStoreName), cmsStoreName)
+      .process(() => new ProbabilisticCounter(cmsStoreName), Named.as("cms-store"), cmsStoreName)
     approximateWordCounts.to(outputTopic)
     builder
   }
