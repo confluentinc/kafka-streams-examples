@@ -47,18 +47,20 @@ blocks:
       jobs:
         - name: Build, Test, & Scan
           commands:
-            - export DOCKER_DEV_FULL_IMAGES=$DOCKER_DEV_REGISTRY${DOCKER_REPOS// /:$DOCKER_DEV_TAG $DOCKER_DEV_REGISTRY}:$DOCKER_DEV_TAG
+            - export OS_TAG=""
+            - export DOCKER_DEV_FULL_IMAGES=$DOCKER_DEV_REGISTRY${DOCKER_REPOS// /:$DOCKER_DEV_TAG$OS_TAG $DOCKER_DEV_REGISTRY}:$DOCKER_DEV_TAG$OS_TAG
             - export AMD_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$AMD_ARCH }$AMD_ARCH
             - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY
-              -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=dev-$BRANCH_TAG-$BUILD_NUMBER$AMD_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG -Darch.type=$AMD_ARCH
+              -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$AMD_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$AMD_ARCH
             - . cache-maven store
-            - . cve-scan "$AMD_DOCKER_DEV_FULL_IMAGES"
+            - cve-scan "$AMD_DOCKER_DEV_FULL_IMAGES"
             - for image in $AMD_DOCKER_DEV_FULL_IMAGES; do echo "Pushing $image" && docker push $image; done
       epilogue:
         always:
           commands:
             - . publish-test-results
             - artifact push workflow target/test-results
+            - artifact push workflow target --destination target-AMD
   - name: Deploy AMD confluentinc/kafka-streams-examples
     dependencies: ["Build, Test, & Scan AMD"]
     run:
@@ -67,13 +69,16 @@ blocks:
       jobs:
         - name: Deploy AMD confluentinc/kafka-streams-examples
           commands:
+            - export OS_TAG=""
             - export PROD_IMAGE_NAME=${DOCKER_PROD_REGISTRY}confluentinc/kafka-streams-examples
-            - export DEV_IMAGE_FULL=${DOCKER_DEV_REGISTRY}confluentinc/kafka-streams-examples:$DOCKER_DEV_TAG$AMD_ARCH
+            - export GIT_COMMIT_TAG=$GIT_COMMIT$OS_TAG$AMD_ARCH
+            - export BRANCH_BUILD_TAG=$BRANCH_TAG-$BUILD_NUMBER$OS_TAG$AMD_ARCH
+            - export DEV_IMAGE_FULL=${DOCKER_DEV_REGISTRY}confluentinc/kafka-streams-examples:$DOCKER_DEV_TAG$OS_TAG$AMD_ARCH
             - docker pull $DEV_IMAGE_FULL
-            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$GIT_COMMIT$AMD_ARCH
-            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$BRANCH_TAG-$BUILD_NUMBER$AMD_ARCH
-            - docker push $PROD_IMAGE_NAME:$GIT_COMMIT$AMD_ARCH
-            - docker push $PROD_IMAGE_NAME:$BRANCH_TAG-$BUILD_NUMBER$AMD_ARCH
+            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$GIT_COMMIT_TAG
+            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$BRANCH_BUILD_TAG
+            - docker push $PROD_IMAGE_NAME:$GIT_COMMIT_TAG
+            - docker push $PROD_IMAGE_NAME:$BRANCH_BUILD_TAG
   - name: Build & Test ARM
     dependencies: []
     run:
@@ -86,10 +91,11 @@ blocks:
       jobs:
         - name: Build & Test
           commands:
-            - export DOCKER_DEV_FULL_IMAGES=$DOCKER_DEV_REGISTRY${DOCKER_REPOS// /:$DOCKER_DEV_TAG $DOCKER_DEV_REGISTRY}:$DOCKER_DEV_TAG
+            - export OS_TAG=""
+            - export DOCKER_DEV_FULL_IMAGES=$DOCKER_DEV_REGISTRY${DOCKER_REPOS// /:$DOCKER_DEV_TAG$OS_TAG $DOCKER_DEV_REGISTRY}:$DOCKER_DEV_TAG$OS_TAG
             - export ARM_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$ARM_ARCH }$ARM_ARCH
-            - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -DBUILD_NUMBER=$BUILD_NUMBER
-              -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=dev-$BRANCH_TAG-$BUILD_NUMBER$ARM_ARCH  -Darch.type=$ARM_ARCH
+            - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY
+              -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$ARM_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$ARM_ARCH
             - . cache-maven store
             - for image in $ARM_DOCKER_DEV_FULL_IMAGES; do echo "Pushing $image" && docker push $image; done
       epilogue:
@@ -97,6 +103,7 @@ blocks:
           commands:
             - . publish-test-results
             - artifact push workflow target/test-results
+            - artifact push workflow target --destination target-ARM
   - name: Deploy ARM confluentinc/kafka-streams-examples
     dependencies: ["Build & Test ARM"]
     run:
@@ -108,13 +115,16 @@ blocks:
       jobs:
         - name: Deploy ARM confluentinc/kafka-streams-examples
           commands:
+            - export OS_TAG=""
             - export PROD_IMAGE_NAME=${DOCKER_PROD_REGISTRY}confluentinc/kafka-streams-examples
-            - export DEV_IMAGE_FULL=${DOCKER_DEV_REGISTRY}confluentinc/kafka-streams-examples:$DOCKER_DEV_TAG$ARM_ARCH
+            - export GIT_COMMIT_TAG=$GIT_COMMIT$OS_TAG$ARM_ARCH
+            - export BRANCH_BUILD_TAG=$BRANCH_TAG-$BUILD_NUMBER$OS_TAG$ARM_ARCH
+            - export DEV_IMAGE_FULL=${DOCKER_DEV_REGISTRY}confluentinc/kafka-streams-examples:$DOCKER_DEV_TAG$OS_TAG$ARM_ARCH
             - docker pull $DEV_IMAGE_FULL
-            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$GIT_COMMIT$ARM_ARCH
-            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$BRANCH_TAG-$BUILD_NUMBER$ARM_ARCH
-            - docker push $PROD_IMAGE_NAME:$GIT_COMMIT$ARM_ARCH
-            - docker push $PROD_IMAGE_NAME:$BRANCH_TAG-$BUILD_NUMBER$ARM_ARCH
+            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$GIT_COMMIT_TAG
+            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$BRANCH_BUILD_TAG
+            - docker push $PROD_IMAGE_NAME:$GIT_COMMIT_TAG
+            - docker push $PROD_IMAGE_NAME:$BRANCH_BUILD_TAG
   - name: Create Manifest and Maven Deploy
     dependencies: ["Deploy AMD confluentinc/kafka-streams-examples", "Deploy ARM confluentinc/kafka-streams-examples"]
     run:
@@ -125,14 +135,18 @@ blocks:
           commands:
             - export DOCKER_PROD_IMAGE_NAME=$DOCKER_PROD_REGISTRY${DOCKER_REPOS// / $DOCKER_PROD_REGISTRY}
             - echo "Skipping Maven Deploy"
+            - . ci-tools ci-update-version
             # Create manifest
             - >-
               for image in $DOCKER_PROD_IMAGE_NAME;
               do
-                docker manifest create $image:$GIT_COMMIT $image:$GIT_COMMIT$AMD_ARCH $image:$GIT_COMMIT$ARM_ARCH
-                docker manifest push $image:$GIT_COMMIT
-                docker manifest create $image:$BRANCH_TAG-$BUILD_NUMBER $image:$BRANCH_TAG-$BUILD_NUMBER$AMD_ARCH $image:$BRANCH_TAG-$BUILD_NUMBER$ARM_ARCH
-                docker manifest push $image:$BRANCH_TAG-$BUILD_NUMBER
+                export OS_TAG=""
+                export GIT_TAG=$GIT_COMMIT$OS_TAG
+                docker manifest create $image:$GIT_TAG $image:$GIT_TAG$AMD_ARCH $image:$GIT_TAG$ARM_ARCH
+                docker manifest push $image:$GIT_TAG
+                export BRANCH_BUILD_TAG=$BRANCH_TAG-$BUILD_NUMBER$OS_TAG
+                docker manifest create $image:$BRANCH_BUILD_TAG $image:$BRANCH_BUILD_TAG$AMD_ARCH $image:$BRANCH_BUILD_TAG$ARM_ARCH
+                docker manifest push $image:$BRANCH_BUILD_TAG
               done
 after_pipeline:
   task:
@@ -150,4 +164,6 @@ after_pipeline:
         commands:
           - checkout
           - sem-version java 11
-          - emit-sonarqube-data -a test-results
+          - artifact pull workflow target-AMD
+          - artifact pull workflow target-ARM
+          - emit-sonarqube-data --run_only_sonar_scan
