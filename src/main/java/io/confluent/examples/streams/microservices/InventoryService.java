@@ -19,8 +19,9 @@ import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.Transformer;
-import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Processor;
+import org.apache.kafka.streams.processor.api.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
@@ -119,7 +120,7 @@ public class InventoryService implements Service {
       .join(warehouseInventory, KeyValue::new, Joined.with(Topics.WAREHOUSE_INVENTORY.keySerde(),
         Topics.ORDERS.valueSerde(), Serdes.Integer()))
       //Validate the order based on how much stock we have both in the warehouse and locally 'reserved' stock
-      .transform(InventoryValidator::new, RESERVED_STOCK_STORE_NAME)
+      .process(InventoryValidator::new, RESERVED_STOCK_STORE_NAME)
       //Push the result into the Order Validations topic
       .to(Topics.ORDER_VALIDATIONS.name(), Produced.with(Topics.ORDER_VALIDATIONS.keySerde(),
         Topics.ORDER_VALIDATIONS.valueSerde()));
@@ -129,22 +130,23 @@ public class InventoryService implements Service {
   }
 
   private static class InventoryValidator implements
-    Transformer<Product, KeyValue<Order, Integer>, KeyValue<String, OrderValidation>> {
+          Processor<Product, KeyValue<Order, Integer>, String, OrderValidation> {
 
+    private ProcessorContext<String, OrderValidation> context;
     private KeyValueStore<Product, Long> reservedStocksStore;
 
     @Override
-    public void init(final ProcessorContext context) {
+    public void init(final ProcessorContext<String, OrderValidation> context) {
+      this.context = context;
       reservedStocksStore = context.getStateStore(RESERVED_STOCK_STORE_NAME);
     }
 
     @Override
-    public KeyValue<String, OrderValidation> transform(final Product productId,
-                                                       final KeyValue<Order, Integer> orderAndStock) {
+    public void process(final Record<Product, KeyValue<Order, Integer>> record) {
       //Process each order/inventory pair one at a time
       final OrderValidation validated;
-      final Order order = orderAndStock.key;
-      final Integer warehouseStockCount = orderAndStock.value;
+      final Order order = record.value().key;
+      final Integer warehouseStockCount = record.value().value;
 
       //Look up locally 'reserved' stock from our state store
       Long reserved = reservedStocksStore.get(order.getProduct());
@@ -162,11 +164,7 @@ public class InventoryService implements Service {
         //fail the order
         validated = new OrderValidation(order.getId(), INVENTORY_CHECK, FAIL);
       }
-      return KeyValue.pair(validated.getOrderId(), validated);
-    }
-
-    @Override
-    public void close() {
+      context.forward(record.withKey(validated.getOrderId()).withValue(validated));
     }
   }
 

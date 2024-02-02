@@ -194,7 +194,7 @@ class CMSStore[T: CMSHasher](override val name: String,
       name,
       Serdes.Integer(),
       TopCMSSerde[T])
-    changeLogger = new CMSStoreChangeLogger[Integer, TopCMS[T]](name, context, serdes)
+    changeLogger = new CMSStoreChangeLogger[Integer, TopCMS[T]](name, context, serdes, name)
 
     // Note: We must manually guard with `loggingEnabled` here because `context.register()` ignores
     // that parameter.
