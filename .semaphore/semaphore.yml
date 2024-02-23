@@ -45,15 +45,19 @@ blocks:
       when: "change_in('/', {exclude: ['/.deployed-versions/', '.github/']})"
     task:
       jobs:
-        - name: Build, Test, & Scan
+        - name: Build, Test, & Scan ubi8
           commands:
-            - export OS_TAG=""
+            - export OS_TAG="-ubi8"
             - export DOCKER_DEV_FULL_IMAGES=$DOCKER_DEV_REGISTRY${DOCKER_REPOS// /:$DOCKER_DEV_TAG$OS_TAG $DOCKER_DEV_REGISTRY}:$DOCKER_DEV_TAG$OS_TAG
             - export AMD_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$AMD_ARCH }$AMD_ARCH
             - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY
-              -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$AMD_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$AMD_ARCH
+              -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$AMD_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$AMD_ARCH -Ddocker.os_type=ubi8
             - . cache-maven store
-            - cve-scan "$AMD_DOCKER_DEV_FULL_IMAGES"
+            - >-
+              for dev_image in $AMD_DOCKER_DEV_FULL_IMAGES;
+              do
+                cve-scan $dev_image
+              done
             - for image in $AMD_DOCKER_DEV_FULL_IMAGES; do echo "Pushing $image" && docker push $image; done
       epilogue:
         always:
@@ -67,9 +71,9 @@ blocks:
       when: "branch = 'master' or branch =~ '[0-9]+\\.[0-9]+\\.[0-9]+'"
     task:
       jobs:
-        - name: Deploy AMD confluentinc/kafka-streams-examples
+        - name: Deploy AMD confluentinc/kafka-streams-examples ubi8
           commands:
-            - export OS_TAG=""
+            - export OS_TAG="-ubi8"
             - export PROD_IMAGE_NAME=${DOCKER_PROD_REGISTRY}confluentinc/kafka-streams-examples
             - export GIT_COMMIT_TAG=$GIT_COMMIT$OS_TAG$AMD_ARCH
             - export BRANCH_BUILD_TAG=$BRANCH_TAG-$BUILD_NUMBER$OS_TAG$AMD_ARCH
@@ -89,13 +93,13 @@ blocks:
         machine:
           type: s1-prod-ubuntu20-04-arm64-1
       jobs:
-        - name: Build & Test
+        - name: Build & Test ubi8
           commands:
-            - export OS_TAG=""
+            - export OS_TAG="-ubi8"
             - export DOCKER_DEV_FULL_IMAGES=$DOCKER_DEV_REGISTRY${DOCKER_REPOS// /:$DOCKER_DEV_TAG$OS_TAG $DOCKER_DEV_REGISTRY}:$DOCKER_DEV_TAG$OS_TAG
             - export ARM_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$ARM_ARCH }$ARM_ARCH
             - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY
-              -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$ARM_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$ARM_ARCH
+              -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$ARM_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$ARM_ARCH -Ddocker.os_type=ubi8
             - . cache-maven store
             - for image in $ARM_DOCKER_DEV_FULL_IMAGES; do echo "Pushing $image" && docker push $image; done
       epilogue:
@@ -113,9 +117,9 @@ blocks:
         machine:
           type: s1-prod-ubuntu20-04-arm64-1
       jobs:
-        - name: Deploy ARM confluentinc/kafka-streams-examples
+        - name: Deploy ARM confluentinc/kafka-streams-examples ubi8
           commands:
-            - export OS_TAG=""
+            - export OS_TAG="-ubi8"
             - export PROD_IMAGE_NAME=${DOCKER_PROD_REGISTRY}confluentinc/kafka-streams-examples
             - export GIT_COMMIT_TAG=$GIT_COMMIT$OS_TAG$ARM_ARCH
             - export BRANCH_BUILD_TAG=$BRANCH_TAG-$BUILD_NUMBER$OS_TAG$ARM_ARCH
@@ -140,7 +144,7 @@ blocks:
             - >-
               for image in $DOCKER_PROD_IMAGE_NAME;
               do
-                export OS_TAG=""
+                export OS_TAG="-ubi8"
                 export GIT_TAG=$GIT_COMMIT$OS_TAG
                 docker manifest create $image:$GIT_TAG $image:$GIT_TAG$AMD_ARCH $image:$GIT_TAG$ARM_ARCH
                 docker manifest push $image:$GIT_TAG
