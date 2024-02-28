@@ -29,6 +29,9 @@ global_job_config:
       - export GIT_COMMIT=$(git rev-parse --verify HEAD --short)
       - export BUILD_NUMBER=$(echo $SEMAPHORE_WORKFLOW_ID | cut -f1 -d"-")
       - export BRANCH_TAG=$(echo $SEMAPHORE_GIT_BRANCH | tr / -)
+      - echo $BRANCH_TAG
+      - echo $SEMAPHORE_GIT_BRANCH
+      - echo $SEMAPHORE_GIT_WORKING_BRANCH
       - export DOCKER_DEV_REGISTRY="519856050701.dkr.ecr.us-west-2.amazonaws.com/docker/dev/"
       - export DOCKER_PROD_REGISTRY="519856050701.dkr.ecr.us-west-2.amazonaws.com/docker/prod/"
       - export DOCKER_UPSTREAM_REGISTRY=$DOCKER_PROD_REGISTRY
