@@ -26,6 +26,8 @@ global_job_config:
       - checkout
       - sem-version java 8
       - . cache-maven restore
+      - echo $SEMAPHORE_GIT_BRANCH
+      - echo $SEMAPHORE_GIT_WORKING_BRANCH
       - export GIT_COMMIT=$(git rev-parse --verify HEAD --short)
       - export BUILD_NUMBER=$(echo $SEMAPHORE_WORKFLOW_ID | cut -f1 -d"-")
       - export BRANCH_TAG=$(echo $SEMAPHORE_GIT_BRANCH | tr / -)
