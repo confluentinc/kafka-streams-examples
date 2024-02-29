@@ -18,7 +18,6 @@ package io.confluent.examples.streams;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.TestInputTopic;
@@ -26,8 +25,9 @@ import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
-import org.apache.kafka.streams.kstream.Transformer;
-import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Processor;
+import org.apache.kafka.streams.processor.api.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.apache.kafka.streams.state.WindowStore;
@@ -48,7 +48,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * End-to-end integration test that demonstrates how to remove duplicate records from an input
  * stream.
  * <p>
- * Here, a stateful {@link org.apache.kafka.streams.kstream.Transformer} (from the Processor API)
+ * Here, a stateful {@link org.apache.kafka.streams.processor.api.Processor} (from the Processor API)
  * detects and discards duplicate input records based on an "event id" that is embedded in each
  * input record.  This transformer is then included in a topology defined via the DSL.
  * <p>
@@ -81,9 +81,9 @@ public class EventDeduplicationLambdaIntegrationTest {
    * <p>
    * Note: This code is for demonstration purposes and was not tested for production usage.
    */
-  private static class DeduplicationTransformer<K, V, E> implements Transformer<K, V, KeyValue<K, V>> {
+  private static class DeduplicationTransformer<K, V, E> implements Processor<K, V, K, V> {
 
-    private ProcessorContext context;
+    private ProcessorContext<K, V> context;
 
     /**
      * Key: event ID
@@ -116,31 +116,28 @@ public class EventDeduplicationLambdaIntegrationTest {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public void init(final ProcessorContext context) {
+    public void init(final ProcessorContext<K, V> context) {
       this.context = context;
-      eventIdStore = (WindowStore<E, Long>) context.getStateStore(storeName);
+      eventIdStore =  context.getStateStore(storeName);
     }
 
-    public KeyValue<K, V> transform(final K key, final V value) {
-      final E eventId = idExtractor.apply(key, value);
+    @Override
+    public void process(final Record<K, V> record) {
+      final E eventId = idExtractor.apply(record.key(), record.value());
       if (eventId == null) {
-        return KeyValue.pair(key, value);
+        context.forward(record);
       } else {
-        final KeyValue<K, V> output;
-        if (isDuplicate(eventId)) {
-          output = null;
-          updateTimestampOfExistingEventToPreventExpiry(eventId, context.timestamp());
+        if (isDuplicate(eventId, record.timestamp())) {
+          updateTimestampOfExistingEventToPreventExpiry(eventId, record.timestamp());
+          // don't forward anything
         } else {
-          output = KeyValue.pair(key, value);
-          rememberNewEvent(eventId, context.timestamp());
+          rememberNewEvent(eventId, record.timestamp());
+          context.forward(record);
         }
-        return output;
       }
     }
 
-    private boolean isDuplicate(final E eventId) {
-      final long eventTime = context.timestamp();
+    private boolean isDuplicate(final E eventId, final long eventTime) {
       final WindowStoreIterator<Long> timeIterator = eventIdStore.fetch(
         eventId,
         eventTime - leftDurationMs,
@@ -156,12 +153,6 @@ public class EventDeduplicationLambdaIntegrationTest {
 
     private void rememberNewEvent(final E eventId, final long timestamp) {
       eventIdStore.put(eventId, timestamp, timestamp);
-    }
-
-    @Override
-    public void close() {
-      // Note: The store should NOT be closed manually here via `eventIdStore.close()`!
-      // The Kafka Streams API will automatically close stores when necessary.
     }
 
   }
@@ -183,8 +174,8 @@ public class EventDeduplicationLambdaIntegrationTest {
     final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "deduplication-lambda-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config");
-    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray().getClass().getName());
-    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArraySerde.class);
+    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
@@ -215,7 +206,7 @@ public class EventDeduplicationLambdaIntegrationTest {
     final String outputTopic = "outputTopic";
 
     final KStream<byte[], String> stream = builder.stream(inputTopic);
-    final KStream<byte[], String> deduplicated = stream.transform(
+    final KStream<byte[], String> deduplicated = stream.process(
         // In this example, we assume that the record value as-is represents a unique event ID by
         // which we can perform de-duplication.  If your records are different, adapt the extractor
         // function as needed.
