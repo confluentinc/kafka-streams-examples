@@ -1,2 +1,2 @@
 # See go/codeowners - automatically generated for confluentinc/kafka-streams-examples:
-*	@confluentinc/ksql
+*	@confluentinc/streams
