@@ -1,2 +1,2 @@
-# See go/codeowners - automatically generated for confluentinc/kafka-streams-examples:
-*	@confluentinc/streams
+# assign ksql team as reviewers for all PRs:
+*       @confluentinc/streams
