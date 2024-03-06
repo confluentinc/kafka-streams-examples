@@ -134,6 +134,7 @@ public class StreamToStreamJoinIntegrationTest {
       impressionInput.pipeKeyValueList(inputAdImpressions);
       clickInput.pipeKeyValueList(inputAdClicks);
       // Flush result
+      topologyTestDriver.advanceWallClockTime(Duration.ofSeconds(1L));
       impressionInput.pipeInput("dummy", "dummy", currentMs + windowSize.toMillis() * 3);
 
       //
