@@ -42,7 +42,7 @@ import java.util.stream.IntStream;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-7.0.14-0-standalone.jar io.confluent.examples.streams.SumLambdaExampleDriver
+ * $ java -cp target/kafka-streams-examples-7.0.14-standalone.jar io.confluent.examples.streams.SumLambdaExampleDriver
  * }
  * </pre>
  * You should terminate with {@code Ctrl-C}.
