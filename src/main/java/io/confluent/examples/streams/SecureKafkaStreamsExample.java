@@ -100,7 +100,7 @@ import java.util.Properties;
  * [vagrant@kafka ~]$ mvn clean -DskipTests=true package
  *
  * # Now we can start this example application
- * [vagrant@kafka ~]$ java -cp target/kafka-streams-examples-6.0.1-standalone.jar \
+ * [vagrant@kafka ~]$ java -cp target/kafka-streams-examples-6.0.1-cp4-standalone.jar \
  *                             io.confluent.examples.streams.SecureKafkaStreamsExample
  * }
  * </pre>

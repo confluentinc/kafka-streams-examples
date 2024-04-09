@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>rest-utils-parent</artifactId>
-        <version>6.0.1</version>
+        <version>6.0.1-cp4</version>
     </parent>
 
     <artifactId>kafka-streams-examples</artifactId>
@@ -54,7 +54,7 @@
         <docker.skip-build>false</docker.skip-build>
         <docker.skip-test>false</docker.skip-test>
         <java.version>1.8</java.version>
-        <licenses.version>6.0.1</licenses.version>
+        <licenses.version>6.0.1-cp4</licenses.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kafka.scala.version>2.13</kafka.scala.version>
         <scala.version>2.13.2</scala.version>
