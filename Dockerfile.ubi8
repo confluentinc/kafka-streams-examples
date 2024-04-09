@@ -56,8 +56,8 @@ EXPOSE $KAFKA_MUSIC_APP_REST_PORT
 # base image that supports it
 ENV LANG="C.UTF-8"
 
-ADD --chown=appuser:appuser target/${ARTIFACT_ID}-${STREAMS_VERSION}-standalone.jar /usr/share/java/${ARTIFACT_ID}/${ARTIFACT_ID}-${STREAMS_VERSION}-standalone.jar
-ADD --chown=appuser:appuser target/${ARTIFACT_ID}-${STREAMS_VERSION}-package/share/doc/* /usr/share/doc/${ARTIFACT_ID}/
+COPY --chown=appuser:appuser target/${ARTIFACT_ID}-${STREAMS_VERSION}-standalone.jar /usr/share/java/${ARTIFACT_ID}/${ARTIFACT_ID}-${STREAMS_VERSION}-standalone.jar
+COPY --chown=appuser:appuser target/${ARTIFACT_ID}-${STREAMS_VERSION}-package/share/doc/* /usr/share/doc/${ARTIFACT_ID}/
 
 COPY --chown=appuser:appuser include/etc/confluent/docker /etc/confluent/docker
 

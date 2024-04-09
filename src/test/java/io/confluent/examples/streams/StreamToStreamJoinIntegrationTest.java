@@ -31,6 +31,7 @@ import org.apache.kafka.test.TestUtils;
 import org.junit.Test;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -41,13 +42,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 /**
  * End-to-end integration test that demonstrates how to perform a join between two KStreams.
  *
- * Note: This example uses lambda expressions and thus works with Java 8+ only.
+ * <p>Note: This example uses lambda expressions and thus works with Java 8+ only.
  */
 public class StreamToStreamJoinIntegrationTest {
 
   private static final String adImpressionsTopic = "adImpressions";
   private static final String adClicksTopic = "adClicks";
   private static final String outputTopic = "output-topic";
+  private static final Duration windowSize = Duration.ofSeconds(5L);
 
   @Test
   public void shouldJoinTwoStreams() {
@@ -66,12 +68,10 @@ public class StreamToStreamJoinIntegrationTest {
     );
 
     final List<KeyValue<String, String>> expectedResults = Arrays.asList(
-      new KeyValue<>("car-advertisement", "shown/not-clicked-yet"),
-      new KeyValue<>("newspaper-advertisement", "shown/not-clicked-yet"),
-      new KeyValue<>("gadget-advertisement", "shown/not-clicked-yet"),
       new KeyValue<>("newspaper-advertisement", "shown/clicked"),
       new KeyValue<>("gadget-advertisement", "shown/clicked"),
-      new KeyValue<>("newspaper-advertisement", "shown/clicked")
+      new KeyValue<>("newspaper-advertisement", "shown/clicked"),
+      new KeyValue<>("car-advertisement", "shown/not-clicked-yet")
     );
 
     //
@@ -80,8 +80,8 @@ public class StreamToStreamJoinIntegrationTest {
     final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "stream-stream-join-lambda-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config");
-    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
+    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
 
@@ -98,7 +98,7 @@ public class StreamToStreamJoinIntegrationTest {
       (impressionValue, clickValue) ->
         (clickValue == null)? impressionValue + "/not-clicked-yet": impressionValue + "/" + clickValue,
       // KStream-KStream joins are always windowed joins, hence we must provide a join window.
-      JoinWindows.of(Duration.ofSeconds(5)),
+      JoinWindows.ofTimeDifferenceWithNoGrace(windowSize),
       // In this specific example, we don't need to define join serdes explicitly because the key, left value, and
       // right value are all of type String, which matches our default serdes configured for the application.  However,
       // we want to showcase the use of `StreamJoined.with(...)` in case your code needs a different type setup.
@@ -112,7 +112,8 @@ public class StreamToStreamJoinIntegrationTest {
     // Write the results to the output topic.
     impressionsAndClicks.to(outputTopic);
 
-    try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {
+    final long currentMs = System.currentTimeMillis();
+    try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration, Instant.ofEpochMilli(currentMs))) {
       //
       // Step 2: Setup input and output topics.
       //
@@ -132,6 +133,9 @@ public class StreamToStreamJoinIntegrationTest {
       //
       impressionInput.pipeKeyValueList(inputAdImpressions);
       clickInput.pipeKeyValueList(inputAdClicks);
+      // Flush result
+      topologyTestDriver.advanceWallClockTime(Duration.ofSeconds(1L));
+      impressionInput.pipeInput("dummy", "dummy", currentMs + windowSize.toMillis() * 3);
 
       //
       // Step 4: Verify the application's output data.
