@@ -27,12 +27,12 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.LongSerializer;
-import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.state.HostInfo;
+import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
-import org.apache.kafka.streams.state.StreamsMetadata;
 import org.apache.kafka.test.TestUtils;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -129,7 +129,7 @@ public class KafkaMusicExampleTest {
     songSerializer.configure(serdeConfig, false);
 
     final KafkaProducer<String, PlayEvent> playEventProducer = new KafkaProducer<>(props,
-        Serdes.String().serializer(),
+        new StringSerializer(),
         playEventSerializer);
 
     final KafkaProducer<Long, Song> songProducer = new KafkaProducer<>(props,
@@ -230,7 +230,7 @@ public class KafkaMusicExampleTest {
       // wait until the StreamsMetadata is available as this indicates that
       // KafkaStreams initialization has occurred
       TestUtils.waitForCondition(
-        () -> !StreamsMetadata.NOT_AVAILABLE.equals(streams.allMetadataForStore(KafkaMusicExample.TOP_FIVE_SONGS_STORE)),
+        () -> !streams.streamsMetadataForStore(KafkaMusicExample.TOP_FIVE_SONGS_STORE).isEmpty(),
         MAX_WAIT_MS,
         "StreamsMetadata should be available");
       final String baseUrl = "http://" + host + ":" + appServerPort + "/kafka-music";
@@ -241,7 +241,9 @@ public class KafkaMusicExampleTest {
         final ReadOnlyKeyValueStore<Long, Song> songsStore;
         try {
           songsStore = streams.store(fromNameAndType(KafkaMusicExample.ALL_SONGS, QueryableStoreTypes.keyValueStore()));
-          return songsStore.all().hasNext();
+          try (final KeyValueIterator<Long, Song> it = songsStore.all()) {
+            return it.hasNext();
+          }
         } catch (final Exception e) {
           e.printStackTrace();
           return false;
