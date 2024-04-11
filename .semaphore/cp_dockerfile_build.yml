@@ -1,0 +1,199 @@
+# This file is managed by ServiceBot plugin - Semaphore. The content in this file is created using a common
+# template and configurations in service.yml.
+# Any modifications made to ths file will be overwritten by the generated content in nightly runs.
+# For more information, please refer to the page:
+# https://confluentinc.atlassian.net/wiki/spaces/Foundations/pages/2871296194/Add+SemaphoreCI
+version: v1.0
+name: build-test-release
+agent:
+  machine:
+    type: s1-prod-ubuntu20-04-amd64-1
+
+fail_fast:
+  cancel:
+    when: "true"
+
+execution_time_limit:
+  hours: 1
+
+queue:
+  - when: "branch != 'master' and branch !~ '[0-9]+\\.[0-9]+\\.[0-9]+'"
+    processing: parallel
+
+global_job_config:
+  prologue:
+    commands:
+      - checkout
+      - sem-version java 8
+      - . cache-maven restore
+      - export GIT_COMMIT=$(git rev-parse --verify HEAD --short)
+      - export BUILD_NUMBER=$(echo $SEMAPHORE_WORKFLOW_ID | cut -f1 -d"-")
+      - export BRANCH_TAG=$(echo $SEMAPHORE_GIT_BRANCH | tr / -)
+      # Semaphore does not accept empty values for parameters.
+      - if [[ "$PACKAGES_MAVEN_URL" = "NONE" ]]; then unset PACKAGES_MAVEN_URL; fi
+      - if [[ "$PACKAGING_BUILD_NUMBER" = "NONE" ]]; then unset PACKAGING_BUILD_NUMBER; fi
+      - export ALLOW_UNSIGNED=$(echo $ALLOW_UNSIGNED | awk '{ print tolower($0) }')
+      - >-
+        echo """
+        Parameters:
+        ==========================
+        CONFLUENT_VERSION: $CONFLUENT_VERSION
+        PACKAGES_URL: $PACKAGES_URL
+        PACKAGES_MAVEN_URL: $PACKAGES_MAVEN_URL
+        PACKAGING_BUILD_NUMBER: $PACKAGING_BUILD_NUMBER
+        ALLOW_UNSIGNED: $ALLOW_UNSIGNED
+        CONFLUENT_DEB_VERSION: $CONFLUENT_DEB_VERSION
+        """
+      - if [[ $BRANCH_TAG =~ "-rc" ]]; then export IS_RC="true"; fi
+      - if [[ $BRANCH_TAG =~ "-cp" ]]; then export IS_HOTFIX="true"; fi
+      - if [[ $BRANCH_TAG =~ "-post" ]]; then export IS_POST="true"; fi
+      - if [[ $BRANCH_TAG =~ "-beta" ]]; then export IS_BETA="true"; fi
+      - if [[ $BRANCH_TAG =~ "-alpha" ]]; then export IS_PREVIEW="true"; fi
+      - if [[ $IS_RC || $IS_HOTFIX || $IS_POST || $IS_BETA || $IS_PREVIEW ]]; then export IS_RELEASE="true"; fi
+
+      - export DOCKER_DEV_REGISTRY="519856050701.dkr.ecr.us-west-2.amazonaws.com/docker/dev/"
+      - export DOCKER_PROD_REGISTRY="519856050701.dkr.ecr.us-west-2.amazonaws.com/docker/prod/"
+      - export DOCKER_UPSTREAM_REGISTRY=$DOCKER_PROD_REGISTRY
+      - export LATEST_TAG=$BRANCH_TAG-latest
+      - export DOCKER_UPSTREAM_TAG="$LATEST_TAG"
+      - export DOCKER_REPOS="confluentinc/kafka-streams-examples"
+      - export DOCKER_DEV_TAG="dev-$BRANCH_TAG-$BUILD_NUMBER"
+      - export AMD_ARCH=.amd64
+      - export ARM_ARCH=.arm64
+blocks:
+  - name: Build, Test, & Scan AMD
+    dependencies: []
+    run:
+      # don't run the tests on non-functional changes...
+      when: "change_in('/', {exclude: ['/.deployed-versions/', '.github/']})"
+    task:
+      jobs:
+        - name: Build, Test, & Scan ubi8
+          commands:
+            - export OS_TAG="-ubi8"
+            - export DOCKER_DEV_FULL_IMAGES=$DOCKER_DEV_REGISTRY${DOCKER_REPOS// /:$DOCKER_DEV_TAG$OS_TAG $DOCKER_DEV_REGISTRY}:$DOCKER_DEV_TAG$OS_TAG
+            - export AMD_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$AMD_ARCH }$AMD_ARCH
+            - ci-tools ci-update-version
+            - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY
+              -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$AMD_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$AMD_ARCH -Ddocker.os_type=ubi8
+            - . cache-maven store
+            - >-
+              for dev_image in $AMD_DOCKER_DEV_FULL_IMAGES;
+              do
+                cve-scan $dev_image
+              done
+            - for image in $AMD_DOCKER_DEV_FULL_IMAGES; do echo "Pushing $image" && docker push $image; done
+      epilogue:
+        always:
+          commands:
+            - . publish-test-results
+            - artifact push workflow target/test-results
+            - artifact push workflow target --destination target-AMD
+  - name: Deploy AMD confluentinc/kafka-streams-examples
+    dependencies: ["Build, Test, & Scan AMD"]
+    run:
+      when: "branch = 'master' or branch =~ '[0-9]+\\.[0-9]+\\.[0-9]+'"
+    task:
+      jobs:
+        - name: Deploy AMD confluentinc/kafka-streams-examples ubi8
+          commands:
+            - export OS_TAG="-ubi8"
+            - export PROD_IMAGE_NAME=${DOCKER_PROD_REGISTRY}confluentinc/kafka-streams-examples
+            - export GIT_COMMIT_TAG=$GIT_COMMIT$OS_TAG$AMD_ARCH
+            - export BRANCH_BUILD_TAG=$BRANCH_TAG-$BUILD_NUMBER$OS_TAG$AMD_ARCH
+            - export DEV_IMAGE_FULL=${DOCKER_DEV_REGISTRY}confluentinc/kafka-streams-examples:$DOCKER_DEV_TAG$OS_TAG$AMD_ARCH
+            - docker pull $DEV_IMAGE_FULL
+            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$GIT_COMMIT_TAG
+            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$BRANCH_BUILD_TAG
+            - docker push $PROD_IMAGE_NAME:$GIT_COMMIT_TAG
+            - docker push $PROD_IMAGE_NAME:$BRANCH_BUILD_TAG
+  - name: Build & Test ARM
+    dependencies: []
+    run:
+      # don't run the tests on non-functional changes...
+      when: "change_in('/', {exclude: ['/.deployed-versions/', '.github/']})"
+    task:
+      agent:
+        machine:
+          type: s1-prod-ubuntu20-04-arm64-1
+      jobs:
+        - name: Build & Test ubi8
+          commands:
+            - export OS_TAG="-ubi8"
+            - export DOCKER_DEV_FULL_IMAGES=$DOCKER_DEV_REGISTRY${DOCKER_REPOS// /:$DOCKER_DEV_TAG$OS_TAG $DOCKER_DEV_REGISTRY}:$DOCKER_DEV_TAG$OS_TAG
+            - export ARM_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$ARM_ARCH }$ARM_ARCH
+            - ci-tools ci-update-version
+            - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY
+              -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$ARM_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$ARM_ARCH -Ddocker.os_type=ubi8
+            - . cache-maven store
+            - for image in $ARM_DOCKER_DEV_FULL_IMAGES; do echo "Pushing $image" && docker push $image; done
+      epilogue:
+        always:
+          commands:
+            - . publish-test-results
+            - artifact push workflow target/test-results
+            - artifact push workflow target --destination target-ARM
+  - name: Deploy ARM confluentinc/kafka-streams-examples
+    dependencies: ["Build & Test ARM"]
+    run:
+      when: "branch = 'master' or branch =~ '[0-9]+\\.[0-9]+\\.[0-9]+'"
+    task:
+      agent:
+        machine:
+          type: s1-prod-ubuntu20-04-arm64-1
+      jobs:
+        - name: Deploy ARM confluentinc/kafka-streams-examples ubi8
+          commands:
+            - export OS_TAG="-ubi8"
+            - export PROD_IMAGE_NAME=${DOCKER_PROD_REGISTRY}confluentinc/kafka-streams-examples
+            - export GIT_COMMIT_TAG=$GIT_COMMIT$OS_TAG$ARM_ARCH
+            - export BRANCH_BUILD_TAG=$BRANCH_TAG-$BUILD_NUMBER$OS_TAG$ARM_ARCH
+            - export DEV_IMAGE_FULL=${DOCKER_DEV_REGISTRY}confluentinc/kafka-streams-examples:$DOCKER_DEV_TAG$OS_TAG$ARM_ARCH
+            - docker pull $DEV_IMAGE_FULL
+            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$GIT_COMMIT_TAG
+            - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$BRANCH_BUILD_TAG
+            - docker push $PROD_IMAGE_NAME:$GIT_COMMIT_TAG
+            - docker push $PROD_IMAGE_NAME:$BRANCH_BUILD_TAG
+  - name: Create Manifest and Maven Deploy
+    dependencies: ["Deploy AMD confluentinc/kafka-streams-examples", "Deploy ARM confluentinc/kafka-streams-examples"]
+    run:
+      when: "branch = 'master' or branch =~ '[0-9]+\\.[0-9]+\\.[0-9]+'"
+    task:
+      jobs:
+        - name: Create Manifest and Maven Deploy
+          commands:
+            - export DOCKER_PROD_IMAGE_NAME=$DOCKER_PROD_REGISTRY${DOCKER_REPOS// / $DOCKER_PROD_REGISTRY}
+            - ci-tools ci-update-version
+            - ci-tools ci-push-tag
+            - echo "Skipping Maven Deploy"
+            # Create manifest
+            - >-
+              for image in $DOCKER_PROD_IMAGE_NAME;
+              do
+                export OS_TAG="-ubi8"
+                export GIT_TAG=$GIT_COMMIT$OS_TAG
+                docker manifest create $image:$GIT_TAG $image:$GIT_TAG$AMD_ARCH $image:$GIT_TAG$ARM_ARCH
+                docker manifest push $image:$GIT_TAG
+                export BRANCH_BUILD_TAG=$BRANCH_TAG-$BUILD_NUMBER$OS_TAG
+                docker manifest create $image:$BRANCH_BUILD_TAG $image:$BRANCH_BUILD_TAG$AMD_ARCH $image:$BRANCH_BUILD_TAG$ARM_ARCH
+                docker manifest push $image:$BRANCH_BUILD_TAG
+              done
+after_pipeline:
+  task:
+    agent:
+      machine:
+        type: s1-prod-ubuntu20-04-arm64-0
+    jobs:
+      - name: Metrics
+        commands:
+          - emit-ci-metrics -p -a test-results
+      - name: Publish Test Results
+        commands:
+          - test-results gen-pipeline-report
+      - name: SonarQube
+        commands:
+          - checkout
+          - sem-version java 11
+          - artifact pull workflow target-AMD
+          - artifact pull workflow target-ARM
+          - emit-sonarqube-data --run_only_sonar_scan

@@ -56,36 +56,36 @@ import static java.util.Collections.singletonMap;
 /**
  * Demonstrates how to locate and query state stores (Interactive Queries).
  *
- * This application continuously computes the latest Top 5 music charts based on song play events
+ * <p>This application continuously computes the latest Top 5 music charts based on song play events
  * collected in real-time in a Kafka topic. This charts data is maintained in a continuously updated
  * state store that can be queried interactively via a REST API.
  *
- * Note: This example uses Java 8 functionality and thus works with Java 8+ only.  But of course you
+ * <p>Note: This example uses Java 8 functionality and thus works with Java 8+ only.  But of course you
  * can use the Interactive Queries feature of Kafka Streams also with Java 7.
  *
- * The topology in this example is modelled on a (very) simple streaming music service. It has 2
+ * <p>The topology in this example is modelled on a (very) simple streaming music service. It has 2
  * input topics: song-feed and play-events.
  *
- * The song-feed topic contains all of the songs available in the streaming service and is read
+ * <p>The song-feed topic contains all of the songs available in the streaming service and is read
  * as a KTable with all songs being stored in the all-songs state store.
  *
- * The play-events topic is a feed of song plays. We filter the play events to only accept events
+ * <p>The play-events topic is a feed of song plays. We filter the play events to only accept events
  * where the duration is >= 30 seconds. We then map the stream so that it is keyed by songId.
  *
- * Now that both streams are keyed the same we can join the play events with the songs, group by
+ * <p>Now that both streams are keyed the same we can join the play events with the songs, group by
  * the song and count them into a KTable, songPlayCounts, and a state store, song-play-count,
  * to keep track of the number of times each song has been played.
  *
- * Next, we group the songPlayCounts KTable by genre and aggregate into another KTable with the
+ * <p>Next, we group the songPlayCounts KTable by genre and aggregate into another KTable with the
  * state store, top-five-songs-by-genre, to track the top five songs by genre. Subsequently, we
  * group the same songPlayCounts KTable such that all song plays end up in the same partition. We
  * use this to aggregate the overall top five songs played into the state store, top-five.
  *
- * HOW TO RUN THIS EXAMPLE
+ * <p>HOW TO RUN THIS EXAMPLE
  *
- * 1) Start Zookeeper, Kafka, and Confluent Schema Registry. Please refer to <a href='http://docs.confluent.io/current/quickstart.html#quickstart'>QuickStart</a>.
+ * <p>1) Start Zookeeper, Kafka, and Confluent Schema Registry. Please refer to <a href="http://docs.confluent.io/current/quickstart.html#quickstart">QuickStart</a>.
  *
- * 2) Create the input and output topics used by this example.
+ * <p>2) Create the input and output topics used by this example.
  *
  * <pre>
  * {@code
@@ -100,43 +100,40 @@ import static java.util.Collections.singletonMap;
  * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be
  * `bin/kafka-topics.sh ...`.
  *
- *
- * 3) Start two instances of this example application either in your IDE or on the command
+ * <p>3) Start two instances of this example application either in your IDE or on the command
  * line.
  *
- * If via the command line please refer to <a href='https://github.com/confluentinc/kafka-streams-examples#packaging-and-running'>Packaging</a>.
+ * <p>If via the command line please refer to <a href="https://github.com/confluentinc/kafka-streams-examples#packaging-and-running">Packaging</a>.
  *
- * Once packaged you can then start the first instance of the application (on port 7070):
+ * <p>Once packaged you can then start the first instance of the application (on port 7070):
  *
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-7.1.1-standalone.jar \
+ * $ java -cp target/kafka-streams-examples-7.8.0-0-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExample 7070
  * }
  * </pre>
  *
- * Here, `7070` sets the port for the REST endpoint that will be used by this application instance.
+ * <p>Here, `7070` sets the port for the REST endpoint that will be used by this application instance.
  *
- * Then, in a separate terminal, run the second instance of this application (on port 7071):
+ * <p>Then, in a separate terminal, run the second instance of this application (on port 7071):
  *
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-7.1.1-standalone.jar \
+ * $ java -cp target/kafka-streams-examples-7.8.0-0-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExample 7071
  * }
  * </pre>
  *
- *
  * 4) Write some input data to the source topics (e.g. via {@link KafkaMusicExampleDriver}). The
  * already running example application (step 3) will automatically process this input data
  *
- *
- * 5) Use your browser to hit the REST endpoint of the app instance you started in step 3 to query
+ * <p>5) Use your browser to hit the REST endpoint of the app instance you started in step 3 to query
  * the state managed by this application.  Note: If you are running multiple app instances, you can
  * query them arbitrarily -- if an app instance cannot satisfy a query itself, it will fetch the
  * results from the other instances.
  *
- * For example:
+ * <p>For example:
  *
  * <pre>
  * {@code
@@ -159,11 +156,11 @@ import static java.util.Collections.singletonMap;
  * uses the Interactive Queries API of Kafka Streams behind the scenes to expose the state stores of
  * this application via REST.
  *
- * 6) Once you're done with your experiments, you can stop this example via `Ctrl-C`.  If needed,
+ * <p>6) Once you're done with your experiments, you can stop this example via `Ctrl-C`.  If needed,
  * also stop the Schema Registry (`Ctrl-C`), the Kafka broker (`Ctrl-C`), and only then stop the ZooKeeper instance
  * (`Ctrl-C`).
  *
- * If you like you can run multiple instances of this example by passing in a different port. You
+ * <p>If you like you can run multiple instances of this example by passing in a different port. You
  * can then experiment with seeing how keys map to different instances etc.
  */
 
@@ -386,22 +383,8 @@ public class KafkaMusicExample {
   private static class TopFiveSerde implements Serde<TopFiveSongs> {
 
     @Override
-    public void configure(final Map<String, ?> map, final boolean b) {
-
-    }
-
-    @Override
-    public void close() {
-
-    }
-
-    @Override
     public Serializer<TopFiveSongs> serializer() {
       return new Serializer<TopFiveSongs>() {
-        @Override
-        public void configure(final Map<String, ?> map, final boolean b) {
-        }
-
         @Override
         public byte[] serialize(final String s, final TopFiveSongs topFiveSongs) {
           final ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -419,22 +402,12 @@ public class KafkaMusicExample {
           }
             return out.toByteArray();
         }
-
-        @Override
-        public void close() {
-
-        }
       };
     }
 
     @Override
     public Deserializer<TopFiveSongs> deserializer() {
       return new Deserializer<TopFiveSongs>() {
-        @Override
-        public void configure(final Map<String, ?> map, final boolean b) {
-
-        }
-
         @Override
         public TopFiveSongs deserialize(final String s, final byte[] bytes) {
           if (bytes == null || bytes.length == 0) {
@@ -456,11 +429,6 @@ public class KafkaMusicExample {
           }
           return result;
         }
-
-        @Override
-        public void close() {
-
-        }
       };
     }
   }
@@ -468,19 +436,19 @@ public class KafkaMusicExample {
   /**
    * Used in aggregations to keep track of the Top five songs
    *
-   * Warning: this aggregator relies on the current order of execution
+   * <p>Warning: this aggregator relies on the current order of execution
    * for updates, namely that the subtractor (#remove) is called prior
    * to the adder (#add). That is an implementation detail which,
    * while it has remained stable for years, is not part of the public
    * contract. There is a Kafka JIRA ticket requesting to make this
    * order of execution part of the public contract.
-   * See https://issues.apache.org/jira/browse/KAFKA-12446
+   * See <a href="https://issues.apache.org/jira/browse/KAFKA-12446"></a>KAFKA-12446</a>
    *
-   * In the meantime, be aware that if you follow this example
+   * <p>In the meantime, be aware that if you follow this example
    * your aggregator might no longer work correctly if future
    * updates to Kafka Streams were to ever change the order of execution.
    *
-   * The issue occurs for any aggregator that uses non-commutative functions
+   * <p>The issue occurs for any aggregator that uses non-commutative functions
    * while relying on a group by key which picks out the same entries as
    * the upstream key.
    */
@@ -528,6 +496,5 @@ public class KafkaMusicExample {
       return topFive.iterator();
     }
   }
-
 
 }

@@ -6,11 +6,15 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StoreQueryParameters;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -38,6 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -63,11 +68,10 @@ import static io.confluent.examples.streams.microservices.domain.Schemas.Topics.
 import static io.confluent.examples.streams.microservices.domain.beans.OrderBean.fromBean;
 import static io.confluent.examples.streams.microservices.domain.beans.OrderBean.toBean;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.*;
-import static org.apache.kafka.streams.state.StreamsMetadata.NOT_AVAILABLE;
 
 /**
  * This class provides a REST interface to write and read orders using a CQRS pattern
- * (https://martinfowler.com/bliki/CQRS.html). Three methods are exposed over HTTP:
+ * (<a href="https://martinfowler.com/bliki/CQRS.html">CQRS</a>). Three methods are exposed over HTTP:
  * <p>
  * - POST(Order) -> Writes and order and returns location of the resource.
  * <p>
@@ -231,8 +235,15 @@ public class OrdersService implements Service {
    * If metadata is available, which can happen on startup, or during a rebalance, block until it is.
    */
   private HostStoreInfo getKeyLocationOrBlock(final String id, final AsyncResponse asyncResponse) {
-    HostStoreInfo locationOfKey;
-    while (locationMetadataIsUnavailable(locationOfKey = getHostForOrderId(id))) {
+    HostStoreInfo locationOfKey = null;
+    while (locationOfKey == null) {
+      try {
+        locationOfKey = getHostForOrderId(id);
+        continue;
+      } catch (final NotFoundException swallow) {
+        // swallow
+      }
+
       //The metastore is not available. This can happen on startup/rebalance.
       if (asyncResponse.isDone()) {
         //The response timed out so return
@@ -246,11 +257,6 @@ public class OrdersService implements Service {
       }
     }
     return locationOfKey;
-  }
-
-  private boolean locationMetadataIsUnavailable(final HostStoreInfo hostWithKey) {
-    return NOT_AVAILABLE.host().equals(hostWithKey.getHost())
-        && NOT_AVAILABLE.port() == hostWithKey.getPort();
   }
 
   private boolean thisHost(final HostStoreInfo host) {
@@ -398,7 +404,7 @@ public class OrdersService implements Service {
 
   private HostStoreInfo getHostForOrderId(final String orderId) {
     return metadataService
-        .streamsMetadataForStoreAndKey(ORDERS_STORE_NAME, orderId, Serdes.String().serializer());
+        .streamsMetadataForStoreAndKey(ORDERS_STORE_NAME, orderId, new StringSerializer());
   }
 
   private Callback callback(final AsyncResponse response, final String orderId) {

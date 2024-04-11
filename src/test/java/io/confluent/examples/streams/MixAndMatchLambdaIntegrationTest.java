@@ -18,17 +18,16 @@ package io.confluent.examples.streams;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.TestInputTopic;
 import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.Transformer;
-import org.apache.kafka.streams.kstream.TransformerSupplier;
-import org.apache.kafka.streams.processor.ProcessorContext;
-import org.apache.kafka.streams.processor.ProcessorSupplier;
+import org.apache.kafka.streams.processor.api.ProcessorSupplier;
+import org.apache.kafka.streams.processor.api.Processor;
+import org.apache.kafka.streams.processor.api.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Record;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -43,13 +42,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * End-to-end integration test that demonstrates how to mix and match the DSL and the Processor
  * API of Kafka Streams.
  * <p>
- * More concretely, we show how to use the {@link KStream#transform(TransformerSupplier, String...)}
+ * More concretely, we show how to use the {@link KStream#process(ProcessorSupplier, String...)}
  * method to include a custom {@link org.apache.kafka.streams.kstream.Transformer} (from the
  * Processor API) in a topology defined via the DSL.  The fictitious use case is to anonymize
  * IPv4 addresses contained in the input data.
  * <p>
  * Tip: Users that want to use {@link KStream#process(ProcessorSupplier, String...)} would need to
- * include a custom {@link org.apache.kafka.streams.processor.Processor}.  Keep in mind though that
+ * include a custom {@link org.apache.kafka.streams.processor.api.Processor}.  Keep in mind though that
  * the return type of {@link KStream#process(ProcessorSupplier, String...)} is `void`, which means
  * you cannot add further operators (such as `to()` as we do below) after having called `process()`.
  * If you need to add further operators, you'd have to use `transform()` as we do in this example.
@@ -62,22 +61,24 @@ public class MixAndMatchLambdaIntegrationTest {
    * Performs rudimentary anonymization of IPv4 address in the input data.
    * You should use this for demonstration purposes only.
    */
-  private static class AnonymizeIpAddressTransformer implements Transformer<byte[], String, KeyValue<byte[], String>> {
+  private static class AnonymizeIpAddressTransformer implements Processor<byte[], String, byte[], String> {
 
     private static final Pattern ipv4AddressPattern =
         Pattern.compile("(?<keep>[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)(?<anonymize>[0-9]{1,3})");
 
+    private ProcessorContext<byte[], String> context;
+
     @Override
-    public void init(final ProcessorContext context) {
-      // Not needed.
+    public void init(final ProcessorContext<byte[], String> context) {
+      this.context = context;
     }
 
     @Override
-    public KeyValue<byte[], String> transform(final byte[] recordKey, final String recordValue) {
+    public void process(final Record<byte[], String> record) {
       // The record value contains the IP address in string representation.
       // The original record key is ignored because we don't need it for this logic.
-      final String anonymizedIpAddress = anonymizeIpAddress(recordValue);
-      return KeyValue.pair(recordKey, anonymizedIpAddress);
+      final String anonymizedIpAddress = anonymizeIpAddress(record.value());
+      context.forward(record.withValue(anonymizedIpAddress));
     }
 
     /**
@@ -93,12 +94,6 @@ public class MixAndMatchLambdaIntegrationTest {
     private String anonymizeIpAddress(final String ipAddress) {
       return ipv4AddressPattern.matcher(ipAddress).replaceAll("${keep}XXX");
     }
-
-    @Override
-    public void close() {
-      // Not needed.
-    }
-
   }
 
 
@@ -115,8 +110,8 @@ public class MixAndMatchLambdaIntegrationTest {
     final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "mix-and-match-lambda-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config");
-    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray().getClass().getName());
-    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArraySerde.class);
+    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
 
     final String inputTopic = "inputTopic";
     final String outputTopic = "outputTopic";
@@ -124,7 +119,7 @@ public class MixAndMatchLambdaIntegrationTest {
     final KStream<byte[], String> stream = builder.stream(inputTopic);
     final KStream<byte[], String> uppercasedAndAnonymized = stream
       .mapValues(s -> s.toUpperCase())
-      .transform(AnonymizeIpAddressTransformer::new);
+      .process(AnonymizeIpAddressTransformer::new);
     uppercasedAndAnonymized.to(outputTopic);
 
     try (final TopologyTestDriver topologyTestDriver = new TopologyTestDriver(builder.build(), streamsConfiguration)) {

@@ -54,7 +54,7 @@ import java.util.Properties;
  * <br>
  * HOW TO RUN THIS EXAMPLE
  * <p>
- * 1) Start Zookeeper, Kafka, and Confluent Schema Registry. Please refer to <a href='http://docs.confluent.io/current/quickstart.html#quickstart'>QuickStart</a>.
+ * 1) Start Zookeeper, Kafka, and Confluent Schema Registry. Please refer to <a href="http://docs.confluent.io/current/quickstart.html#quickstart">QuickStart</a>.
  * <p>
  * 2) Create the input/intermediate/output topics used by this example.
  * <pre>
@@ -71,11 +71,11 @@ import java.util.Properties;
  * <p>
  * 3) Start this example application either in your IDE or on the command line.
  * <p>
- * If via the command line please refer to <a href='https://github.com/confluentinc/kafka-streams-examples#packaging-and-running'>Packaging</a>.
+ * If via the command line please refer to <a href="https://github.com/confluentinc/kafka-streams-examples#packaging-and-running">Packaging</a>.
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-7.1.1-standalone.jar io.confluent.examples.streams.PageViewRegionLambdaExample
+ * $ java -cp target/kafka-streams-examples-7.8.0-0-standalone.jar io.confluent.examples.streams.PageViewRegionLambdaExample
  * }
  * </pre>
  * 4) Write some input data to the source topics (e.g. via {@link PageViewRegionExampleDriver}).
@@ -85,7 +85,7 @@ import java.util.Properties;
  * {@code
  * # Here: Write input data using the example driver. Once the driver has stopped generating data,
  * # you can terminate it via `Ctrl-C`.
- * $ java -cp target/kafka-streams-examples-7.1.1-standalone.jar io.confluent.examples.streams.PageViewRegionExampleDriver
+ * $ java -cp target/kafka-streams-examples-7.8.0-0-standalone.jar io.confluent.examples.streams.PageViewRegionExampleDriver
  * }
  * </pre>
  * 5) Inspect the resulting data in the output topic, e.g. via {@code kafka-console-consumer}.
@@ -126,7 +126,7 @@ public class PageViewRegionLambdaExample {
     // Where to find the Confluent schema registry instance(s)
     streamsConfiguration.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
     // Specify default (de)serializers for record keys and for record values.
-    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, GenericAvroSerde.class);
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     // Records should be flushed every 10 seconds. This is less than the default
@@ -180,7 +180,7 @@ public class PageViewRegionLambdaExample {
       .map((user, viewRegion) -> new KeyValue<>(viewRegion.get("region").toString(), viewRegion))
       // count views by region, using hopping windows of size 5 minutes that advance every 1 minute
       .groupByKey() // no need to specify explicit serdes because the resulting key and value types match our default serde settings
-      .windowedBy(TimeWindows.of(Duration.ofMinutes(5)).advanceBy(Duration.ofMinutes(1)))
+      .windowedBy(TimeWindows.ofSizeWithNoGrace(Duration.ofMinutes(5)).advanceBy(Duration.ofMinutes(1)))
       .count();
 
     // Note: The following operations would NOT be needed for the actual pageview-by-region

@@ -40,7 +40,7 @@ import java.util.Properties;
  * <br>
  * HOW TO RUN THIS EXAMPLE
  * <p>
- * 1) Start Zookeeper and Kafka. Please refer to <a href='http://docs.confluent.io/current/quickstart.html#quickstart'>QuickStart</a>.
+ * 1) Start Zookeeper and Kafka. Please refer to <a href="http://docs.confluent.io/current/quickstart.html#quickstart">QuickStart</a>.
  * <p>
  * 2) Create the input and output topics used by this example.
  * <pre>
@@ -54,11 +54,11 @@ import java.util.Properties;
  * <p>
  * 3) Start this example application either in your IDE or on the command line.
  * <p>
- * If via the command line please refer to <a href='https://github.com/confluentinc/kafka-streams-examples#packaging-and-running'>Packaging</a>.
+ * If via the command line please refer to <a href="https://github.com/confluentinc/kafka-streams-examples#packaging-and-running">Packaging</a>.
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-7.1.1-standalone.jar io.confluent.examples.streams.AnomalyDetectionLambdaExample
+ * $ java -cp target/kafka-streams-examples-7.8.0-0-standalone.jar io.confluent.examples.streams.AnomalyDetectionLambdaExample
  * }</pre>
  * <p>
  * 4) Write some input data to the source topic (e.g. via {@code kafka-console-producer}. The already
@@ -112,8 +112,8 @@ public class AnomalyDetectionLambdaExample {
     // Where to find Kafka broker(s).
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     // Specify default (de)serializers for record keys and for record values.
-    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
+    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
     // Set the commit interval to 500ms so that any changes are flushed frequently. The low latency
     // would be important for anomaly detection.
     streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 500);
@@ -134,7 +134,7 @@ public class AnomalyDetectionLambdaExample {
       // count users, using one-minute tumbling windows;
       // no need to specify explicit serdes because the resulting key and value types match our default serde settings
       .groupByKey()
-      .windowedBy(TimeWindows.of(Duration.ofMinutes(1)))
+      .windowedBy(TimeWindows.ofSizeWithNoGrace(Duration.ofMinutes(1)))
       .count()
       // get users whose one-minute count is >= 3
       .filter((windowedUserId, count) -> count >= 3);
