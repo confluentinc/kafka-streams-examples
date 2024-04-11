@@ -343,7 +343,7 @@ public class WordCountInteractiveQueriesExampleTest {
     // Set the default value serde
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
     streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, "100");
-    streamsConfiguration.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, "0");
+    streamsConfiguration.put(StreamsConfig.STATESTORE_CACHE_MAX_BYTES_CONFIG, "0");
     return streamsConfiguration;
   }
 }
