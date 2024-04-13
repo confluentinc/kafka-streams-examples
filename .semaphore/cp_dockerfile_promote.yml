@@ -26,11 +26,9 @@ global_job_config:
       - checkout
       - . vault-setup
       # Semaphore does not accept empty values for parameters.
-      - if [[ "$CONFLUENT_VERSION" = "NONE" ]]; then echo "Must specify CONFLUENT_VERSION" && exit 1; fi
-      - if [[ "$IMAGE_REVISION" = "NONE" ]]; then echo "Must specify IMAGE_REVISION" && exit 1; fi
-      - if [[ "$UPDATE_LATEST_TAG" = "NONE" ]]; then unset UPDATE_LATEST_TAG; fi
-      - if [[ "$PACKAGING_BUILD_NUMBER" = "NONE" ]]; then unset PACKAGING_BUILD_NUMBER; fi
-      - if [[ "$PROMOTE_OS_TYPE" = "NONE" ]]; then echo "Must specify PROMOTE_OS_TYPE" && exit 1; fi
+      - if [[ -z "$CONFLUENT_VERSION" ]]; then echo "Must specify CONFLUENT_VERSION" && exit 1; fi
+      - if [[ -z "$IMAGE_REVISION" ]]; then echo "Must specify IMAGE_REVISION" && exit 1; fi
+      - if [[ -z "$PROMOTE_OS_TYPE" ]]; then echo "Must specify PROMOTE_OS_TYPE" && exit 1; fi
       - >-
         echo """
         Parameters:
