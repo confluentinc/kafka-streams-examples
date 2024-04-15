@@ -30,8 +30,6 @@ global_job_config:
       - export BUILD_NUMBER=$(echo $SEMAPHORE_WORKFLOW_ID | cut -f1 -d"-")
       - export BRANCH_TAG=$(echo $SEMAPHORE_GIT_BRANCH | tr / -)
       # Semaphore does not accept empty values for parameters.
-      - if [[ "$PACKAGES_MAVEN_URL" = "NONE" ]]; then unset PACKAGES_MAVEN_URL; fi
-      - if [[ "$PACKAGING_BUILD_NUMBER" = "NONE" ]]; then unset PACKAGING_BUILD_NUMBER; fi
       - export ALLOW_UNSIGNED=$(echo $ALLOW_UNSIGNED | awk '{ print tolower($0) }')
       - >-
         echo """
