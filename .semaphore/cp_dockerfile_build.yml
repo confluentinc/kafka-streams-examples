@@ -105,6 +105,8 @@ blocks:
             - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$BRANCH_BUILD_TAG
             - docker push $PROD_IMAGE_NAME:$GIT_COMMIT_TAG
             - docker push $PROD_IMAGE_NAME:$BRANCH_BUILD_TAG
+            - sign-images $PROD_IMAGE_NAME:$GIT_COMMIT_TAG
+            - sign-images $PROD_IMAGE_NAME:$BRANCH_BUILD_TAG
   - name: Build & Test ARM
     dependencies: []
     run:
@@ -152,6 +154,8 @@ blocks:
             - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$BRANCH_BUILD_TAG
             - docker push $PROD_IMAGE_NAME:$GIT_COMMIT_TAG
             - docker push $PROD_IMAGE_NAME:$BRANCH_BUILD_TAG
+            - sign-images $PROD_IMAGE_NAME:$GIT_COMMIT_TAG
+            - sign-images $PROD_IMAGE_NAME:$BRANCH_BUILD_TAG
   - name: Create Manifest and Maven Deploy
     dependencies: ["Deploy AMD confluentinc/kafka-streams-examples", "Deploy ARM confluentinc/kafka-streams-examples"]
     run:
@@ -172,9 +176,13 @@ blocks:
                 export GIT_TAG=$GIT_COMMIT$OS_TAG
                 docker manifest create $image:$GIT_TAG $image:$GIT_TAG$AMD_ARCH $image:$GIT_TAG$ARM_ARCH
                 docker manifest push $image:$GIT_TAG
+                docker pull $image:$GIT_TAG
+                sign-images $image:$GIT_TAG
                 export BRANCH_BUILD_TAG=$BRANCH_TAG-$BUILD_NUMBER$OS_TAG
                 docker manifest create $image:$BRANCH_BUILD_TAG $image:$BRANCH_BUILD_TAG$AMD_ARCH $image:$BRANCH_BUILD_TAG$ARM_ARCH
                 docker manifest push $image:$BRANCH_BUILD_TAG
+                docker pull $image:$BRANCH_BUILD_TAG
+                sign-images $image:$BRANCH_BUILD_TAG
               done
 after_pipeline:
   task:
