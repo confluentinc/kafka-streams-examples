@@ -61,7 +61,7 @@
    * #
    * # abc,1701855889
    * #
-   * # Here, the part before the comma will become the message key, and the part after the comma will
+   * # Here, the part before the comma will become the message key and the part after the comma will
    * # become the message value.
    * $ bin/kafka-console-producer --bootstrap-server localhost:9092 --topic InputTopic \
    *                              --property parse.key=true --property key.separator=,
@@ -69,7 +69,7 @@
    * 5) Inspect the resulting data in the output topics, e.g. via {@code kafka-console-consumer}.
    * <pre>
    * {@code
-   * $ bin/kafka-console-consumer --topic InputTopic --from-beginning \
+   * $ bin/kafka-console-consumer --topic OutputTopic --from-beginning \
    *                              --bootstrap-server localhost:9092 \
    *                              --property print.key=true
    *
