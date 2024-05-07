@@ -18,7 +18,7 @@ semaphore:
   os_types: ['ubi8']
   tasks:
     - name: cp-dockerfile-build
-      branches: ["master", "7.7.x", ... , "6.3.x"]
+      branches: ["master", "7.7.x", "7.6.x",  "7.5.x",  "7.4.x",  "7.3.x",  "7.2.x",  "7.1.x", "7.0.x", "6.2.x"]
       pipeline_file: .semaphore/cp_dockerfile_build.yml
       parameters:
         - name: CONFLUENT_VERSION
