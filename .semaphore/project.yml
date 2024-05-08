@@ -44,6 +44,28 @@ spec:
   - forked_pull_request
   - tag
   tasks:
+  - name: cp-dockerfile-build
+    scheduled: False
+    branch: "master"
+    pipeline_file: .semaphore/cp_dockerfile_build.yml
+    parameters:
+    - name: CONFLUENT_VERSION
+      required: True
+    - name: PACKAGES_URL
+      required: False
+    - name: PACKAGES_MAVEN_URL
+      required: False
+    - name: PACKAGING_BUILD_NUMBER
+      required: True
+    - name: ALLOW_UNSIGNED
+      required: False
+      default_value: "False"
+      options:
+       - True
+       - False
+    - name: CONFLUENT_DEB_VERSION
+      required: False
+      default_value: "1"
   - name: cp-dockerfile-promote
     scheduled: False
     branch: "master"
@@ -63,223 +85,3 @@ spec:
       options:
        - deb
        - ubi
-  - name: cp-dockerfile-build-master
-    scheduled: False
-    branch: "master"
-    pipeline_file: .semaphore/cp_dockerfile_build.yml
-    parameters:
-    - name: CONFLUENT_VERSION
-      required: True
-    - name: PACKAGES_URL
-      required: False
-    - name: PACKAGES_MAVEN_URL
-      required: False
-    - name: PACKAGING_BUILD_NUMBER
-      required: True
-    - name: ALLOW_UNSIGNED
-      required: False
-      default_value: "False"
-      options:
-       - True
-       - False
-    - name: CONFLUENT_DEB_VERSION
-      required: False
-      default_value: "1"
-  - name: cp-dockerfile-build-7.7.x
-    scheduled: False
-    branch: "7.7.x"
-    pipeline_file: .semaphore/cp_dockerfile_build.yml
-    parameters:
-    - name: CONFLUENT_VERSION
-      required: True
-    - name: PACKAGES_URL
-      required: False
-    - name: PACKAGES_MAVEN_URL
-      required: False
-    - name: PACKAGING_BUILD_NUMBER
-      required: True
-    - name: ALLOW_UNSIGNED
-      required: False
-      default_value: "False"
-      options:
-       - True
-       - False
-    - name: CONFLUENT_DEB_VERSION
-      required: False
-      default_value: "1"
-  - name: cp-dockerfile-build-7.6.x
-    scheduled: False
-    branch: "7.6.x"
-    pipeline_file: .semaphore/cp_dockerfile_build.yml
-    parameters:
-    - name: CONFLUENT_VERSION
-      required: True
-    - name: PACKAGES_URL
-      required: False
-    - name: PACKAGES_MAVEN_URL
-      required: False
-    - name: PACKAGING_BUILD_NUMBER
-      required: True
-    - name: ALLOW_UNSIGNED
-      required: False
-      default_value: "False"
-      options:
-       - True
-       - False
-    - name: CONFLUENT_DEB_VERSION
-      required: False
-      default_value: "1"
-  - name: cp-dockerfile-build-7.5.x
-    scheduled: False
-    branch: "7.5.x"
-    pipeline_file: .semaphore/cp_dockerfile_build.yml
-    parameters:
-    - name: CONFLUENT_VERSION
-      required: True
-    - name: PACKAGES_URL
-      required: False
-    - name: PACKAGES_MAVEN_URL
-      required: False
-    - name: PACKAGING_BUILD_NUMBER
-      required: True
-    - name: ALLOW_UNSIGNED
-      required: False
-      default_value: "False"
-      options:
-       - True
-       - False
-    - name: CONFLUENT_DEB_VERSION
-      required: False
-      default_value: "1"
-  - name: cp-dockerfile-build-7.4.x
-    scheduled: False
-    branch: "7.4.x"
-    pipeline_file: .semaphore/cp_dockerfile_build.yml
-    parameters:
-    - name: CONFLUENT_VERSION
-      required: True
-    - name: PACKAGES_URL
-      required: False
-    - name: PACKAGES_MAVEN_URL
-      required: False
-    - name: PACKAGING_BUILD_NUMBER
-      required: True
-    - name: ALLOW_UNSIGNED
-      required: False
-      default_value: "False"
-      options:
-       - True
-       - False
-    - name: CONFLUENT_DEB_VERSION
-      required: False
-      default_value: "1"
-  - name: cp-dockerfile-build-7.3.x
-    scheduled: False
-    branch: "7.3.x"
-    pipeline_file: .semaphore/cp_dockerfile_build.yml
-    parameters:
-    - name: CONFLUENT_VERSION
-      required: True
-    - name: PACKAGES_URL
-      required: False
-    - name: PACKAGES_MAVEN_URL
-      required: False
-    - name: PACKAGING_BUILD_NUMBER
-      required: True
-    - name: ALLOW_UNSIGNED
-      required: False
-      default_value: "False"
-      options:
-       - True
-       - False
-    - name: CONFLUENT_DEB_VERSION
-      required: False
-      default_value: "1"
-  - name: cp-dockerfile-build-7.2.x
-    scheduled: False
-    branch: "7.2.x"
-    pipeline_file: .semaphore/cp_dockerfile_build.yml
-    parameters:
-    - name: CONFLUENT_VERSION
-      required: True
-    - name: PACKAGES_URL
-      required: False
-    - name: PACKAGES_MAVEN_URL
-      required: False
-    - name: PACKAGING_BUILD_NUMBER
-      required: True
-    - name: ALLOW_UNSIGNED
-      required: False
-      default_value: "False"
-      options:
-       - True
-       - False
-    - name: CONFLUENT_DEB_VERSION
-      required: False
-      default_value: "1"
-  - name: cp-dockerfile-build-7.1.x
-    scheduled: False
-    branch: "7.1.x"
-    pipeline_file: .semaphore/cp_dockerfile_build.yml
-    parameters:
-    - name: CONFLUENT_VERSION
-      required: True
-    - name: PACKAGES_URL
-      required: False
-    - name: PACKAGES_MAVEN_URL
-      required: False
-    - name: PACKAGING_BUILD_NUMBER
-      required: True
-    - name: ALLOW_UNSIGNED
-      required: False
-      default_value: "False"
-      options:
-       - True
-       - False
-    - name: CONFLUENT_DEB_VERSION
-      required: False
-      default_value: "1"
-  - name: cp-dockerfile-build-7.0.x
-    scheduled: False
-    branch: "7.0.x"
-    pipeline_file: .semaphore/cp_dockerfile_build.yml
-    parameters:
-    - name: CONFLUENT_VERSION
-      required: True
-    - name: PACKAGES_URL
-      required: False
-    - name: PACKAGES_MAVEN_URL
-      required: False
-    - name: PACKAGING_BUILD_NUMBER
-      required: True
-    - name: ALLOW_UNSIGNED
-      required: False
-      default_value: "False"
-      options:
-       - True
-       - False
-    - name: CONFLUENT_DEB_VERSION
-      required: False
-      default_value: "1"
-  - name: cp-dockerfile-build-6.2.x
-    scheduled: False
-    branch: "6.2.x"
-    pipeline_file: .semaphore/cp_dockerfile_build.yml
-    parameters:
-    - name: CONFLUENT_VERSION
-      required: True
-    - name: PACKAGES_URL
-      required: False
-    - name: PACKAGES_MAVEN_URL
-      required: False
-    - name: PACKAGING_BUILD_NUMBER
-      required: True
-    - name: ALLOW_UNSIGNED
-      required: False
-      default_value: "False"
-      options:
-       - True
-       - False
-    - name: CONFLUENT_DEB_VERSION
-      required: False
-      default_value: "1"
