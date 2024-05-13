@@ -16,3 +16,44 @@ semaphore:
   sign_images: true
   triggers: ['branches', 'pull_requests']
   os_types: ['ubi8']
+  use_packages: true
+  tasks:
+    - name: cp-dockerfile-build
+      branch: master
+      pipeline_file: .semaphore/cp_dockerfile_build.yml
+      parameters:
+        - name: CONFLUENT_VERSION
+          required: true
+        - name: PACKAGES_URL
+          required: false
+        - name: PACKAGES_MAVEN_URL
+          required: false
+        - name: PACKAGING_BUILD_NUMBER
+          required: true
+        - name: ALLOW_UNSIGNED
+          required: false
+          default_value: 'False'
+          options:
+            - 'True'
+            - 'False'
+        - name: CONFLUENT_DEB_VERSION
+          required: false
+          default_value: '1'
+    - name: cp-dockerfile-promote
+      branch: master
+      pipeline_file: .semaphore/cp_dockerfile_promote.yml
+      parameters:
+        - name: CONFLUENT_VERSION
+          required: true
+        - name: IMAGE_REVISION
+          required: true
+          default_value: '1'
+        - name: UPDATE_LATEST_TAG
+          required: true
+        - name: PACKAGING_BUILD_NUMBER
+          required: true
+        - name: PROMOTE_OS_TYPE
+          required: true
+          options:
+            - 'deb'
+            - 'ubi'
