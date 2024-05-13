@@ -37,8 +37,8 @@ import java.util.concurrent.TimeUnit;
 
 
 /**
- * A simple service which listens to to validation results from each of the Validation
- * services and aggregates them by order Id, triggering a pass or fail based on whether
+ * A simple service which listens to validation results from each of the Validation
+ * services and aggregates them by order ID, triggering a pass or fail based on whether
  * all rules pass or not.
  */
 public class ValidationsAggregatorService implements Service {
@@ -105,7 +105,7 @@ public class ValidationsAggregatorService implements Service {
     //If all rules pass then validate the order
     validations
         .groupByKey(serdes3)
-        .windowedBy(SessionWindows.with(Duration.ofMinutes(5)))
+        .windowedBy(SessionWindows.ofInactivityGapWithNoGrace(Duration.ofMinutes(5)))
         .aggregate(
             () -> 0L,
             (id, result, total) -> PASS.equals(result.getValidationResult()) ? total + 1 : total,
@@ -122,7 +122,7 @@ public class ValidationsAggregatorService implements Service {
         .join(orders, (id, order) ->
                 //Set the order to Validated
                 newBuilder(order).setState(VALIDATED).build()
-            , JoinWindows.of(Duration.ofMinutes(5)), serdes4)
+            , JoinWindows.ofTimeDifferenceWithNoGrace(Duration.ofMinutes(5)), serdes4)
         //Push the validated order into the orders topic
         .to(ORDERS.name(), serdes5);
 
@@ -131,7 +131,7 @@ public class ValidationsAggregatorService implements Service {
         .join(orders, (id, order) ->
                 //Set the order to Failed and bump the version on it's ID
                 newBuilder(order).setState(OrderState.FAILED).build(),
-            JoinWindows.of(Duration.ofMinutes(5)), serdes7)
+            JoinWindows.ofTimeDifferenceWithNoGrace(Duration.ofMinutes(5)), serdes7)
         //there could be multiple failed rules for each order so collapse to a single order
         .groupByKey(serdes6)
         .reduce((order, v1) -> order)

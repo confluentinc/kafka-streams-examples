@@ -25,7 +25,9 @@ spec:
       branches:
       - master
       - main
-      - /^v\d+\.\d+\.x$/
+      - /^\d+\.\d+\.x$/
+      - /^\d+\.\d+\.\d+-cp\d+-rc\d+$/
+      - /^\d+\.\d+\.\d+-rc\d+$/
       - /^gh-readonly-queue.*/
   custom_permissions: true
   debug_permissions:
@@ -41,3 +43,45 @@ spec:
   - pull_request
   - forked_pull_request
   - tag
+  tasks:
+  - name: cp-dockerfile-build
+    scheduled: False
+    branch: "master"
+    pipeline_file: .semaphore/cp_dockerfile_build.yml
+    parameters:
+    - name: CONFLUENT_VERSION
+      required: True
+    - name: PACKAGES_URL
+      required: False
+    - name: PACKAGES_MAVEN_URL
+      required: False
+    - name: PACKAGING_BUILD_NUMBER
+      required: True
+    - name: ALLOW_UNSIGNED
+      required: False
+      default_value: "False"
+      options:
+       - True
+       - False
+    - name: CONFLUENT_DEB_VERSION
+      required: False
+      default_value: "1"
+  - name: cp-dockerfile-promote
+    scheduled: False
+    branch: "master"
+    pipeline_file: .semaphore/cp_dockerfile_promote.yml
+    parameters:
+    - name: CONFLUENT_VERSION
+      required: True
+    - name: IMAGE_REVISION
+      required: True
+      default_value: "1"
+    - name: UPDATE_LATEST_TAG
+      required: True
+    - name: PACKAGING_BUILD_NUMBER
+      required: True
+    - name: PROMOTE_OS_TYPE
+      required: True
+      options:
+       - deb
+       - ubi

@@ -43,26 +43,25 @@ import java.util.Properties;
  * example uses the same Topology as {@link io.confluent.examples.streams.WordCountLambdaExample} so
  * please see that for the full explanation of the topology.
  *
- * Note: This example uses Java 8 functionality and thus works with Java 8+ only.  But of course you
+ * <p>Note: This example uses Java 8 functionality and thus works with Java 8+ only.  But of course you
  * can use the Interactive Queries feature of Kafka Streams also with Java 7.
  *
- * In this example, the input stream reads from a topic named "TextLinesTopic", where the values of
+ * <p>In this example, the input stream reads from a topic named "TextLinesTopic", where the values of
  * messages represent lines of text; and the histogram output is exposed via two State Stores:
  * word-count (KeyValue) and windowed-word-count (Windowed Store).
  *
- * The word-count store contains the all time word-count. The windowed-word-count contains per
+ * <p>The word-count store contains the all time word-count. The windowed-word-count contains per
  * minute word-counts.
  *
- * Note: Before running this example you must 1) create the source topic (e.g. via `kafka-topics
+ * <p>Note: Before running this example you must 1) create the source topic (e.g. via `kafka-topics
  * --create ...`), then 2) start this example and 3) write some data to the source topic (e.g. via
  * `kafka-console-producer`). Otherwise you won't see any data arriving in the output topic.
  *
+ * <p>HOW TO RUN THIS EXAMPLE
  *
- * HOW TO RUN THIS EXAMPLE
+ * <p>1) Start Zookeeper and Kafka. Please refer to <a href="http://docs.confluent.io/current/quickstart.html#quickstart">QuickStart</a>.
  *
- * 1) Start Zookeeper and Kafka. Please refer to <a href='http://docs.confluent.io/current/quickstart.html#quickstart'>QuickStart</a>.
- *
- * 2) Create the input and output topics used by this example.
+ * <p>2) Create the input and output topics used by this example.
  *
  * <pre>
  * {@code
@@ -74,27 +73,26 @@ import java.util.Properties;
  * Note: The above commands are for the Confluent Platform. For Apache Kafka it should be
  * `bin/kafka-topics.sh ...`.
  *
+ * <p>3) Start two instances of this example application either in your IDE or on the command line.
  *
- * 3) Start two instances of this example application either in your IDE or on the command line.
+ * <p>If via the command line please refer to <a href="https://github.com/confluentinc/kafka-streams-examples#packaging-and-running">Packaging</a>.
  *
- * If via the command line please refer to <a href='https://github.com/confluentinc/kafka-streams-examples#packaging-and-running'>Packaging</a>.
- *
- * Once packaged you can then start the first instance of the application (on port 7070):
+ * <p>Once packaged you can then start the first instance of the application (on port 7070):
  *
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-7.0.15-0-standalone.jar \
+ * $ java -cp target/kafka-streams-examples-7.8.0-0-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExample 7070
  * }
  * </pre>
  *
  * Here, `7070` sets the port for the REST endpoint that will be used by this application instance.
  *
- * Then, in a separate terminal, run the second instance of this application (on port 7071):
+ * <p>Then, in a separate terminal, run the second instance of this application (on port 7071):
  *
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-7.0.15-0-standalone.jar \
+ * $ java -cp target/kafka-streams-examples-7.8.0-0-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.WordCountInteractiveQueriesExample 7071
  * }
  * </pre>
@@ -103,13 +101,12 @@ import java.util.Properties;
  * 4) Write some input data to the source topics (e.g. via {@link WordCountInteractiveQueriesDriver}). The
  * already running example application (step 3) will automatically process this input data
  *
- *
- * 5) Use your browser to hit the REST endpoint of the app instance you started in step 3 to query
+ * <p>5) Use your browser to hit the REST endpoint of the app instance you started in step 3 to query
  * the state managed by this application.  Note: If you are running multiple app instances, you can
  * query them arbitrarily -- if an app instance cannot satisfy a query itself, it will fetch the
  * results from the other instances.
  *
- * For example:
+ * <p>For example:
  *
  * <pre>
  * {@code
@@ -136,10 +133,10 @@ import java.util.Properties;
  * uses the Interactive Queries API of Kafka Streams behind the scenes to expose the state stores of
  * this application via REST.
  *
- * 6) Once you're done with your experiments, you can stop this example via `Ctrl-C`.  If needed,
+ * <p>6) Once you're done with your experiments, you can stop this example via `Ctrl-C`.  If needed,
  * also stop the Kafka broker (`Ctrl-C`), and only then stop the ZooKeeper instance (`Ctrl-C`).
  *
- * If you like you can run multiple instances of this example by passing in a different port. You
+ * <p>If you like you can run multiple instances of this example by passing in a different port. You
  * can then experiment with seeing how keys map to different instances etc.
  */
 public class WordCountInteractiveQueriesExample {
@@ -162,9 +159,9 @@ public class WordCountInteractiveQueriesExample {
     // Where to find Kafka broker(s).
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     // Set the default key serde
-    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
     // Set the default value serde
-    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
     // Provide the details of our embedded http service that we'll use to connect to this streams
     // instance and discover locations of stores.
     streamsConfiguration.put(StreamsConfig.APPLICATION_SERVER_CONFIG, DEFAULT_HOST + ":" + port);
@@ -229,7 +226,7 @@ public class WordCountInteractiveQueriesExample {
 
     // Create a Windowed State Store that contains the word count for every
     // 1 minute
-    groupedByWord.windowedBy(TimeWindows.of(Duration.ofMinutes(1)))
+    groupedByWord.windowedBy(TimeWindows.ofSizeWithNoGrace(Duration.ofMinutes(1)))
         .count(Materialized.<String, Long, WindowStore<Bytes, byte[]>>as("windowed-word-count")
             .withValueSerde(Serdes.Long()));
 

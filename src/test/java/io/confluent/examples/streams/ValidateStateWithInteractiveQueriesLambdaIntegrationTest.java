@@ -78,8 +78,8 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
     final Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "validating-with-interactive-queries-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy config");
-    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.Long().getClass().getName());
+    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
+    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.LongSerde.class);
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     // The commit interval for flushing records to state stores and downstream must be lower than
     // this integration test's timeout (30 secs) to ensure we observe the expected processing results.
@@ -102,7 +102,7 @@ public class ValidateStateWithInteractiveQueriesLambdaIntegrationTest {
     // windowed MAX() aggregation
     final String maxWindowStore = "max-window-store";
     stream.groupByKey()
-      .windowedBy(TimeWindows.of(Duration.ofMinutes(1L)).grace(Duration.ZERO))
+      .windowedBy(TimeWindows.ofSizeWithNoGrace(Duration.ofMinutes(1L)))
       .aggregate(
         () -> Long.MIN_VALUE,
         (aggKey, value, aggregate) -> Math.max(value, aggregate),

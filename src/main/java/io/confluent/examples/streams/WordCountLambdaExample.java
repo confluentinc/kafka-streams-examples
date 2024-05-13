@@ -44,7 +44,7 @@ import java.util.regex.Pattern;
  * <br>
  * HOW TO RUN THIS EXAMPLE
  * <p>
- * 1) Start Zookeeper and Kafka. Please refer to <a href='http://docs.confluent.io/current/quickstart.html#quickstart'>QuickStart</a>.
+ * 1) Start Zookeeper and Kafka. Please refer to <a href="http://docs.confluent.io/current/quickstart.html#quickstart">QuickStart</a>.
  * <p>
  * 2) Create the input and output topics used by this example.
  * <pre>
@@ -58,11 +58,11 @@ import java.util.regex.Pattern;
  * <p>
  * 3) Start this example application either in your IDE or on the command line.
  * <p>
- * If via the command line please refer to <a href='https://github.com/confluentinc/kafka-streams-examples#packaging-and-running'>Packaging</a>.
+ * If via the command line please refer to <a href="https://github.com/confluentinc/kafka-streams-examples#packaging-and-running">Packaging</a>.
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-7.0.15-0-standalone.jar io.confluent.examples.streams.WordCountLambdaExample
+ * $ java -cp target/kafka-streams-examples-7.8.0-0-standalone.jar io.confluent.examples.streams.WordCountLambdaExample
  * }
  * </pre>
  * 4) Write some input data to the source topic "streams-plaintext-input" (e.g. via {@code kafka-console-producer}).
@@ -133,7 +133,7 @@ public class WordCountLambdaExample {
     // when resetting the application for doing a re-run (via the Application Reset Tool,
     // https://docs.confluent.io/platform/current/streams/developer-guide/app-reset-tool.html).
     //
-    // The drawback of cleaning up local state prior is that your app must rebuilt its local state from scratch, which
+    // The drawback of cleaning up local state prior is that your app must rebuild its local state from scratch, which
     // will take time and will require reading all the state-relevant data from the Kafka cluster over the network.
     // Thus in a production scenario you typically do not want to clean up always as we do here but rather only when it
     // is truly needed, i.e., only under certain conditions (e.g., the presence of a command line flag for your app).
@@ -150,7 +150,7 @@ public class WordCountLambdaExample {
   /**
    * Configure the Streams application.
    *
-   * Various Kafka Streams related settings are defined here such as the location of the target Kafka cluster to use.
+   * <p>Various Kafka Streams related settings are defined here such as the location of the target Kafka cluster to use.
    * Additionally, you could also define Kafka Producer and Kafka Consumer settings when needed.
    *
    * @param bootstrapServers Kafka cluster address
@@ -165,13 +165,13 @@ public class WordCountLambdaExample {
     // Where to find Kafka broker(s).
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     // Specify default (de)serializers for record keys and for record values.
-    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
+    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
     // Records should be flushed every 10 seconds. This is less than the default
     // in order to keep this example interactive.
     streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 10 * 1000);
     // For illustrative purposes we disable record caches.
-    streamsConfiguration.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
+    streamsConfiguration.put(StreamsConfig.STATESTORE_CACHE_MAX_BYTES_CONFIG, 0);
     // Use a temporary directory for storing state, which will be automatically removed after the test.
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, TestUtils.tempDirectory().getAbsolutePath());
     return streamsConfiguration;
