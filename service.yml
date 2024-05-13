@@ -16,6 +16,7 @@ semaphore:
   sign_images: true
   triggers: ['branches', 'pull_requests']
   os_types: ['ubi8']
+  use_packages: true
   tasks:
     - name: cp-dockerfile-build
       branch: master
