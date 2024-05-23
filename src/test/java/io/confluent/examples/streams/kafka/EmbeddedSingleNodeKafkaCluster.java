@@ -22,6 +22,9 @@ import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaConfig$;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
+import org.apache.kafka.coordinator.group.GroupCoordinatorConfig;
+import org.apache.kafka.network.SocketServerConfigs;
+import org.apache.kafka.server.config.ServerLogConfigs;
 import org.apache.kafka.storage.internals.log.CleanerConfig;
 import org.apache.kafka.test.TestCondition;
 import org.apache.kafka.test.TestUtils;
@@ -88,7 +91,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
 
     final Properties effectiveBrokerConfig = effectiveBrokerConfigFrom(brokerConfig, zookeeper);
     log.debug("Starting a Kafka instance on port {} ...",
-      effectiveBrokerConfig.getProperty(KafkaConfig.ListenersProp()));
+      effectiveBrokerConfig.getProperty(SocketServerConfigs.LISTENERS_CONFIG));
     broker = new KafkaEmbedded(effectiveBrokerConfig);
     log.debug("Kafka instance is running at {}, connected to ZooKeeper at {}",
       broker.brokerList(), broker.zookeeperConnect());
@@ -98,7 +101,7 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, KAFKASTORE_OPERATION_TIMEOUT_MS);
     schemaRegistryProps.put(SchemaRegistryConfig.DEBUG_CONFIG, KAFKASTORE_DEBUG);
     schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_INIT_TIMEOUT_CONFIG, KAFKASTORE_INIT_TIMEOUT);
-    schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, effectiveBrokerConfig.getProperty(KafkaConfig.ListenersProp()));
+    schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, effectiveBrokerConfig.getProperty(SocketServerConfigs.LISTENERS_CONFIG));
 
     schemaRegistry = new RestApp(0, null, KAFKA_SCHEMAS_TOPIC, AVRO_COMPATIBILITY_TYPE, schemaRegistryProps);
     schemaRegistry.start();
@@ -110,14 +113,14 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     effectiveConfig.putAll(brokerConfig);
     effectiveConfig.put(ZkConfigs.ZK_CONNECT_CONFIG, zookeeper.connectString());
     effectiveConfig.put(ZkConfigs.ZK_SESSION_TIMEOUT_MS_CONFIG, 30 * 1000);
-    effectiveConfig.put(KafkaConfig.ListenersProp(), String.format("PLAINTEXT://127.0.0.1:%s", DEFAULT_BROKER_PORT));
+    effectiveConfig.put(SocketServerConfigs.LISTENERS_CONFIG, String.format("PLAINTEXT://127.0.0.1:%s", DEFAULT_BROKER_PORT));
     effectiveConfig.put(ZkConfigs.ZK_CONNECTION_TIMEOUT_MS_CONFIG, 60 * 1000);
     effectiveConfig.put(KafkaConfig$.MODULE$.DeleteTopicEnableProp(), true);
     effectiveConfig.put(CleanerConfig.LOG_CLEANER_DEDUPE_BUFFER_SIZE_PROP, 2 * 1024 * 1024L);
-    effectiveConfig.put(KafkaConfig$.MODULE$.GroupMinSessionTimeoutMsProp(), 0);
-    effectiveConfig.put(KafkaConfig$.MODULE$.OffsetsTopicReplicationFactorProp(), (short) 1);
-    effectiveConfig.put(KafkaConfig$.MODULE$.OffsetsTopicPartitionsProp(), 1);
-    effectiveConfig.put(KafkaConfig$.MODULE$.AutoCreateTopicsEnableProp(), true);
+    effectiveConfig.put(GroupCoordinatorConfig.GROUP_MIN_SESSION_TIMEOUT_MS_CONFIG, 0);
+    effectiveConfig.put(GroupCoordinatorConfig.OFFSETS_TOPIC_REPLICATION_FACTOR_CONFIG, (short) 1);
+    effectiveConfig.put(GroupCoordinatorConfig.OFFSETS_TOPIC_PARTITIONS_CONFIG, 1);
+    effectiveConfig.put(ServerLogConfigs.AUTO_CREATE_TOPICS_ENABLE_CONFIG, true);
     return effectiveConfig;
   }
 
