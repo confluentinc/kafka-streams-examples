@@ -27,6 +27,8 @@ import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Time;
+import org.apache.kafka.network.SocketServerConfigs;
+import org.apache.kafka.server.config.ServerLogConfigs;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,14 +84,14 @@ public class KafkaEmbedded {
   private Properties effectiveConfigFrom(final Properties initialConfig) {
     final Properties effectiveConfig = new Properties();
     effectiveConfig.put(KafkaConfig$.MODULE$.BrokerIdProp(), 0);
-    effectiveConfig.put(KafkaConfig.ListenersProp(), "PLAINTEXT://127.0.0.1:9092");
-    effectiveConfig.put(KafkaConfig$.MODULE$.NumPartitionsProp(), 1);
-    effectiveConfig.put(KafkaConfig$.MODULE$.AutoCreateTopicsEnableProp(), true);
+    effectiveConfig.put(SocketServerConfigs.LISTENERS_CONFIG, "PLAINTEXT://127.0.0.1:9092");
+    effectiveConfig.put(ServerLogConfigs.NUM_PARTITIONS_CONFIG, 1);
+    effectiveConfig.put(ServerLogConfigs.AUTO_CREATE_TOPICS_ENABLE_CONFIG, true);
     effectiveConfig.put(KafkaConfig$.MODULE$.MessageMaxBytesProp(), 1000000);
     effectiveConfig.put(KafkaConfig$.MODULE$.ControlledShutdownEnableProp(), true);
 
     effectiveConfig.putAll(initialConfig);
-    effectiveConfig.setProperty(KafkaConfig$.MODULE$.LogDirProp(), logDir.getAbsolutePath());
+    effectiveConfig.setProperty(ServerLogConfigs.LOG_DIR_CONFIG, logDir.getAbsolutePath());
     return effectiveConfig;
   }
 
