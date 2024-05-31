@@ -17,7 +17,6 @@ package io.confluent.examples.streams.kafka;
 
 import kafka.cluster.EndPoint;
 import kafka.server.KafkaConfig;
-import kafka.server.KafkaConfig$;
 import kafka.server.KafkaServer;
 import kafka.utils.TestUtils;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -28,6 +27,7 @@ import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Time;
 import org.apache.kafka.network.SocketServerConfigs;
+import org.apache.kafka.server.config.ServerConfigs;
 import org.apache.kafka.server.config.ServerLogConfigs;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
@@ -43,7 +43,7 @@ import java.util.concurrent.ExecutionException;
 /**
  * Runs an in-memory, "embedded" instance of a Kafka broker, which listens at `127.0.0.1:9092` by
  * default.
- *
+ * <p>
  * Requires a running ZooKeeper instance to connect to.  By default, it expects a ZooKeeper instance
  * running at `127.0.0.1:2181`.  You can specify a different ZooKeeper instance by setting the
  * `zookeeper.connect` parameter in the broker's configuration.
@@ -83,12 +83,12 @@ public class KafkaEmbedded {
 
   private Properties effectiveConfigFrom(final Properties initialConfig) {
     final Properties effectiveConfig = new Properties();
-    effectiveConfig.put(KafkaConfig$.MODULE$.BrokerIdProp(), 0);
+    effectiveConfig.put(ServerConfigs.BROKER_ID_CONFIG, 0);
     effectiveConfig.put(SocketServerConfigs.LISTENERS_CONFIG, "PLAINTEXT://127.0.0.1:9092");
     effectiveConfig.put(ServerLogConfigs.NUM_PARTITIONS_CONFIG, 1);
     effectiveConfig.put(ServerLogConfigs.AUTO_CREATE_TOPICS_ENABLE_CONFIG, true);
-    effectiveConfig.put(KafkaConfig$.MODULE$.MessageMaxBytesProp(), 1000000);
-    effectiveConfig.put(KafkaConfig$.MODULE$.ControlledShutdownEnableProp(), true);
+    effectiveConfig.put(ServerConfigs.MESSAGE_MAX_BYTES_CONFIG, 1000000);
+    effectiveConfig.put(ServerConfigs.CONTROLLED_SHUTDOWN_ENABLE_CONFIG, true);
 
     effectiveConfig.putAll(initialConfig);
     effectiveConfig.setProperty(ServerLogConfigs.LOG_DIR_CONFIG, logDir.getAbsolutePath());
@@ -97,7 +97,7 @@ public class KafkaEmbedded {
 
   /**
    * This broker's `metadata.broker.list` value.  Example: `127.0.0.1:9092`.
-   *
+   * <p>
    * You can use this to tell Kafka producers and consumers how to connect to this instance.
    */
   public String brokerList() {
