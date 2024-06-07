@@ -79,8 +79,17 @@ global_job_config:
       - export AMD_ARCH=.amd64
       - export ARM_ARCH=.arm64
 blocks:
-  - name: Build, Test, & Scan AMD
+  - name: Validation
     dependencies: []
+    run:
+      when: "branch = 'master'"
+    task:
+      jobs:
+        - name: Validation
+          commands:
+            - . sem-pint -c
+  - name: Build, Test, & Scan AMD
+    dependencies: ["Validation"]
     run:
       when: "pull_request =~ '.*'"
     task:
@@ -109,7 +118,7 @@ blocks:
             - artifact push workflow target/test-results
             - artifact push workflow target --destination target-AMD
   - name: Build & Test ARM
-    dependencies: []
+    dependencies: ["Validation"]
     run:
       when: "pull_request =~ '.*'"
     task:
