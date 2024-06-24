@@ -57,7 +57,7 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-7.1.13-0-standalone.jar io.confluent.examples.streams.JsonToAvroExample
+ * $ java -cp target/kafka-streams-examples-7.1.13-standalone.jar io.confluent.examples.streams.JsonToAvroExample
  * }
  * </pre>
  * 4) Write some input data to the source topics (e.g. via {@link JsonToAvroExampleDriver}). The
@@ -68,7 +68,7 @@ import java.util.Properties;
  * {@code
  * # Here: Write input data using the example driver.  Once the driver has stopped generating data,
  * # you can terminate it via Ctrl-C.
- * $ java -cp target/kafka-streams-examples-7.1.13-0-standalone.jar io.confluent.examples.streams.JsonToAvroExampleDriver
+ * $ java -cp target/kafka-streams-examples-7.1.13-standalone.jar io.confluent.examples.streams.JsonToAvroExampleDriver
  * }
  * </pre>
  */
