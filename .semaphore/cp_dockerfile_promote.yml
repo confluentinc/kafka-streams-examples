@@ -121,7 +121,7 @@ blocks:
         - name: Create Manifest confluentinc/kafka-streams-examples ubi8
           commands:
             - export OS_TYPE="ubi8"
-            - if [[ "$OS_TYPE" =~ "$PROMOTE_OS_TYPE*" || ! "$OS_TYPE" ]]; then export OS_TAG=""; else export OS_TAG="-$OS_TYPE"; fi
+            - if [[ ! "$OS_TYPE" ]]; then export OS_TAG=""; else export OS_TAG="-$OS_TYPE"; fi
             - export DOCKER_REPO="confluentinc/kafka-streams-examples"
             - export PROMOTED_TAG="$PROMOTED_TAG_PREFIX$OS_TAG"
             - docker manifest create $DOCKER_REPO:$PROMOTED_TAG $DOCKER_REPO:$PROMOTED_TAG$AMD_ARCH $DOCKER_REPO:$PROMOTED_TAG$ARM_ARCH
