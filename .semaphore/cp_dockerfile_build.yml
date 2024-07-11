@@ -31,8 +31,6 @@ global_job_config:
       - export BUILD_NUMBER=$(echo $SEMAPHORE_WORKFLOW_ID | cut -f1 -d"-")
       - export BRANCH_TAG=$(echo $SEMAPHORE_GIT_BRANCH | tr / -)
       # Semaphore does not accept empty values for parameters.
-      - if [[ "$PACKAGES_MAVEN_URL" = "NONE" ]]; then unset PACKAGES_MAVEN_URL; fi
-      - if [[ "$PACKAGING_BUILD_NUMBER" = "NONE" ]]; then unset PACKAGING_BUILD_NUMBER; fi
       - export ALLOW_UNSIGNED=$(echo $ALLOW_UNSIGNED | awk '{ print tolower($0) }')
       - >-
         echo """
@@ -88,8 +86,17 @@ global_job_config:
       - export AMD_ARCH=.amd64
       - export ARM_ARCH=.arm64
 blocks:
-  - name: Build, Test, & Scan AMD
+  - name: Validation
     dependencies: []
+    run:
+      when: "branch = 'master'"
+    task:
+      jobs:
+        - name: Validation
+          commands:
+            - . sem-pint -c
+  - name: Build, Test, & Scan AMD
+    dependencies: ["Validation"]
     run:
       # don't run the tests on non-functional changes...
       when: "change_in('/', {exclude: ['/.deployed-versions/', '.github/']})"
@@ -146,7 +153,7 @@ blocks:
             - docker tag $DEV_IMAGE_FULL $PROD_IMAGE_NAME:$LATEST_PUSH_TAG
             - docker push $PROD_IMAGE_NAME:$LATEST_PUSH_TAG
   - name: Build & Test ARM
-    dependencies: []
+    dependencies: ["Validation"]
     run:
       # don't run the tests on non-functional changes...
       when: "change_in('/', {exclude: ['/.deployed-versions/', '.github/']})"
