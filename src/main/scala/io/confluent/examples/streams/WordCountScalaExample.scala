@@ -41,7 +41,7 @@ import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
   * Once packaged you can then run:
   *
   * {{{
-  * $ java -cp target/kafka-streams-examples-7.0.15-0-standalone.jar io.confluent.examples.streams.WordCountLambdaExample
+  * $ java -cp target/kafka-streams-examples-7.0.16-0-standalone.jar io.confluent.examples.streams.WordCountLambdaExample
   * }}}
   *
   * 4) Write some input data to the source topic "streams-plaintext-input" (e.g. via `kafka-console-producer`).
