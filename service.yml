@@ -5,7 +5,6 @@ code_artifact:
   enable: true
   package_paths:
     - "maven-snapshots/maven/io.confluent/kafka-streams.examples"
-    - "maven-snapshots/maven/org.apache.kafka/kafka-streams.examples"
 git:
   enable: true
 codeowners:
