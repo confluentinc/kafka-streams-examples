@@ -7,12 +7,12 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>rest-utils-parent</artifactId>
-        <version>[7.7.1-0, 7.7.2-0)</version>
+        <version>7.7.1-10</version>
     </parent>
 
     <artifactId>kafka-streams-examples</artifactId>
     <packaging>jar</packaging>
-    <version>7.7.1-0</version>
+    <version>7.7.1-3</version>
 
     <organization>
         <name>Confluent, Inc.</name>
@@ -62,9 +62,9 @@
         <!-- Need to explicitly set this otherwise it will be overridden from common-docker pom. -->
         <docker.file>Dockerfile.${docker.os_type}</docker.file>
         <docker.tag>${project.version}-${docker.os_type}</docker.tag>
-        <io.confluent.schema-registry.version>${confluent.version.range}</io.confluent.schema-registry.version>
-        <io.confluent.blueway.version>${confluent.version.range}</io.confluent.blueway.version>
-        <io.confluent.kafka-streams-examples.version>7.7.1-0</io.confluent.kafka-streams-examples.version>
+        <io.confluent.schema-registry.version>7.7.1-16</io.confluent.schema-registry.version>
+        <io.confluent.blueway.version>7.7.1-28</io.confluent.blueway.version>
+        <io.confluent.kafka-streams-examples.version>7.7.1-3</io.confluent.kafka-streams-examples.version>
     </properties>
 
     <dependencies>
