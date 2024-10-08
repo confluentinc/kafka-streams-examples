@@ -182,10 +182,6 @@ class CMSStore[T: CMSHasher](override val name: String,
 
   @volatile private var open: Boolean = false
 
-  override def init(context: ProcessorContext, root: StateStore): Unit = {
-    throw new IllegalStateException("Should not be called as we implement `init(StateStoreContext, StateStore)`");
-  }
-
   /**
     * Initializes this store, including restoring the store's state from its changelog.
     */
