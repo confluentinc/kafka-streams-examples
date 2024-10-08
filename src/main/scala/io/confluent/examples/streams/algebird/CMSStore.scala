@@ -17,7 +17,7 @@ package io.confluent.examples.streams.algebird
 
 import com.twitter.algebird.{CMSHasher, TopCMS, TopPctCMS}
 import org.apache.kafka.common.serialization.Serdes
-import org.apache.kafka.streams.processor.{ProcessorContext, StateStore, StateStoreContext}
+import org.apache.kafka.streams.processor.{StateStore, StateStoreContext}
 import org.apache.kafka.streams.state.StateSerdes
 
 /**
@@ -181,10 +181,6 @@ class CMSStore[T: CMSHasher](override val name: String,
   private[algebird] def cmsFrom(item: T): TopCMS[T] = cmsMonoid.create(item)
 
   @volatile private var open: Boolean = false
-
-  override def init(context: ProcessorContext, root: StateStore): Unit = {
-    throw new IllegalStateException("Should not be called as we implement `init(StateStoreContext, StateStore)`");
-  }
 
   /**
     * Initializes this store, including restoring the store's state from its changelog.
