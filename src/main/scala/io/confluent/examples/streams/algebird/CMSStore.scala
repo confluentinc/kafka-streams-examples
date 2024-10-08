@@ -17,7 +17,7 @@ package io.confluent.examples.streams.algebird
 
 import com.twitter.algebird.{CMSHasher, TopCMS, TopPctCMS}
 import org.apache.kafka.common.serialization.Serdes
-import org.apache.kafka.streams.processor.{ProcessorContext, StateStore, StateStoreContext}
+import org.apache.kafka.streams.processor.{StateStore, StateStoreContext}
 import org.apache.kafka.streams.state.StateSerdes
 
 /**
