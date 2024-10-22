@@ -319,7 +319,7 @@ The next step is to create a standalone jar ("fat jar") of the [application exam
 # Create a standalone jar ("fat jar")
 $ mvn clean package
 
-# >>> Creates target/kafka-streams-examples-7.4.8-0-standalone.jar
+# >>> Creates target/kafka-streams-examples-7.4.8-standalone.jar
 ```
 
 > Tip: If needed, you can disable the test suite during packaging, for example to speed up the packaging or to lower
@@ -333,7 +333,7 @@ You can now run the application examples as follows:
 
 ```shell
 # Run an example application from the standalone jar. Here: `WordCountLambdaExample`
-$ java -cp target/kafka-streams-examples-7.4.8-0-standalone.jar \
+$ java -cp target/kafka-streams-examples-7.4.8-standalone.jar \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
 
@@ -348,7 +348,7 @@ If you want to turn on log4j while running your example application, you can edi
 
 ```shell
 # Run an example application from the standalone jar. Here: `WordCountLambdaExample`
-$ java -cp target/kafka-streams-examples-7.4.8-0-standalone.jar \
+$ java -cp target/kafka-streams-examples-7.4.8-standalone.jar \
   -Dlog4j.configuration=file:src/main/resources/log4j.properties \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
