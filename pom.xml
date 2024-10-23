@@ -12,7 +12,7 @@
 
     <artifactId>kafka-streams-examples</artifactId>
     <packaging>jar</packaging>
-    <version>7.3.11</version>
+    <version>7.3.11-27</version>
 
     <organization>
         <name>Confluent, Inc.</name>
@@ -64,7 +64,7 @@
         <docker.tag>${project.version}-${docker.os_type}</docker.tag>
         <io.confluent.schema-registry.version>${confluent.version.range}</io.confluent.schema-registry.version>
         <io.confluent.blueway.version>${confluent.version.range}</io.confluent.blueway.version>
-        <io.confluent.kafka-streams-examples.version>7.3.11</io.confluent.kafka-streams-examples.version>
+        <io.confluent.kafka-streams-examples.version>7.3.11-27</io.confluent.kafka-streams-examples.version>
     </properties>
 
     <dependencies>
