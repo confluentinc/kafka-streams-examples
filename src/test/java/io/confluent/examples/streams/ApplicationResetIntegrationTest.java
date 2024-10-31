@@ -137,7 +137,7 @@ public class ApplicationResetIntegrationTest {
     final int exitCode = new StreamsResetter().execute(
       new String[]{
         "--application-id", applicationId,
-        "--bootstrap-server", CLUSTER.bootstrapServers(),
+        "--bootstrap-servers", CLUSTER.bootstrapServers(),
         "--input-topics", inputTopic
       });
     Assert.assertEquals(0, exitCode);
