@@ -24,7 +24,7 @@ global_job_config:
   prologue:
     commands:
       - checkout
-      - sem-version java 8
+      - if [[ $SEMAPHORE_GIT_BRANCH =~ ^7\..* ]]; then sem-version java 8; else sem-version java 17; fi
       - . vault-setup
       - . cache-maven restore
       - export GIT_COMMIT=$(git rev-parse --verify HEAD --short)
