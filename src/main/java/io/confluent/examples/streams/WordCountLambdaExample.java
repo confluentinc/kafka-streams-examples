@@ -62,7 +62,7 @@ import java.util.regex.Pattern;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-7.7.0-standalone.jar io.confluent.examples.streams.WordCountLambdaExample
+ * $ java -cp target/kafka-streams-examples-7.7.0-cp5-standalone.jar io.confluent.examples.streams.WordCountLambdaExample
  * }
  * </pre>
  * 4) Write some input data to the source topic "streams-plaintext-input" (e.g. via {@code kafka-console-producer}).
