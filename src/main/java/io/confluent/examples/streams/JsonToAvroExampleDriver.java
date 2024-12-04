@@ -49,7 +49,7 @@ import java.io.IOException;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * java -cp target/kafka-streams-examples-7.3.11-0-standalone.jar io.confluent.examples.streams.JsonToAvroExampleDriver
+ * java -cp target/kafka-streams-examples-7.3.12-0-standalone.jar io.confluent.examples.streams.JsonToAvroExampleDriver
  * }
  * </pre>
  *
