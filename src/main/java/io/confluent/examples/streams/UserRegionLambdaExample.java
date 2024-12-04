@@ -54,7 +54,7 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-7.5.7-0-standalone.jar io.confluent.examples.streams.UserRegionLambdaExample
+ * $ java -cp target/kafka-streams-examples-7.5.8-0-standalone.jar io.confluent.examples.streams.UserRegionLambdaExample
  * }
  * </pre>
  * 4) Write some input data to the source topics (e.g. via {@code kafka-console-producer}). The already
