@@ -48,7 +48,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 public class WikipediaFeedAvroLambdaExampleTest {
 
   @ClassRule
-  public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster(new Properties() {
+  public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster(new HashMap<>() {
     {
       put(ZkConfigs.ZK_CONNECTION_TIMEOUT_MS_CONFIG, "30000");
     }
@@ -83,26 +83,20 @@ public class WikipediaFeedAvroLambdaExampleTest {
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
               io.confluent.kafka.serializers.KafkaAvroSerializer.class);
     props.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl());
-    final KafkaProducer<String, WikiFeed> producer = new KafkaProducer<>(props);
-
-    producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
-                                       new WikiFeed("donna", true, "first post")));
-
-    producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
-                                       new WikiFeed("donna", true, "second post")));
-
-    producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
-                                       new WikiFeed("donna", true, "third post")));
-
-    producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
-                                       new WikiFeed("becca", true, "first post")));
-
-    producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
-                                       new WikiFeed("becca", true, "second post")));
-
-    producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
-                                       new WikiFeed("john", true, "first post")));
-    producer.flush();
+    try (final KafkaProducer<String, WikiFeed> producer = new KafkaProducer<>(props)) {
+      producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
+              new WikiFeed("donna", true, "first post")));
+      producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
+              new WikiFeed("donna", true, "second post")));
+      producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
+              new WikiFeed("donna", true, "third post")));
+      producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
+              new WikiFeed("becca", true, "first post")));
+      producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
+              new WikiFeed("becca", true, "second post")));
+      producer.send(new ProducerRecord<>(WikipediaFeedAvroExample.WIKIPEDIA_FEED,
+              new WikiFeed("john", true, "first post")));
+    }
 
     streams.start();
 
