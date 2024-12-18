@@ -2,7 +2,7 @@
 version: '2'
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.7.1
+    image: confluentinc/cp-zookeeper:7.7.1-cp2
     hostname: zookeeper
     ports:
       - '32181:32181'
@@ -13,7 +13,7 @@ services:
       - "moby:127.0.0.1"
 
   kafka:
-    image: confluentinc/cp-enterprise-kafka:7.7.1
+    image: confluentinc/cp-enterprise-kafka:7.7.1-cp2
     hostname: kafka
     ports:
       - '9092:9092'
@@ -38,7 +38,7 @@ services:
       - "moby:127.0.0.1"
 
   schema-registry:
-    image: confluentinc/cp-schema-registry:7.7.1
+    image: confluentinc/cp-schema-registry:7.7.1-cp2
     hostname: schema-registry
     depends_on:
       - zookeeper
@@ -56,7 +56,7 @@ services:
   # This "container" is a workaround to pre-create topics for the Kafka Music application
   # until we have a more elegant way to do that.
   kafka-create-topics:
-    image: confluentinc/cp-kafka:7.7.1
+    image: confluentinc/cp-kafka:7.7.1-cp2
     depends_on:
       - kafka
     hostname: kafka-create-topics
@@ -81,7 +81,7 @@ services:
 
   # Continuously generates input data for the Kafka Music application.
   kafka-music-data-generator:
-    image: confluentinc/kafka-streams-examples:7.7.1
+    image: confluentinc/kafka-streams-examples:7.7.1-cp2
     hostname: kafka-music-data-generator
     depends_on:
       - kafka
@@ -92,7 +92,7 @@ services:
                        cub kafka-ready -b kafka:29092 1 20 && \
                        echo Waiting for Confluent Schema Registry to be ready... && \
                        cub sr-ready schema-registry 8081 20 && \
-                       java -cp /usr/share/java/kafka-streams-examples/kafka-streams-examples-7.7.1-standalone.jar \
+                       java -cp /usr/share/java/kafka-streams-examples/kafka-streams-examples-7.7.1-cp2-standalone.jar \
                        io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExampleDriver \
                        kafka:29092 http://schema-registry:8081'"
     environment:
@@ -106,7 +106,7 @@ services:
 
   # Runs the Kafka Music application.
   kafka-music-application:
-    image: confluentinc/kafka-streams-examples:7.7.1
+    image: confluentinc/kafka-streams-examples:7.7.1-cp2
     hostname: kafka-music-application
     depends_on:
       - kafka
