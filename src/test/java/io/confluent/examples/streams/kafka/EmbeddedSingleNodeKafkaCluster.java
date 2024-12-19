@@ -132,6 +132,10 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
    * Stops the cluster.
    */
   public void stop() {
+    if (!running) {
+      log.info("Confluent is already stopped");
+      return;
+    }
     log.info("Stopping Confluent");
     try {
       if (schemaRegistry != null) {
