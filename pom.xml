@@ -54,7 +54,7 @@
         <chill.version>0.9.5</chill.version>
         <docker.skip-build>false</docker.skip-build>
         <docker.skip-test>false</docker.skip-test>
-        <java.version>11</java.version>
+        <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scalatest.version>3.1.2</scalatest.version>
         <!-- The default is ubi8 -->
@@ -125,14 +125,6 @@
             <version>${scala.version}</version>
         </dependency>
         <dependency>
-            <!-- This could be a test-only dependency, but we keep it a compile dependency so that
-                 users are able to package the examples via `mvn package` and actually run the examples
-                 against a Kafka cluster. -->
-            <groupId>com.101tec</groupId>
-            <artifactId>zkclient</artifactId>
-            <version>0.9</version>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-reload4j</artifactId>
         </dependency>
@@ -180,6 +172,11 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <version>4.0.1</version>
         </dependency>
         <!--
             This dependency is included to demonstrate the use of
@@ -239,6 +236,12 @@
             <artifactId>kafka_${kafka.scala.version}</artifactId>
             <version>${kafka.version}</version>
             <classifier>test</classifier>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-test-common</artifactId>
+            <version>${kafka.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

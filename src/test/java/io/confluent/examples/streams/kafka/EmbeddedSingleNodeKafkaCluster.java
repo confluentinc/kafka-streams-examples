@@ -15,10 +15,12 @@
  */
 package io.confluent.examples.streams.kafka;
 
-import io.confluent.examples.streams.zookeeper.ZooKeeperEmbedded;
 import io.confluent.kafka.schemaregistry.RestApp;
 import io.confluent.kafka.schemaregistry.CompatibilityLevel;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
+import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.apache.kafka.coordinator.group.GroupCoordinatorConfig;
 import org.apache.kafka.network.SocketServerConfigs;
@@ -27,27 +29,23 @@ import org.apache.kafka.server.config.ServerLogConfigs;
 import org.apache.kafka.storage.internals.log.CleanerConfig;
 import org.apache.kafka.test.TestCondition;
 import org.apache.kafka.test.TestUtils;
-import org.apache.kafka.server.config.ZkConfigs;
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.jdk.CollectionConverters;
 
-import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
 /**
- * Runs an in-memory, "embedded" Kafka cluster with 1 ZooKeeper instance, 1 Kafka broker, and 1
- * Confluent Schema Registry instance.
+ * Runs an in-memory, "embedded" Kafka cluster with 1 Kafka broker and 1 Confluent Schema Registry instance.
  */
 public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
 
   private static final Logger log = LoggerFactory.getLogger(EmbeddedSingleNodeKafkaCluster.class);
-  private static final int DEFAULT_BROKER_PORT = 1234; // pick a random port
   private static final String KAFKA_SCHEMAS_TOPIC = "_schemas";
   private static final String AVRO_COMPATIBILITY_TYPE = CompatibilityLevel.NONE.name;
 
@@ -55,17 +53,17 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
   private static final String KAFKASTORE_DEBUG = "true";
   private static final String KAFKASTORE_INIT_TIMEOUT = "90000";
 
-  private ZooKeeperEmbedded zookeeper;
   private KafkaEmbedded broker;
+  private Admin admin;
   private RestApp schemaRegistry;
-  private final Properties brokerConfig;
+  private final Map<String, String> brokerConfig;
   private boolean running;
 
   /**
    * Creates and starts the cluster.
    */
   public EmbeddedSingleNodeKafkaCluster() {
-    this(new Properties());
+    this(new HashMap<>());
   }
 
   /**
@@ -73,8 +71,8 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
    *
    * @param brokerConfig Additional broker configuration settings.
    */
-  public EmbeddedSingleNodeKafkaCluster(final Properties brokerConfig) {
-    this.brokerConfig = new Properties();
+  public EmbeddedSingleNodeKafkaCluster(final Map<String, String> brokerConfig) {
+    this.brokerConfig = new HashMap<>();
     this.brokerConfig.put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, KAFKASTORE_OPERATION_TIMEOUT_MS);
     this.brokerConfig.putAll(brokerConfig);
   }
@@ -84,42 +82,39 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
    */
   public void start() throws Exception {
     log.debug("Initiating embedded Kafka cluster startup");
-    log.debug("Starting a ZooKeeper instance...");
-    zookeeper = new ZooKeeperEmbedded();
-    log.debug("ZooKeeper instance is running at {}", zookeeper.connectString());
 
-    final Properties effectiveBrokerConfig = effectiveBrokerConfigFrom(brokerConfig, zookeeper);
-    log.debug("Starting a Kafka instance on port {} ...",
-      effectiveBrokerConfig.getProperty(SocketServerConfigs.LISTENERS_CONFIG));
+    final Map<String, String> effectiveBrokerConfig = effectiveBrokerConfigFrom(brokerConfig);
+    log.debug(
+        "Starting a Kafka instance on port {} ...",
+        effectiveBrokerConfig.get(SocketServerConfigs.LISTENERS_CONFIG)
+    );
     broker = new KafkaEmbedded(effectiveBrokerConfig);
-    log.debug("Kafka instance is running at {}, connected to ZooKeeper at {}",
-      broker.brokerList(), broker.zookeeperConnect());
+    log.debug("Kafka instance is running at {}", broker.brokerList());
+
+    final Properties adminConfig = new Properties();
+    adminConfig.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, broker.brokerList());
+    admin = Admin.create(adminConfig);
 
     final Properties schemaRegistryProps = new Properties();
 
     schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_TIMEOUT_CONFIG, KAFKASTORE_OPERATION_TIMEOUT_MS);
     schemaRegistryProps.put(SchemaRegistryConfig.DEBUG_CONFIG, KAFKASTORE_DEBUG);
     schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_INIT_TIMEOUT_CONFIG, KAFKASTORE_INIT_TIMEOUT);
-    schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, effectiveBrokerConfig.getProperty(SocketServerConfigs.LISTENERS_CONFIG));
+    schemaRegistryProps.put(SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, broker.brokerList());
 
     schemaRegistry = new RestApp(0, null, KAFKA_SCHEMAS_TOPIC, AVRO_COMPATIBILITY_TYPE, schemaRegistryProps);
     schemaRegistry.start();
     running = true;
   }
 
-  private Properties effectiveBrokerConfigFrom(final Properties brokerConfig, final ZooKeeperEmbedded zookeeper) {
-    final Properties effectiveConfig = new Properties();
-    effectiveConfig.putAll(brokerConfig);
-    effectiveConfig.put(ZkConfigs.ZK_CONNECT_CONFIG, zookeeper.connectString());
-    effectiveConfig.put(ZkConfigs.ZK_SESSION_TIMEOUT_MS_CONFIG, 30 * 1000);
-    effectiveConfig.put(SocketServerConfigs.LISTENERS_CONFIG, String.format("PLAINTEXT://127.0.0.1:%s", DEFAULT_BROKER_PORT));
-    effectiveConfig.put(ZkConfigs.ZK_CONNECTION_TIMEOUT_MS_CONFIG, 60 * 1000);
-    effectiveConfig.put(ServerConfigs.DELETE_TOPIC_ENABLE_CONFIG, true);
-    effectiveConfig.put(CleanerConfig.LOG_CLEANER_DEDUPE_BUFFER_SIZE_PROP, 2 * 1024 * 1024L);
-    effectiveConfig.put(GroupCoordinatorConfig.GROUP_MIN_SESSION_TIMEOUT_MS_CONFIG, 0);
-    effectiveConfig.put(GroupCoordinatorConfig.OFFSETS_TOPIC_REPLICATION_FACTOR_CONFIG, (short) 1);
-    effectiveConfig.put(GroupCoordinatorConfig.OFFSETS_TOPIC_PARTITIONS_CONFIG, 1);
-    effectiveConfig.put(ServerLogConfigs.AUTO_CREATE_TOPICS_ENABLE_CONFIG, true);
+  private Map<String, String> effectiveBrokerConfigFrom(final Map<String, String> brokerConfig) {
+    final Map<String, String> effectiveConfig = new HashMap<>(brokerConfig);
+    effectiveConfig.put(ServerConfigs.DELETE_TOPIC_ENABLE_CONFIG, "true");
+    effectiveConfig.put(CleanerConfig.LOG_CLEANER_DEDUPE_BUFFER_SIZE_PROP, "" + 2 * 1024 * 1024L);
+    effectiveConfig.put(GroupCoordinatorConfig.GROUP_MIN_SESSION_TIMEOUT_MS_CONFIG, "0");
+    effectiveConfig.put(GroupCoordinatorConfig.OFFSETS_TOPIC_REPLICATION_FACTOR_CONFIG, "1");
+    effectiveConfig.put(GroupCoordinatorConfig.OFFSETS_TOPIC_PARTITIONS_CONFIG, "1");
+    effectiveConfig.put(ServerLogConfigs.AUTO_CREATE_TOPICS_ENABLE_CONFIG, "true");
     return effectiveConfig;
   }
 
@@ -137,25 +132,20 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
    * Stops the cluster.
    */
   public void stop() {
+    if (!running) {
+      log.info("Confluent is already stopped");
+      return;
+    }
     log.info("Stopping Confluent");
     try {
-      try {
-        if (schemaRegistry != null) {
-          schemaRegistry.stop();
-        }
-      } catch (final Exception fatal) {
-        throw new RuntimeException(fatal);
+      if (schemaRegistry != null) {
+        schemaRegistry.stop();
       }
       if (broker != null) {
         broker.stop();
       }
-      try {
-        if (zookeeper != null) {
-          zookeeper.stop();
-        }
-      } catch (final IOException fatal) {
-        throw new RuntimeException(fatal);
-      }
+    } catch (final Exception fatal) {
+      throw new RuntimeException(fatal);
     } finally {
       running = false;
     }
@@ -267,16 +257,14 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
 
     @Override
     public boolean conditionMet() {
-      //TODO once KAFKA-6098 is fixed use AdminClient to verify topics have been deleted
-      // The Set returned from JavaConverters.setAsJavaSetConverter does not support the remove
-      // method so we need to continue to wrap in a HashSet
-      final Set<String> allTopicsFromZk = new HashSet<>(
-          CollectionConverters.SetHasAsJava(broker.kafkaServer().zkClient().getAllTopicsInCluster(false)).asJava());
+      final ListTopicsResult result = admin.listTopics();
+      try {
+        final Set<String> topics = result.names().get();
 
-      final Set<String> allTopicsFromBrokerCache = new HashSet<>(
-          CollectionConverters.SeqHasAsJava(broker.kafkaServer().metadataCache().getAllTopics().toSeq()).asJava());
-
-      return !allTopicsFromZk.removeAll(deletedTopics) && !allTopicsFromBrokerCache.removeAll(deletedTopics);
+        return topics.stream().noneMatch(deletedTopics::contains);
+      } catch (final Exception error) {
+        return false;
+      }
     }
   }
 
@@ -289,9 +277,14 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
 
     @Override
     public boolean conditionMet() {
-      //TODO once KAFKA-6098 is fixed use AdminClient to verify topics have been deleted
-      return broker.kafkaServer().zkClient().getAllTopicsInCluster(false).contains(createdTopic) &&
-          broker.kafkaServer().metadataCache().contains(createdTopic);
+      final ListTopicsResult result = admin.listTopics();
+      try {
+        final Set<String> topics = result.names().get();
+
+        return topics.contains(createdTopic);
+      } catch (final Exception error) {
+        return false;
+      }
     }
   }
 
