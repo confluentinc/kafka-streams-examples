@@ -1,8 +1,8 @@
 # Kafka Streams Examples
 
 > [!NOTE]
-> This repo is replace with [Apache Tutorial](https://github.com/confluentinc/tutorials). We still "keep the lights on",
-but we don't improve existing examples any longer, nor do we add new example.
+> This repo is replaced with [Confluent Tutorials for Apache Kafka](https://github.com/confluentinc/tutorials).
+We still "keep the lights on", but we don't improve existing examples any longer, nor do we add new example.
 
 This project contains code examples that demonstrate how to implement real-time applications and event-driven
 microservices using the Streams API of [Apache Kafka](http://kafka.apache.org/) aka Kafka Streams.
