@@ -84,10 +84,6 @@ public class EmbeddedSingleNodeKafkaCluster extends ExternalResource {
     log.debug("Initiating embedded Kafka cluster startup");
 
     final Map<String, String> effectiveBrokerConfig = effectiveBrokerConfigFrom(brokerConfig);
-    log.debug(
-        "Starting a Kafka instance on port {} ...",
-        effectiveBrokerConfig.get(SocketServerConfigs.LISTENERS_CONFIG)
-    );
     broker = new KafkaEmbedded(effectiveBrokerConfig);
     log.debug("Kafka instance is running at {}", broker.brokerList());
 
