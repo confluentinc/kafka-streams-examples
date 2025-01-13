@@ -50,7 +50,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-7.7.0-standalone.jar \
+ * $ java -cp target/kafka-streams-examples-7.7.0-cp6-standalone.jar \
  *      io.confluent.examples.streams.interactivequeries.kafkamusic.KafkaMusicExampleDriver
  * }
  * </pre>
