@@ -240,7 +240,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-test-common</artifactId>
+            <artifactId>kafka-test-common-runtime</artifactId>
             <version>${kafka.version}</version>
             <scope>test</scope>
         </dependency>
