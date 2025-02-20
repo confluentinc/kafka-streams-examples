@@ -32,6 +32,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
@@ -49,7 +50,7 @@ public class MicroserviceTestUtils {
 
   @ClassRule
   public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster(
-      new Properties() {
+      new HashMap<>() {
         {
           //Transactions need durability so the defaults require multiple nodes.
           //For testing purposes set transactions to work with a single kafka broker.

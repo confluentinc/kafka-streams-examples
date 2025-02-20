@@ -15,18 +15,13 @@
  */
 package io.confluent.examples.streams.kafka;
 
-import kafka.cluster.EndPoint;
-import kafka.server.KafkaConfig;
-import kafka.server.KafkaServer;
-import kafka.utils.TestUtils;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
-import org.apache.kafka.common.network.ListenerName;
-import org.apache.kafka.common.security.auth.SecurityProtocol;
-import org.apache.kafka.common.utils.Time;
-import org.apache.kafka.network.SocketServerConfigs;
+import org.apache.kafka.common.test.KafkaClusterTestKit;
+import org.apache.kafka.common.test.TestKitNodes;
 import org.apache.kafka.server.config.ServerConfigs;
 import org.apache.kafka.server.config.ServerLogConfigs;
 import org.junit.rules.TemporaryFolder;
@@ -36,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
@@ -43,21 +39,13 @@ import java.util.concurrent.ExecutionException;
 /**
  * Runs an in-memory, "embedded" instance of a Kafka broker, which listens at `127.0.0.1:9092` by
  * default.
- * <p>
- * Requires a running ZooKeeper instance to connect to.  By default, it expects a ZooKeeper instance
- * running at `127.0.0.1:2181`.  You can specify a different ZooKeeper instance by setting the
- * `zookeeper.connect` parameter in the broker's configuration.
  */
 public class KafkaEmbedded {
 
   private static final Logger log = LoggerFactory.getLogger(KafkaEmbedded.class);
-
-  private static final String DEFAULT_ZK_CONNECT = "127.0.0.1:2181";
-
-  private final Properties effectiveConfig;
   private final File logDir;
   private final TemporaryFolder tmpFolder;
-  private final KafkaServer kafka;
+  private final KafkaClusterTestKit cluster;
 
   /**
    * Creates and starts an embedded Kafka broker.
@@ -66,32 +54,46 @@ public class KafkaEmbedded {
    *               broker should listen to.  Note that you cannot change some settings such as
    *               `log.dirs`, `port`.
    */
-  public KafkaEmbedded(final Properties config) throws IOException {
+  public KafkaEmbedded(final Map<String, String> config) throws IOException {
     tmpFolder = new TemporaryFolder();
     tmpFolder.create();
     logDir = tmpFolder.newFolder();
-    effectiveConfig = effectiveConfigFrom(config);
-    final boolean loggingEnabled = true;
 
-    final KafkaConfig kafkaConfig = new KafkaConfig(effectiveConfig, loggingEnabled);
-    log.debug("Starting embedded Kafka broker (with log.dirs={} and ZK ensemble at {}) ...",
-        logDir, zookeeperConnect());
-    kafka = TestUtils.createServer(kafkaConfig, Time.SYSTEM);
-    log.debug("Startup of embedded Kafka broker at {} completed (with ZK ensemble at {}) ...",
-        brokerList(), zookeeperConnect());
+    final Map<String, String> brokerConfig = effectiveConfigFrom(config);
+
+    log.debug("Starting embedded Kafka broker (with log.dirs={}) ...", logDir);
+    try {
+      final KafkaClusterTestKit.Builder clusterBuilder = new KafkaClusterTestKit.Builder(
+        new TestKitNodes.Builder()
+          .setCombined(true)
+          .setNumBrokerNodes(1)
+          .setPerServerProperties(Map.of(0, brokerConfig))
+          .setNumControllerNodes(1)
+          .build()
+      );
+
+      cluster = clusterBuilder.build();
+      cluster.nonFatalFaultHandler().setIgnore(true);
+
+      cluster.format();
+      cluster.startup();
+      cluster.waitForReadyBrokers();
+    } catch (final Exception e) {
+      throw new KafkaException("Failed to create test Kafka cluster", e);
+    }
+    log.debug("Startup of embedded Kafka broker at {} completed ...", brokerList());
   }
 
-  private Properties effectiveConfigFrom(final Properties initialConfig) {
-    final Properties effectiveConfig = new Properties();
-    effectiveConfig.put(ServerConfigs.BROKER_ID_CONFIG, 0);
-    effectiveConfig.put(SocketServerConfigs.LISTENERS_CONFIG, "PLAINTEXT://127.0.0.1:9092");
-    effectiveConfig.put(ServerLogConfigs.NUM_PARTITIONS_CONFIG, 1);
-    effectiveConfig.put(ServerLogConfigs.AUTO_CREATE_TOPICS_ENABLE_CONFIG, true);
-    effectiveConfig.put(ServerConfigs.MESSAGE_MAX_BYTES_CONFIG, 1000000);
-    effectiveConfig.put(ServerConfigs.CONTROLLED_SHUTDOWN_ENABLE_CONFIG, true);
+  private Map<String, String> effectiveConfigFrom(final Map<String, String> initialConfig) {
+    final Map<String, String> effectiveConfig = new HashMap<>();
+    effectiveConfig.put(ServerConfigs.BROKER_ID_CONFIG, "0");
+    effectiveConfig.put(ServerLogConfigs.NUM_PARTITIONS_CONFIG, "1");
+    effectiveConfig.put(ServerLogConfigs.AUTO_CREATE_TOPICS_ENABLE_CONFIG, "true");
+    effectiveConfig.put(ServerConfigs.MESSAGE_MAX_BYTES_CONFIG, "1000000");
+    effectiveConfig.put(ServerConfigs.CONTROLLED_SHUTDOWN_ENABLE_CONFIG, "true");
 
     effectiveConfig.putAll(initialConfig);
-    effectiveConfig.setProperty(ServerLogConfigs.LOG_DIR_CONFIG, logDir.getAbsolutePath());
+    effectiveConfig.put(ServerLogConfigs.LOG_DIR_CONFIG, logDir.getAbsolutePath());
     return effectiveConfig;
   }
 
@@ -101,34 +103,17 @@ public class KafkaEmbedded {
    * You can use this to tell Kafka producers and consumers how to connect to this instance.
    */
   public String brokerList() {
-    final EndPoint endPoint = kafka.advertisedListeners().head();
-    final String hostname = endPoint.host() == null ? "" : endPoint.host();
-
-    return String.join(":", hostname, Integer.toString(
-            kafka.boundPort(ListenerName.forSecurityProtocol(SecurityProtocol.PLAINTEXT))
-    ));
+    return cluster.bootstrapServers();
   }
 
-
-  /**
-   * The ZooKeeper connection string aka `zookeeper.connect`.
-   */
-  public String zookeeperConnect() {
-    return effectiveConfig.getProperty("zookeeper.connect", DEFAULT_ZK_CONNECT);
-  }
 
   /**
    * Stop the broker.
    */
-  public void stop() {
-    log.debug("Shutting down embedded Kafka broker at {} (with ZK ensemble at {}) ...",
-        brokerList(), zookeeperConnect());
-    kafka.shutdown();
-    kafka.awaitShutdown();
+  public void stop() throws Exception {
+    cluster.close();
     log.debug("Removing temp folder {} with logs.dir at {} ...", tmpFolder, logDir);
     tmpFolder.delete();
-    log.debug("Shutdown of embedded Kafka broker at {} completed (with ZK ensemble at {}) ...",
-        brokerList(), zookeeperConnect());
   }
 
   /**
@@ -198,9 +183,5 @@ public class KafkaEmbedded {
         throw new RuntimeException(e);
       }
     }
-  }
-
-  KafkaServer kafkaServer() {
-    return kafka;
   }
 }

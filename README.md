@@ -1,5 +1,9 @@
 # Kafka Streams Examples
 
+> [!NOTE]
+> This repo is replaced with [Confluent Tutorials for Apache Kafka](https://github.com/confluentinc/tutorials).
+We still "keep the lights on", but we don't improve existing examples any longer, nor do we add new example.
+
 This project contains code examples that demonstrate how to implement real-time applications and event-driven
 microservices using the Streams API of [Apache Kafka](http://kafka.apache.org/) aka Kafka Streams.
 
@@ -254,17 +258,14 @@ If you are using Eclipse, you can also right-click on `pom.xml` file and choose 
 
 <a name="requirements-java"/>
 
-## Java 8+
-
-Some code examples require Java 8+, primarily because of the usage of
-[lambda expressions](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html).
+## Java 17+
 
 IntelliJ IDEA users:
 
 * Open _File > Project structure_
 * Select "Project" on the left.
-    * Set "Project SDK" to Java 1.8.
-    * Set "Project language level" to "8 - Lambdas, type annotations, etc."
+    * Set "Project SDK" to Java 17.
+    * Set "Project language level" to "17 - Sealed types, always-strict floating-point semantics"
 
 
 <a name="requirements-scala"/>
@@ -274,11 +275,7 @@ IntelliJ IDEA users:
 > Scala is required only for the Scala examples in this repository.  If you are a Java developer you can safely ignore
 > this section.
 
-If you want to experiment with the Scala examples in this repository, you need a version of Scala that supports Java 8
-and SAM / Java lambda (e.g. Scala 2.11 with `-Xexperimental` compiler flag, or 2.12).
-
-If you are compiling with Java 9+, you'll need to have Scala version 2.12+ to be compatible with the Java version.
-
+If you want to experiment with the Scala examples in this repository, you need a version of Scala that supports Java 17.
 
 <a name="packaging-and-running"/>
 
@@ -300,10 +297,13 @@ In a nutshell:
 ```shell
 # Ensure you have downloaded and installed Confluent Platform as per the Quickstart instructions above.
 
-# Start ZooKeeper
-$ ./bin/zookeeper-server-start ./etc/kafka/zookeeper.properties
+#Generate a Cluster UUID
+$ KAFKA_CLUSTER_ID="$(bin/kafka-storage.sh random-uuid)"
 
-# In a separate terminal, start Kafka broker
+#Format Log Directories
+$ bin/kafka-storage.sh format --standalone -t $KAFKA_CLUSTER_ID -c config/kraft/reconfig-server.properties
+
+# Start the Kafka broker
 $ ./bin/kafka-server-start ./etc/kafka/server.properties
 
 # In a separate terminal, start Confluent Schema Registry
@@ -378,17 +378,15 @@ $ mvn package # Packages the application examples into a standalone jar
 
 | Branch (this repo)                      | Confluent Platform | Apache Kafka      |
 | ----------------------------------------|--------------------|-------------------|
-| [5.4.x](../../../tree/5.4.x/)\*         | 5.4.0-SNAPSHOT     | 2.4.0-SNAPSHOT    |
-| [5.3.0-post](../../../tree/5.3.0-post/) | 5.3.0              | 2.3.0             |
-| [5.2.2-post](../../../tree/5.2.2-post/) | 5.2.2              | 2.2.1             |
-| [5.2.1-post](../../../tree/5.2.1-post/) | 5.2.1              | 2.2.1             |
-| [5.1.0-post](../../../tree/5.1.0-post/) | 5.1.0              | 2.1.0             |
-| [5.0.0-post](../../../tree/5.0.0-post/) | 5.0.0              | 2.0.0             |
-| [4.1.0-post](../../../tree/4.1.0-post/) | 4.1.0              | 1.1.0             |
-| [4.0.0-post](../../../tree/4.4.0-post/) | 4.0.0              | 1.0.0             |
-| [3.3.0-post](../../../tree/3.3.0-post/) | 3.3.0              | 0.11.0            |
+| [master](../../../tree/master/)\*       | 8.0.0-SNAPSHOT     | 4.0.0-SNAPSHOT    |
+| [7.9.x](../../../tree/7.9.x/)           | 7.9.0-SNAPSHOT     | 3.9.0             |
+| [7.8.0-post](../../../tree/7.8.0-post/) | 7.8.0              | 3.8.0             |
+| ...                                     |                    |                   |
+| [7.1.0-post](../../../tree/7.1.0-post/) | 7.1.0              | 3.1.0             |
 
-\*You must manually build the `2.3` version of Apache Kafka and the `5.3.x` version of Confluent Platform.  See instructions above.
+Older version prior to 7.1.0 are [not supported any longer](https://docs.confluent.io/platform/current/installation/versions-interoperability.html).
+
+\*You must manually build the `4.0` version of Apache Kafka and the `8.0.0` version of Confluent Platform.  See instructions above.
 
 The `master` branch of this repository represents active development, and may require additional steps on your side to
 make it compile.  Check this README as well as [pom.xml](pom.xml) for any such information.
