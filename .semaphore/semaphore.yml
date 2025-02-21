@@ -7,7 +7,7 @@ version: v1.0
 name: build-test-release
 agent:
   machine:
-    type: s1-prod-ubuntu20-04-amd64-1
+    type: s1-prod-ubuntu24-04-amd64-1
 
 fail_fast:
   cancel:
@@ -120,7 +120,7 @@ blocks:
     task:
       agent:
         machine:
-          type: s1-prod-ubuntu20-04-arm64-1
+          type: s1-prod-ubuntu24-04-arm64-1
       jobs:
         - name: Build & Test ubi8
           commands:
@@ -144,7 +144,7 @@ after_pipeline:
   task:
     agent:
       machine:
-        type: s1-prod-ubuntu20-04-arm64-0
+        type: s1-prod-ubuntu24-04-arm64-0
     jobs:
       - name: Metrics
         commands:
@@ -155,7 +155,7 @@ after_pipeline:
       - name: SonarQube
         commands:
           - checkout
-          - if [[ $SEMAPHORE_GIT_BRANCH =~ ^7\..* ]]; then sem-version java 8; else sem-version java 17; fi
+          - sem-version java 11
           - artifact pull workflow target-AMD
           - artifact pull workflow target-ARM
           - emit-sonarqube-data --run_only_sonar_scan
