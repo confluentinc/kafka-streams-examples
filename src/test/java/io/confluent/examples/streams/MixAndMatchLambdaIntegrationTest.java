@@ -43,15 +43,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * API of Kafka Streams.
  * <p>
  * More concretely, we show how to use the {@link KStream#process(ProcessorSupplier, String...)}
- * method to include a custom {@link org.apache.kafka.streams.kstream.Transformer} (from the
+ * method to include a custom {@link org.apache.kafka.streams.processor.api.Processor} (from the
  * Processor API) in a topology defined via the DSL.  The fictitious use case is to anonymize
  * IPv4 addresses contained in the input data.
- * <p>
- * Tip: Users that want to use {@link KStream#process(ProcessorSupplier, String...)} would need to
- * include a custom {@link org.apache.kafka.streams.processor.api.Processor}.  Keep in mind though that
- * the return type of {@link KStream#process(ProcessorSupplier, String...)} is `void`, which means
- * you cannot add further operators (such as `to()` as we do below) after having called `process()`.
- * If you need to add further operators, you'd have to use `transform()` as we do in this example.
  * <p>
  * Note: This example uses lambda expressions and thus works with Java 8+ only.
  */
