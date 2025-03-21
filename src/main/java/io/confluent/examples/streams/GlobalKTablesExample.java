@@ -43,8 +43,7 @@ import java.util.Properties;
  * don't require re-partitioning of the input streams.
  * <p>
  * The {@link GlobalStoresExample} shows another way to perform the same operation using
- * {@link org.apache.kafka.streams.TopologyDescription.GlobalStore} and a
- * {@link org.apache.kafka.streams.kstream.ValueTransformer}.
+ * {@link org.apache.kafka.streams.TopologyDescription.GlobalStore}
  * <p>
  * In this example, we join a stream of orders that reads from a topic named
  * "order" with a customers table that reads from a topic named "customer", and a products
