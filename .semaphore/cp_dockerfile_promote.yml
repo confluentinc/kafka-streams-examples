@@ -52,9 +52,9 @@ blocks:
     dependencies: []
     task:
       jobs:
-        - name: Promote confluentinc/kafka-streams-examples ubi8 AMD
+        - name: Promote confluentinc/kafka-streams-examples ubi9 AMD
           commands:
-            - export OS_TYPE="ubi8"
+            - export OS_TYPE="ubi9"
             - export DOCKER_REPO="confluentinc/kafka-streams-examples"
             - if [[ ! "$OS_TYPE" ]]; then export OS_TAG=""; elif [[ "$OS_TYPE" =~ $PROMOTE_OS_TYPE* ]]; then export OS_TAG="-$OS_TYPE"; fi
             - export INTERNAL_IMAGE_TAG="$BRANCH_TAG-$PACKAGING_BUILD_NUMBER$OS_TAG$AMD_ARCH"
@@ -84,9 +84,9 @@ blocks:
     dependencies: []
     task:
       jobs:
-        - name: Promote confluentinc/kafka-streams-examples ubi8 ARM
+        - name: Promote confluentinc/kafka-streams-examples ubi9 ARM
           commands:
-            - export OS_TYPE="ubi8"
+            - export OS_TYPE="ubi9"
             - export DOCKER_REPO="confluentinc/kafka-streams-examples"
             - if [[ ! "$OS_TYPE" ]]; then export OS_TAG=""; elif [[ "$OS_TYPE" =~ $PROMOTE_OS_TYPE* ]]; then export OS_TAG="-$OS_TYPE"; fi
             - export INTERNAL_IMAGE_TAG="$BRANCH_TAG-$PACKAGING_BUILD_NUMBER$OS_TAG$ARM_ARCH"
@@ -116,9 +116,9 @@ blocks:
     dependencies: ["Promote AMD", "Promote ARM"]
     task:
       jobs:
-        - name: Create Manifest confluentinc/kafka-streams-examples ubi8
+        - name: Create Manifest confluentinc/kafka-streams-examples ubi9
           commands:
-            - export OS_TYPE="ubi8"
+            - export OS_TYPE="ubi9"
             - if [[ ! "$OS_TYPE" ]]; then export OS_TAG=""; elif [[ "$OS_TYPE" =~ $PROMOTE_OS_TYPE* ]]; then export OS_TAG="-$OS_TYPE"; fi
             - export DOCKER_REPO="confluentinc/kafka-streams-examples"
             - export PROMOTED_TAG="$PROMOTED_TAG_PREFIX$OS_TAG"
