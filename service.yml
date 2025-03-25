@@ -19,7 +19,7 @@ semaphore:
   nano_version: true
   sign_images: true
   triggers: ['branches', 'pull_requests']
-  os_types: ['ubi8']
+  os_types: ['ubi9']
   use_packages: true
   push_latest: true
   tasks:
