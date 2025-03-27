@@ -65,6 +65,8 @@
         <io.confluent.schema-registry.version>${confluent.version.range}</io.confluent.schema-registry.version>
         <io.confluent.blueway.version>${confluent.version.range}</io.confluent.blueway.version>
         <io.confluent.kafka-streams-examples.version>8.0.0-0</io.confluent.kafka-streams-examples.version>
+        <!-- 9.4.57.v20241219 is the latest version, we are pinning it until Jetty 12 changes are done -->
+         <jetty.override.version>9.4.57.v20241219</jetty.override.version>
     </properties>
 
     <dependencies>
@@ -141,12 +143,12 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
-            <version>${jetty.version}</version>
+            <version>${jetty.override.version}</version>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-servlet</artifactId>
-            <version>${jetty.version}</version>
+            <version>${jetty.override.version}</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.containers</groupId>
