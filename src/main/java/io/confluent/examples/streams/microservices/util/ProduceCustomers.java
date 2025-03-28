@@ -1,7 +1,6 @@
 package io.confluent.examples.streams.microservices.util;
 
 import io.confluent.examples.streams.avro.microservices.Customer;
-import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
 import org.apache.commons.cli.CommandLine;
@@ -62,7 +61,6 @@ public class ProduceCustomers {
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.ACKS_CONFIG, "all");
         props.put(ProducerConfig.RETRIES_CONFIG, 1);
-        MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(props);
 
         try (final KafkaProducer<Long, Customer> producer = new KafkaProducer<>(props, new LongSerializer(), mySerializer)) {
             while (true) {

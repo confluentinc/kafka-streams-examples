@@ -1,7 +1,6 @@
 package io.confluent.examples.streams.microservices.util;
 
 import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
-import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -60,7 +59,6 @@ public class ConsumeCustomers {
         props.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, Topics.CUSTOMERS.keySerde().deserializer().getClass());
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, Topics.CUSTOMERS.valueSerde().deserializer().getClass());
-        MonitoringInterceptorUtils.maybeConfigureInterceptorsConsumer(props);
 
         try (final KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props)) {
             consumer.subscribe(Collections.singletonList("customers"));
