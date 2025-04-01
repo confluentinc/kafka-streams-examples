@@ -9,6 +9,8 @@ semaphore:
   enable: true
   pipeline_type: cp-dockerfile
   docker_repos: ['confluentinc/kafka-streams-examples']
+  community_docker_repos: []
+  community_maven_modules: []
   maven_phase: 'package' # streams examples integration-test needs host-based networking, won't work in CI as-is
   maven_skip_deploy: true
   build_arm: true
@@ -40,6 +42,13 @@ semaphore:
         - name: CONFLUENT_DEB_VERSION
           required: false
           default_value: '1'
+        - name: SKIP_COMMUNITY
+          required: false
+          default_value: 'False'
+          description: 'Skip building community docker images'
+          options:
+            - 'True'
+            - 'False'
     - name: cp-dockerfile-promote
       branch: master
       pipeline_file: .semaphore/cp_dockerfile_promote.yml
@@ -58,3 +67,10 @@ semaphore:
           options:
             - 'deb'
             - 'ubi'
+        - name: SKIP_COMMUNITY
+          required: false
+          default_value: 'False'
+          description: 'Skip publishing community docker images'
+          options:
+            - 'True'
+            - 'False'
