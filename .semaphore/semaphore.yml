@@ -71,6 +71,28 @@ global_job_config:
       - export LATEST_TAG=$BRANCH_TAG-latest
       - export DOCKER_UPSTREAM_TAG="$LATEST_TAG"
       - export DOCKER_REPOS="confluentinc/kafka-streams-examples"
+      - export COMMUNITY_DOCKER_REPOS=""
+      - |
+        if [[ $SKIP_COMMUNITY == "True" ]]; then
+          # Filter out community repos from DOCKER_REPOS
+          DOCKER_REPOS=$(comm -23 <(echo "$DOCKER_REPOS" | tr ' ' '\n' | sort) <(echo "$COMMUNITY_DOCKER_REPOS" | tr ' ' '\n' | sort) | tr '\n' ' ' | xargs)
+          export DOCKER_REPOS
+          echo "DOCKER_REPOS after skipping community images - $DOCKER_REPOS"
+
+          # Set Maven arguments for skipping community modules
+          export MAVEN_EXTRA_ARGS=""
+
+          # Check if current DOCKER_IMAGE is in community repos, skip job execution
+          for skip_repo in $COMMUNITY_DOCKER_REPOS; do
+            if [ "$skip_repo" = "$DOCKER_IMAGE" ]; then
+              echo "Skipping build for $DOCKER_IMAGE as it is in COMMUNITY_DOCKER_REPOS list"
+              export SEMAPHORE_JOB_RESULT=passed
+              return 130
+            fi
+          done
+        else
+          export MAVEN_EXTRA_ARGS=""
+        fi
       - export DOCKER_DEV_TAG="dev-$BRANCH_TAG-$BUILD_NUMBER"
       - export AMD_ARCH=.amd64
       - export ARM_ARCH=.arm64
@@ -99,7 +121,7 @@ blocks:
             - export PACKAGING_BUILD_ARGS="$PACKAGING_BUILD_ARGS -DCONFLUENT_PACKAGES_REPO=$PACKAGES_URL"
             - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY
               -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$AMD_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$AMD_ARCH -Ddocker.os_type=ubi9
-              $PACKAGING_BUILD_ARGS -Ddependency.check.skip=true
+              $PACKAGING_BUILD_ARGS -Ddependency.check.skip=true $MAVEN_EXTRA_ARGS
             - . cache-maven store
             - >-
               for dev_image in $AMD_DOCKER_DEV_FULL_IMAGES;
@@ -131,7 +153,7 @@ blocks:
             - ci-tools ci-update-version
             - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY
               -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$ARM_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$ARM_ARCH -Ddocker.os_type=ubi9
-              $PACKAGING_BUILD_ARGS -Ddependency.check.skip=true
+              $PACKAGING_BUILD_ARGS -Ddependency.check.skip=true $MAVEN_EXTRA_ARGS
             - . cache-maven store
             - for image in $ARM_DOCKER_DEV_FULL_IMAGES; do echo "Pushing $image" && docker push $image; done
       epilogue:
