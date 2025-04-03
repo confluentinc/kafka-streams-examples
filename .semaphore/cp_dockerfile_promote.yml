@@ -46,6 +46,17 @@ global_job_config:
       - docker login --username $DOCKERHUB_USER --password $DOCKERHUB_APIKEY
       - export AMD_ARCH=.amd64
       - export ARM_ARCH=.arm64
+      - export COMMUNITY_DOCKER_REPOS=""
+      - |
+        if [[ $SKIP_COMMUNITY == "True" ]]; then
+          for skip_repo in $COMMUNITY_DOCKER_REPOS; do
+            if [ "$skip_repo" = "$DOCKER_IMAGE" ]; then
+              echo "Skipping promotion for $DOCKER_IMAGE as it is in COMMUNITY_DOCKER_REPOS list"
+              export SEMAPHORE_JOB_RESULT=passed
+              return 130
+            fi
+          done
+        fi
 
 blocks:
   - name: Promote AMD
@@ -53,6 +64,9 @@ blocks:
     task:
       jobs:
         - name: Promote confluentinc/kafka-streams-examples ubi9 AMD
+          env_vars:
+            - name: DOCKER_IMAGE
+              value: confluentinc/kafka-streams-examples
           commands:
             - export OS_TYPE="ubi9"
             - export DOCKER_REPO="confluentinc/kafka-streams-examples"
@@ -85,6 +99,9 @@ blocks:
     task:
       jobs:
         - name: Promote confluentinc/kafka-streams-examples ubi9 ARM
+          env_vars:
+            - name: DOCKER_IMAGE
+              value: confluentinc/kafka-streams-examples
           commands:
             - export OS_TYPE="ubi9"
             - export DOCKER_REPO="confluentinc/kafka-streams-examples"
@@ -117,6 +134,9 @@ blocks:
     task:
       jobs:
         - name: Create Manifest confluentinc/kafka-streams-examples ubi9
+          env_vars:
+            - name: DOCKER_IMAGE
+              value: confluentinc/kafka-streams-examples
           commands:
             - export OS_TYPE="ubi9"
             - if [[ ! "$OS_TYPE" ]]; then export OS_TAG=""; elif [[ "$OS_TYPE" =~ $PROMOTE_OS_TYPE* ]]; then export OS_TAG="-$OS_TYPE"; fi
