@@ -6,6 +6,7 @@ import io.confluent.examples.streams.avro.microservices.Product;
 import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
 import io.confluent.examples.streams.microservices.util.Paths;
+import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
 import org.apache.commons.cli.*;
@@ -52,6 +53,7 @@ public class PostOrdersAndPayments {
         producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
         producerConfig.put(ProducerConfig.RETRIES_CONFIG, 1);
         producerConfig.put(ProducerConfig.CLIENT_ID_CONFIG, "payment-generator");
+        MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(producerConfig);
 
         return new KafkaProducer<>(producerConfig, new StringSerializer(), paymentSerializer);
     }
