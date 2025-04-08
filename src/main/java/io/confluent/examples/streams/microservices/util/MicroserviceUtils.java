@@ -3,6 +3,7 @@ package io.confluent.examples.streams.microservices.util;
 import io.confluent.examples.streams.avro.microservices.Product;
 import io.confluent.examples.streams.microservices.Service;
 import io.confluent.examples.streams.microservices.domain.Schemas;
+import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -13,8 +14,8 @@ import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.state.RocksDBConfigSetter;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
@@ -22,8 +23,8 @@ import org.rocksdb.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.container.AsyncResponse;
+import jakarta.ws.rs.core.Response;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -84,6 +85,7 @@ public class MicroserviceUtils {
             enableEOS ? "exactly_once" : "at_least_once");
     config.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 1); //commit as fast as possible
     config.put(StreamsConfig.consumerPrefix(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG), 30000);
+    MonitoringInterceptorUtils.maybeConfigureInterceptorsStreams(config);
     return config;
   }
 
@@ -196,6 +198,7 @@ public class MicroserviceUtils {
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, String.valueOf(Integer.MAX_VALUE));
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     producerConfig.put(ProducerConfig.CLIENT_ID_CONFIG, "order-sender");
+    MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(producerConfig);
 
     return new KafkaProducer<>(producerConfig,
         topic.keySerde().serializer(),

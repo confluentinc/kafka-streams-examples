@@ -6,6 +6,7 @@ import io.confluent.examples.streams.avro.microservices.Product;
 import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
 import io.confluent.examples.streams.microservices.util.Paths;
+import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
 import org.apache.commons.cli.*;
@@ -17,11 +18,11 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.jackson.JacksonFeature;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.Response;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -29,7 +30,7 @@ import java.util.*;
 
 import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
 import static io.confluent.examples.streams.microservices.util.MicroserviceUtils.*;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 
 public class PostOrdersAndPayments {
 
@@ -52,6 +53,7 @@ public class PostOrdersAndPayments {
         producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
         producerConfig.put(ProducerConfig.RETRIES_CONFIG, 1);
         producerConfig.put(ProducerConfig.CLIENT_ID_CONFIG, "payment-generator");
+        MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(producerConfig);
 
         return new KafkaProducer<>(producerConfig, new StringSerializer(), paymentSerializer);
     }
