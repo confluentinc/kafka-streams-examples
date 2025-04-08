@@ -34,7 +34,7 @@ import static io.confluent.examples.streams.avro.microservices.Product.UNDERPANT
 import static io.confluent.examples.streams.microservices.domain.beans.OrderId.id;
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
 import static java.util.Arrays.asList;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.Assert.fail;
 
