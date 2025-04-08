@@ -3,7 +3,6 @@ package io.confluent.examples.streams.microservices.util;
 import io.confluent.examples.streams.avro.microservices.Product;
 import io.confluent.examples.streams.microservices.Service;
 import io.confluent.examples.streams.microservices.domain.Schemas;
-import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -85,7 +84,6 @@ public class MicroserviceUtils {
             enableEOS ? "exactly_once" : "at_least_once");
     config.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 1); //commit as fast as possible
     config.put(StreamsConfig.consumerPrefix(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG), 30000);
-    MonitoringInterceptorUtils.maybeConfigureInterceptorsStreams(config);
     return config;
   }
 
@@ -198,7 +196,6 @@ public class MicroserviceUtils {
     producerConfig.put(ProducerConfig.RETRIES_CONFIG, String.valueOf(Integer.MAX_VALUE));
     producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
     producerConfig.put(ProducerConfig.CLIENT_ID_CONFIG, "order-sender");
-    MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(producerConfig);
 
     return new KafkaProducer<>(producerConfig,
         topic.keySerde().serializer(),

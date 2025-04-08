@@ -178,17 +178,6 @@
             <artifactId>jakarta.xml.bind-api</artifactId>
             <version>4.0.1</version>
         </dependency>
-        <!--
-            This dependency is included to demonstrate the use of
-            Confluent Monitoring Interceptors in conjunction with
-            Kafka Streams but isn't a required
-            dependency for running Kafka Streams.
-        -->
-        <dependency>
-            <groupId>io.confluent</groupId>
-            <artifactId>monitoring-interceptors</artifactId>
-            <version>${io.confluent.blueway.version}</version>
-        </dependency>
 
         <dependency>
             <groupId>com.twitter</groupId>
