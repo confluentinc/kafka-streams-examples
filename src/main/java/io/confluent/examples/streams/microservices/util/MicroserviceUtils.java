@@ -23,8 +23,8 @@ import org.rocksdb.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.container.AsyncResponse;
+import jakarta.ws.rs.core.Response;
 
 import java.io.FileInputStream;
 import java.io.IOException;
