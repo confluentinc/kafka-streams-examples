@@ -349,7 +349,7 @@ If you want to turn on log4j2 while running your example application, you can ed
 ```shell
 # Run an example application from the standalone jar. Here: `WordCountLambdaExample`
 $ java -cp target/kafka-streams-examples-8.0.0-0-standalone.jar \
-  -Dlog4j.configuration=file:src/main/resources/log4j2.yaml \
+  -Dlog4j2.configurationFile=src/main/resources/log4j2.yaml \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
 
