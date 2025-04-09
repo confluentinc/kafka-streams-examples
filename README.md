@@ -343,13 +343,13 @@ In order to observe the expected output stream, you will need to start a console
 and start a console consumer to continuously read from the output topic. More details in how to run the examples can be found
 in the [java docs](src/main/java/io/confluent/examples/streams/WordCountLambdaExample.java#L31) of each example code.
 
-If you want to turn on log4j while running your example application, you can edit the
+If you want to turn on log4j2 while running your example application, you can edit the
 [log4j2.yaml](src/main/resources/log4j2.yaml) file and then execute as follows:
 
 ```shell
 # Run an example application from the standalone jar. Here: `WordCountLambdaExample`
 $ java -cp target/kafka-streams-examples-8.0.0-0-standalone.jar \
-  -Dlog4j.configuration=file:src/main/resources/log4j.properties \
+  -Dlog4j.configuration=file:src/main/resources/log4j2.yaml \
   io.confluent.examples.streams.WordCountLambdaExample
 ```
 
