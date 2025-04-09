@@ -190,7 +190,7 @@ public class KafkaMusicExampleTest {
         restProxy = KafkaMusicExample.startRestProxy(streams, new HostInfo(host, appServerPort));
         break;
       } catch (final Exception ex) {
-        log.error("Could not start Rest Service due to: " + ex.toString());
+        log.error("Could not start Rest Service due to: " + ex.toString(), ex);
       }
       count++;
     }

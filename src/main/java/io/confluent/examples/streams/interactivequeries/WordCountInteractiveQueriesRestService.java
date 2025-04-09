@@ -275,9 +275,7 @@ public class WordCountInteractiveQueriesRestService {
     connector.setHost(hostInfo.host());
     connector.setPort(port);
     jettyServer.addConnector(connector);
-  
-    context.start();
-    
+
     try {
       jettyServer.start();
     } catch (final java.net.SocketException exception) {

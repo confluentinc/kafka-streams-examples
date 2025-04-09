@@ -232,9 +232,7 @@ public class MusicPlaysRestService {
     connector.setHost(hostInfo.host());
     connector.setPort(hostInfo.port());
     jettyServer.addConnector(connector);
-  
-    context.start();
-  
+
     try {
       jettyServer.start();
     } catch (final java.net.SocketException exception) {
