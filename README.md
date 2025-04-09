@@ -344,7 +344,7 @@ and start a console consumer to continuously read from the output topic. More de
 in the [java docs](src/main/java/io/confluent/examples/streams/WordCountLambdaExample.java#L31) of each example code.
 
 If you want to turn on log4j while running your example application, you can edit the
-[log4j.properties](src/main/resources/log4j.properties) file and then execute as follows:
+[log4j2.yaml](src/main/resources/log4j2.yaml) file and then execute as follows:
 
 ```shell
 # Run an example application from the standalone jar. Here: `WordCountLambdaExample`
