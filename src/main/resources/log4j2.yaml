@@ -1,0 +1,40 @@
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##
+configuration:
+  name: "Log4j2"
+  appenders:
+    Console:
+      name: "STDOUT"
+      target: "SYSTEM_OUT"
+      PatternLayout:
+        Pattern: "[%d] %p [%t] %m (%c)%n"
+  loggers:
+    root:
+      level: "WARN"
+      AppenderRef:
+        - ref: "STDOUT"
+    logger:
+# Enable for debugging if need be
+#      - name: "org.apache.kafka.streams"
+#        level: "DEBUG"
+#        additivity: false
+#        AppenderRef:
+#          - ref: "STDOUT"
+      - name: "org.apache.kafka.streams.processor.internals.StreamThread"
+        level: "WARN"
+        additivity: false
+        AppenderRef:
+          - ref: "STDOUT"
+# Enable info for Microservices
+      - name: "io.confluent.examples.streams.microservices"
+        level: "INFO"
+        additivity: false
+        AppenderRef:
+          - ref: "STDOUT"
+# Enable for debugging if need be
+#      - name: "io.confluent"
+#        level: "DEBUG"
+#        additivity: false
+#        AppenderRef:
+#          - ref: "STDOUT"

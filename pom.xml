@@ -50,15 +50,15 @@
     -->
     <properties>
         <algebird.version>0.13.7</algebird.version>
-        <avro.version>1.10.1</avro.version>
+        <avro.version>1.11.4</avro.version>
         <chill.version>0.9.5</chill.version>
         <docker.skip-build>false</docker.skip-build>
         <docker.skip-test>false</docker.skip-test>
         <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scalatest.version>3.1.2</scalatest.version>
-        <!-- The default is ubi8 -->
-        <docker.os_type>ubi8</docker.os_type>
+        <!-- The default is ubi9 -->
+        <docker.os_type>ubi9</docker.os_type>
         <!-- Need to explicitly set this otherwise it will be overridden from common-docker pom. -->
         <docker.file>Dockerfile.${docker.os_type}</docker.file>
         <docker.tag>${project.version}-${docker.os_type}</docker.tag>
@@ -125,10 +125,14 @@
             <version>${scala.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-reload4j</artifactId>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
         </dependency>
-        <!-- Use a repackaged version of log4j with security patches. Default log4j v1.2 is a transitive dependency of slf4j-log4j12, but it is excluded in common/pom.xml -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <scope>runtime</scope>
+        </dependency>
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>logredactor</artifactId>
@@ -144,8 +148,8 @@
             <version>${jetty.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlet</artifactId>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-servlet</artifactId>
             <version>${jetty.version}</version>
         </dependency>
         <dependency>
@@ -177,17 +181,6 @@
             <groupId>jakarta.xml.bind</groupId>
             <artifactId>jakarta.xml.bind-api</artifactId>
             <version>4.0.1</version>
-        </dependency>
-        <!--
-            This dependency is included to demonstrate the use of
-            Confluent Monitoring Interceptors in conjunction with
-            Kafka Streams but isn't a required
-            dependency for running Kafka Streams.
-        -->
-        <dependency>
-            <groupId>io.confluent</groupId>
-            <artifactId>monitoring-interceptors</artifactId>
-            <version>${io.confluent.blueway.version}</version>
         </dependency>
 
         <dependency>
