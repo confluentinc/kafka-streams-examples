@@ -94,7 +94,7 @@ public class PostOrdersAndPayments {
         final String orderServiceUrl = cl.getOptionValue("order-service-url", "http://localhost:5432");
         final int startingOrderId = Integer.parseInt(cl.getOptionValue("order-id", "1"));
 
-        final Properties defaultConfig = Optional.ofNullable(cl.getOptionValue("config-file", null))
+        final Properties defaultConfig = Optional.ofNullable(cl.getOptionValue("config-file", (String) null))
                 .map(path -> {
                     try {
                         return buildPropertiesFromConfigFile(path);
