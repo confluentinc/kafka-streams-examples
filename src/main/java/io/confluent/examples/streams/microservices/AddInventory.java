@@ -77,7 +77,7 @@ public class AddInventory {
 
         final String bootstrapServers = cl.getOptionValue("b", DEFAULT_BOOTSTRAP_SERVERS);
 
-        final Properties defaultConfig = Optional.ofNullable(cl.getOptionValue("config-file", null))
+        final Properties defaultConfig = Optional.ofNullable(cl.getOptionValue("config-file", (String) null))
                 .map(path -> {
                     try {
                         return buildPropertiesFromConfigFile(path);
