@@ -445,7 +445,7 @@ public class OrdersService implements Service {
     final int restPort = Integer.parseInt(cl.getOptionValue("port", "5432"));
     final String stateDir = cl.getOptionValue("state-dir", "/tmp/kafka-streams");
 
-    final Properties defaultConfig = Optional.ofNullable(cl.getOptionValue("config-file", null))
+    final Properties defaultConfig = Optional.ofNullable(cl.getOptionValue("config-file", (String) null))
             .map(path -> {
               try {
                 return buildPropertiesFromConfigFile(path);
