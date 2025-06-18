@@ -46,7 +46,7 @@ public class ProduceCustomers {
             Collections.singletonMap(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl),
             isKeySerde);
 
-        final Properties defaultConfig = Optional.ofNullable(cl.getOptionValue("config-file", null))
+        final Properties defaultConfig = Optional.ofNullable(cl.getOptionValue("config-file", (String) null))
             .map(path -> {
                 try {
                     return buildPropertiesFromConfigFile(path);
