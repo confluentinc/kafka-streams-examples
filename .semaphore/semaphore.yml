@@ -31,7 +31,7 @@ global_job_config:
       - export BUILD_NUMBER=$(echo $SEMAPHORE_WORKFLOW_ID | cut -f1 -d"-")
       - export BRANCH_TAG=$(echo $SEMAPHORE_GIT_BRANCH | tr / -)
       # For PR Builds using Packaging
-      - pip install confluent-release-tools
+      - pip install confluent-devtools
       - if [ $BRANCH_TAG == "master" ]; then export BUILD_KEY=$(pinto get-master-version); else export BUILD_KEY=$BRANCH_TAG; fi
       - export PACKAGING_BUCKET="s3://dev-confluent-packages-654654529379-us-west-2/$BRANCH_TAG/"
       - export LATEST_PACKAGING_BUILD_NUMBER=$(aws s3 ls $PACKAGING_BUCKET --no-paginate | grep 'PRE' | awk '{print $NF}' | awk '{print substr($1, 1, length($1)-1)}' | sort -n | tail -n 1)
