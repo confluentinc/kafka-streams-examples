@@ -58,7 +58,8 @@ global_job_config:
         else
             export PLATFORM_LABEL=""
         fi
-      - export PACKAGING_BUILD_ARGS=" -DCONFLUENT_VERSION=$CONFLUENT_VERSION  -DCONFLUENT_PLATFORM_LABEL=$PLATFORM_LABEL -DCONFLUENT_DEB_VERSION=$CONFLUENT_DEB_VERSION  -DALLOW_UNSIGNED=$ALLOW_UNSIGNED"
+      - export PACKAGING_BUILD_ARGS=" -DCONFLUENT_VERSION=$CONFLUENT_VERSION  -DCONFLUENT_PLATFORM_LABEL=$PLATFORM_LABEL -DCONFLUENT_DEB_VERSION=$CONFLUENT_DEB_VERSION 
+        -DALLOW_UNSIGNED=$ALLOW_UNSIGNED"
       - >-
         if [[ $IS_RELEASE && $PACKAGING_BUILD_NUMBER ]]; then
           if [[ $IS_RC ]]; then
@@ -127,9 +128,9 @@ blocks:
             - export AMD_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$AMD_ARCH }$AMD_ARCH
             - ci-tools ci-update-version
             - export PACKAGING_BUILD_ARGS="$PACKAGING_BUILD_ARGS -DCONFLUENT_PACKAGES_REPO=$PACKAGES_URL"
-            - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY
-              -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$AMD_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$AMD_ARCH -Ddocker.os_type=ubi9
-              $PACKAGING_BUILD_ARGS -Ddependency.check.skip=true $MAVEN_EXTRA_ARGS
+            - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY 
+              -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$AMD_ARCH 
+              -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$AMD_ARCH -Ddocker.os_type=ubi9 $PACKAGING_BUILD_ARGS -Ddependency.check.skip=true $MAVEN_EXTRA_ARGS
             - . cache-maven store
             - >-
               for dev_image in $AMD_DOCKER_DEV_FULL_IMAGES;
@@ -190,9 +191,9 @@ blocks:
             - export ARM_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$ARM_ARCH }$ARM_ARCH
             - export PACKAGING_BUILD_ARGS="$PACKAGING_BUILD_ARGS -DCONFLUENT_PACKAGES_REPO=$PACKAGES_URL"
             - ci-tools ci-update-version
-            - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY
-              -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$ARM_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$ARM_ARCH -Ddocker.os_type=ubi9
-              $PACKAGING_BUILD_ARGS -Ddependency.check.skip=true $MAVEN_EXTRA_ARGS
+            - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY 
+              -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$ARM_ARCH 
+              -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$ARM_ARCH -Ddocker.os_type=ubi9 $PACKAGING_BUILD_ARGS -Ddependency.check.skip=true $MAVEN_EXTRA_ARGS
             - . cache-maven store
             - for image in $ARM_DOCKER_DEV_FULL_IMAGES; do echo "Pushing $image" && docker push $image; done
       epilogue:
