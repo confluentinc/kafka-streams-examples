@@ -23,6 +23,7 @@ queue:
 global_job_config:
   prologue:
     commands:
+      - cache clear
       - checkout
       - if [[ $SEMAPHORE_GIT_BRANCH =~ ^7\..* ]]; then sem-version java 8; else sem-version java 17; fi
       - . vault-setup
