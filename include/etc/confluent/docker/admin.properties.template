@@ -1,4 +1,4 @@
-{% set streams_props = env_to_props('STREAMS_SECURITY_', '') -%}
-{% for name, value in streams_props.items() -%}
-{{name}}={{value}}
-{% endfor -%}
+{{- $streams_props := envToProps "STREAMS_SECURITY_" "" nil nil nil -}}
+{{ range $k, $v := $streams_props }}
+{{ $k }}={{ $v }}
+{{ end }}

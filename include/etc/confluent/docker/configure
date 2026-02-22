@@ -16,16 +16,16 @@
 
 . /etc/confluent/docker/bash-config
 
-dub ensure STREAMS_BOOTSTRAP_SERVERS
-dub ensure STREAMS_SCHEMA_REGISTRY_HOST
-dub ensure STREAMS_SCHEMA_REGISTRY_PORT
-dub ensure KAFKA_MUSIC_APP_REST_HOST
-dub ensure KAFKA_MUSIC_APP_REST_PORT
+ub ensure STREAMS_BOOTSTRAP_SERVERS
+ub ensure STREAMS_SCHEMA_REGISTRY_HOST
+ub ensure STREAMS_SCHEMA_REGISTRY_PORT
+ub ensure KAFKA_MUSIC_APP_REST_HOST
+ub ensure KAFKA_MUSIC_APP_REST_PORT
 
-dub ensure STREAMS_EXAMPLES_FATJAR_DEPLOYED
-dub path "${STREAMS_EXAMPLES_FATJAR_DEPLOYED}" readable
-dub ensure KAFKA_MUSIC_APP_CLASS
+ub ensure STREAMS_EXAMPLES_FATJAR_DEPLOYED
+ub path "${STREAMS_EXAMPLES_FATJAR_DEPLOYED}" readable
+ub ensure KAFKA_MUSIC_APP_CLASS
 
-dub path /etc/"${COMPONENT}"/ writable
+ub path /etc/"${COMPONENT}"/ writable
 
-dub template "/etc/confluent/docker/admin.properties.template" "/etc/"${COMPONENT}"/admin.properties"
+ub render-template "/etc/confluent/docker/admin.properties.template" > /etc/"${COMPONENT}"/admin.properties
