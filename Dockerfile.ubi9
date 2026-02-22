@@ -15,9 +15,9 @@
 
 # Builds a docker image for Confluent's example applications for the Kafka Streams API
 ARG DOCKER_UPSTREAM_REGISTRY
-ARG DOCKER_UPSTREAM_TAG=latest
+ARG DOCKER_UPSTREAM_TAG=ubi9-latest
 
-FROM ${DOCKER_UPSTREAM_REGISTRY}confluentinc/cp-base-new:${DOCKER_UPSTREAM_TAG}
+FROM ${DOCKER_UPSTREAM_REGISTRY}confluentinc/cp-base-java-micro:${DOCKER_UPSTREAM_TAG}
 
 ARG STREAMS_VERSION
 ARG PROJECT_VERSION
@@ -38,11 +38,6 @@ LABEL io.confluent.docker.build.number=$BUILD_NUMBER
 WORKDIR /build
 ENV COMPONENT="${ARTIFACT_ID}"
 
-# We run the Kafka Streams demo application as a non-priviledged user.
-ENV STREAMS_USER="streams"
-ENV STREAMS_GROUP=$STREAMS_USER
-
-ENV STREAMS_EXAMPLES_BRANCH="${CONFLUENT_MAJOR_VERSION}.${CONFLUENT_MINOR_VERSION}.x"
 ENV STREAMS_EXAMPLES_FATJAR="kafka-streams-examples-${STREAMS_VERSION}-standalone.jar"
 ENV STREAMS_APP_DIRECTORY="/usr/share/java/kafka-streams-examples"
 ENV STREAMS_EXAMPLES_FATJAR_DEPLOYED="$STREAMS_APP_DIRECTORY/$STREAMS_EXAMPLES_FATJAR"
@@ -56,18 +51,19 @@ EXPOSE $KAFKA_MUSIC_APP_REST_PORT
 # base image that supports it
 ENV LANG="C.UTF-8"
 
-COPY --chown=appuser:appuser target/${ARTIFACT_ID}-${STREAMS_VERSION}-standalone.jar /usr/share/java/${ARTIFACT_ID}/${ARTIFACT_ID}-${STREAMS_VERSION}-standalone.jar
-COPY --chown=appuser:appuser target/${ARTIFACT_ID}-${STREAMS_VERSION}-package/share/doc/* /usr/share/doc/${ARTIFACT_ID}/
+COPY target/${ARTIFACT_ID}-${STREAMS_VERSION}-standalone.jar /usr/share/java/${ARTIFACT_ID}/${ARTIFACT_ID}-${STREAMS_VERSION}-standalone.jar
+COPY target/${ARTIFACT_ID}-${STREAMS_VERSION}-package/share/doc/* /usr/share/doc/${ARTIFACT_ID}/
 
-COPY --chown=appuser:appuser include/etc/confluent/docker /etc/confluent/docker
+COPY include/etc/confluent/docker /etc/confluent/docker
 
 USER root
 
-RUN groupadd $STREAMS_GROUP && useradd -r -g $STREAMS_GROUP $STREAMS_USER
+RUN chown -R ${APP_UID}:${APP_GID} /etc/confluent/docker \
+    && chown -R ${APP_UID}:${APP_GID} /usr/share/java/${ARTIFACT_ID} \
+    && chown -R ${APP_UID}:${APP_GID} /usr/share/doc/${ARTIFACT_ID} \
+    && mkdir -p /etc/$COMPONENT \
+    && chown ${APP_UID}:${APP_GID} /etc/$COMPONENT
 
-RUN mkdir /etc/$COMPONENT \
-  && chown $STREAMS_USER:$STREAMS_GROUP /etc/$COMPONENT
-
-USER $STREAMS_USER
+USER ${APP_UID}
 
 CMD ["/etc/confluent/docker/run"]

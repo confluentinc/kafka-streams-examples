@@ -18,7 +18,7 @@
 
 echo "===> Verify that Kafka is healthy ..."
 
-cub kafka-ready \
+ub kafka-ready \
     "${STREAMS_CUB_KAFKA_MIN_BROKERS:-1}" \
     "${STREAMS_CUB_KAFKA_TIMEOUT:-40}" \
     -b "$STREAMS_BOOTSTRAP_SERVERS" \
@@ -26,7 +26,7 @@ cub kafka-ready \
 
 echo "===> Verify that Confluent Schema Registry is healthy ..."
 
-cub sr-ready \
+ub sr-ready \
     "$STREAMS_SCHEMA_REGISTRY_HOST" \
     "$STREAMS_SCHEMA_REGISTRY_PORT" \
     "${STREAMS_CUB_SCHEMA_REGISTRY_TIMEOUT:-40}"
