@@ -1,6 +1,10 @@
 name: kafka-streams-examples
 lang: java
 lang_version: "11"
+code_artifact:
+  enable: true
+  package_paths:
+    - "maven-snapshots/maven/io.confluent/kafka-streams.examples"
 git:
   enable: true
 codeowners:
