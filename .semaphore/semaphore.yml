@@ -56,7 +56,7 @@ global_job_config:
       - export PACKAGING_BUILD_ARGS=" -DCONFLUENT_VERSION=$CONFLUENT_VERSION  -DCONFLUENT_PLATFORM_LABEL=$PLATFORM_LABEL -DCONFLUENT_DEB_VERSION=$CONFLUENT_DEB_VERSION  -DALLOW_UNSIGNED=$ALLOW_UNSIGNED"
       - >-
         if true; then
-          if true; then
+          if [[ $IS_RC ]]; then
               export MAVEN_PACKAGES_URL="https://s3.us-west-2.amazonaws.com/staging-confluent-packages-maven-654654529379-us-west-2/v$BRANCH_NAME/maven"
               if [[ $PACKAGES_MAVEN_URL ]]; then
                   export MAVEN_PACKAGES_URL=$PACKAGES_MAVEN_URL
