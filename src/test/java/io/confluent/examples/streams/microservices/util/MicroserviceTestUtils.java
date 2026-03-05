@@ -53,9 +53,9 @@ public class MicroserviceTestUtils {
         {
           //Transactions need durability so the defaults require multiple nodes.
           //For testing purposes set transactions to work with a single kafka broker.
-          put(KafkaConfig.TransactionsTopicReplicationFactorProp(), "1");
-          put(KafkaConfig.TransactionsTopicMinISRProp(), "1");
-          put(KafkaConfig.TransactionsTopicPartitionsProp(), "1");
+          put("transaction.state.log.replication.factor", "1");
+          put("transaction.state.log.min.isr", "1");
+          put("transaction.state.log.num.partitions", "1");
         }
       });
 
