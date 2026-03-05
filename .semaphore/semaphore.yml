@@ -57,7 +57,7 @@ global_job_config:
       - echo "SEMAPHORE_GIT_BRANCH=${SEMAPHORE_GIT_BRANCH}"
       - echo "PACKAGING_BUILD_NUMBER=${PACKAGING_BUILD_NUMBER:-unset}"
       - echo "IS_RC=${IS_RC:-unset}"
-      - echo "IS_RELEASE=${IS_RELEASE:-unset}
+      - echo "IS_RELEASE=${IS_RELEASE:-unset}"
       - >-
         if true; then
           if [[ $IS_RC ]]; then
