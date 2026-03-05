@@ -54,6 +54,10 @@ global_job_config:
             export PLATFORM_LABEL=""
         fi
       - export PACKAGING_BUILD_ARGS=" -DCONFLUENT_VERSION=$CONFLUENT_VERSION  -DCONFLUENT_PLATFORM_LABEL=$PLATFORM_LABEL -DCONFLUENT_DEB_VERSION=$CONFLUENT_DEB_VERSION  -DALLOW_UNSIGNED=$ALLOW_UNSIGNED"
+      - echo "SEMAPHORE_GIT_BRANCH=${SEMAPHORE_GIT_BRANCH}"
+      - echo "PACKAGING_BUILD_NUMBER=${PACKAGING_BUILD_NUMBER:-unset}"
+      - echo "IS_RC=${IS_RC:-unset}"
+      - echo "IS_RELEASE=${IS_RELEASE:-unset}
       - >-
         if true; then
           if [[ $IS_RC ]]; then
