@@ -1,7 +1,6 @@
 package io.confluent.examples.streams.microservices.util;
 
 import io.confluent.examples.streams.avro.microservices.Order;
-import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
 import org.apache.commons.cli.CommandLine;
@@ -64,7 +63,6 @@ public class ProduceOrders {
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.ACKS_CONFIG, "all");
         props.put(ProducerConfig.RETRIES_CONFIG, 1);
-        MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(props);
 
         try (final KafkaProducer<String, Order> producer = new KafkaProducer<>(props, new StringSerializer(), mySerializer)) {
             while (true) {

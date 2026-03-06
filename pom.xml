@@ -7,12 +7,12 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>rest-utils-parent</artifactId>
-        <version>[7.9.6-0, 7.9.7-0)</version>
+        <version>[8.0.4-0, 8.0.5-0)</version>
     </parent>
 
     <artifactId>kafka-streams-examples</artifactId>
     <packaging>jar</packaging>
-    <version>7.9.6-0</version>
+    <version>8.0.4-0</version>
 
     <organization>
         <name>Confluent, Inc.</name>
@@ -54,17 +54,17 @@
         <chill.version>0.9.5</chill.version>
         <docker.skip-build>false</docker.skip-build>
         <docker.skip-test>false</docker.skip-test>
-        <java.version>1.8</java.version>
+        <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scalatest.version>3.1.2</scalatest.version>
-        <!-- The default is ubi8 -->
-        <docker.os_type>ubi8</docker.os_type>
+        <!-- The default is ubi9 -->
+        <docker.os_type>ubi9</docker.os_type>
         <!-- Need to explicitly set this otherwise it will be overridden from common-docker pom. -->
         <docker.file>Dockerfile.${docker.os_type}</docker.file>
         <docker.tag>${project.version}-${docker.os_type}</docker.tag>
         <io.confluent.schema-registry.version>${confluent.version.range}</io.confluent.schema-registry.version>
         <io.confluent.blueway.version>${confluent.version.range}</io.confluent.blueway.version>
-        <io.confluent.kafka-streams-examples.version>7.9.6-0</io.confluent.kafka-streams-examples.version>
+        <io.confluent.kafka-streams-examples.version>8.0.4-0</io.confluent.kafka-streams-examples.version>
     </properties>
 
     <dependencies>
@@ -125,18 +125,14 @@
             <version>${scala.version}</version>
         </dependency>
         <dependency>
-            <!-- This could be a test-only dependency, but we keep it a compile dependency so that
-                 users are able to package the examples via `mvn package` and actually run the examples
-                 against a Kafka cluster. -->
-            <groupId>com.101tec</groupId>
-            <artifactId>zkclient</artifactId>
-            <version>0.9</version>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-reload4j</artifactId>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <scope>runtime</scope>
         </dependency>
-        <!-- Use a repackaged version of log4j with security patches. Default log4j v1.2 is a transitive dependency of slf4j-log4j12, but it is excluded in common/pom.xml -->
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>logredactor</artifactId>
@@ -152,8 +148,8 @@
             <version>${jetty.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlet</artifactId>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-servlet</artifactId>
             <version>${jetty.version}</version>
         </dependency>
         <dependency>
@@ -181,16 +177,10 @@
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
         </dependency>
-        <!--
-            This dependency is included to demonstrate the use of
-            Confluent Monitoring Interceptors in conjunction with
-            Kafka Streams but isn't a required
-            dependency for running Kafka Streams.
-        -->
         <dependency>
-            <groupId>io.confluent</groupId>
-            <artifactId>monitoring-interceptors</artifactId>
-            <version>${io.confluent.blueway.version}</version>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <version>4.0.1</version>
         </dependency>
 
         <dependency>
@@ -226,7 +216,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.7.14</version>
+            <version>4.11.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
@@ -239,6 +229,12 @@
             <artifactId>kafka_${kafka.scala.version}</artifactId>
             <version>${kafka.version}</version>
             <classifier>test</classifier>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-test-common-runtime</artifactId>
+            <version>${kafka.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

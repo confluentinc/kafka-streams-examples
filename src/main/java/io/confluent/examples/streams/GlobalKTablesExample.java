@@ -43,8 +43,7 @@ import java.util.Properties;
  * don't require re-partitioning of the input streams.
  * <p>
  * The {@link GlobalStoresExample} shows another way to perform the same operation using
- * {@link org.apache.kafka.streams.TopologyDescription.GlobalStore} and a
- * {@link org.apache.kafka.streams.kstream.ValueTransformer}.
+ * {@link org.apache.kafka.streams.TopologyDescription.GlobalStore}
  * <p>
  * In this example, we join a stream of orders that reads from a topic named
  * "order" with a customers table that reads from a topic named "customer", and a products
@@ -76,7 +75,7 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-7.9.6-0-standalone.jar io.confluent.examples.streams.GlobalKTablesExample
+ * $ java -cp target/kafka-streams-examples-8.0.4-0-standalone.jar io.confluent.examples.streams.GlobalKTablesExample
  * }
  * </pre>
  * 4) Write some input data to the source topics (e.g. via {@link GlobalKTablesAndStoresExampleDriver}). The
@@ -86,7 +85,7 @@ import java.util.Properties;
  * {@code
  * # Here: Write input data using the example driver. The driver will exit once it has received
  * # all EnrichedOrders
- * $ java -cp target/kafka-streams-examples-7.9.6-0-standalone.jar io.confluent.examples.streams.GlobalKTablesAndStoresExampleDriver
+ * $ java -cp target/kafka-streams-examples-8.0.4-0-standalone.jar io.confluent.examples.streams.GlobalKTablesAndStoresExampleDriver
  * }
  * </pre>
  * <p>

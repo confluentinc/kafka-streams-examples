@@ -1,0 +1,16 @@
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##
+configuration:
+  name: "Log4j2"
+  appenders:
+    Console:
+      name: "STDOUT"
+      target: "SYSTEM_OUT"
+      PatternLayout:
+        Pattern: "[%d] %p [%t] %m (%c)%n"
+  loggers:
+    root:
+      level: "INFO"
+      AppenderRef:
+        - ref: "STDOUT"

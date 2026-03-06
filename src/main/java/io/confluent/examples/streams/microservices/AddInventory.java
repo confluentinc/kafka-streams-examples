@@ -3,7 +3,6 @@ package io.confluent.examples.streams.microservices;
 import io.confluent.examples.streams.avro.microservices.Product;
 import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
-import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 import org.apache.commons.cli.*;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -35,7 +34,6 @@ public class AddInventory {
         producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
         producerConfig.put(ProducerConfig.RETRIES_CONFIG, 1);
         producerConfig.put(ProducerConfig.CLIENT_ID_CONFIG, "inventory-generator");
-        MonitoringInterceptorUtils.maybeConfigureInterceptorsProducer(producerConfig);
 
         final ProductTypeSerde productSerde = new ProductTypeSerde();
 

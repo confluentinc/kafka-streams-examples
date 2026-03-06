@@ -16,7 +16,6 @@
 package io.confluent.examples.streams;
 
 import io.confluent.examples.streams.avro.WikiFeed;
-import io.confluent.examples.streams.utils.MonitoringInterceptorUtils;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -58,7 +57,7 @@ import java.util.Properties;
  * Once packaged you can then run:
  * <pre>
  * {@code
- * $ java -cp target/kafka-streams-examples-7.9.6-0-standalone.jar io.confluent.examples.streams.WikipediaFeedAvroExample
+ * $ java -cp target/kafka-streams-examples-8.0.4-0-standalone.jar io.confluent.examples.streams.WikipediaFeedAvroExample
  * }
  * </pre>
  * 4) Write some input data to the source topics (e.g. via {@link WikipediaFeedAvroExampleDriver}).
@@ -69,7 +68,7 @@ import java.util.Properties;
  * {@code
  * # Here: Write input data using the example driver.  Once the driver has stopped generating data,
  * # you can terminate it via Ctrl-C.
- * $ java -cp target/kafka-streams-examples-7.9.6-0-standalone.jar io.confluent.examples.streams.WikipediaFeedAvroExampleDriver
+ * $ java -cp target/kafka-streams-examples-8.0.4-0-standalone.jar io.confluent.examples.streams.WikipediaFeedAvroExampleDriver
  * }
  * </pre>
  */
@@ -123,11 +122,6 @@ public class WikipediaFeedAvroExample {
     // Records should be flushed every 10 seconds. This is less than the default
     // in order to keep this example interactive.
     streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 10 * 1000);
-
-    // If Confluent monitoring interceptors are on the classpath,
-    // then the producer and consumer interceptors are added to the
-    // streams application.
-    MonitoringInterceptorUtils.maybeConfigureInterceptorsStreams(streamsConfiguration);
 
     final Serde<String> stringSerde = Serdes.String();
     final Serde<Long> longSerde = Serdes.Long();
