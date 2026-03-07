@@ -166,7 +166,7 @@ public class FraudService implements Service {
       return;
     }
     final FraudService service = new FraudService();
-    final Properties defaultConfig = Optional.ofNullable(cl.getOptionValue("config-file", null))
+    final Properties defaultConfig = Optional.ofNullable(cl.getOptionValue("config-file", (String) null))
             .map(path -> {
               try {
                 return buildPropertiesFromConfigFile(path);

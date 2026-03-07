@@ -217,7 +217,7 @@ public class OrderDetailsService implements Service {
       formatter.printHelp("Order Details Service", opts);
       return;
     }
-    final Properties defaultConfig = Optional.ofNullable(cl.getOptionValue("config-file", null))
+    final Properties defaultConfig = Optional.ofNullable(cl.getOptionValue("config-file", (String) null))
             .map(path -> {
               try {
                 return buildPropertiesFromConfigFile(path);

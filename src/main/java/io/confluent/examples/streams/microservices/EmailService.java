@@ -152,7 +152,7 @@ public class EmailService implements Service {
     }
     final EmailService service = new EmailService(new LoggingEmailer());
 
-    final Properties defaultConfig = Optional.ofNullable(cl.getOptionValue("config-file", null))
+    final Properties defaultConfig = Optional.ofNullable(cl.getOptionValue("config-file", (String) null))
             .map(path -> {
               try {
                 return buildPropertiesFromConfigFile(path);
