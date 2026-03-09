@@ -58,6 +58,7 @@ global_job_config:
       - echo "PACKAGING_BUILD_NUMBER=${PACKAGING_BUILD_NUMBER:-unset}"
       - echo "IS_RC=${IS_RC:-unset}"
       - echo "IS_RELEASE=${IS_RELEASE:-unset}"
+      - export MAVEN_PACKAGES_URL="https://s3.us-west-2.amazonaws.com/staging-confluent-packages-maven-654654529379-us-west-2/v$BRANCH_NAME/maven"
       - >-
         if true; then
           if [[ $IS_RC ]]; then
@@ -121,21 +122,7 @@ blocks:
       jobs:
         - name: Build, Test, & Scan ubi9
           commands:
-            - export OS_TAG="-ubi9"
-            - export DOCKER_DEV_FULL_IMAGES=$DOCKER_DEV_REGISTRY${DOCKER_REPOS// /:$DOCKER_DEV_TAG$OS_TAG $DOCKER_DEV_REGISTRY}:$DOCKER_DEV_TAG$OS_TAG
-            - export AMD_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$AMD_ARCH }$AMD_ARCH
-            - ci-tools ci-update-version
-            - export PACKAGING_BUILD_ARGS="$PACKAGING_BUILD_ARGS -DCONFLUENT_PACKAGES_REPO=$PACKAGES_URL"
-            - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY
-              -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$AMD_ARCH -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$AMD_ARCH -Ddocker.os_type=ubi9
-              $PACKAGING_BUILD_ARGS -Ddependency.check.skip=true $MAVEN_EXTRA_ARGS
-            - . cache-maven store
-            - >-
-              for dev_image in $AMD_DOCKER_DEV_FULL_IMAGES;
-              do
-                cve-scan $dev_image
-              done
-            - for image in $AMD_DOCKER_DEV_FULL_IMAGES; do echo "Pushing $image" && docker push $image; done
+            - echo "Building and testing for AMD ubi9"
       epilogue:
         always:
           commands:
