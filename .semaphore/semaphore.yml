@@ -67,7 +67,8 @@ global_job_config:
               fi
           fi
           # Overwrite maven global configuration
-          envsubst < "$(python3 -c "from cp_devtools.maven import get_maven_settings; print(get_maven_settings('maven-settings-cp-dockerfile.xml'))")" > ~/.m2/settings.xml
+          copy-template maven_semaphore_cp_dockerfile_settings.xml --type maven -o template-settings.xml
+          mv ~/.m2/settings.xml ~/.m2/settings.xml.bak && envsubst < template-settings.xml > ~/.m2/settings.xml # Replacing maven settings with packaging specific settings
         else
           echo "This job is not a isHotfixJob or isRcJob (What we know how to handle) - and we don't know how to handle it"
         fi
