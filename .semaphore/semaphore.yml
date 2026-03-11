@@ -25,14 +25,12 @@ global_job_config:
     commands:
       - checkout
       - if [[ $SEMAPHORE_GIT_BRANCH =~ ^7\..* ]]; then sem-version java 8; else sem-version java 17; fi
-      - sem-version python 3.14
       - . cache-maven restore
       - export GIT_COMMIT=$(git rev-parse --verify HEAD --short)
       - export BUILD_NUMBER=$(echo $SEMAPHORE_WORKFLOW_ID | cut -f1 -d"-")
       - export BRANCH_TAG=$(echo $SEMAPHORE_GIT_BRANCH | tr / -)
       # For PR Builds using Packaging
       - pip install confluent-release-tools
-      - pip install cp-devtools
       - if [ $BRANCH_TAG == "master" ]; then export BUILD_KEY=$(pinto get-master-version); else export BUILD_KEY=$BRANCH_TAG; fi
       - export PACKAGING_BUCKET="s3://dev-confluent-packages-654654529379-us-west-2/$BRANCH_TAG/"
       - export LATEST_PACKAGING_BUILD_NUMBER=$(aws s3 ls $PACKAGING_BUCKET --no-paginate | grep 'PRE' | awk '{print $NF}' | awk '{print substr($1, 1, length($1)-1)}' | sort -n | tail -n 1)
@@ -62,8 +60,8 @@ global_job_config:
               fi
           fi
           # Overwrite maven global configuration
-          copy-template maven_semaphore_cp_dockerfile_settings.xml --type maven -o template-settings.xml
-          mv ~/.m2/settings.xml ~/.m2/settings.xml.bak && envsubst < template-settings.xml > ~/.m2/settings.xml # Replacing maven settings with packaging specific settings
+          uv run --with cp-devtools copy-template maven_semaphore_cp_dockerfile_settings.xml --type maven -o template-settings.xml
+          [[ -f ~/.m2/settings.xml ]] && mv ~/.m2/settings.xml ~/.m2/settings.xml.bak; envsubst < template-settings.xml > ~/.m2/settings.xml # Replacing maven settings with packaging specific settings
         else
           echo "This job is not a isHotfixJob or isRcJob (What we know how to handle) - and we don't know how to handle it"
         fi
