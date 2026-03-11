@@ -25,7 +25,6 @@ global_job_config:
     commands:
       - checkout
       - if [[ $SEMAPHORE_GIT_BRANCH =~ ^7\..* ]]; then sem-version java 8; else sem-version java 17; fi
-      - . vault-setup
       - . cache-maven restore
       - export GIT_COMMIT=$(git rev-parse --verify HEAD --short)
       - export BUILD_NUMBER=$(echo $SEMAPHORE_WORKFLOW_ID | cut -f1 -d"-")
@@ -61,7 +60,8 @@ global_job_config:
               fi
           fi
           # Overwrite maven global configuration
-          . vault-sem-get-secret maven-settings-cp-dockerfile
+          uv run --with cp-devtools copy-template maven_semaphore_cp_dockerfile_settings.xml --type maven -o template-settings.xml
+          [[ -f ~/.m2/settings.xml ]] && mv ~/.m2/settings.xml ~/.m2/settings.xml.bak; envsubst < template-settings.xml > ~/.m2/settings.xml # Replacing maven settings with packaging specific settings
         else
           echo "This job is not a isHotfixJob or isRcJob (What we know how to handle) - and we don't know how to handle it"
         fi
@@ -181,3 +181,4 @@ after_pipeline:
           - artifact pull workflow target-AMD
           - artifact pull workflow target-ARM
           - emit-sonarqube-data --run_only_sonar_scan
+
