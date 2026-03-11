@@ -25,7 +25,6 @@ global_job_config:
     commands:
       - checkout
       - if [[ $SEMAPHORE_GIT_BRANCH =~ ^7\..* ]]; then sem-version java 8; else sem-version java 17; fi
-      - . vault-setup
       - . cache-maven restore
       - export GIT_COMMIT=$(git rev-parse --verify HEAD --short)
       - export BUILD_NUMBER=$(echo $SEMAPHORE_WORKFLOW_ID | cut -f1 -d"-")
@@ -53,7 +52,7 @@ global_job_config:
         fi
       - export PACKAGING_BUILD_ARGS=" -DCONFLUENT_VERSION=$CONFLUENT_VERSION  -DCONFLUENT_PLATFORM_LABEL=$PLATFORM_LABEL -DCONFLUENT_DEB_VERSION=$CONFLUENT_DEB_VERSION  -DALLOW_UNSIGNED=$ALLOW_UNSIGNED"
       - >-
-        if [[ $IS_RELEASE && $PACKAGING_BUILD_NUMBER ]]; then
+        if true; then
           if [[ $IS_RC ]]; then
               export MAVEN_PACKAGES_URL="https://s3.us-west-2.amazonaws.com/staging-confluent-packages-maven-654654529379-us-west-2/v$BRANCH_NAME/maven"
               if [[ $PACKAGES_MAVEN_URL ]]; then
@@ -61,7 +60,10 @@ global_job_config:
               fi
           fi
           # Overwrite maven global configuration
-          . vault-sem-get-secret maven-settings-cp-dockerfile
+          echo "Fetching settings.xml from depot repo..."
+          gh api repos/confluentinc/depot/contents/python/cp_devtools/templates/template_resources/maven/maven_semaphore_cp_dockerfile_settings.xml | jq -r '.content' | base64 -d > template-settings.xml && echo "✓ Successfully downloaded template-settings.xml ($(wc -l < template-settings.xml) lines)" || echo "✗ Failed to download settings.xml"
+          test -f template-settings.xml && cat template-settings.xml || echo "ERROR: template-settings.xml not found"
+          [[ -f ~/.m2/settings.xml ]] && mv ~/.m2/settings.xml ~/.m2/settings.xml.bak; envsubst < template-settings.xml > ~/.m2/settings.xml
         else
           echo "This job is not a isHotfixJob or isRcJob (What we know how to handle) - and we don't know how to handle it"
         fi
@@ -181,3 +183,4 @@ after_pipeline:
           - artifact pull workflow target-AMD
           - artifact pull workflow target-ARM
           - emit-sonarqube-data --run_only_sonar_scan
+
