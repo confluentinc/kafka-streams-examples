@@ -27,8 +27,10 @@ global_job_config:
     commands:
       - checkout
       - if [[ $SEMAPHORE_GIT_BRANCH =~ ^7\..* ]]; then sem-version java 8; else sem-version java 17; fi
+      - sem-version python 3.14
       - . vault-setup
       - . cache-maven restore
+      - pip install cp-devtools
       - export GIT_COMMIT=$(git rev-parse --verify HEAD --short)
       - export BUILD_NUMBER=$(echo $SEMAPHORE_WORKFLOW_ID | cut -f1 -d"-")
       - export BRANCH_TAG=$(echo $SEMAPHORE_GIT_BRANCH | tr / -)
@@ -71,7 +73,8 @@ global_job_config:
               fi
           fi
           # Overwrite maven global configuration
-          . vault-sem-get-secret maven-settings-cp-dockerfile
+          copy-template maven_semaphore_cp_dockerfile_settings.xml --type maven -o template-settings.xml
+          mv ~/.m2/settings.xml ~/.m2/settings.xml.bak && envsubst < template-settings.xml > ~/.m2/settings.xml # Replacing maven settings with packaging specific settings
         else
           echo "This job is not a isHotfixJob or isRcJob (What we know how to handle) - and we don't know how to handle it"
         fi
@@ -130,8 +133,8 @@ blocks:
             - export AMD_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$AMD_ARCH }$AMD_ARCH
             - ci-tools ci-update-version --direct-pom-edit
             - export PACKAGING_BUILD_ARGS="$PACKAGING_BUILD_ARGS -DCONFLUENT_PACKAGES_REPO=$PACKAGES_URL"
-            - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY
-              -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$AMD_ARCH
+            - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY 
+              -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$AMD_ARCH 
               -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$AMD_ARCH -Ddocker.os_type=ubi9 $PACKAGING_BUILD_ARGS -Ddependency.check.skip=true $MAVEN_EXTRA_ARGS
             - . cache-maven store
             - >-
@@ -193,8 +196,8 @@ blocks:
             - export ARM_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$ARM_ARCH }$ARM_ARCH
             - export PACKAGING_BUILD_ARGS="$PACKAGING_BUILD_ARGS -DCONFLUENT_PACKAGES_REPO=$PACKAGES_URL"
             - ci-tools ci-update-version --direct-pom-edit
-            - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY
-              -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$ARM_ARCH
+            - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY 
+              -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$ARM_ARCH 
               -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$ARM_ARCH -Ddocker.os_type=ubi9 $PACKAGING_BUILD_ARGS -Ddependency.check.skip=true $MAVEN_EXTRA_ARGS
             - . cache-maven store
             - for image in $ARM_DOCKER_DEV_FULL_IMAGES; do echo "Pushing $image" && docker push $image; done
