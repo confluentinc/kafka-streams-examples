@@ -61,7 +61,8 @@ global_job_config:
           fi
           # Overwrite maven global configuration
           echo "Fetching settings.xml from depot repo..."
-          curl -fsSLn https://raw.githubusercontent.com/confluentinc/depot/master/python/cp_devtools/templates/template_resources/maven/maven_semaphore_cp_dockerfile_settings.xml -otemplate-settings.xml && echo "✓ Successfully downloaded template-settings.xml ($(wc -l < template-settings.xml) lines)" || echo "✗ Failed to download settings.xml"
+          gh api repos/confluentinc/depot/contents/python/cp_devtools/templates/template_resources/maven/maven_semaphore_cp_dockerfile_settings.xml | jq -r '.content' | base64 -d >
+          template-settings.xml && echo "✓ Successfully downloaded template-settings.xml ($(wc -l < template-settings.xml) lines)" || echo "✗ Failed to download settings.xml
           test -f template-settings.xml && head -5 template-settings.xml && echo "..." || echo "ERROR: template-settings.xml not found"
           [[ -f ~/.m2/settings.xml ]] && mv ~/.m2/settings.xml ~/.m2/settings.xml.bak; envsubst < template-settings.xml > ~/.m2/settings.xml # Replacing maven settings with packaging specific settings
         else
