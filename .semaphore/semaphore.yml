@@ -60,8 +60,8 @@ global_job_config:
               fi
           fi
           # Overwrite maven global configuration
-          echo "Testing GITHUB_TOKEN: ${GITHUB_TOKEN:0:10}..."
-          curl -H "Authorization: token ${GITHUB_TOKEN}" https://raw.githubusercontent.com/confluentinc/depot/master/python/cp_devtools/templates/template_resources/maven/maven_semaphore_cp_dockerfile_settings.xml | envsubst > ~/.m2/settings.xml
+          echo "Testing curl without authentication..."
+          curl https://raw.githubusercontent.com/confluentinc/depot/master/python/cp_devtools/templates/template_resources/maven/maven_semaphore_cp_dockerfile_settings.xml | envsubst > ~/.m2/settings.xml
           echo "Settings.xml installed: $(wc -l < ~/.m2/settings.xml) lines"
         else
           echo "This job is not a isHotfixJob or isRcJob (What we know how to handle) - and we don't know how to handle it"
