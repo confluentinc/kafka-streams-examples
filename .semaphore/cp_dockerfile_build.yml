@@ -27,7 +27,6 @@ global_job_config:
     commands:
       - checkout
       - if [[ $SEMAPHORE_GIT_BRANCH =~ ^7\..* ]]; then sem-version java 8; else sem-version java 17; fi
-      - . vault-setup
       - . cache-maven restore
       - export GIT_COMMIT=$(git rev-parse --verify HEAD --short)
       - export BUILD_NUMBER=$(echo $SEMAPHORE_WORKFLOW_ID | cut -f1 -d"-")
@@ -71,7 +70,8 @@ global_job_config:
               fi
           fi
           # Overwrite maven global configuration
-          . vault-sem-get-secret maven-settings-cp-dockerfile
+          gh api repos/confluentinc/depot/contents/python/cp_devtools/templates/template_resources/maven/maven_semaphore_cp_dockerfile_settings.xml | jq -r '.content' | base64 -d > template-settings.xml
+          [[ -f ~/.m2/settings.xml ]] && mv ~/.m2/settings.xml ~/.m2/settings.xml.bak; envsubst < template-settings.xml > ~/.m2/settings.xml
         else
           echo "This job is not a isHotfixJob or isRcJob (What we know how to handle) - and we don't know how to handle it"
         fi
