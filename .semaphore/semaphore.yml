@@ -59,6 +59,11 @@ global_job_config:
               if [[ $PACKAGES_MAVEN_URL ]]; then
                   export MAVEN_PACKAGES_URL=$PACKAGES_MAVEN_URL
               fi
+          elif [[ $IS_HOTFIX ]]; then
+              export MAVEN_PACKAGES_URL="https://s3.us-west-2.amazonaws.com/dev-confluent-packages-maven-654654529379-us-west-2/$BRANCH_TAG/maven"
+              if [[ $PACKAGES_MAVEN_URL ]]; then
+                  export MAVEN_PACKAGES_URL=$PACKAGES_MAVEN_URL
+              fi
           fi
           # Overwrite maven global configuration
           . vault-sem-get-secret maven-settings-cp-dockerfile
