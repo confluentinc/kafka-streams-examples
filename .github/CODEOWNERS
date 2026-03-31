@@ -1,2 +1,4 @@
 # assign Kafak Streams and Java Client team as reviewers for all PRs:
 *       @confluentinc/streams @confluentinc/kafka-java-client
+.semaphore/	@confluentinc/streams @confluentinc/kafka-java-client @confluentinc/cp-build-and-release-team
+service.yml	@confluentinc/streams @confluentinc/kafka-java-client @confluentinc/cp-build-and-release-team
