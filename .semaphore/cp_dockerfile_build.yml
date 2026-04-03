@@ -59,8 +59,13 @@ global_job_config:
         else
             export PLATFORM_LABEL=""
         fi
-      - export PACKAGING_BUILD_ARGS=" -DCONFLUENT_VERSION=$CONFLUENT_VERSION  -DCONFLUENT_PLATFORM_LABEL=$PLATFORM_LABEL -DCONFLUENT_DEB_VERSION=$CONFLUENT_DEB_VERSION 
-        -DALLOW_UNSIGNED=$ALLOW_UNSIGNED"
+      # Guard -D flags: fabric8 fails when build args resolve to null from empty -D values (e.g. -DCONFLUENT_VERSION=)
+      - |
+        export PACKAGING_BUILD_ARGS=""
+        if [[ -n "$CONFLUENT_VERSION" ]]; then PACKAGING_BUILD_ARGS="$PACKAGING_BUILD_ARGS -DCONFLUENT_VERSION=$CONFLUENT_VERSION"; fi
+        if [[ -n "$PLATFORM_LABEL" ]]; then PACKAGING_BUILD_ARGS="$PACKAGING_BUILD_ARGS -DCONFLUENT_PLATFORM_LABEL=$PLATFORM_LABEL"; fi
+        if [[ -n "$CONFLUENT_DEB_VERSION" ]]; then PACKAGING_BUILD_ARGS="$PACKAGING_BUILD_ARGS -DCONFLUENT_DEB_VERSION=$CONFLUENT_DEB_VERSION"; fi
+        if [[ -n "$ALLOW_UNSIGNED" ]]; then PACKAGING_BUILD_ARGS="$PACKAGING_BUILD_ARGS -DALLOW_UNSIGNED=$ALLOW_UNSIGNED"; fi
       - >-
         if [[ $IS_RELEASE && $PACKAGING_BUILD_NUMBER ]]; then
           if [[ $IS_RC ]]; then
@@ -88,14 +93,12 @@ global_job_config:
       - export DOCKER_REPOS="confluentinc/kafka-streams-examples"
       - export COMMUNITY_DOCKER_REPOS=""
       - |
+        export COMMUNITY_MVN_PL_ARGS=""
         if [[ $SKIP_COMMUNITY == "True" ]]; then
           # Filter out community repos from DOCKER_REPOS
           DOCKER_REPOS=$(comm -23 <(echo "$DOCKER_REPOS" | tr ' ' '\n' | sort) <(echo "$COMMUNITY_DOCKER_REPOS" | tr ' ' '\n' | sort) | tr '\n' ' ' | xargs)
           export DOCKER_REPOS
           echo "DOCKER_REPOS after skipping community images - $DOCKER_REPOS"
-
-          # Set Maven arguments for skipping community modules
-          export MAVEN_EXTRA_ARGS=""
 
           # Check if current DOCKER_IMAGE is in community repos, skip job execution
           for skip_repo in $COMMUNITY_DOCKER_REPOS; do
@@ -105,8 +108,6 @@ global_job_config:
               return 130
             fi
           done
-        else
-          export MAVEN_EXTRA_ARGS=""
         fi
       - export DOCKER_DEV_TAG="dev-$BRANCH_TAG-$BUILD_NUMBER"
       - export AMD_ARCH=.amd64
@@ -135,9 +136,9 @@ blocks:
             - export AMD_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$AMD_ARCH }$AMD_ARCH
             - ci-tools ci-update-version --direct-pom-edit
             - export PACKAGING_BUILD_ARGS="$PACKAGING_BUILD_ARGS -DCONFLUENT_PACKAGES_REPO=$PACKAGES_URL"
-            - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY
-              -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$AMD_ARCH
-              -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$AMD_ARCH -Ddocker.os_type=ubi9 $PACKAGING_BUILD_ARGS -Ddependency.check.skip=true $MAVEN_EXTRA_ARGS
+            - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker-fabric8 clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY 
+              -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$AMD_ARCH 
+              -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$AMD_ARCH -Ddocker.os_type=ubi9 $PACKAGING_BUILD_ARGS -Ddependency.check.skip=true $COMMUNITY_MVN_PL_ARGS
             - . cache-maven store
             - >-
               for dev_image in $AMD_DOCKER_DEV_FULL_IMAGES;
@@ -198,9 +199,9 @@ blocks:
             - export ARM_DOCKER_DEV_FULL_IMAGES=${DOCKER_DEV_FULL_IMAGES// /$ARM_ARCH }$ARM_ARCH
             - export PACKAGING_BUILD_ARGS="$PACKAGING_BUILD_ARGS -DCONFLUENT_PACKAGES_REPO=$PACKAGES_URL"
             - ci-tools ci-update-version --direct-pom-edit
-            - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY
-              -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$ARM_ARCH
-              -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$ARM_ARCH -Ddocker.os_type=ubi9 $PACKAGING_BUILD_ARGS -Ddependency.check.skip=true $MAVEN_EXTRA_ARGS
+            - mvn -Dmaven.wagon.http.retryHandler.count=3 --batch-mode -P jenkins,docker-fabric8 clean package dependency:analyze validate -U -Ddocker.registry=$DOCKER_DEV_REGISTRY 
+              -Ddocker.upstream-registry=$DOCKER_UPSTREAM_REGISTRY -DBUILD_NUMBER=$BUILD_NUMBER -DGIT_COMMIT=$GIT_COMMIT -Ddocker.tag=$DOCKER_DEV_TAG$OS_TAG$ARM_ARCH 
+              -Ddocker.upstream-tag=$DOCKER_UPSTREAM_TAG$OS_TAG -Darch.type=$ARM_ARCH -Ddocker.os_type=ubi9 $PACKAGING_BUILD_ARGS -Ddependency.check.skip=true $COMMUNITY_MVN_PL_ARGS
             - . cache-maven store
             - for image in $ARM_DOCKER_DEV_FULL_IMAGES; do echo "Pushing $image" && docker push $image; done
       epilogue:
@@ -252,7 +253,14 @@ blocks:
           commands:
             - export DOCKER_PROD_IMAGE_NAME=$DOCKER_PROD_REGISTRY${DOCKER_REPOS// / $DOCKER_PROD_REGISTRY}
             - ci-tools ci-update-version --direct-pom-edit
-            - ci-tools ci-push-tag
+            # Skip ci-push-tag for release builds. Without this guard, -rc and -cp builds also push
+            # tags via this line — for -rc builds the tags are in a different format which is
+            # unexpected and unused, and for -cp builds it pushes the same tags as nightly which is
+            # also not the intended behavior.
+            - |-
+              if [[ ! $IS_RELEASE ]]; then
+                ci-tools ci-push-tag
+              fi
             - echo "Skipping Maven Deploy"
             # Create manifest
             - >-
