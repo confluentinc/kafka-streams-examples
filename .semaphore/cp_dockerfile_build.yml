@@ -252,7 +252,14 @@ blocks:
           commands:
             - export DOCKER_PROD_IMAGE_NAME=$DOCKER_PROD_REGISTRY${DOCKER_REPOS// / $DOCKER_PROD_REGISTRY}
             - ci-tools ci-update-version --direct-pom-edit
-            - ci-tools ci-push-tag
+            # Skip ci-push-tag for release builds. Without this guard, -rc and -cp builds also push
+            # tags via this line — for -rc builds the tags are in a different format which is
+            # unexpected and unused, and for -cp builds it pushes the same tags as nightly which is
+            # also not the intended behavior.
+            - |-
+              if [[ ! $IS_RELEASE ]]; then
+                ci-tools ci-push-tag
+              fi
             - echo "Skipping Maven Deploy"
             # Create manifest
             - >-
