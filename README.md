@@ -1,5 +1,9 @@
 # Kafka Streams Examples
 
+<!-- hy-mt2-i18n:start -->
+**English** · [中文](./README_zh-CN.md) · [日本語](./README_ja.md) · [Español](./README_es.md)
+<!-- hy-mt2-i18n:end -->
+
 > [!NOTE]
 > This repo is replaced with [Confluent Tutorials for Apache Kafka](https://github.com/confluentinc/tutorials).
 We still "keep the lights on", but we don't improve existing examples any longer, nor do we add new example.
