@@ -29,7 +29,6 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.ReadOnlyWindowStore;
 import org.apache.kafka.streams.state.WindowStoreIterator;
-import org.apache.kafka.test.TestUtils;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -46,6 +45,7 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import io.confluent.examples.streams.utils.KeyValueWithTimestamp;
+import io.confluent.examples.streams.utils.TestUtils;
 
 /**
  * Utility functions to make integration testing more convenient.

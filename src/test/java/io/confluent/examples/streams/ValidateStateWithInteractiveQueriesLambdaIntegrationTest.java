@@ -15,6 +15,7 @@
  */
 package io.confluent.examples.streams;
 
+import io.confluent.examples.streams.utils.TestUtils;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.Serdes;
@@ -31,7 +32,6 @@ import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.ReadOnlyWindowStore;
 import org.apache.kafka.streams.state.WindowStore;
-import org.apache.kafka.test.TestUtils;
 import org.junit.Test;
 
 import java.time.Duration;

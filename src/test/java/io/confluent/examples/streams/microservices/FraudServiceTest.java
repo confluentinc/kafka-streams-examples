@@ -4,8 +4,8 @@ import io.confluent.examples.streams.avro.microservices.Order;
 import io.confluent.examples.streams.avro.microservices.OrderValidation;
 import io.confluent.examples.streams.microservices.domain.Schemas;
 import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
+import io.confluent.examples.streams.utils.TestUtils;
 
-import org.apache.kafka.test.TestUtils;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;

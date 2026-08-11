@@ -8,8 +8,8 @@ import io.confluent.examples.streams.microservices.domain.Schemas.Topics;
 import io.confluent.examples.streams.microservices.domain.beans.OrderBean;
 import io.confluent.examples.streams.microservices.util.MicroserviceTestUtils;
 import io.confluent.examples.streams.microservices.util.Paths;
+import io.confluent.examples.streams.utils.TestUtils;
 
-import org.apache.kafka.test.TestUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
