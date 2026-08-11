@@ -117,7 +117,7 @@ blocks:
   - name: Build, Test, & Scan AMD
     dependencies: ["Validation"]
     run:
-      when: "pull_request =~ '.*'"
+      when: "pull_request =~ '.*' or branch = 'master'"
     task:
       jobs:
         - name: Build, Test, & Scan ubi9
@@ -146,7 +146,7 @@ blocks:
   - name: Build & Test ARM
     dependencies: ["Validation"]
     run:
-      when: "pull_request =~ '.*'"
+      when: "pull_request =~ '.*' or branch = 'master'"
     task:
       agent:
         machine:
