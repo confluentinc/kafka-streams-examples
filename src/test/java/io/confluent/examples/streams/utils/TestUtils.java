@@ -28,11 +28,11 @@ import java.util.function.Supplier;
 /**
  * Test helpers adapted from {@code org.apache.kafka.test.TestUtils} in Apache Kafka.
  *
- * <p>Those helpers moved from the {@code clients} test source set to test fixtures in KAFKA
- * PR #22201, so they are no longer present in the published {@code kafka-clients} {@code test}
- * artifact for the community ({@code -ccs}) build that this project resolves. Only the two
- * helpers this project actually uses are reproduced here, which also removes the dependency on
- * an internal, non-public Apache Kafka test package. See KSTREAMS-9277.
+ * <p>Those helpers moved from the {@code clients} test source set to test fixtures in Apache
+ * Kafka PR #22201, so they are no longer present in the published {@code kafka-clients}
+ * {@code test} artifact this project resolves. Only the helpers this project actually uses are
+ * reproduced here, which also removes the dependency on an internal, non-public Apache Kafka
+ * test package.
  *
  * <p>Timeouts and polling intervals match the upstream defaults so test timing is unchanged.
  */

@@ -21,9 +21,9 @@ package io.confluent.examples.streams.utils;
  * purposes. Note that this is not intended to do any assertions.
  *
  * <p>Adapted from {@code org.apache.kafka.test.TestCondition} in Apache Kafka. That class moved
- * from the {@code clients} test source set to test fixtures in KAFKA PR #22201, and is therefore
- * no longer present in the published {@code kafka-clients} {@code test} artifact for the
- * community ({@code -ccs}) build. See KSTREAMS-9277.
+ * from the {@code clients} test source set to test fixtures in Apache Kafka PR #22201, and is
+ * therefore no longer present in the published {@code kafka-clients} {@code test} artifact this
+ * project resolves.
  */
 @FunctionalInterface
 public interface TestCondition {
