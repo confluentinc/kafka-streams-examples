@@ -17,10 +17,10 @@ package io.confluent.examples.streams
 
 import java.util.Properties
 
+import io.confluent.examples.streams.utils.TestUtils
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream.{KStream, KTable}
 import org.apache.kafka.streams.{StreamsConfig, TopologyTestDriver}
-import org.apache.kafka.test.TestUtils
 import org.junit._
 import org.scalatestplus.junit.AssertionsForJUnit
 

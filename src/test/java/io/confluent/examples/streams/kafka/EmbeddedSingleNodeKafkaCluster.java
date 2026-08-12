@@ -15,6 +15,8 @@
  */
 package io.confluent.examples.streams.kafka;
 
+import io.confluent.examples.streams.utils.TestCondition;
+import io.confluent.examples.streams.utils.TestUtils;
 import io.confluent.kafka.schemaregistry.RestApp;
 import io.confluent.kafka.schemaregistry.CompatibilityLevel;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
@@ -27,8 +29,6 @@ import org.apache.kafka.network.SocketServerConfigs;
 import org.apache.kafka.server.config.ServerConfigs;
 import org.apache.kafka.server.config.ServerLogConfigs;
 import org.apache.kafka.storage.internals.log.CleanerConfig;
-import org.apache.kafka.test.TestCondition;
-import org.apache.kafka.test.TestUtils;
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -15,6 +15,7 @@
  */
 package io.confluent.examples.streams;
 
+import io.confluent.examples.streams.utils.TestUtils;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -27,7 +28,6 @@ import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.JoinWindows;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.StreamJoined;
-import org.apache.kafka.test.TestUtils;
 import org.junit.Test;
 
 import java.time.Duration;

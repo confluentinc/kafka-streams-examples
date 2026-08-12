@@ -15,6 +15,7 @@
  */
 package io.confluent.examples.streams;
 
+import io.confluent.examples.streams.utils.TestUtils;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
@@ -32,7 +33,6 @@ import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
-import org.apache.kafka.test.TestUtils;
 import org.junit.Test;
 
 import java.util.Arrays;

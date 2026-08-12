@@ -15,6 +15,7 @@
  */
 package io.confluent.examples.streams;
 
+import io.confluent.examples.streams.utils.TestUtils;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
@@ -28,7 +29,6 @@ import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.test.TestUtils;
 import org.junit.Test;
 
 import java.util.Arrays;

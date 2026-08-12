@@ -36,7 +36,6 @@ import org.apache.kafka.streams.processor.api.ProcessorSupplier;
 import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.ValueAndTimestamp;
-import org.apache.kafka.test.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -57,6 +56,7 @@ import io.confluent.examples.streams.utils.KeyValueWithTimestamp;
 import io.confluent.examples.streams.utils.Pair;
 import io.confluent.examples.streams.utils.PairOfDoubleAndLongDeserializer;
 import io.confluent.examples.streams.utils.PairSerde;
+import io.confluent.examples.streams.utils.TestUtils;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;

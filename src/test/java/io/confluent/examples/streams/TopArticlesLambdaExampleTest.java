@@ -16,6 +16,7 @@
 package io.confluent.examples.streams;
 
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
+import io.confluent.examples.streams.utils.TestUtils;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
@@ -31,7 +32,6 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.kstream.Windowed;
 import org.apache.kafka.streams.kstream.WindowedSerdes;
-import org.apache.kafka.test.TestUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;

@@ -18,13 +18,13 @@ package io.confluent.examples.streams
 import java.util.Properties
 
 import io.confluent.examples.streams.IntegrationTestUtils.NothingSerde
+import io.confluent.examples.streams.utils.TestUtils
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams.scala.ImplicitConversions._
 import org.apache.kafka.streams.scala.serialization.Serdes._
 import org.apache.kafka.streams.scala.StreamsBuilder
 import org.apache.kafka.streams.scala.kstream.{KStream, KTable}
 import org.apache.kafka.streams.{KeyValue, StreamsConfig, TopologyTestDriver}
-import org.apache.kafka.test.TestUtils
 import org.junit._
 import org.scalatestplus.junit.AssertionsForJUnit
 import org.assertj.core.api.Assertions.assertThat
