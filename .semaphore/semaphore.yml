@@ -115,7 +115,7 @@ blocks:
           commands:
             - ci-sem-pint -c
   - name: Build, Test, & Scan AMD
-    dependencies: ["Validation"]
+    dependencies: []
     run:
       when: "pull_request =~ '.*' or branch = 'master'"
     task:
@@ -144,7 +144,7 @@ blocks:
             - artifact push workflow target/test-results
             - artifact push workflow target --destination target-AMD
   - name: Build & Test ARM
-    dependencies: ["Validation"]
+    dependencies: []
     run:
       when: "pull_request =~ '.*' or branch = 'master'"
     task:
