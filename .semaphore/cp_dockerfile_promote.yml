@@ -44,8 +44,8 @@ global_job_config:
       - export BRANCH_TAG=$(echo $SEMAPHORE_GIT_BRANCH | tr / -)
       - export DOCKER_PROD_REGISTRY="519856050701.dkr.ecr.us-west-2.amazonaws.com/docker/prod/"
       - export PROMOTED_TAG_PREFIX="$CONFLUENT_VERSION-$IMAGE_REVISION"
-      - if [[ ! "$PACKAGING_BUILD_NUMBER" ]]; then export $PACKAGING_BUILD_NUMBER="latest"; fi
-      - docker login --username $DOCKERHUB_USER --password $DOCKERHUB_APIKEY
+      - if [[ ! "$PACKAGING_BUILD_NUMBER" ]]; then export PACKAGING_BUILD_NUMBER="latest"; fi
+      - . get-auth-token dockerhub
       - export AMD_ARCH=.amd64
       - export ARM_ARCH=.arm64
       - export COMMUNITY_DOCKER_REPOS=""
