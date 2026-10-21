@@ -59,8 +59,8 @@ global_job_config:
             fi
           done
         fi
-
 blocks:
+
   - name: Promote AMD
     dependencies: []
     task:
@@ -96,6 +96,7 @@ blocks:
                   docker tag $DOCKER_REPO:$PROMOTED_TAG $DOCKER_REPO:latest-$OS_TYPE$AMD_ARCH
                   docker push $DOCKER_REPO:latest-$OS_TYPE$AMD_ARCH
               fi
+
   - name: Promote ARM
     dependencies: []
     task:
