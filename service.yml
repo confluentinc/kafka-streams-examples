@@ -12,6 +12,18 @@ codeowners:
 semaphore:
   enable: true
   pipeline_type: cp-dockerfile
+  # 'blocks' is deliberately omitted so ServiceBot does not regenerate it. The build blocks in
+  # .semaphore/semaphore.yml are gated to also run on master; without this, that gating is reset
+  # on the next ServiceBot regeneration and master builds nothing again.
+  managed_sections:
+    - version
+    - name
+    - agent
+    - fail_fast
+    - execution_time_limit
+    - queue
+    - global_job_config
+    - after_pipeline
   docker_repos: ['confluentinc/kafka-streams-examples']
   community_docker_repos: []
   community_maven_modules: []
