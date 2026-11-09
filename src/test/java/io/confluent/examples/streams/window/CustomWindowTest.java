@@ -303,9 +303,11 @@ public class CustomWindowTest {
     }
 
     /** Generates an event after window end + grace period to trigger flush everything through suppression
+     Uses a fixed timestamp rather than the wall clock: if "now" falls on a DST change day, the dummy
+     event's own (non-24h) window can itself be flushed and break the expected output.
      @see KTable#suppress(Suppressed)
     */
     private TestRecord<String, Integer> dummyEventToForceSuppression() {
-      return new TestRecord<>(null, 7, ZonedDateTime.now().toInstant());
+      return new TestRecord<>(null, 7, ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC).toInstant());
     }
 }
