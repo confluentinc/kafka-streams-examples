@@ -26,7 +26,6 @@ global_job_config:
   prologue:
     commands:
       - checkout
-      - . vault-setup
       # Semaphore does not accept empty values for parameters.
       - if [[ -z "$CONFLUENT_VERSION" ]]; then echo "Must specify CONFLUENT_VERSION" && exit 1; fi
       - if [[ -z "$IMAGE_REVISION" ]]; then echo "Must specify IMAGE_REVISION" && exit 1; fi
@@ -59,8 +58,8 @@ global_job_config:
             fi
           done
         fi
-
 blocks:
+
   - name: Promote AMD
     dependencies: []
     task:
@@ -96,6 +95,7 @@ blocks:
                   docker tag $DOCKER_REPO:$PROMOTED_TAG $DOCKER_REPO:latest-$OS_TYPE$AMD_ARCH
                   docker push $DOCKER_REPO:latest-$OS_TYPE$AMD_ARCH
               fi
+
   - name: Promote ARM
     dependencies: []
     task:
